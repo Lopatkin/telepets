@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import io from 'socket.io-client';
 
 const ChatContainer = styled.div`
-  padding: 10px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -12,7 +11,9 @@ const ChatContainer = styled.div`
 const MessagesContainer = styled.div`
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
 `;
 
 const Message = styled.div`
@@ -31,8 +32,14 @@ const MessageName = styled.div`
 `;
 
 const InputContainer = styled.div`
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 10px;
+  border-top: 1px solid #ddd;
   display: flex;
   gap: 10px;
+  z-index: 10;
 `;
 
 const Input = styled.input`

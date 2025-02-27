@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://telepets.netlify.app/",
+    origin: "https://telepets.netlify.app",
     methods: ["GET", "POST"]
   }
 });

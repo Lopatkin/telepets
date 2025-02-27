@@ -58,7 +58,7 @@ function Chat({ userId }) {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    socketRef.current = io('https://telepets.netlify.app/');
+    socketRef.current = io('https://telepets.netlify.asdfpp/');
     
     socketRef.current.on('message', (msg) => {
       setMessages(prev => [...prev, msg]);

@@ -7,20 +7,20 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "https://telepets.netlify.app",
+    origin: "https://telepets.netlify.app", // Разрешаем Netlify
     methods: ["GET", "POST"]
   }
 });
 
-// Подключение к MongoDB
+// Подключение к MongoDB Atlas
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
   .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err.message, err.stack));
+  .catch(err => console.error('MongoDB connection error:', err.message));
 
-// Схема и модель для сообщений
+// Схема сообщений
 const messageSchema = new mongoose.Schema({
   userId: String,
   text: String,
@@ -28,25 +28,33 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-io.on('connection', async (socket) => {
+io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  // Отправка истории сообщений при подключении
-  try {
-    const messages = await Message.find().sort({ timestamp: 1 }).limit(50);
-    socket.emit('messageHistory', messages);
-  } catch (err) {
-    console.error('Error fetching messages:', err);
-  }
+  // Обработка авторизации
+  socket.on('auth', async ({ userId }) => {
+    socket.userId = userId; // Привязываем userId к сокету
+    console.log('Authenticated user:', userId);
 
-  // Получение и сохранение нового сообщения
+    try {
+      const messages = await Message.find({}).sort({ timestamp: 1 }).limit(50);
+      socket.emit('messageHistory', messages);
+    } catch (err) {
+      console.error('Error fetching messages:', err.message, err.stack);
+    }
+  });
+
   socket.on('sendMessage', async (message) => {
     try {
-      const newMessage = new Message(message);
+      const newMessage = new Message({
+        userId: socket.userId, // Используем userId из сокета
+        text: message.text,
+        timestamp: message.timestamp
+      });
       await newMessage.save();
       io.emit('message', newMessage);
     } catch (err) {
-      console.error('Error saving message:', err);
+      console.error('Error saving message:', err.message, err.stack);
     }
   });
 

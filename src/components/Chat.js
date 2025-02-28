@@ -59,15 +59,22 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
-function Chat({ userId }) {
+function Chat() {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const socketRef = useRef();
   const messagesEndRef = useRef(null);
 
+  // Получение Telegram User ID
+  const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
+  const userId = telegramUser?.id?.toString() || 'unknown'; // Telegram ID как строка
+
   useEffect(() => {
+    // Инициализация Telegram Web App
+    window.Telegram.WebApp.ready();
+
+    // Подключение к серверу Render
     socketRef.current = io('https://telepets.onrender.com');
-    
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });
@@ -75,6 +82,9 @@ function Chat({ userId }) {
     socketRef.current.on('message', (msg) => {
       setMessages(prev => [...prev, msg]);
     });
+
+    // Отправка userId серверу для авторизации
+    socketRef.current.emit('auth', { userId });
 
     return () => {
       socketRef.current.disconnect();

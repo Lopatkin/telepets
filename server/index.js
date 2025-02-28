@@ -13,7 +13,7 @@ const io = new Server(server, {
 });
 
 // Подключение к MongoDB
-mongoose.connect('mongodb://zedd218:UGsULsq9TCeSXGjV@atlas-sql-67c194a856f1c851b2454820-pz23d.a.query.mongodb.net/?ssl=true&authSource=admin', {
+mongoose.connect('mongodb+srv://zedd218:UGsULsq9TCeSXGjV@telepetscluster.pz23d.mongodb.net/?retryWrites=true&w=majority&appName=telepetscluster', {              
   useNewUrlParser: true,
   useUnifiedTopology: true
 })

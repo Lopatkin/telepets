@@ -13,7 +13,7 @@ const io = new Server(server, {
 });
 
 // Подключение к MongoDB
-mongoose.connect('mongodb://telepetsadmin:gsdfgRGRAgHWSWJubdEfnY@e27aed3db67d.vps.myjino.ru:27017/admin', {
+mongoose.connect('mongodb://telepetsadmin:gsdfgRGRAgHWSWJubdEfnY@e27aed3db67d.vps.myjino.ru:27017/telepets_db', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })

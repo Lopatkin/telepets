@@ -25,6 +25,7 @@ function App() {
       window.Telegram.WebApp.ready();
       const telegramData = window.Telegram.WebApp.initDataUnsafe;
 
+      
       if (telegramData?.user?.id) {
         setUser({
           id: telegramData.user.id.toString(), // Telegram ID как строка

@@ -19,20 +19,32 @@ function App() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('chat');
 
-  // Мок авторизации для тестирования без Telegram
   useEffect(() => {
-    if (!window.Telegram?.WebApp?.initData) {
-      setUser({ id: 'test123', firstName: 'Test User' });
-    } else {
+    // Инициализация Telegram Web App
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.ready();
       const telegramData = window.Telegram.WebApp.initDataUnsafe;
-      setUser({
-        id: telegramData.user.id,
-        firstName: telegramData.user.first_name
-      });
+
+      if (telegramData?.user?.id) {
+        setUser({
+          id: telegramData.user.id.toString(), // Telegram ID как строка
+          firstName: telegramData.user.first_name || 'User'
+        });
+      } else {
+        // Fallback для случаев, когда Telegram данные недоступны
+        console.warn('Telegram Web App data not available');
+        setUser({ id: 'test123', firstName: 'Test User' });
+      }
+    } else {
+      // Для локального тестирования без Telegram
+      console.warn('Telegram Web App not loaded');
+      setUser({ id: 'test123', firstName: 'Test User' });
     }
   }, []);
 
-  if (!user) return <div>Loading...</div>;
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AppContainer>

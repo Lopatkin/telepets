@@ -13,12 +13,14 @@ const io = new Server(server, {
 });
 
 // Подключение к MongoDB
-mongoose.connect('mongodb://adm:adm@e27aed3db67d.vps.myjino.ru:27017/admin', {
+mongoose.connect('mongodb://adm:adm@e27aed3db67d.vps.myjino.ru:27017/telepets_db?authSource=admin', {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  connectTimeoutMS: 30000,
+  serverSelectionTimeoutMS: 30000
 })
   .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => console.error('MongoDB connection error:', err.message, err.stack));
 
 // Схема и модель для сообщений
 const messageSchema = new mongoose.Schema({

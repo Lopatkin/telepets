@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
 
+// Стили остаются прежними
 const ChatContainer = styled.div`
   height: 100%;
   display: flex;
@@ -67,6 +68,10 @@ function Chat({ userId }) {
   useEffect(() => {
     socketRef.current = io('https://telepets.onrender.com');
     
+    socketRef.current.on('messageHistory', (history) => {
+      setMessages(history);
+    });
+
     socketRef.current.on('message', (msg) => {
       setMessages(prev => [...prev, msg]);
     });

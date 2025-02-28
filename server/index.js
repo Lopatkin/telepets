@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
@@ -11,11 +12,42 @@ const io = new Server(server, {
   }
 });
 
-io.on('connection', (socket) => {
+// Подключение к MongoDB
+mongoose.connect('mongosh "mongodb://telepetsadmin:gsdfgRGRAgHWSWJubdEfnY@e27aed3db67d.vps.myjino.ru:27017/admin"', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
+
+// Схема и модель для сообщений
+const messageSchema = new mongoose.Schema({
+  userId: String,
+  text: String,
+  timestamp: { type: Date, default: Date.now }
+});
+const Message = mongoose.model('Message', messageSchema);
+
+io.on('connection', async (socket) => {
   console.log('User connected:', socket.id);
 
-  socket.on('sendMessage', (message) => {
-    io.emit('message', message);
+  // Отправка истории сообщений при подключении
+  try {
+    const messages = await Message.find().sort({ timestamp: 1 }).limit(50);
+    socket.emit('messageHistory', messages);
+  } catch (err) {
+    console.error('Error fetching messages:', err);
+  }
+
+  // Получение и сохранение нового сообщения
+  socket.on('sendMessage', async (message) => {
+    try {
+      const newMessage = new Message(message);
+      await newMessage.save();
+      io.emit('message', newMessage);
+    } catch (err) {
+      console.error('Error saving message:', err);
+    }
   });
 
   socket.on('disconnect', () => {

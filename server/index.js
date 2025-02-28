@@ -13,11 +13,9 @@ const io = new Server(server, {
 });
 
 // Подключение к MongoDB
-mongoose.connect('mongodb://adm:adm@e27aed3db67d.vps.myjino.ru:27017/telepets_db?authSource=admin', {
+mongoose.connect('mongodb://zedd218:UGsULsq9TCeSXGjV@atlas-sql-67c194a856f1c851b2454820-pz23d.a.query.mongodb.net/?ssl=true&authSource=admin', {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
-  connectTimeoutMS: 30000,
-  serverSelectionTimeoutMS: 30000
+  useUnifiedTopology: true
 })
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message, err.stack));

@@ -66,8 +66,8 @@ function Chat({ userId }) {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    socketRef.current = io(process.env.RENDER_SERVER_URL);
-
+    socketRef.current = io('https://telepets.onrender.com');
+    
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });

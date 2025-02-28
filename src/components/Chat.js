@@ -59,37 +59,39 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
-function Chat() {
+function Chat({ userId }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const socketRef = useRef();
   const messagesEndRef = useRef(null);
 
-  // Получение Telegram User ID
-  const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
-  const userId = telegramUser?.id?.toString() || 'unknown'; // Telegram ID как строка
-
   useEffect(() => {
     window.Telegram.WebApp.ready();
-    socketRef.current = io('https://telepets.onrender.com');  
+    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || {};
+    
+    const userData = {
+      userId: telegramUser.id?.toString() || userId, // Используем Telegram ID или пропс
+      firstName: telegramUser.first_name || '',
+      username: telegramUser.username || '',
+      lastName: telegramUser.last_name || ''
+    };
+
+    socketRef.current = io('https://telepets.onrender.com');
+    
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });
-  
+
     socketRef.current.on('message', (msg) => {
       setMessages(prev => [...prev, msg]);
     });
-  
+
+    socketRef.current.emit('auth', userData);
+
     return () => {
       socketRef.current.disconnect();
     };
-  }, []); // Socket.IO подключается только раз
-  
-  useEffect(() => {
-    if (socketRef.current && userId) {
-      socketRef.current.emit('auth', { userId });
-    }
-  }, [userId]); // Отправка auth только при изменении userId
+  }, [userId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -98,7 +100,6 @@ function Chat() {
   const sendMessage = () => {
     if (message.trim()) {
       const newMessage = {
-        userId,
         text: message,
         timestamp: new Date().toISOString()
       };
@@ -107,13 +108,23 @@ function Chat() {
     }
   };
 
+  // Форматирование имени автора
+  const getAuthorName = (msg) => {
+    if (msg.userId === userId) return ''; // Свои сообщения не подписываем
+    const parts = [];
+    if (msg.firstName) parts.push(msg.firstName);
+    if (msg.username) parts.push(`@${msg.username}`);
+    if (msg.lastName) parts.push(msg.lastName);
+    return parts.length > 0 ? parts.join(' ') : `User ${msg.userId}`;
+  };
+
   return (
     <ChatContainer>
       <MessagesContainer>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId}>
             {msg.userId !== userId && (
-              <MessageName>User {msg.userId}</MessageName>
+              <MessageName>{getAuthorName(msg)}</MessageName>
             )}
             {msg.text}
           </Message>

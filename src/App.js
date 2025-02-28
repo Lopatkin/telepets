@@ -20,23 +20,19 @@ function App() {
   const [activeTab, setActiveTab] = useState('chat');
 
   useEffect(() => {
-    // Инициализация Telegram Web App
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
       const telegramData = window.Telegram.WebApp.initDataUnsafe;
-
       if (telegramData?.user?.id) {
         setUser({
-          id: telegramData.user.id.toString(), // Telegram ID как строка
+          id: telegramData.user.id.toString(),
           firstName: telegramData.user.first_name || 'User'
         });
       } else {
-        // Fallback для случаев, когда Telegram данные недоступны
         console.warn('Telegram Web App data not available');
         setUser({ id: 'test123', firstName: 'Test User' });
       }
     } else {
-      // Для локального тестирования без Telegram
       console.warn('Telegram Web App not loaded');
       setUser({ id: 'test123', firstName: 'Test User' });
     }

@@ -70,26 +70,26 @@ function Chat() {
   const userId = telegramUser?.id?.toString() || 'unknown'; // Telegram ID как строка
 
   useEffect(() => {
-    // Инициализация Telegram Web App
     window.Telegram.WebApp.ready();
-
-    // Подключение к серверу Render
-    socketRef.current = io('https://telepets.onrender.com');
+    socketRef.current = io('https://telepets.onrender.com');  
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });
-
+  
     socketRef.current.on('message', (msg) => {
       setMessages(prev => [...prev, msg]);
     });
-
-    // Отправка userId серверу для авторизации
-    socketRef.current.emit('auth', { userId });
-
+  
     return () => {
       socketRef.current.disconnect();
     };
-  }, []);
+  }, []); // Socket.IO подключается только раз
+  
+  useEffect(() => {
+    if (socketRef.current && userId) {
+      socketRef.current.emit('auth', { userId });
+    }
+  }, [userId]); // Отправка auth только при изменении userId
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

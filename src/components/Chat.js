@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
 
-// Стили остаются прежними
 const ChatContainer = styled.div`
   height: 100%;
   display: flex;
@@ -26,10 +25,36 @@ const Message = styled.div`
   max-width: 70%;
 `;
 
+const MessageHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+`;
+
+const Avatar = styled.img`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 8px;
+  object-fit: cover;
+`;
+
+const DefaultAvatar = styled.div`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #007AFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  margin-right: 8px;
+`;
+
 const MessageName = styled.div`
   font-size: 12px;
   color: #666;
-  margin-bottom: 4px;
 `;
 
 const InputContainer = styled.div`
@@ -68,12 +93,13 @@ function Chat({ userId }) {
   useEffect(() => {
     window.Telegram.WebApp.ready();
     const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || {};
-    
+
     const userData = {
-      userId: telegramUser.id?.toString() || userId, // Используем Telegram ID или пропс
+      userId: telegramUser.id?.toString() || userId,
       firstName: telegramUser.first_name || '',
       username: telegramUser.username || '',
-      lastName: telegramUser.last_name || ''
+      lastName: telegramUser.last_name || '',
+      photoUrl: telegramUser.photo_url || '' // Добавляем photoUrl
     };
 
     socketRef.current = io('https://telepets.onrender.com');
@@ -108,7 +134,6 @@ function Chat({ userId }) {
     }
   };
 
-  // Форматирование имени автора
   const getAuthorName = (msg) => {
     if (msg.userId === userId) return ''; // Свои сообщения не подписываем
     const parts = [];
@@ -118,13 +143,25 @@ function Chat({ userId }) {
     return parts.length > 0 ? parts.join(' ') : `User ${msg.userId}`;
   };
 
+  const getAvatar = (msg) => {
+    const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
+    return msg.photoUrl ? (
+      <Avatar src={msg.photoUrl} alt="Avatar" />
+    ) : (
+      <DefaultAvatar>{initial}</DefaultAvatar>
+    );
+  };
+
   return (
     <ChatContainer>
       <MessagesContainer>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId}>
             {msg.userId !== userId && (
-              <MessageName>{getAuthorName(msg)}</MessageName>
+              <MessageHeader>
+                {getAvatar(msg)}
+                <MessageName>{getAuthorName(msg)}</MessageName>
+              </MessageHeader>
             )}
             {msg.text}
           </Message>

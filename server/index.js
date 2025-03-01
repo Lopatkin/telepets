@@ -19,13 +19,14 @@ mongoose.connect(process.env.MONGODB_URI, {
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message));
 
-// Схема сообщений с дополнительными полями
+// Схема сообщений с полем photoUrl
 const messageSchema = new mongoose.Schema({
   userId: String,
   text: String,
   firstName: String,
   username: String,
   lastName: String,
+  photoUrl: String,
   timestamp: { type: Date, default: Date.now }
 });
 const Message = mongoose.model('Message', messageSchema);
@@ -34,7 +35,7 @@ io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
   socket.on('auth', async (userData) => {
-    socket.userData = userData; // Сохраняем данные пользователя в сокете
+    socket.userData = userData; // Сохраняем данные пользователя, включая photoUrl
     console.log('Authenticated user:', userData.userId);
 
     try {
@@ -53,6 +54,7 @@ io.on('connection', (socket) => {
         firstName: socket.userData.firstName || '',
         username: socket.userData.username || '',
         lastName: socket.userData.lastName || '',
+        photoUrl: socket.userData.photoUrl || '', // Сохраняем photoUrl
         timestamp: message.timestamp
       });
       await newMessage.save();

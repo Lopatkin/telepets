@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import Chat from './components/Chat';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import Profile from './components/Profile';
 
 const AppContainer = styled.div`
   height: 100vh;
@@ -26,7 +27,9 @@ function App() {
       if (telegramData?.user?.id) {
         setUser({
           id: telegramData.user.id.toString(),
-          firstName: telegramData.user.first_name || 'User'
+          firstName: telegramData.user.first_name || 'User',
+          username: telegramData.user.username || '',
+          lastName: telegramData.user.last_name || ''
         });
       } else {
         console.warn('Telegram Web App data not available');
@@ -50,7 +53,7 @@ function App() {
         {activeTab === 'actions' && <div>Действия</div>}
         {activeTab === 'housing' && <div>Жильё</div>}
         {activeTab === 'map' && <div>Карта</div>}
-        {activeTab === 'profile' && <div>Профиль</div>}
+        {activeTab === 'profile' && <Profile user={user} />}
       </Content>
       <Footer activeTab={activeTab} setActiveTab={setActiveTab} />
     </AppContainer>

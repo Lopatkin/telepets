@@ -14,28 +14,29 @@ const FooterContainer = styled.div`
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
 `;
 
 const TabButton = styled.button`
-  background: ${props => props.active ? '#007AFF' : 'none'};
+  background: ${props => props.active ? '#005BBB' : 'none'};
+  box-shadow: ${props => props.active ? '0 2px 4px rgba(0, 0, 0, 0.2)' : 'none'};
   color: ${props => props.active ? 'white' : 'black'};
   border: none;
-  padding: 6px 10px;
+  padding: 8px 12px; /* Увеличили padding для большего пространства */
   border-radius: 4px;
   cursor: pointer;
-  font-size: 16px; /* Размер иконок */
+  font-size: 24px; /* Увеличили размер иконок до 24px */
   flex: 1;
-  margin: 0 2px;
+  margin: 0 4px; /* Увеличили отступы между кнопками */
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
   max-width: 20%;
 
+  /* Адаптивность для маленьких экранов */
   @media (max-width: 400px) {
-    padding: 4px 6px;
-    font-size: 14px;
+    font-size: 20px; /* Чуть меньше на очень маленьких экранах */
+    padding: 6px 10px;
   }
 `;
 

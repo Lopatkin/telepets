@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
-import { FaUsers, FaPaperPlane } from 'react-icons/fa'; // Добавляем иконку отправки
+import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
 
 const ChatContainer = styled.div`
@@ -19,7 +19,7 @@ const MessagesContainer = styled.div`
   flex-direction: column;
   background: ${props => props.room === 'Автобусная остановка' 
     ? `url(${busStationImage}) no-repeat center center fixed` 
-    : '#fff'};
+    : (props.theme === 'dark' ? '#1A1A1A' : '#fff')}; /* Тёмный фон для тёмной темы */
   background-size: cover;
 `;
 
@@ -27,7 +27,7 @@ const Message = styled.div`
   margin: 5px 0;
   padding: 8px;
   border-radius: 4px;
-  background: ${props => props.isOwn ? '#DCF8C6' : '#ECECEC'};
+  background: ${props => props.isOwn ? '#DCF8C6' : (props.theme === 'dark' ? '#444' : '#ECECEC')}; /* Тёмный фон для чужих сообщений */
   align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
   max-width: 70%;
   display: flex;
@@ -65,7 +65,7 @@ const DefaultAvatar = styled.div`
 
 const MessageName = styled.div`
   font-size: 12px;
-  color: #666;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
 `;
 
 const MessageContent = styled.div`
@@ -77,11 +77,12 @@ const MessageContent = styled.div`
 const MessageText = styled.span`
   font-size: 14px;
   word-break: break-word;
+  color: ${props => props.theme === 'dark' ? '#fff' : '#000'}; /* Белый текст для тёмной темы */
 `;
 
 const Timestamp = styled.span`
   font-size: 10px;
-  color: #999;
+  color: ${props => props.theme === 'dark' ? '#999' : '#999'};
   margin-left: 8px;
   white-space: nowrap;
 `;
@@ -89,9 +90,9 @@ const Timestamp = styled.span`
 const InputContainer = styled.div`
   position: sticky;
   bottom: 0;
-  background: #333; /* Более тёмный фон */
+  background: ${props => props.theme === 'dark' ? '#333' : '#fff'};
   padding: 10px;
-  border-top: 1px solid #555; /* Тёмная граница для контраста */
+  border-top: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ddd'};
   display: flex;
   align-items: center;
   gap: 10px;
@@ -107,17 +108,17 @@ const UsersIcon = styled(FaUsers)`
 const Input = styled.input`
   flex: 1;
   padding: 8px;
-  border: 1px solid #555; /* Тёмная граница для поля */
+  border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ddd'};
   border-radius: 4px;
-  background: #444; /* Чуть светлее фон для поля */
-  color: #fff; /* Белый текст для читаемости */
+  background: ${props => props.theme === 'dark' ? '#444' : '#fff'};
+  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
 `;
 
 const SendIcon = styled(FaPaperPlane)`
   font-size: 24px;
   color: #007AFF;
   cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
-  padding: 8px; /* Увеличиваем область клика */
+  padding: 8px;
 `;
 
 const UserListModal = styled.div`
@@ -125,8 +126,8 @@ const UserListModal = styled.div`
   bottom: 60px;
   left: 10px;
   width: 200px;
-  background: #fff;
-  border: 1px solid #ddd;
+  background: ${props => props.theme === 'dark' ? '#333' : '#fff'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ddd'};
   border-radius: 4px;
   padding: 10px;
   max-height: 200px;
@@ -138,7 +139,7 @@ const UserListModal = styled.div`
 const ModalTitle = styled.div`
   font-size: 14px;
   font-weight: bold;
-  color: #333;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   margin-bottom: 8px;
 `;
 
@@ -150,10 +151,10 @@ const UserItem = styled.div`
 
 const UserName = styled.span`
   font-size: 14px;
-  color: #333;
+  color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
 `;
 
-function Chat({ userId, room }) {
+function Chat({ userId, room, theme }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);
@@ -269,24 +270,24 @@ function Chat({ userId, room }) {
 
   return (
     <ChatContainer>
-      <MessagesContainer room={room}>
+      <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
-          <Message key={index} isOwn={msg.userId === userId}>
+          <Message key={index} isOwn={msg.userId === userId} theme={theme}>
             {msg.userId !== userId && (
               <MessageHeader>
                 {getAvatar(msg)}
-                <MessageName>{getAuthorName(msg)}</MessageName>
+                <MessageName theme={theme}>{getAuthorName(msg)}</MessageName>
               </MessageHeader>
             )}
             <MessageContent>
-              <MessageText>{msg.text}</MessageText>
-              <Timestamp>{formatTimestamp(msg.timestamp)}</Timestamp>
+              <MessageText theme={theme}>{msg.text}</MessageText>
+              <Timestamp theme={theme}>{formatTimestamp(msg.timestamp)}</Timestamp>
             </MessageContent>
           </Message>
         ))}
         <div ref={messagesEndRef} />
       </MessagesContainer>
-      <InputContainer>
+      <InputContainer theme={theme}>
         <UsersIcon onClick={toggleUserList} />
         <Input
           value={message}
@@ -294,12 +295,13 @@ function Chat({ userId, room }) {
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           placeholder={room ? "Напишите сообщение..." : "Выберите комнату на вкладке Карта"}
           disabled={!room}
+          theme={theme}
         />
         <SendIcon onClick={sendMessage} disabled={!room} />
       </InputContainer>
       {showUserList && room && (
-        <UserListModal ref={modalRef} onClick={handleModalClick}>
-          <ModalTitle>Онлайн</ModalTitle>
+        <UserListModal ref={modalRef} onClick={handleModalClick} theme={theme}>
+          <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
               {user.photoUrl ? (
@@ -307,7 +309,7 @@ function Chat({ userId, room }) {
               ) : (
                 <DefaultAvatar>{(user.firstName || user.userId || 'U').charAt(0).toUpperCase()}</DefaultAvatar>
               )}
-              <UserName>{user.firstName || `User ${user.userId}`}</UserName>
+              <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName>
             </UserItem>
           ))}
         </UserListModal>

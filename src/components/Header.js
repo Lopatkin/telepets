@@ -4,9 +4,9 @@ import styled from 'styled-components';
 const HeaderContainer = styled.div`
   position: sticky;
   top: 0;
-  background: #2A2A2A; /* Такой же тёмный фон, как у Footer */
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
   padding: 10px;
-  border-bottom: 1px solid #444; /* Тёмная граница для контраста */
+  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
   z-index: 100;
   display: flex;
   justify-content: space-between;
@@ -15,7 +15,7 @@ const HeaderContainer = styled.div`
 
 const RoomTitle = styled.h3`
   font-size: 18px;
-  color: #ccc; /* Светлый цвет для читаемости на тёмном фоне */
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -25,20 +25,20 @@ const RoomTitle = styled.h3`
 
 const UserName = styled.p`
   font-size: 16px;
-  color: #ccc; /* Светлый цвет для читаемости на тёмном фоне */
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#666'};
   margin: 0;
   text-align: right;
 `;
 
-function Header({ user, room }) {
+function Header({ user, room, theme }) {
   const roomName = room 
     ? (room.startsWith('myhome_') ? 'Мой дом' : room) 
     : 'Выберите комнату';
 
   return (
-    <HeaderContainer>
-      <RoomTitle>{roomName}</RoomTitle>
-      <UserName>{user.firstName}</UserName>
+    <HeaderContainer theme={theme}>
+      <RoomTitle theme={theme}>{roomName}</RoomTitle>
+      <UserName theme={theme}>{user.firstName}</UserName>
     </HeaderContainer>
   );
 }

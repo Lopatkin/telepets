@@ -7,7 +7,7 @@ const ProfileContainer = styled.div`
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background: #f5f5f5;
+  background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#f5f5f5'};
   height: 100%;
 `;
 
@@ -36,44 +36,42 @@ const DefaultAvatar = styled.div`
 
 const Name = styled.h2`
   font-size: 24px;
-  color: #333;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   margin: 0 0 10px 0;
 `;
 
 const Username = styled.p`
   font-size: 18px;
-  color: #666;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
   margin: 0 0 10px 0;
 `;
 
 const Info = styled.p`
   font-size: 16px;
-  color: #888;
+  color: ${props => props.theme === 'dark' ? '#999' : '#888'};
   margin: 0;
 `;
 
-function Profile({ user }) {
+function Profile({ user, theme }) {
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
 
-  // Данные пользователя из Telegram или переданные через пропс
   const firstName = telegramUser.first_name || user.firstName || 'User';
   const username = telegramUser.username || '';
   const lastName = telegramUser.last_name || '';
-  const photoUrl = telegramUser.photo_url || ''; // URL аватара из Telegram
+  const photoUrl = telegramUser.photo_url || '';
 
-  // Первая буква имени для дефолтного аватара
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
 
   return (
-    <ProfileContainer>
+    <ProfileContainer theme={theme}>
       {photoUrl ? (
         <Avatar src={photoUrl} alt={`${firstName}'s avatar`} />
       ) : (
         <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
       )}
-      <Name>{firstName} {lastName}</Name>
-      {username && <Username>@{username}</Username>}
-      <Info>ID: {user.id}</Info>
+      <Name theme={theme}>{firstName} {lastName}</Name>
+      {username && <Username theme={theme}>@{username}</Username>}
+      <Info theme={theme}>ID: {user.id}</Info>
     </ProfileContainer>
   );
 }

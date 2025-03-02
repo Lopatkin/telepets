@@ -5,8 +5,8 @@ import { FaComments, FaTasks, FaHome, FaMap, FaUser } from 'react-icons/fa';
 const FooterContainer = styled.div`
   position: sticky;
   bottom: 0;
-  background: #2A2A2A; /* Более тёмный фон */
-  border-top: 1px solid #444; /* Тёмная граница для контраста */
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+  border-top: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -19,7 +19,7 @@ const FooterContainer = styled.div`
 const TabButton = styled.button`
   background: ${props => props.active ? '#007AFF' : 'none'};
   box-shadow: ${props => props.active ? '0 2px 4px rgba(0, 0, 0, 0.2)' : 'none'};
-  color: ${props => props.active ? 'white' : '#ccc'}; /* Светлый цвет иконок для тёмного фона */
+  color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : 'black')};
   border: none;
   padding: 8px 12px;
   border-radius: 4px;
@@ -39,7 +39,7 @@ const TabButton = styled.button`
   }
 `;
 
-function Footer({ activeTab, setActiveTab }) {
+function Footer({ activeTab, setActiveTab, theme }) {
   const tabs = [
     { key: 'chat', icon: <FaComments /> },
     { key: 'actions', icon: <FaTasks /> },
@@ -49,12 +49,13 @@ function Footer({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <FooterContainer>
+    <FooterContainer theme={theme}>
       {tabs.map(tab => (
         <TabButton
           key={tab.key}
           active={activeTab === tab.key}
           onClick={() => setActiveTab(tab.key)}
+          theme={theme}
         >
           {tab.icon}
         </TabButton>

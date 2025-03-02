@@ -17,7 +17,7 @@ const FooterContainer = styled.div`
 `;
 
 const TabButton = styled.button`
-  background: ${props => props.active ? '#005BBB' : 'none'};
+  background: ${props => props.active ? '#007AFF' : 'none'};
   box-shadow: ${props => props.active ? '0 2px 4px rgba(0, 0, 0, 0.2)' : 'none'};
   color: ${props => props.active ? 'white' : 'black'};
   border: none;

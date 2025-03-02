@@ -292,7 +292,7 @@ function Chat({ userId, room }) {
       </InputContainer>
       {showUserList && room && (
         <UserListModal onClick={handleModalClick}>
-          <ModalTitle>На локации...</ModalTitle>
+          <ModalTitle>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
               {user.photoUrl ? (

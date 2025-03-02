@@ -53,11 +53,20 @@ const Info = styled.p`
 `;
 
 const ThemeOptions = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   width: 100%;
   max-width: 300px;
+  padding: 15px;
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+`;
+
+const ThemeTitle = styled.h3`
+  font-size: 18px;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  margin: 0 0 10px 0;
 `;
 
 const ThemeOption = styled.label`
@@ -96,7 +105,8 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange }) {
       <Name theme={theme}>{firstName} {lastName}</Name>
       {username && <Username theme={theme}>@{username}</Username>}
       <Info theme={theme}>ID: {user.id}</Info>
-      <ThemeOptions>
+      <ThemeOptions theme={theme}>
+        <ThemeTitle theme={theme}>Тема оформления</ThemeTitle>
         <ThemeOption theme={theme}>
           <ThemeRadio
             checked={selectedTheme === 'telegram'}

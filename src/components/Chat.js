@@ -23,6 +23,8 @@ const Message = styled.div`
   background: ${props => props.isOwn ? '#DCF8C6' : '#ECECEC'};
   align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
   max-width: 70%;
+  display: flex;
+  flex-direction: column;
 `;
 
 const MessageHeader = styled.div`
@@ -55,6 +57,24 @@ const DefaultAvatar = styled.div`
 const MessageName = styled.div`
   font-size: 12px;
   color: #666;
+`;
+
+const MessageContent = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+`;
+
+const MessageText = styled.span`
+  font-size: 14px;
+  word-break: break-word;
+`;
+
+const Timestamp = styled.span`
+  font-size: 10px;
+  color: #999;
+  margin-left: 8px;
+  white-space: nowrap;
 `;
 
 const InputContainer = styled.div`
@@ -99,11 +119,10 @@ function Chat({ userId }) {
       firstName: telegramUser.first_name || '',
       username: telegramUser.username || '',
       lastName: telegramUser.last_name || '',
-      photoUrl: telegramUser.photo_url || '' // Добавляем photoUrl
+      photoUrl: telegramUser.photo_url || ''
     };
 
     socketRef.current = io('https://telepets.onrender.com');
-    
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });
@@ -135,7 +154,7 @@ function Chat({ userId }) {
   };
 
   const getAuthorName = (msg) => {
-    if (msg.userId === userId) return ''; // Свои сообщения не подписываем
+    if (msg.userId === userId) return '';
     const parts = [];
     if (msg.firstName) parts.push(msg.firstName);
     if (msg.username) parts.push(`@${msg.username}`);
@@ -152,6 +171,20 @@ function Chat({ userId }) {
     );
   };
 
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      // Только время для сообщений сегодня
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else {
+      // Дата и время для старых сообщений
+      return `${date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+  };
+
   return (
     <ChatContainer>
       <MessagesContainer>
@@ -163,7 +196,10 @@ function Chat({ userId }) {
                 <MessageName>{getAuthorName(msg)}</MessageName>
               </MessageHeader>
             )}
-            {msg.text}
+            <MessageContent>
+              <MessageText>{msg.text}</MessageText>
+              <Timestamp>{formatTimestamp(msg.timestamp)}</Timestamp>
+            </MessageContent>
           </Message>
         ))}
         <div ref={messagesEndRef} />

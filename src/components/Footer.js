@@ -1,5 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
+import { FaComments, FaTasks, FaHome, FaMap, FaUser } from 'react-icons/fa';
+const tabs = [
+  { key: 'chat', icon: <FaComments /> },
+  { key: 'actions', icon: <FaTasks /> },
+  { key: 'housing', icon: <FaHome /> },
+  { key: 'map', icon: <FaMap /> },
+  { key: 'profile', icon: <FaUser /> }
+];
 
 const FooterContainer = styled.div`
   position: sticky;
@@ -13,6 +21,7 @@ const FooterContainer = styled.div`
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden; /* Предотвращаем горизонтальный скролл */
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
 `;
 
 const TabButton = styled.button`
@@ -50,12 +59,8 @@ function Footer({ activeTab, setActiveTab }) {
   return (
     <FooterContainer>
       {tabs.map(tab => (
-        <TabButton
-          key={tab.key}
-          active={activeTab === tab.key}
-          onClick={() => setActiveTab(tab.key)}
-        >
-          {tab.label}
+        <TabButton active={activeTab === tab.key} onClick={() => setActiveTab(tab.key)}>
+          {tab.icon}
         </TabButton>
       ))}
     </FooterContainer>

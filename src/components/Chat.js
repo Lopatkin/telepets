@@ -27,7 +27,9 @@ const Message = styled.div`
   margin: 5px 0;
   padding: 8px;
   border-radius: 4px;
-  background: ${props => props.isOwn ? '#DCF8C6' : (props.theme === 'dark' ? '#444' : '#ECECEC')};
+  background: ${props => props.theme === 'dark' 
+    ? '#444' // Один тёмный фон для всех в тёмной теме
+    : (props.isOwn ? '#DCF8C6' : '#ECECEC')}; // Зелёный для моих в светлой теме
   align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
   max-width: 70%;
   display: flex;

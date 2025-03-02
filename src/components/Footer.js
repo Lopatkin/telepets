@@ -24,7 +24,7 @@ const TabButton = styled.button`
   padding: 8px 12px; /* Увеличили padding для большего пространства */
   border-radius: 4px;
   cursor: pointer;
-  font-size: 24px; /* Увеличили размер иконок до 24px */
+  font-size: 32px; /* Увеличили размер иконок до 32px */
   flex: 1;
   margin: 0 4px; /* Увеличили отступы между кнопками */
   text-align: center;
@@ -35,7 +35,7 @@ const TabButton = styled.button`
 
   /* Адаптивность для маленьких экранов */
   @media (max-width: 400px) {
-    font-size: 20px; /* Чуть меньше на очень маленьких экранах */
+    font-size: 24px; /* Чуть меньше на очень маленьких экранах */
     padding: 6px 10px;
   }
 `;

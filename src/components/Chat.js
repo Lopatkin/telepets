@@ -77,7 +77,12 @@ const MessageContent = styled.div`
 const MessageText = styled.span`
   font-size: 14px;
   word-break: break-word;
-  color: ${props => props.isOwn && props.theme === 'dark' ? '#333' : (props.theme === 'dark' ? '#fff' : '#000')};
+  color: ${props => {
+    if (props.theme === 'dark') {
+      return props.isOwn ? '#333' : '#fff'; // Тёмный для моих, белый для чужих в тёмной теме
+    }
+    return '#000'; // Чёрный для светлой темы
+  }};
 `;
 
 const Timestamp = styled.span`

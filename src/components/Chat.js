@@ -126,10 +126,32 @@ const InputContainer = styled.div`
   z-index: 10;
 `;
 
+const UsersButton = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+`;
+
 const UsersIcon = styled(FaUsers)`
   font-size: 24px;
   color: #007AFF;
-  cursor: pointer;
+`;
+
+const UserCount = styled.span`
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #007AFF;
+  color: white;
+  font-size: 12px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const Input = styled.input`
@@ -202,7 +224,8 @@ function Chat({ userId, room, theme }) {
       photoUrl: telegramUser.photo_url || ''
     };
 
-    socketRef.current = io('https://telepets.onrender.com');
+    socketRef.current = io(process.env.REACT_APP_RENDER_SERVER_URL || 'https://your-app.onrender.com');
+
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });
@@ -315,7 +338,10 @@ function Chat({ userId, room, theme }) {
         <div ref={messagesEndRef} />
       </MessagesContainer>
       <InputContainer theme={theme}>
-        <UsersIcon onClick={toggleUserList} />
+        <UsersButton onClick={toggleUserList}>
+          <UsersIcon />
+          <UserCount>{users.length}</UserCount>
+        </UsersButton>
         <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}

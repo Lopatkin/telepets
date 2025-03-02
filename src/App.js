@@ -21,14 +21,15 @@ function App() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('chat');
   const [currentRoom, setCurrentRoom] = useState(null);
-  const [theme, setTheme] = useState('telegram'); // По умолчанию "Как в Telegram"
-  const [telegramTheme, setTelegramTheme] = useState('light'); // Тема Telegram
+  const [theme, setTheme] = useState('telegram');
+  const [telegramTheme, setTelegramTheme] = useState('light');
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
       const telegramData = window.Telegram.WebApp.initDataUnsafe;
-      const savedTheme = localStorage.getItem('theme') || 'telegram'; // Загружаем сохранённую тему
+      const savedTheme = localStorage.getItem('theme') || 'telegram';
+      const savedRoom = localStorage.getItem('currentRoom'); // Загружаем сохранённую комнату
       if (telegramData?.user?.id) {
         const userData = {
           id: telegramData.user.id.toString(),
@@ -37,40 +38,41 @@ function App() {
           lastName: telegramData.user.last_name || ''
         };
         setUser(userData);
-        setCurrentRoom(`myhome_${userData.id}`);
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
         setTheme(savedTheme);
+        // Устанавливаем сохранённую комнату или "Мой дом" по умолчанию
+        setCurrentRoom(savedRoom || `myhome_${userData.id}`);
       } else {
         console.warn('Telegram Web App data not available');
         setUser({ id: 'test123', firstName: 'Test User' });
-        setCurrentRoom('myhome_test123');
         setTelegramTheme('light');
         setTheme(savedTheme);
+        setCurrentRoom(savedRoom || 'myhome_test123');
       }
     } else {
       console.warn('Telegram Web App not loaded');
       setUser({ id: 'test123', firstName: 'Test User' });
-      setCurrentRoom('myhome_test123');
       setTelegramTheme('light');
-      setTheme('light'); // Для локального теста
+      setTheme('light');
+      setCurrentRoom('myhome_test123');
     }
   }, []);
 
   const handleRoomSelect = (room) => {
     setCurrentRoom(room);
+    localStorage.setItem('currentRoom', room); // Сохраняем комнату при выборе
     setActiveTab('chat');
   };
 
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
-    localStorage.setItem('theme', newTheme); // Сохраняем выбор в localStorage
+    localStorage.setItem('theme', newTheme);
   };
 
   if (!user) {
     return <div>Loading...</div>;
   }
 
-  // Определяем текущую тему для компонентов
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
 
   return (
@@ -95,5 +97,6 @@ function App() {
     </AppContainer>
   );
 }
+
 
 export default App;

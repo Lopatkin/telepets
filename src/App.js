@@ -34,7 +34,6 @@ function App() {
           lastName: telegramData.user.last_name || ''
         };
         setUser(userData);
-        // Автоматический вход в "Мой дом" при запуске
         setCurrentRoom(`myhome_${userData.id}`);
       } else {
         console.warn('Telegram Web App data not available');
@@ -59,7 +58,7 @@ function App() {
 
   return (
     <AppContainer>
-      <Header user={user} />
+      <Header user={user} room={currentRoom} />
       <Content>
         {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} />}
         {activeTab === 'actions' && <div>Действия</div>}

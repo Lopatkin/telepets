@@ -19,7 +19,7 @@ const MessagesContainer = styled.div`
   flex-direction: column;
   background: ${props => props.room === 'Автобусная остановка' 
     ? `url(${busStationImage}) no-repeat center center fixed` 
-    : (props.theme === 'dark' ? '#1A1A1A' : '#fff')}; /* Тёмный фон для тёмной темы */
+    : (props.theme === 'dark' ? '#1A1A1A' : '#fff')};
   background-size: cover;
 `;
 
@@ -27,7 +27,7 @@ const Message = styled.div`
   margin: 5px 0;
   padding: 8px;
   border-radius: 4px;
-  background: ${props => props.isOwn ? '#DCF8C6' : (props.theme === 'dark' ? '#444' : '#ECECEC')}; /* Тёмный фон для чужих сообщений */
+  background: ${props => props.isOwn ? '#DCF8C6' : (props.theme === 'dark' ? '#444' : '#ECECEC')};
   align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
   max-width: 70%;
   display: flex;
@@ -77,7 +77,7 @@ const MessageContent = styled.div`
 const MessageText = styled.span`
   font-size: 14px;
   word-break: break-word;
-  color: ${props => props.theme === 'dark' ? '#fff' : '#000'}; /* Белый текст для тёмной темы */
+  color: ${props => props.isOwn && props.theme === 'dark' ? '#333' : (props.theme === 'dark' ? '#fff' : '#000')};
 `;
 
 const Timestamp = styled.span`

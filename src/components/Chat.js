@@ -104,7 +104,7 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
-function Chat({ userId }) {
+function Chat({ userId, room }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const socketRef = useRef();
@@ -133,19 +133,25 @@ function Chat({ userId }) {
 
     socketRef.current.emit('auth', userData);
 
+    // Присоединяемся к комнате, если она указана
+    if (room) {
+      socketRef.current.emit('joinRoom', room);
+    }
+
     return () => {
       socketRef.current.disconnect();
     };
-  }, [userId]);
+  }, [userId, room]); // Добавили room в зависимости
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const sendMessage = () => {
-    if (message.trim()) {
+    if (message.trim() && room) {
       const newMessage = {
         text: message,
+        room, // Указываем комнату
         timestamp: new Date().toISOString()
       };
       socketRef.current.emit('sendMessage', newMessage);
@@ -177,10 +183,8 @@ function Chat({ userId }) {
     const isToday = date.toDateString() === now.toDateString();
     
     if (isToday) {
-      // Только время для сообщений сегодня
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else {
-      // Дата и время для старых сообщений
       return `${date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     }
   };
@@ -209,9 +213,10 @@ function Chat({ userId }) {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-          placeholder="Напишите сообщение..."
+          placeholder={room ? "Напишите сообщение..." : "Выберите комнату на вкладке Карта"}
+          disabled={!room} // Отключаем ввод, если комната не выбрана
         />
-        <Button onClick={sendMessage}>Отправить</Button>
+        <Button onClick={sendMessage} disabled={!room}>Отправить</Button>
       </InputContainer>
     </ChatContainer>
   );

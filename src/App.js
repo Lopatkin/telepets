@@ -4,6 +4,7 @@ import Chat from './components/Chat';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Profile from './components/Profile';
+import Map from './components/Map';
 
 const AppContainer = styled.div`
   height: 100vh;
@@ -19,6 +20,7 @@ const Content = styled.div`
 function App() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('chat');
+  const [currentRoom, setCurrentRoom] = useState(null);
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -41,6 +43,11 @@ function App() {
     }
   }, []);
 
+  const handleRoomSelect = (room) => {
+    setCurrentRoom(room);
+    setActiveTab('chat'); // Переключаемся на вкладку "Чат"
+  };
+
   if (!user) {
     return <div>Loading...</div>;
   }
@@ -49,10 +56,10 @@ function App() {
     <AppContainer>
       <Header user={user} />
       <Content>
-        {activeTab === 'chat' && <Chat userId={user.id} />}
+        {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} />}
         {activeTab === 'actions' && <div>Действия</div>}
         {activeTab === 'housing' && <div>Жильё</div>}
-        {activeTab === 'map' && <div>Карта</div>}
+        {activeTab === 'map' && <Map onRoomSelect={handleRoomSelect} />}
         {activeTab === 'profile' && <Profile user={user} />}
       </Content>
       <Footer activeTab={activeTab} setActiveTab={setActiveTab} />

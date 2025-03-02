@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGODB_URI, {
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message));
 
-// Схема сообщений с полем photoUrl
+// Схема сообщений с полем room
 const messageSchema = new mongoose.Schema({
   userId: String,
   text: String,
@@ -27,6 +27,7 @@ const messageSchema = new mongoose.Schema({
   username: String,
   lastName: String,
   photoUrl: String,
+  room: String, // Добавляем комнату
   timestamp: { type: Date, default: Date.now }
 });
 const Message = mongoose.model('Message', messageSchema);
@@ -35,11 +36,16 @@ io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
   socket.on('auth', async (userData) => {
-    socket.userData = userData; // Сохраняем данные пользователя, включая photoUrl
+    socket.userData = userData;
     console.log('Authenticated user:', userData.userId);
+  });
+
+  socket.on('joinRoom', async (room) => {
+    socket.join(room); // Пользователь присоединяется к комнате
+    console.log(`User ${socket.userData.userId} joined room: ${room}`);
 
     try {
-      const messages = await Message.find({}).sort({ timestamp: 1 }).limit(50);
+      const messages = await Message.find({ room }).sort({ timestamp: 1 }).limit(50);
       socket.emit('messageHistory', messages);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);
@@ -54,11 +60,12 @@ io.on('connection', (socket) => {
         firstName: socket.userData.firstName || '',
         username: socket.userData.username || '',
         lastName: socket.userData.lastName || '',
-        photoUrl: socket.userData.photoUrl || '', // Сохраняем photoUrl
+        photoUrl: socket.userData.photoUrl || '',
+        room: message.room, // Сохраняем комнату
         timestamp: message.timestamp
       });
       await newMessage.save();
-      io.emit('message', newMessage);
+      io.to(message.room).emit('message', newMessage); // Отправляем только в комнату
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);
     }

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
-import { FaUsers } from 'react-icons/fa'; // Добавляем иконку пользователей
+import { FaUsers } from 'react-icons/fa';
 
 const ChatContainer = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative; /* Для позиционирования модального окна */
 `;
 
 const MessagesContainer = styled.div`
@@ -113,10 +114,10 @@ const Button = styled.button`
 `;
 
 const UserListModal = styled.div`
-  position: fixed;
-  bottom: 60px; /* Выше InputContainer */
+  position: absolute;
+  bottom: 60px;
   left: 10px;
-  right: 10px;
+  width: 200px; /* Фиксированная ширина вместо полной */
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -125,6 +126,13 @@ const UserListModal = styled.div`
   overflow-y: auto;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   z-index: 20;
+`;
+
+const ModalTitle = styled.div`
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
 `;
 
 const UserItem = styled.div`
@@ -145,6 +153,7 @@ function Chat({ userId, room }) {
   const [showUserList, setShowUserList] = useState(false);
   const socketRef = useRef();
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   useEffect(() => {
     window.Telegram.WebApp.ready();
@@ -158,8 +167,8 @@ function Chat({ userId, room }) {
       photoUrl: telegramUser.photo_url || ''
     };
 
-    socketRef.current = io('https://telepets.onrender.com');
-    
+    socketRef.current = io(process.env.REACT_APP_RENDER_SERVER_URL || 'https://your-app.onrender.com');
+
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });
@@ -186,6 +195,19 @@ function Chat({ userId, room }) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (chatContainerRef.current && !chatContainerRef.current.contains(event.target)) {
+        setShowUserList(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
 
   const sendMessage = () => {
     if (message.trim() && room) {
@@ -229,12 +251,18 @@ function Chat({ userId, room }) {
     }
   };
 
-  const toggleUserList = () => {
+  const toggleUserList = (e) => {
+    e.stopPropagation(); // Предотвращаем закрытие при клике на иконку
     setShowUserList(prev => !prev);
   };
 
+  const handleModalClick = (e) => {
+    e.stopPropagation(); // Предотвращаем всплытие события
+    setShowUserList(false); // Закрываем при клике на модальное окно
+  };
+
   return (
-    <ChatContainer>
+    <ChatContainer ref={chatContainerRef}>
       <MessagesContainer>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId}>
@@ -264,7 +292,8 @@ function Chat({ userId, room }) {
         <Button onClick={sendMessage} disabled={!room}>Отправить</Button>
       </InputContainer>
       {showUserList && room && (
-        <UserListModal>
+        <UserListModal onClick={handleModalClick}>
+          <ModalTitle>На локации...</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
               {user.photoUrl ? (

@@ -307,6 +307,7 @@ function Chat({ userId, room }) {
         </UserListModal>
       )}
     </ChatContainer>
+  
   );
 }
 

@@ -32,6 +32,9 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
+// Хранилище активных пользователей по комнатам
+const roomUsers = {};
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -44,8 +47,20 @@ io.on('connection', (socket) => {
     socket.join(room);
     console.log(`User ${socket.userData.userId} joined room: ${room}`);
 
+    // Добавляем пользователя в список комнаты
+    if (!roomUsers[room]) roomUsers[room] = new Set();
+    roomUsers[room].add({
+      userId: socket.userData.userId,
+      firstName: socket.userData.firstName,
+      username: socket.userData.username,
+      lastName: socket.userData.lastName,
+      photoUrl: socket.userData.photoUrl
+    });
+
+    // Отправляем обновлённый список пользователей в комнату
+    io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
+
     try {
-      // Для "Мой дом" фильтруем только сообщения пользователя
       const query = room.startsWith('myhome_')
         ? { room, userId: socket.userData.userId }
         : { room };
@@ -77,6 +92,15 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    // Удаляем пользователя из всех комнат
+    Object.keys(roomUsers).forEach(room => {
+      roomUsers[room].forEach(user => {
+        if (user.userId === socket.userData?.userId) {
+          roomUsers[room].delete(user);
+        }
+      });
+      io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
+    });
   });
 });
 

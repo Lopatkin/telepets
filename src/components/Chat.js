@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
+import { FaUsers } from 'react-icons/fa'; // Добавляем иконку пользователей
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -84,8 +85,15 @@ const InputContainer = styled.div`
   padding: 10px;
   border-top: 1px solid #ddd;
   display: flex;
+  align-items: center;
   gap: 10px;
   z-index: 10;
+`;
+
+const UsersIcon = styled(FaUsers)`
+  font-size: 24px;
+  color: #007AFF;
+  cursor: pointer;
 `;
 
 const Input = styled.input`
@@ -104,9 +112,37 @@ const Button = styled.button`
   cursor: pointer;
 `;
 
+const UserListModal = styled.div`
+  position: fixed;
+  bottom: 60px; /* Выше InputContainer */
+  left: 10px;
+  right: 10px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 20;
+`;
+
+const UserItem = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+`;
+
+const UserName = styled.span`
+  font-size: 14px;
+  color: #333;
+`;
+
 function Chat({ userId, room }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
+  const [users, setUsers] = useState([]);
+  const [showUserList, setShowUserList] = useState(false);
   const socketRef = useRef();
   const messagesEndRef = useRef(null);
 
@@ -123,6 +159,7 @@ function Chat({ userId, room }) {
     };
 
     socketRef.current = io('https://telepets.onrender.com');
+    
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });
@@ -131,9 +168,12 @@ function Chat({ userId, room }) {
       setMessages(prev => [...prev, msg]);
     });
 
+    socketRef.current.on('roomUsers', (roomUsers) => {
+      setUsers(roomUsers);
+    });
+
     socketRef.current.emit('auth', userData);
 
-    // Присоединяемся к комнате, если она указана
     if (room) {
       socketRef.current.emit('joinRoom', room);
     }
@@ -141,7 +181,7 @@ function Chat({ userId, room }) {
     return () => {
       socketRef.current.disconnect();
     };
-  }, [userId, room]); // Добавили room в зависимости
+  }, [userId, room]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -151,7 +191,7 @@ function Chat({ userId, room }) {
     if (message.trim() && room) {
       const newMessage = {
         text: message,
-        room, // Указываем комнату
+        room,
         timestamp: new Date().toISOString()
       };
       socketRef.current.emit('sendMessage', newMessage);
@@ -189,6 +229,10 @@ function Chat({ userId, room }) {
     }
   };
 
+  const toggleUserList = () => {
+    setShowUserList(prev => !prev);
+  };
+
   return (
     <ChatContainer>
       <MessagesContainer>
@@ -209,15 +253,30 @@ function Chat({ userId, room }) {
         <div ref={messagesEndRef} />
       </MessagesContainer>
       <InputContainer>
+        <UsersIcon onClick={toggleUserList} />
         <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           placeholder={room ? "Напишите сообщение..." : "Выберите комнату на вкладке Карта"}
-          disabled={!room} // Отключаем ввод, если комната не выбрана
+          disabled={!room}
         />
         <Button onClick={sendMessage} disabled={!room}>Отправить</Button>
       </InputContainer>
+      {showUserList && room && (
+        <UserListModal>
+          {users.map((user, index) => (
+            <UserItem key={index}>
+              {user.photoUrl ? (
+                <Avatar src={user.photoUrl} alt="Avatar" />
+              ) : (
+                <DefaultAvatar>{(user.firstName || user.userId || 'U').charAt(0).toUpperCase()}</DefaultAvatar>
+              )}
+              <UserName>{user.firstName || `User ${user.userId}`}</UserName>
+            </UserItem>
+          ))}
+        </UserListModal>
+      )}
     </ChatContainer>
   );
 }

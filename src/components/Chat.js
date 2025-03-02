@@ -3,7 +3,13 @@ import styled from 'styled-components';
 import io from 'socket.io-client';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
-import myRoomImage from '../images/my_room.jpg'; // Новый импорт
+import myRoomImage from '../images/my_room.jpg';
+import trainStationImage from '../images/train_station.jpg'; // Вокзал
+import zhkSferaImage from '../images/zhk_sfera.jpg'; // ЖК Сфера
+import factoryImage from '../images/factory.jpg'; // Завод
+import forestImage from '../images/forest.jpg'; // Лес
+import parkImage from '../images/park.jpg'; // Парк
+import villageImage from '../images/village.jpg'; // Район Дачный
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -22,9 +28,21 @@ const MessagesContainer = styled.div`
     if (props.room === 'Автобусная остановка') {
       return `url(${busStationImage}) no-repeat center center fixed`;
     } else if (props.room && props.room.startsWith('myhome_')) {
-      return `url(${myRoomImage}) no-repeat center center fixed`; // Фон для "Мой дом"
+      return `url(${myRoomImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Вокзал') {
+      return `url(${trainStationImage}) no-repeat center center fixed`;
+    } else if (props.room === 'ЖК Сфера') {
+      return `url(${zhkSferaImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Завод') {
+      return `url(${factoryImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Лес') {
+      return `url(${forestImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Парк') {
+      return `url(${parkImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Район Дачный') {
+      return `url(${villageImage}) no-repeat center center fixed`;
     } else {
-      return props.theme === 'dark' ? '#1A1A1A' : '#fff'; // Тёмный или светлый фон для других комнат
+      return props.theme === 'dark' ? '#1A1A1A' : '#fff';
     }
   }};
   background-size: cover;

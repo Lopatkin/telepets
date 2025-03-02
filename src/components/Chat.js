@@ -7,7 +7,7 @@ const ChatContainer = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
-  position: relative; /* Для позиционирования модального окна */
+  position: relative;
 `;
 
 const MessagesContainer = styled.div`
@@ -117,7 +117,7 @@ const UserListModal = styled.div`
   position: absolute;
   bottom: 60px;
   left: 10px;
-  width: 200px; /* Фиксированная ширина вместо полной */
+  width: 200px;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -153,7 +153,7 @@ function Chat({ userId, room }) {
   const [showUserList, setShowUserList] = useState(false);
   const socketRef = useRef();
   const messagesEndRef = useRef(null);
-  const chatContainerRef = useRef(null);
+  const modalRef = useRef(null); // Реф для модального окна
 
   useEffect(() => {
     window.Telegram.WebApp.ready();
@@ -197,8 +197,8 @@ function Chat({ userId, room }) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (chatContainerRef.current && !chatContainerRef.current.contains(event.target)) {
-        setShowUserList(false);
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setShowUserList(false); // Закрываем, если клик вне модального окна
       }
     };
 
@@ -251,17 +251,17 @@ function Chat({ userId, room }) {
   };
 
   const toggleUserList = (e) => {
-    e.stopPropagation(); // Предотвращаем закрытие при клике на иконку
+    e.stopPropagation(); // Предотвращаем закрытие при открытии
     setShowUserList(prev => !prev);
   };
 
   const handleModalClick = (e) => {
-    e.stopPropagation(); // Предотвращаем всплытие события
+    e.stopPropagation(); // Предотвращаем всплытие
     setShowUserList(false); // Закрываем при клике на модальное окно
   };
 
   return (
-    <ChatContainer ref={chatContainerRef}>
+    <ChatContainer>
       <MessagesContainer>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId}>
@@ -291,7 +291,7 @@ function Chat({ userId, room }) {
         <Button onClick={sendMessage} disabled={!room}>Отправить</Button>
       </InputContainer>
       {showUserList && room && (
-        <UserListModal onClick={handleModalClick}>
+        <UserListModal ref={modalRef} onClick={handleModalClick}>
           <ModalTitle>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
@@ -306,7 +306,6 @@ function Chat({ userId, room }) {
         </UserListModal>
       )}
     </ChatContainer>
-  
   );
 }
 

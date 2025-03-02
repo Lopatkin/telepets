@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
-import { FaUsers } from 'react-icons/fa';
-import busStationImage from '../images/bus_station.jpg'; // Импорт изображения
+import { FaUsers, FaPaperPlane } from 'react-icons/fa'; // Добавляем иконку отправки
+import busStationImage from '../images/bus_station.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -19,8 +19,8 @@ const MessagesContainer = styled.div`
   flex-direction: column;
   background: ${props => props.room === 'Автобусная остановка' 
     ? `url(${busStationImage}) no-repeat center center fixed` 
-    : '#fff'}; /* Условный фон без слоя */
-  background-size: cover; /* Растягиваем изображение */
+    : '#fff'};
+  background-size: cover;
 `;
 
 const Message = styled.div`
@@ -33,7 +33,7 @@ const Message = styled.div`
   display: flex;
   flex-direction: column;
   position: relative;
-  z-index: 2; /* Сообщения выше полупрозрачного слоя */
+  z-index: 2;
 `;
 
 const MessageHeader = styled.div`
@@ -89,9 +89,9 @@ const Timestamp = styled.span`
 const InputContainer = styled.div`
   position: sticky;
   bottom: 0;
-  background: #fff;
+  background: #333; /* Более тёмный фон */
   padding: 10px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid #555; /* Тёмная граница для контраста */
   display: flex;
   align-items: center;
   gap: 10px;
@@ -107,17 +107,17 @@ const UsersIcon = styled(FaUsers)`
 const Input = styled.input`
   flex: 1;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid #555; /* Тёмная граница для поля */
   border-radius: 4px;
+  background: #444; /* Чуть светлее фон для поля */
+  color: #fff; /* Белый текст для читаемости */
 `;
 
-const Button = styled.button`
-  padding: 8px 16px;
-  background: #007AFF;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+const SendIcon = styled(FaPaperPlane)`
+  font-size: 24px;
+  color: #007AFF;
+  cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
+  padding: 8px; /* Увеличиваем область клика */
 `;
 
 const UserListModal = styled.div`
@@ -174,7 +174,8 @@ function Chat({ userId, room }) {
       photoUrl: telegramUser.photo_url || ''
     };
 
-    socketRef.current = io('https://telepets.onrender.com');
+    socketRef.current = io(process.env.REACT_APP_RENDER_SERVER_URL || 'https://your-app.onrender.com');
+
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });
@@ -295,7 +296,7 @@ function Chat({ userId, room }) {
           placeholder={room ? "Напишите сообщение..." : "Выберите комнату на вкладке Карта"}
           disabled={!room}
         />
-        <Button onClick={sendMessage} disabled={!room}>Отправить</Button>
+        <SendIcon onClick={sendMessage} disabled={!room} />
       </InputContainer>
       {showUserList && room && (
         <UserListModal ref={modalRef} onClick={handleModalClick}>

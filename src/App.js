@@ -27,25 +27,30 @@ function App() {
       window.Telegram.WebApp.ready();
       const telegramData = window.Telegram.WebApp.initDataUnsafe;
       if (telegramData?.user?.id) {
-        setUser({
+        const userData = {
           id: telegramData.user.id.toString(),
           firstName: telegramData.user.first_name || 'User',
           username: telegramData.user.username || '',
           lastName: telegramData.user.last_name || ''
-        });
+        };
+        setUser(userData);
+        // Автоматический вход в "Мой дом" при запуске
+        setCurrentRoom(`myhome_${userData.id}`);
       } else {
         console.warn('Telegram Web App data not available');
         setUser({ id: 'test123', firstName: 'Test User' });
+        setCurrentRoom('myhome_test123');
       }
     } else {
       console.warn('Telegram Web App not loaded');
       setUser({ id: 'test123', firstName: 'Test User' });
+      setCurrentRoom('myhome_test123');
     }
   }, []);
 
   const handleRoomSelect = (room) => {
     setCurrentRoom(room);
-    setActiveTab('chat'); // Переключаемся на вкладку "Чат"
+    setActiveTab('chat');
   };
 
   if (!user) {
@@ -59,7 +64,7 @@ function App() {
         {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} />}
         {activeTab === 'actions' && <div>Действия</div>}
         {activeTab === 'housing' && <div>Жильё</div>}
-        {activeTab === 'map' && <Map onRoomSelect={handleRoomSelect} />}
+        {activeTab === 'map' && <Map userId={user.id} onRoomSelect={handleRoomSelect} />}
         {activeTab === 'profile' && <Profile user={user} />}
       </Content>
       <Footer activeTab={activeTab} setActiveTab={setActiveTab} />

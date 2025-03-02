@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGODB_URI, {
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message));
 
-// Схема сообщений с полем room
+// Схема сообщений
 const messageSchema = new mongoose.Schema({
   userId: String,
   text: String,
@@ -27,7 +27,7 @@ const messageSchema = new mongoose.Schema({
   username: String,
   lastName: String,
   photoUrl: String,
-  room: String, // Добавляем комнату
+  room: String,
   timestamp: { type: Date, default: Date.now }
 });
 const Message = mongoose.model('Message', messageSchema);
@@ -41,11 +41,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('joinRoom', async (room) => {
-    socket.join(room); // Пользователь присоединяется к комнате
+    socket.join(room);
     console.log(`User ${socket.userData.userId} joined room: ${room}`);
 
     try {
-      const messages = await Message.find({ room }).sort({ timestamp: 1 }).limit(50);
+      // Для "Мой дом" фильтруем только сообщения пользователя
+      const query = room.startsWith('myhome_')
+        ? { room, userId: socket.userData.userId }
+        : { room };
+      const messages = await Message.find(query).sort({ timestamp: 1 }).limit(50);
       socket.emit('messageHistory', messages);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);
@@ -61,11 +65,11 @@ io.on('connection', (socket) => {
         username: socket.userData.username || '',
         lastName: socket.userData.lastName || '',
         photoUrl: socket.userData.photoUrl || '',
-        room: message.room, // Сохраняем комнату
+        room: message.room,
         timestamp: message.timestamp
       });
       await newMessage.save();
-      io.to(message.room).emit('message', newMessage); // Отправляем только в комнату
+      io.to(message.room).emit('message', newMessage);
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);
     }

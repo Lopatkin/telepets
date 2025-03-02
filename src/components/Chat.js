@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import io from 'socket.io-client';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
+import myRoomImage from '../images/my_room.jpg'; // Новый импорт
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -17,9 +18,15 @@ const MessagesContainer = styled.div`
   padding: 10px;
   display: flex;
   flex-direction: column;
-  background: ${props => props.room === 'Автобусная остановка' 
-    ? `url(${busStationImage}) no-repeat center center fixed` 
-    : (props.theme === 'dark' ? '#1A1A1A' : '#fff')};
+  background: ${props => {
+    if (props.room === 'Автобусная остановка') {
+      return `url(${busStationImage}) no-repeat center center fixed`;
+    } else if (props.room && props.room.startsWith('myhome_')) {
+      return `url(${myRoomImage}) no-repeat center center fixed`; // Фон для "Мой дом"
+    } else {
+      return props.theme === 'dark' ? '#1A1A1A' : '#fff'; // Тёмный или светлый фон для других комнат
+    }
+  }};
   background-size: cover;
 `;
 
@@ -28,8 +35,8 @@ const Message = styled.div`
   padding: 8px;
   border-radius: 4px;
   background: ${props => props.theme === 'dark' 
-    ? '#444' // Один тёмный фон для всех в тёмной теме
-    : (props.isOwn ? '#DCF8C6' : '#ECECEC')}; // Зелёный для моих в светлой теме
+    ? '#444' 
+    : (props.isOwn ? '#DCF8C6' : '#ECECEC')};
   align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
   max-width: 70%;
   display: flex;
@@ -79,12 +86,7 @@ const MessageContent = styled.div`
 const MessageText = styled.span`
   font-size: 14px;
   word-break: break-word;
-  color: ${props => {
-    if (props.theme === 'dark') {
-      return props.isOwn ? '#333' : '#fff'; // Тёмный для моих, белый для чужих в тёмной теме
-    }
-    return '#000'; // Чёрный для светлой темы
-  }};
+  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
 `;
 
 const Timestamp = styled.span`
@@ -287,7 +289,7 @@ function Chat({ userId, room, theme }) {
               </MessageHeader>
             )}
             <MessageContent>
-              <MessageText theme={theme}>{msg.text}</MessageText>
+              <MessageText theme={theme} isOwn={msg.userId === userId}>{msg.text}</MessageText>
               <Timestamp theme={theme}>{formatTimestamp(msg.timestamp)}</Timestamp>
             </MessageContent>
           </Message>

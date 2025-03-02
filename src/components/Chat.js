@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
 import { FaUsers } from 'react-icons/fa';
+import busStationImage from '../images/bus_station.jpg'; // Импорт изображения
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -16,6 +17,24 @@ const MessagesContainer = styled.div`
   padding: 10px;
   display: flex;
   flex-direction: column;
+  background: ${props => props.room === 'Автобусная остановка' 
+    ? `url(${busStationImage}) no-repeat center center fixed` 
+    : '#fff'}; /* Условный фон */
+  background-size: cover; /* Растягиваем изображение */
+  position: relative;
+
+  /* Полупрозрачный слой для читаемости текста */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7); /* Белый слой с прозрачностью */
+    z-index: 1;
+    display: ${props => props.room === 'Автобусная остановка' ? 'block' : 'none'};
+  }
 `;
 
 const Message = styled.div`
@@ -27,6 +46,8 @@ const Message = styled.div`
   max-width: 70%;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 2; /* Сообщения выше полупрозрачного слоя */
 `;
 
 const MessageHeader = styled.div`
@@ -153,7 +174,7 @@ function Chat({ userId, room }) {
   const [showUserList, setShowUserList] = useState(false);
   const socketRef = useRef();
   const messagesEndRef = useRef(null);
-  const modalRef = useRef(null); // Реф для модального окна
+  const modalRef = useRef(null);
 
   useEffect(() => {
     window.Telegram.WebApp.ready();
@@ -198,7 +219,7 @@ function Chat({ userId, room }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
-        setShowUserList(false); // Закрываем, если клик вне модального окна
+        setShowUserList(false);
       }
     };
 
@@ -251,18 +272,18 @@ function Chat({ userId, room }) {
   };
 
   const toggleUserList = (e) => {
-    e.stopPropagation(); // Предотвращаем закрытие при открытии
+    e.stopPropagation();
     setShowUserList(prev => !prev);
   };
 
   const handleModalClick = (e) => {
-    e.stopPropagation(); // Предотвращаем всплытие
-    setShowUserList(false); // Закрываем при клике на модальное окно
+    e.stopPropagation();
+    setShowUserList(false);
   };
 
   return (
     <ChatContainer>
-      <MessagesContainer>
+      <MessagesContainer room={room}>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId}>
             {msg.userId !== userId && (

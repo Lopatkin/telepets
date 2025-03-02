@@ -5,8 +5,8 @@ import { FaComments, FaTasks, FaHome, FaMap, FaUser } from 'react-icons/fa';
 const FooterContainer = styled.div`
   position: sticky;
   bottom: 0;
-  background: #fff;
-  border-top: 1px solid #ddd;
+  background: #2A2A2A; /* Более тёмный фон */
+  border-top: 1px solid #444; /* Тёмная граница для контраста */
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -19,23 +19,22 @@ const FooterContainer = styled.div`
 const TabButton = styled.button`
   background: ${props => props.active ? '#007AFF' : 'none'};
   box-shadow: ${props => props.active ? '0 2px 4px rgba(0, 0, 0, 0.2)' : 'none'};
-  color: ${props => props.active ? 'white' : 'black'};
+  color: ${props => props.active ? 'white' : '#ccc'}; /* Светлый цвет иконок для тёмного фона */
   border: none;
-  padding: 8px 12px; /* Увеличили padding для большего пространства */
+  padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 32px; /* Увеличили размер иконок до 32px */
+  font-size: 32px;
   flex: 1;
-  margin: 0 4px; /* Увеличили отступы между кнопками */
+  margin: 0 4px;
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
   max-width: 20%;
 
-  /* Адаптивность для маленьких экранов */
   @media (max-width: 400px) {
-    font-size: 24px; /* Чуть меньше на очень маленьких экранах */
+    font-size: 24px;
     padding: 6px 10px;
   }
 `;

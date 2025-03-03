@@ -337,10 +337,7 @@ function Chat({ userId, room, theme }) {
         <div ref={messagesEndRef} />
       </MessagesContainer>
       <InputContainer theme={theme}>
-        <UsersButton onClick={toggleUserList}>
-          <UsersIcon />
-          <UserCount>{users.length}</UserCount>
-        </UsersButton>
+        <UsersIcon onClick={toggleUserList} />
         <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}

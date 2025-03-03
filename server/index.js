@@ -7,13 +7,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL, // Используем переменную окружения
+    origin: "https://telepets.netlify.app",
     methods: ["GET", "POST"]
   }
 });
 
 mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
+    useNewUrlParser: true,
   useUnifiedTopology: true
 })
   .then(() => console.log('MongoDB connected'))
@@ -47,6 +47,7 @@ io.on('connection', (socket) => {
     socket.join(room);
     console.log(`User ${socket.userData.userId} joined room: ${room}`);
 
+    // Добавляем пользователя в список комнаты
     if (!roomUsers[room]) roomUsers[room] = new Set();
     roomUsers[room].add({
       userId: socket.userData.userId,
@@ -56,11 +57,12 @@ io.on('connection', (socket) => {
       photoUrl: socket.userData.photoUrl
     });
 
+    // Отправляем обновлённый список пользователей в комнату
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
 
     try {
-      const query = room.startsWith('myhome_')
-        ? { room, userId: socket.userData.userId }
+      const query = room.startsWith('myhome_') 
+        ? { room, userId: socket.userData.userId } 
         : { room };
       const messages = await Message.find(query).sort({ timestamp: 1 }).limit(50);
       socket.emit('messageHistory', messages);
@@ -90,6 +92,7 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    // Удаляем пользователя из всех комнат
     Object.keys(roomUsers).forEach(room => {
       roomUsers[room].forEach(user => {
         if (user.userId === socket.userData?.userId) {

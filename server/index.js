@@ -32,48 +32,8 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// Схема пользователя для энергии
-const userSchema = new mongoose.Schema({
-  userId: { type: String, unique: true },
-  energy: { type: Number, default: 100, min: 0, max: 100 },
-  lastUpdated: { type: Date, default: Date.now },
-  currentRoom: String
-});
-const User = mongoose.model('User', userSchema);
-
 // Хранилище активных пользователей по комнатам
 const roomUsers = {};
-
-// Функция расчёта энергии
-const calculateEnergy = (userData) => {
-  const now = new Date();
-  const lastUpdated = new Date(userData.lastUpdated);
-  const timeDiffMinutes = (now - lastUpdated) / (1000 * 60);
-  const energyDecrease = Math.floor(timeDiffMinutes / 10);
-
-  if (userData.currentRoom && !userData.currentRoom.startsWith('myhome_')) {
-    return Math.max(userData.energy - energyDecrease, 0);
-  }
-  return userData.energy;
-};
-
-// Функция обновления энергии
-const updateEnergy = async (socket, userId, room) => {
-  try {
-    let user = await User.findOne({ userId });
-    if (!user) {
-      user = new User({ userId });
-    }
-    const newEnergy = calculateEnergy(user);
-    user.energy = newEnergy;
-    user.lastUpdated = new Date();
-    user.currentRoom = room || user.currentRoom;
-    await user.save();
-    socket.emit('energyUpdate', newEnergy);
-  } catch (err) {
-    console.error('Error updating energy:', err.message, err.stack);
-  }
-};
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -81,38 +41,31 @@ io.on('connection', (socket) => {
   socket.on('auth', async (userData) => {
     socket.userData = userData;
     console.log('Authenticated user:', userData.userId);
-    await updateEnergy(socket, userData.userId, null);
   });
 
   socket.on('joinRoom', async (room) => {
     socket.join(room);
     console.log(`User ${socket.userData.userId} joined room: ${room}`);
 
+    if (!roomUsers[room]) roomUsers[room] = new Set();
+    roomUsers[room].add({
+      userId: socket.userData.userId,
+      firstName: socket.userData.firstName,
+      username: socket.userData.username,
+      lastName: socket.userData.lastName,
+      photoUrl: socket.userData.photoUrl
+    });
+
+    io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
+
     try {
-      console.time('MessageLoad'); // Логируем время загрузки сообщений
       const query = room.startsWith('myhome_') 
         ? { room, userId: socket.userData.userId } 
         : { room };
-      const messages = await Message.find(query).limit(10); // Уменьшено до 10, без сортировки
+      const messages = await Message.find(query).sort({ timestamp: -1 }).limit(20);
       socket.emit('messageHistory', messages);
-      console.timeEnd('MessageLoad');
-
-      // Асинхронное обновление roomUsers и энергии
-      setImmediate(async () => {
-        if (!roomUsers[room]) roomUsers[room] = new Set();
-        roomUsers[room].add({
-          userId: socket.userData.userId,
-          firstName: socket.userData.firstName,
-          username: socket.userData.username,
-          lastName: socket.userData.lastName,
-          photoUrl: socket.userData.photoUrl
-        });
-        io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
-
-        await updateEnergy(socket, socket.userData.userId, room);
-      });
     } catch (err) {
-      console.error('Error in joinRoom:', err.message, err.stack);
+      console.error('Error fetching messages:', err.message, err.stack);
     }
   });
 
@@ -130,14 +83,12 @@ io.on('connection', (socket) => {
       });
       await newMessage.save();
       io.to(message.room).emit('message', newMessage);
-
-      await updateEnergy(socket, socket.userData.userId, message.room);
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);
     }
   });
 
-  socket.on('disconnect', async () => {
+  socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     Object.keys(roomUsers).forEach(room => {
       roomUsers[room].forEach(user => {
@@ -147,8 +98,6 @@ io.on('connection', (socket) => {
       });
       io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
     });
-
-    await updateEnergy(socket, socket.userData?.userId, null);
   });
 });
 

@@ -20,7 +20,7 @@ const RoomTitle = styled.h3`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 50%; /* Уменьшено для места под прогресс-бары */
+  max-width: 50%;
 `;
 
 const UserSection = styled.div`
@@ -79,7 +79,20 @@ const ProgressBar = styled.div`
 const ProgressFill = styled.div`
   width: ${props => props.value}%;
   height: 100%;
-  background: #007AFF;
+  background: ${props => {
+    switch (props.type) {
+      case 'energy':
+        return '#FFA500'; // Жёлто-оранжевый для энергии
+      case 'health':
+        return '#FF0000'; // Красный для здоровья
+      case 'mood':
+        return '#007AFF'; // Синий для настроения
+      case 'fullness':
+        return '#32CD32'; // Зелёно-салатовый для сытости
+      default:
+        return '#007AFF';
+    }
+  }};
   transition: width 0.3s ease;
 `;
 
@@ -114,25 +127,25 @@ function Header({ user, room, theme }) {
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Энергия</ProgressLabel>
             <ProgressBar>
-              <ProgressFill value={progressValues.energy} />
+              <ProgressFill type="energy" value={progressValues.energy} />
             </ProgressBar>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
             <ProgressBar>
-              <ProgressFill value={progressValues.health} />
+              <ProgressFill type="health" value={progressValues.health} />
             </ProgressBar>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Настроение</ProgressLabel>
             <ProgressBar>
-              <ProgressFill value={progressValues.mood} />
+              <ProgressFill type="mood" value={progressValues.mood} />
             </ProgressBar>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Сытость</ProgressLabel>
             <ProgressBar>
-              <ProgressFill value={progressValues.fullness} />
+              <ProgressFill type="fullness" value={progressValues.fullness} />
             </ProgressBar>
           </ProgressBarContainer>
         </ProgressBars>

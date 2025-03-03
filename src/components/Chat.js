@@ -4,12 +4,12 @@ import io from 'socket.io-client';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
-import trainStationImage from '../images/train_station.jpg';
-import zhkSferaImage from '../images/zhk_sfera.jpg';
-import factoryImage from '../images/factory.jpg';
-import forestImage from '../images/forest.jpg';
-import parkImage from '../images/park.jpg';
-import villageImage from '../images/village.jpg';
+import trainStationImage from '../images/train_station.jpg'; // Вокзал
+import zhkSferaImage from '../images/zhk_sfera.jpg'; // ЖК Сфера
+import factoryImage from '../images/factory.jpg'; // Завод
+import forestImage from '../images/forest.jpg'; // Лес
+import parkImage from '../images/park.jpg'; // Парк
+import villageImage from '../images/village.jpg'; // Район Дачный
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -224,9 +224,7 @@ function Chat({ userId, room, theme }) {
       photoUrl: telegramUser.photo_url || ''
     };
 
-    const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com'; // Переменная окружения
-    socketRef.current = io(SERVER_URL);
-
+    socketRef.current = io('https://telepets.onrender.com');
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });

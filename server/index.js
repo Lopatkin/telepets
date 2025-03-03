@@ -48,7 +48,7 @@ const calculateEnergy = (userData, currentRoom) => {
   const now = new Date();
   const lastUpdated = new Date(userData.lastUpdated);
   const timeDiffMinutes = (now - lastUpdated) / (1000 * 60); // Разница в минутах
-  const energyDecrease = Math.floor(timeDiffMinutes / 10); // 1% каждые 10 минут
+  const energyDecrease = Math.floor(timeDiffMinutes / 1); // 1% каждые 10 минут
 
   // Уменьшаем энергию только если пользователь не в "Мой дом"
   if (currentRoom && !currentRoom.startsWith('myhome_')) {

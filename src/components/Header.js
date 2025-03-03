@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import io from 'socket.io-client';
 
 const HeaderContainer = styled.div`
   position: sticky;
@@ -122,26 +121,18 @@ const ProgressFill = styled.div`
   transition: width 0.3s ease;
 `;
 
-function Header({ user, room, theme }) {
+function Header({ user, room, theme, energy }) {
   const [showProgress, setShowProgress] = useState(false);
   const [progressValues, setProgressValues] = useState({
-    energy: 100, // Начальное значение 100
+    energy: energy || 100,
     health: 50,
     mood: 50,
     fullness: 50
   });
 
-  const socket = io('https://telepets.onrender.com');
-
   useEffect(() => {
-    socket.on('energyUpdate', (newEnergy) => {
-      setProgressValues(prev => ({ ...prev, energy: newEnergy }));
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [socket]);
+    setProgressValues(prev => ({ ...prev, energy: energy || 100 }));
+  }, [energy]);
 
   const roomName = room 
     ? (room.startsWith('myhome_') ? 'Мой дом' : room) 

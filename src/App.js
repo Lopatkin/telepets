@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import io from 'socket.io-client';
 import Chat from './components/Chat';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -23,13 +24,16 @@ function App() {
   const [currentRoom, setCurrentRoom] = useState(null);
   const [theme, setTheme] = useState('telegram');
   const [telegramTheme, setTelegramTheme] = useState('light');
+  const [energy, setEnergy] = useState(100);
+
+  const socket = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
       const telegramData = window.Telegram.WebApp.initDataUnsafe;
       const savedTheme = localStorage.getItem('theme') || 'telegram';
-      const savedRoom = localStorage.getItem('currentRoom'); // Загружаем сохранённую комнату
+      const savedRoom = localStorage.getItem('currentRoom');
       if (telegramData?.user?.id) {
         const userData = {
           id: telegramData.user.id.toString(),
@@ -40,28 +44,35 @@ function App() {
         setUser(userData);
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
         setTheme(savedTheme);
-        // Устанавливаем сохранённую комнату или "Мой дом" по умолчанию
         setCurrentRoom(savedRoom || `myhome_${userData.id}`);
+
+        socket.emit('auth', userData);
       } else {
         console.warn('Telegram Web App data not available');
-        setUser({ id: 'test123', firstName: 'Test User' });
+        const testUser = { id: 'test123', firstName: 'Test User' };
+        setUser(testUser);
         setTelegramTheme('light');
         setTheme(savedTheme);
         setCurrentRoom(savedRoom || 'myhome_test123');
+        socket.emit('auth', testUser);
       }
-    } else {
-      console.warn('Telegram Web App not loaded');
-      setUser({ id: 'test123', firstName: 'Test User' });
-      setTelegramTheme('light');
-      setTheme('light');
-      setCurrentRoom('myhome_test123');
+
+      socket.on('energyUpdate', (newEnergy) => {
+        console.log('Received energyUpdate:', newEnergy);
+        setEnergy(newEnergy);
+      });
+
+      return () => {
+        socket.disconnect();
+      };
     }
-  }, []);
+  }, [socket]);
 
   const handleRoomSelect = (room) => {
     setCurrentRoom(room);
-    localStorage.setItem('currentRoom', room); // Сохраняем комнату при выборе
+    localStorage.setItem('currentRoom', room);
     setActiveTab('chat');
+    socket.emit('joinRoom', room);
   };
 
   const handleThemeChange = (newTheme) => {
@@ -77,7 +88,7 @@ function App() {
 
   return (
     <AppContainer>
-      <Header user={user} room={currentRoom} theme={appliedTheme} />
+      <Header user={user} room={currentRoom} theme={appliedTheme} energy={energy} />
       <Content>
         {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} theme={appliedTheme} />}
         {activeTab === 'actions' && <div>Действия</div>}

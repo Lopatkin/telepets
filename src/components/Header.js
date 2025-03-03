@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
 const HeaderContainer = styled.div`
@@ -20,46 +20,68 @@ const RoomTitle = styled.h3`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 50%;
+  max-width: 70%; /* Больше места, так как прогресс-бары убраны */
 `;
 
-const UserSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
+const AvatarContainer = styled.div`
+  position: relative;
+  cursor: pointer;
 `;
 
 const Avatar = styled.img`
-  width: 32px;
-  height: 32px;
+  width: 40px; /* Увеличен размер */
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #007AFF;
 `;
 
 const DefaultAvatar = styled.div`
-  width: 32px;
-  height: 32px;
+  width: 40px; /* Увеличен размер */
+  height: 40px;
   border-radius: 50%;
   background: #007AFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 20px; /* Увеличен шрифт */
   color: white;
   border: 2px solid #007AFF;
 `;
 
-const ProgressBars = styled.div`
+const AverageValue = styled.span`
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  background: #007AFF;
+  color: white;
+  font-size: 12px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
-  gap: 5px;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ProgressModal = styled.div`
+  position: absolute;
+  top: 50px;
+  right: 10px;
+  width: 200px;
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 101;
 `;
 
 const ProgressBarContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
+  margin: 5px 0;
 `;
 
 const ProgressLabel = styled.span`
@@ -69,7 +91,7 @@ const ProgressLabel = styled.span`
 `;
 
 const ProgressBar = styled.div`
-  width: 100px;
+  width: 120px; /* Чуть шире для модального окна */
   height: 8px;
   background: ${props => props.theme === 'dark' ? '#444' : '#ddd'};
   border-radius: 4px;
@@ -82,13 +104,13 @@ const ProgressFill = styled.div`
   background: ${props => {
     switch (props.type) {
       case 'energy':
-        return '#FFA500'; // Жёлто-оранжевый для энергии
+        return '#FFA500'; // Жёлто-оранжевый
       case 'health':
-        return '#FF0000'; // Красный для здоровья
+        return '#FF0000'; // Красный
       case 'mood':
-        return '#007AFF'; // Синий для настроения
+        return '#007AFF'; // Синий
       case 'fullness':
-        return '#32CD32'; // Зелёно-салатовый для сытости
+        return '#32CD32'; // Зелёно-салатовый
       default:
         return '#007AFF';
     }
@@ -97,6 +119,8 @@ const ProgressFill = styled.div`
 `;
 
 function Header({ user, room, theme }) {
+  const [showProgress, setShowProgress] = useState(false);
+
   const roomName = room 
     ? (room.startsWith('myhome_') ? 'Мой дом' : room) 
     : 'Выберите комнату';
@@ -106,7 +130,7 @@ function Header({ user, room, theme }) {
   const firstName = telegramUser.first_name || user.firstName || 'User';
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
 
-  // Заглушки для прогресс-баров (пока 50% для всех)
+  // Заглушки для прогресс-баров
   const progressValues = {
     energy: 50,
     health: 50,
@@ -114,16 +138,40 @@ function Header({ user, room, theme }) {
     fullness: 50
   };
 
+  // Среднее значение всех прогресс-баров
+  const averageValue = Math.round(
+    (progressValues.energy + progressValues.health + progressValues.mood + progressValues.fullness) / 4
+  );
+
+  const toggleProgressModal = (e) => {
+    e.stopPropagation();
+    setShowProgress(prev => !prev);
+  };
+
+  // Закрытие модального окна при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.avatar-container')) {
+        setShowProgress(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   return (
     <HeaderContainer theme={theme}>
       <RoomTitle theme={theme}>{roomName}</RoomTitle>
-      <UserSection>
+      <AvatarContainer className="avatar-container" onClick={toggleProgressModal}>
         {photoUrl ? (
           <Avatar src={photoUrl} alt="User avatar" />
         ) : (
           <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
         )}
-        <ProgressBars>
+        <AverageValue>{averageValue}</AverageValue>
+      </AvatarContainer>
+      {showProgress && (
+        <ProgressModal theme={theme}>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Энергия</ProgressLabel>
             <ProgressBar>
@@ -148,8 +196,8 @@ function Header({ user, room, theme }) {
               <ProgressFill type="fullness" value={progressValues.fullness} />
             </ProgressBar>
           </ProgressBarContainer>
-        </ProgressBars>
-      </UserSection>
+        </ProgressModal>
+      )}
     </HeaderContainer>
   );
 }

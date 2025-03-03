@@ -75,7 +75,14 @@ function App() {
         {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} theme={appliedTheme} />}
         {activeTab === 'actions' && <div>Действия</div>}
         {activeTab === 'housing' && <div>Жильё</div>}
-        {activeTab === 'map' && <Map userId={user.id} onRoomSelect={handleRoomSelect} theme={appliedTheme} />}
+        {activeTab === 'map' && (
+          <Map 
+            userId={user.id} 
+            onRoomSelect={handleRoomSelect} 
+            theme={appliedTheme} 
+            currentRoom={currentRoom} // Передаём текущую комнату
+          />
+        )}
         {activeTab === 'profile' && (
           <Profile 
             user={user} 

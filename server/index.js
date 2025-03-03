@@ -77,7 +77,7 @@ setInterval(async () => {
   } catch (err) {
     console.error('Error updating energy:', err.message, err.stack);
   }
-}, 10 * 60 * 10); // 10 минут в миллисекундах
+}, 10 * 60 * 1000); // 10 минут в миллисекундах
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);

@@ -20,11 +20,11 @@ const ChatContainer = styled.div`
 
 const MessagesContainer = styled.div`
   flex: 1;
-  overflow-y: auto; /* Включаем скролл, если сообщений много */
+  max-height: calc(100% - 60px); /* Вычитаем высоту InputContainer */
+  overflow-y: auto; /* Включаем вертикальный скролл */
   padding: 10px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* Новые сообщения внизу */
   background: ${props => {
     if (props.room === 'Автобусная остановка') {
       return `url(${busStationImage}) no-repeat center center fixed`;
@@ -210,9 +210,7 @@ function Chat({ userId, room, theme }) {
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
   const socketRef = useRef();
-  const messagesEndRef = useRef(null);
-  const modalRef = useRef(null);
-  const messagesContainerRef = useRef(null); // Ссылка на контейнер сообщений
+  const messagesContainerRef = useRef(null);
 
   useEffect(() => {
     window.Telegram.WebApp.ready();
@@ -250,15 +248,10 @@ function Chat({ userId, room, theme }) {
     };
   }, [userId, room]);
 
-  // Убираем автоматическую прокрутку
-  // useEffect(() => {
-  //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  // }, [messages]);
-
-  // Прокрутка вниз при обновлении сообщений
   useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight; // Прокрутка вниз
     }
   }, [messages]);
 
@@ -344,7 +337,6 @@ function Chat({ userId, room, theme }) {
             </MessageContent>
           </Message>
         ))}
-        <div ref={messagesEndRef} />
       </MessagesContainer>
       <InputContainer theme={theme}>
         <UsersButton onClick={toggleUserList}>

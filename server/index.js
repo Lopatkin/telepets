@@ -49,7 +49,7 @@ const calculateEnergy = (userData) => {
   const now = new Date();
   const lastUpdated = new Date(userData.lastUpdated);
   const timeDiffMinutes = (now - lastUpdated) / (1000 * 60);
-  const energyDecrease = Math.floor(timeDiffMinutes / 1); // 1% каждые 10 минут
+  const energyDecrease = Math.floor(timeDiffMinutes / 1);
 
   if (userData.currentRoom && !userData.currentRoom.startsWith('myhome_')) {
     return Math.max(userData.energy - energyDecrease, 0);
@@ -81,36 +81,35 @@ io.on('connection', (socket) => {
   socket.on('auth', async (userData) => {
     socket.userData = userData;
     console.log('Authenticated user:', userData.userId);
-    await updateEnergy(socket, userData.userId, null); // Начальное значение энергии
+    await updateEnergy(socket, userData.userId, null);
   });
 
   socket.on('joinRoom', async (room) => {
     socket.join(room);
     console.log(`User ${socket.userData.userId} joined room: ${room}`);
 
-    if (!roomUsers[room]) roomUsers[room] = new Set();
-    roomUsers[room].add({
-      userId: socket.userData.userId,
-      firstName: socket.userData.firstName,
-      username: socket.userData.username,
-      lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl
-    });
-
-    io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
-
     try {
-      // Параллельное выполнение запросов
-      const [messages] = await Promise.all([
-        Message.find(
-          room.startsWith('myhome_') 
-            ? { room, userId: socket.userData.userId } 
-            : { room }
-        ).sort({ timestamp: 1 }).limit(50),
-        updateEnergy(socket, socket.userData.userId, room) // Обновление энергии отдельно
-      ]);
-
+      // Загрузка сообщений
+      const query = room.startsWith('myhome_') 
+        ? { room, userId: socket.userData.userId } 
+        : { room };
+      const messages = await Message.find(query).sort({ timestamp: -1 }).limit(20); // Уменьшено до 20
       socket.emit('messageHistory', messages);
+
+      // Асинхронное обновление roomUsers и энергии
+      setImmediate(async () => {
+        if (!roomUsers[room]) roomUsers[room] = new Set();
+        roomUsers[room].add({
+          userId: socket.userData.userId,
+          firstName: socket.userData.firstName,
+          username: socket.userData.username,
+          lastName: socket.userData.lastName,
+          photoUrl: socket.userData.photoUrl
+        });
+        io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
+
+        await updateEnergy(socket, socket.userData.userId, room);
+      });
     } catch (err) {
       console.error('Error in joinRoom:', err.message, err.stack);
     }

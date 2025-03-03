@@ -20,7 +20,7 @@ const ChatContainer = styled.div`
 
 const MessagesContainer = styled.div`
   flex: 1;
-  overflow-y: auto;
+  overflow-y: auto; /* Включаем скролл, если сообщений много */
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -212,6 +212,7 @@ function Chat({ userId, room, theme }) {
   const socketRef = useRef();
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
+  const messagesContainerRef = useRef(null); // Ссылка на контейнер сообщений
 
   useEffect(() => {
     window.Telegram.WebApp.ready();
@@ -253,6 +254,13 @@ function Chat({ userId, room, theme }) {
   // useEffect(() => {
   //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   // }, [messages]);
+
+  // Прокрутка вниз при обновлении сообщений
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -321,7 +329,7 @@ function Chat({ userId, room, theme }) {
 
   return (
     <ChatContainer>
-      <MessagesContainer room={room} theme={theme}>
+      <MessagesContainer ref={messagesContainerRef} room={room} theme={theme}>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId} theme={theme}>
             {msg.userId !== userId && (

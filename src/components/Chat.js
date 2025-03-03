@@ -4,12 +4,12 @@ import io from 'socket.io-client';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
-import trainStationImage from '../images/train_station.jpg'; // Вокзал
-import zhkSferaImage from '../images/zhk_sfera.jpg'; // ЖК Сфера
-import factoryImage from '../images/factory.jpg'; // Завод
-import forestImage from '../images/forest.jpg'; // Лес
-import parkImage from '../images/park.jpg'; // Парк
-import villageImage from '../images/village.jpg'; // Район Дачный
+import trainStationImage from '../images/train_station.jpg';
+import zhkSferaImage from '../images/zhk_sfera.jpg';
+import factoryImage from '../images/factory.jpg';
+import forestImage from '../images/forest.jpg';
+import parkImage from '../images/park.jpg';
+import villageImage from '../images/village.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -224,7 +224,9 @@ function Chat({ userId, room, theme }) {
       photoUrl: telegramUser.photo_url || ''
     };
 
-    socketRef.current = io(process.env.SERVER_URL);
+    const SERVER_URL = process.env.REACT_APP_SERVER_URL; // Переменная окружения
+    socketRef.current = io(SERVER_URL);
+
     socketRef.current.on('messageHistory', (history) => {
       setMessages(history);
     });

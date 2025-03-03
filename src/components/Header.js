@@ -68,22 +68,22 @@ const ProgressModal = styled.div`
   position: absolute;
   top: 50px;
   right: 10px;
-  width: 220px; /* Чуть шире для отступов */
+  width: 220px;
   background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
   border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
   border-radius: 8px;
-  padding: 15px; /* Увеличены отступы */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Усилена тень */
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 101;
 `;
 
 const ProgressBarContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px; /* Увеличен отступ между названием и полоской */
-  margin: 8px 0; /* Увеличен вертикальный отступ */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Тень для каждого прогресс-бара */
-  padding: 5px; /* Внутренний отступ для контейнера */
+  gap: 10px;
+  margin: 4px 0; /* Уменьшено вертикальное расстояние */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 5px;
   border-radius: 4px;
 `;
 

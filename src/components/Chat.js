@@ -4,12 +4,12 @@ import io from 'socket.io-client';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
-import trainStationImage from '../images/train_station.jpg'; // Вокзал
-import zhkSferaImage from '../images/zhk_sfera.jpg'; // ЖК Сфера
-import factoryImage from '../images/factory.jpg'; // Завод
-import forestImage from '../images/forest.jpg'; // Лес
-import parkImage from '../images/park.jpg'; // Парк
-import villageImage from '../images/village.jpg'; // Район Дачный
+import trainStationImage from '../images/train_station.jpg';
+import zhkSferaImage from '../images/zhk_sfera.jpg';
+import factoryImage from '../images/factory.jpg';
+import forestImage from '../images/forest.jpg';
+import parkImage from '../images/park.jpg';
+import villageImage from '../images/village.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -24,6 +24,7 @@ const MessagesContainer = styled.div`
   padding: 10px;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end; /* Новые сообщения внизу */
   background: ${props => {
     if (props.room === 'Автобусная остановка') {
       return `url(${busStationImage}) no-repeat center center fixed`;
@@ -248,9 +249,10 @@ function Chat({ userId, room, theme }) {
     };
   }, [userId, room]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  // Убираем автоматическую прокрутку
+  // useEffect(() => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // }, [messages]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

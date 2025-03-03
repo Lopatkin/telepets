@@ -52,8 +52,8 @@ const Message = styled.div`
   margin: 5px 0;
   padding: 8px;
   border-radius: 4px;
-  background: ${props => props.theme === 'dark' 
-    ? '#444' 
+  background: ${props => props.theme === 'dark'
+    ? '#444'
     : (props.isOwn ? '#DCF8C6' : '#ECECEC')};
   align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
   max-width: 70%;
@@ -299,7 +299,7 @@ function Chat({ userId, room, theme }) {
     const date = new Date(timestamp);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
-    
+
     if (isToday) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else {

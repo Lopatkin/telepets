@@ -2,19 +2,19 @@ import React from 'react';
 import styled from 'styled-components';
 
 const MapContainer = styled.div`
-  padding: 10px;
-  height: 100%;
+  height: 100%; /* Оставляем высоту 100% */
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#fff'};
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  padding: 10px;
+  box-sizing: border-box; /* Учитываем padding в высоте */
 `;
 
 const RoomList = styled.ul`
   list-style: none;
   padding: 0;
-  margin: 0;
-  flex-grow: 1; /* Список занимает доступное пространство */
+  margin: 0 0 10px 0; /* Отступ снизу для отделения от кнопки */
+  flex: 1; /* Растягиваем список, но не больше доступного */
 `;
 
 const RoomItem = styled.li`
@@ -39,7 +39,6 @@ const RoomItem = styled.li`
 
 const HomeButton = styled.button`
   padding: 15px;
-  margin: 10px 0 0 0;
   background: #007AFF;
   color: white;
   border: none;
@@ -79,7 +78,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
             key={room} 
             onClick={() => onRoomSelect(room)} 
             theme={theme} 
-            isCurrent={room === currentRoom} // Проверка текущей комнаты
+            isCurrent={room === currentRoom}
           >
             <RoomName>{room}</RoomName>
           </RoomItem>

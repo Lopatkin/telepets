@@ -32,52 +32,8 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// Схема пользователя для энергии
-const userSchema = new mongoose.Schema({
-  userId: { type: String, unique: true },
-  energy: { type: Number, default: 100, min: 0, max: 100 },
-  lastUpdated: { type: Date, default: Date.now },
-  currentRoom: String,
-  socketId: String // Для отправки обновлений конкретному клиенту
-});
-const User = mongoose.model('User', userSchema);
-
 // Хранилище активных пользователей по комнатам
 const roomUsers = {};
-
-// Функция расчёта энергии
-const calculateEnergy = (userData) => {
-  const now = new Date();
-  const lastUpdated = new Date(userData.lastUpdated);
-  const timeDiffMinutes = (now - lastUpdated) / (1000 * 60);
-  const energyDecrease = Math.floor(timeDiffMinutes / 10); // 1% каждые 10 минут
-
-  if (userData.currentRoom && !userData.currentRoom.startsWith('myhome_')) {
-    return Math.max(userData.energy - energyDecrease, 0);
-  }
-  return userData.energy;
-};
-
-// Периодическое обновление энергии (каждые 10 минут)
-setInterval(async () => {
-  try {
-    const users = await User.find({});
-    for (const user of users) {
-      const newEnergy = calculateEnergy(user);
-      if (newEnergy !== user.energy) {
-        user.energy = newEnergy;
-        user.lastUpdated = new Date();
-        await user.save();
-        if (user.socketId) {
-          io.to(user.socketId).emit('energyUpdate', newEnergy);
-        }
-      }
-    }
-    console.log('Energy updated for all users');
-  } catch (err) {
-    console.error('Error updating energy:', err.message, err.stack);
-  }
-}, 10 * 60 * 1000); // 10 минут в миллисекундах
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -85,20 +41,6 @@ io.on('connection', (socket) => {
   socket.on('auth', async (userData) => {
     socket.userData = userData;
     console.log('Authenticated user:', userData.userId);
-
-    // Проверяем или создаём пользователя
-    let user = await User.findOne({ userId: userData.userId });
-    if (!user) {
-      user = new User({ userId: userData.userId, socketId: socket.id });
-      await user.save();
-    } else {
-      user.socketId = socket.id; // Обновляем socketId
-      const newEnergy = calculateEnergy(user);
-      user.energy = newEnergy;
-      user.lastUpdated = new Date();
-      await user.save();
-      socket.emit('energyUpdate', newEnergy);
-    }
   });
 
   socket.on('joinRoom', async (room) => {
@@ -122,12 +64,6 @@ io.on('connection', (socket) => {
         : { room };
       const messages = await Message.find(query).sort({ timestamp: -1 }).limit(20);
       socket.emit('messageHistory', messages);
-
-      // Обновляем текущую комнату
-      await User.updateOne(
-        { userId: socket.userData.userId },
-        { currentRoom: room }
-      );
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);
     }
@@ -147,18 +83,12 @@ io.on('connection', (socket) => {
       });
       await newMessage.save();
       io.to(message.room).emit('message', newMessage);
-
-      // Обновляем текущую комнату
-      await User.updateOne(
-        { userId: socket.userData.userId },
-        { currentRoom: message.room }
-      );
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);
     }
   });
 
-  socket.on('disconnect', async () => {
+  socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     Object.keys(roomUsers).forEach(room => {
       roomUsers[room].forEach(user => {
@@ -168,12 +98,6 @@ io.on('connection', (socket) => {
       });
       io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
     });
-
-    // Убираем socketId при отключении
-    await User.updateOne(
-      { userId: socket.userData?.userId },
-      { socketId: null }
-    );
   });
 });
 

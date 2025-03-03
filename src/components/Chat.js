@@ -274,6 +274,7 @@ function Chat({ userId, room, theme }) {
     return () => {
       socketRef.current.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, room]);
 
   useEffect(() => {

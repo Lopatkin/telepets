@@ -224,7 +224,7 @@ function Chat({ userId, room, theme }) {
       photoUrl: telegramUser.photo_url || ''
     };
 
-    const SERVER_URL = process.env.REACT_APP_SERVER_URL; // Переменная окружения
+    const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com'; // Переменная окружения
     socketRef.current = io(SERVER_URL);
 
     socketRef.current.on('messageHistory', (history) => {

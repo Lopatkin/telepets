@@ -8,7 +8,7 @@ const ProfileContainer = styled.div`
   align-items: center;
   text-align: center;
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#f5f5f5'};
-  /* Убираем height: 100%, чтобы контейнер подстраивался под содержимое */
+  min-height: 0; /* Предотвращает растягивание на всю высоту */
 `;
 
 const Avatar = styled.img`

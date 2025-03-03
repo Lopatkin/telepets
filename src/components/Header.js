@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 const HeaderContainer = styled.div`
@@ -121,8 +121,8 @@ const ProgressFill = styled.div`
 function Header({ user, room, theme }) {
   const [showProgress, setShowProgress] = useState(false);
 
-  const roomName = room 
-    ? (room.startsWith('myhome_') ? 'Мой дом' : room) 
+  const roomName = room
+    ? (room.startsWith('myhome_') ? 'Мой дом' : room)
     : 'Выберите комнату';
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};

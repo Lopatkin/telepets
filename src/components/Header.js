@@ -20,7 +20,7 @@ const RoomTitle = styled.h3`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 70%; /* Больше места, так как прогресс-бары убраны */
+  max-width: 70%;
 `;
 
 const AvatarContainer = styled.div`
@@ -29,7 +29,7 @@ const AvatarContainer = styled.div`
 `;
 
 const Avatar = styled.img`
-  width: 40px; /* Увеличен размер */
+  width: 40px;
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
@@ -37,14 +37,14 @@ const Avatar = styled.img`
 `;
 
 const DefaultAvatar = styled.div`
-  width: 40px; /* Увеличен размер */
+  width: 40px;
   height: 40px;
   border-radius: 50%;
   background: #007AFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px; /* Увеличен шрифт */
+  font-size: 20px;
   color: white;
   border: 2px solid #007AFF;
 `;
@@ -68,20 +68,23 @@ const ProgressModal = styled.div`
   position: absolute;
   top: 50px;
   right: 10px;
-  width: 200px;
+  width: 220px; /* Чуть шире для отступов */
   background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
   border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
   border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  padding: 15px; /* Увеличены отступы */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Усилена тень */
   z-index: 101;
 `;
 
 const ProgressBarContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin: 5px 0;
+  gap: 10px; /* Увеличен отступ между названием и полоской */
+  margin: 8px 0; /* Увеличен вертикальный отступ */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Тень для каждого прогресс-бара */
+  padding: 5px; /* Внутренний отступ для контейнера */
+  border-radius: 4px;
 `;
 
 const ProgressLabel = styled.span`
@@ -91,7 +94,7 @@ const ProgressLabel = styled.span`
 `;
 
 const ProgressBar = styled.div`
-  width: 120px; /* Чуть шире для модального окна */
+  width: 120px;
   height: 8px;
   background: ${props => props.theme === 'dark' ? '#444' : '#ddd'};
   border-radius: 4px;
@@ -104,13 +107,13 @@ const ProgressFill = styled.div`
   background: ${props => {
     switch (props.type) {
       case 'energy':
-        return '#FFA500'; // Жёлто-оранжевый
+        return '#FFA500';
       case 'health':
-        return '#FF0000'; // Красный
+        return '#FF0000';
       case 'mood':
-        return '#007AFF'; // Синий
+        return '#007AFF';
       case 'fullness':
-        return '#32CD32'; // Зелёно-салатовый
+        return '#32CD32';
       default:
         return '#007AFF';
     }
@@ -121,8 +124,8 @@ const ProgressFill = styled.div`
 function Header({ user, room, theme }) {
   const [showProgress, setShowProgress] = useState(false);
 
-  const roomName = room
-    ? (room.startsWith('myhome_') ? 'Мой дом' : room)
+  const roomName = room 
+    ? (room.startsWith('myhome_') ? 'Мой дом' : room) 
     : 'Выберите комнату';
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
@@ -130,7 +133,6 @@ function Header({ user, room, theme }) {
   const firstName = telegramUser.first_name || user.firstName || 'User';
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
 
-  // Заглушки для прогресс-баров
   const progressValues = {
     energy: 50,
     health: 50,
@@ -138,7 +140,6 @@ function Header({ user, room, theme }) {
     fullness: 50
   };
 
-  // Среднее значение всех прогресс-баров
   const averageValue = Math.round(
     (progressValues.energy + progressValues.health + progressValues.mood + progressValues.fullness) / 4
   );
@@ -148,7 +149,6 @@ function Header({ user, room, theme }) {
     setShowProgress(prev => !prev);
   };
 
-  // Закрытие модального окна при клике вне его
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.avatar-container')) {

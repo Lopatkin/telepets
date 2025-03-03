@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import io from 'socket.io-client';
 
 const HeaderContainer = styled.div`
   position: sticky;
@@ -122,26 +121,8 @@ const ProgressFill = styled.div`
   transition: width 0.3s ease;
 `;
 
-function Header({ user, room, theme }) {
+function Header({ user, room, theme, energy }) {
   const [showProgress, setShowProgress] = useState(false);
-  const [progressValues, setProgressValues] = useState({
-    energy: 100, // Начальное значение 100
-    health: 50,
-    mood: 50,
-    fullness: 50
-  });
-
-  const socket = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
-
-  useEffect(() => {
-    socket.on('energyUpdate', (newEnergy) => {
-      setProgressValues(prev => ({ ...prev, energy: newEnergy }));
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [socket]);
 
   const roomName = room 
     ? (room.startsWith('myhome_') ? 'Мой дом' : room) 
@@ -151,6 +132,13 @@ function Header({ user, room, theme }) {
   const photoUrl = telegramUser.photo_url || '';
   const firstName = telegramUser.first_name || user.firstName || 'User';
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
+
+  const progressValues = {
+    energy: energy, // Используем значение от сервера
+    health: 50,
+    mood: 50,
+    fullness: 50
+  };
 
   const averageValue = Math.round(
     (progressValues.energy + progressValues.health + progressValues.mood + progressValues.fullness) / 4
@@ -213,6 +201,5 @@ function Header({ user, room, theme }) {
     </HeaderContainer>
   );
 }
-
 
 export default Header;

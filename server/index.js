@@ -62,7 +62,9 @@ io.on('connection', (socket) => {
       const query = room.startsWith('myhome_') 
         ? { room, userId: socket.userData.userId } 
         : { room };
-      const messages = await Message.find(query).sort({ timestamp: -1 }).limit(20);
+      const messages = await Message.find(query)
+        .sort({ timestamp: 1 }) // Сортировка по возрастанию времени
+        .limit(100); // 100 последних сообщений
       socket.emit('messageHistory', messages);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);

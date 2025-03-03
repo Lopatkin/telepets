@@ -121,8 +121,26 @@ const ProgressFill = styled.div`
   transition: width 0.3s ease;
 `;
 
-function Header({ user, room, theme, energy }) {
+function Header({ user, room, theme, energy, socket }) {
   const [showProgress, setShowProgress] = useState(false);
+  const [progressValues, setProgressValues] = useState({
+    energy: energy, // Используем начальное значение от пропса
+    health: 50,
+    mood: 50,
+    fullness: 50
+  });
+
+  useEffect(() => {
+    // Обновляем энергию из пропса при изменении
+    setProgressValues(prev => ({ ...prev, energy }));
+  }, [energy]);
+
+  useEffect(() => {
+    socket.on('energyUpdate', (newEnergy) => {
+      console.log('Header received energyUpdate:', newEnergy); // Для отладки
+      setProgressValues(prev => ({ ...prev, energy: newEnergy }));
+    });
+  }, [socket]);
 
   const roomName = room 
     ? (room.startsWith('myhome_') ? 'Мой дом' : room) 
@@ -132,13 +150,6 @@ function Header({ user, room, theme, energy }) {
   const photoUrl = telegramUser.photo_url || '';
   const firstName = telegramUser.first_name || user.firstName || 'User';
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
-
-  const progressValues = {
-    energy: energy, // Используем значение от сервера
-    health: 50,
-    mood: 50,
-    fullness: 50
-  };
 
   const averageValue = Math.round(
     (progressValues.energy + progressValues.health + progressValues.mood + progressValues.fullness) / 4

@@ -24,9 +24,9 @@ function App() {
   const [currentRoom, setCurrentRoom] = useState(null);
   const [theme, setTheme] = useState('telegram');
   const [telegramTheme, setTelegramTheme] = useState('light');
-  const [energy, setEnergy] = useState(100); // Энергия пользователя
+  const [energy, setEnergy] = useState(100);
 
-  const socket = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
+  const socket = io('https://telepets.onrender.com');
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -57,6 +57,7 @@ function App() {
       }
 
       socket.on('energyUpdate', (newEnergy) => {
+        console.log('Received energyUpdate:', newEnergy); // Для отладки
         setEnergy(newEnergy);
       });
 
@@ -70,7 +71,7 @@ function App() {
     setCurrentRoom(room);
     localStorage.setItem('currentRoom', room);
     setActiveTab('chat');
-    socket.emit('joinRoom', room); // Уведомляем сервер о смене комнаты
+    socket.emit('joinRoom', room);
   };
 
   const handleThemeChange = (newTheme) => {
@@ -86,7 +87,7 @@ function App() {
 
   return (
     <AppContainer>
-      <Header user={user} room={currentRoom} theme={appliedTheme} energy={energy} />
+      <Header user={user} room={currentRoom} theme={appliedTheme} energy={energy} socket={socket} />
       <Content>
         {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} theme={appliedTheme} />}
         {activeTab === 'actions' && <div>Действия</div>}

@@ -4,12 +4,12 @@ import io from 'socket.io-client';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
-import trainStationImage from '../images/train_station.jpg';
-import zhkSferaImage from '../images/zhk_sfera.jpg';
-import factoryImage from '../images/factory.jpg';
-import forestImage from '../images/forest.jpg';
-import parkImage from '../images/park.jpg';
-import villageImage from '../images/village.jpg';
+import trainStationImage from '../images/train_station.jpg'; // Вокзал
+import zhkSferaImage from '../images/zhk_sfera.jpg'; // ЖК Сфера
+import factoryImage from '../images/factory.jpg'; // Завод
+import forestImage from '../images/forest.jpg'; // Лес
+import parkImage from '../images/park.jpg'; // Парк
+import villageImage from '../images/village.jpg'; // Район Дачный
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -20,8 +20,7 @@ const ChatContainer = styled.div`
 
 const MessagesContainer = styled.div`
   flex: 1;
-  max-height: calc(100% - 60px); /* Вычитаем высоту InputContainer */
-  overflow-y: auto; /* Включаем вертикальный скролл */
+  overflow-y: auto;
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -210,7 +209,8 @@ function Chat({ userId, room, theme }) {
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
   const socketRef = useRef();
-  const messagesContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     window.Telegram.WebApp.ready();
@@ -249,10 +249,7 @@ function Chat({ userId, room, theme }) {
   }, [userId, room]);
 
   useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (container) {
-      container.scrollTop = container.scrollHeight; // Прокрутка вниз
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
@@ -322,7 +319,7 @@ function Chat({ userId, room, theme }) {
 
   return (
     <ChatContainer>
-      <MessagesContainer ref={messagesContainerRef} room={room} theme={theme}>
+      <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId} theme={theme}>
             {msg.userId !== userId && (
@@ -337,6 +334,7 @@ function Chat({ userId, room, theme }) {
             </MessageContent>
           </Message>
         ))}
+        <div ref={messagesEndRef} />
       </MessagesContainer>
       <InputContainer theme={theme}>
         <UsersButton onClick={toggleUserList}>

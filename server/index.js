@@ -49,7 +49,7 @@ const calculateEnergy = (userData) => {
   const now = new Date();
   const lastUpdated = new Date(userData.lastUpdated);
   const timeDiffMinutes = (now - lastUpdated) / (1000 * 60);
-  const energyDecrease = Math.floor(timeDiffMinutes / 1);
+  const energyDecrease = Math.floor(timeDiffMinutes / 10);
 
   if (userData.currentRoom && !userData.currentRoom.startsWith('myhome_')) {
     return Math.max(userData.energy - energyDecrease, 0);
@@ -89,12 +89,13 @@ io.on('connection', (socket) => {
     console.log(`User ${socket.userData.userId} joined room: ${room}`);
 
     try {
-      // Загрузка сообщений
+      console.time('MessageLoad'); // Логируем время загрузки сообщений
       const query = room.startsWith('myhome_') 
         ? { room, userId: socket.userData.userId } 
         : { room };
-      const messages = await Message.find(query).sort({ timestamp: -1 }).limit(20); // Уменьшено до 20
+      const messages = await Message.find(query).limit(10); // Уменьшено до 10, без сортировки
       socket.emit('messageHistory', messages);
+      console.timeEnd('MessageLoad');
 
       // Асинхронное обновление roomUsers и энергии
       setImmediate(async () => {

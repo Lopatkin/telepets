@@ -43,7 +43,7 @@ io.on('connection', (socket) => {
     console.log('Authenticated user:', userData.userId);
   });
 
-  socket.on('joinRoom', async (room) => {
+  socket.on('joinRoom', async ({ room, lastTimestamp }) => {
     socket.join(room);
     console.log(`User ${socket.userData.userId} joined room: ${room}`);
 
@@ -62,9 +62,15 @@ io.on('connection', (socket) => {
       const query = room.startsWith('myhome_') 
         ? { room, userId: socket.userData.userId } 
         : { room };
+      
+      // Если передан lastTimestamp, запрашиваем только новые сообщения
+      if (lastTimestamp) {
+        query.timestamp = { $gt: new Date(lastTimestamp) };
+      }
+
       const messages = await Message.find(query)
-        .sort({ timestamp: 1 }) // Сортировка по возрастанию времени
-        .limit(100); // 100 последних сообщений
+        .sort({ timestamp: 1 })
+        .limit(lastTimestamp ? undefined : 100); // 100, если нет фильтра
       socket.emit('messageHistory', messages);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);

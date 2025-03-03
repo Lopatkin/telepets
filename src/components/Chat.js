@@ -4,12 +4,12 @@ import io from 'socket.io-client';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
-import trainStationImage from '../images/train_station.jpg'; // Вокзал
-import zhkSferaImage from '../images/zhk_sfera.jpg'; // ЖК Сфера
-import factoryImage from '../images/factory.jpg'; // Завод
-import forestImage from '../images/forest.jpg'; // Лес
-import parkImage from '../images/park.jpg'; // Парк
-import villageImage from '../images/village.jpg'; // Район Дачный
+import trainStationImage from '../images/train_station.jpg';
+import zhkSferaImage from '../images/zhk_sfera.jpg';
+import factoryImage from '../images/factory.jpg';
+import forestImage from '../images/forest.jpg';
+import parkImage from '../images/park.jpg';
+import villageImage from '../images/village.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -212,6 +212,9 @@ function Chat({ userId, room, theme }) {
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
 
+  // Кэш сообщений для каждой комнаты
+  const [messageCache, setMessageCache] = useState({});
+
   useEffect(() => {
     window.Telegram.WebApp.ready();
     const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || {};
@@ -225,12 +228,30 @@ function Chat({ userId, room, theme }) {
     };
 
     socketRef.current = io('https://telepets.onrender.com');
+    
     socketRef.current.on('messageHistory', (history) => {
-      setMessages(history);
+      setMessages(prev => {
+        const cached = messageCache[room] || [];
+        const newMessages = [...cached, ...history].sort((a, b) => 
+          new Date(a.timestamp) - new Date(b.timestamp)
+        );
+        setMessageCache(prevCache => ({
+          ...prevCache,
+          [room]: newMessages
+        }));
+        return newMessages;
+      });
     });
 
     socketRef.current.on('message', (msg) => {
-      setMessages(prev => [...prev, msg]);
+      setMessages(prev => {
+        const updated = [...prev, msg];
+        setMessageCache(prevCache => ({
+          ...prevCache,
+          [room]: updated
+        }));
+        return updated;
+      });
     });
 
     socketRef.current.on('roomUsers', (roomUsers) => {
@@ -240,7 +261,14 @@ function Chat({ userId, room, theme }) {
     socketRef.current.emit('auth', userData);
 
     if (room) {
-      socketRef.current.emit('joinRoom', room);
+      const cachedMessages = messageCache[room] || [];
+      if (cachedMessages.length > 0) {
+        setMessages(cachedMessages);
+        const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
+        socketRef.current.emit('joinRoom', { room, lastTimestamp });
+      } else {
+        socketRef.current.emit('joinRoom', { room });
+      }
     }
 
     return () => {

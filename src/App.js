@@ -142,14 +142,6 @@ function App() {
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
 
-  // Фиктивные значения для прогресс-баров
-  const progressValues = {
-    energy,
-    health: 50,
-    mood: 50,
-    fullness: 50
-  };
-
   return (
     <AppContainer>
       <Header user={user} room={currentRoom} theme={appliedTheme} energy={energy} />
@@ -165,7 +157,6 @@ function App() {
             selectedTheme={theme} 
             telegramTheme={telegramTheme} 
             onThemeChange={handleThemeChange} 
-            progressValues={progressValues} // Передаём значения прогресс-баров
           />
         )}
       </Content>

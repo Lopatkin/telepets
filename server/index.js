@@ -27,7 +27,7 @@ const messageSchema = new mongoose.Schema({
   firstName: String,
   username: String,
   lastName: String,
-  photoUrl: String,
+  photoUrl: String, // Убедимся, что поле photoUrl есть в схеме
   room: String,
   timestamp: { type: Date, default: Date.now }
 });
@@ -74,9 +74,9 @@ io.on('connection', (socket) => {
       firstName: userData.firstName || '',
       username: userData.username || '',
       lastName: userData.lastName || '',
-      photoUrl: userData.photoUrl || ''
+      photoUrl: userData.photoUrl || '' // Убедимся, что photoUrl передаётся
     };
-    console.log('Authenticated user:', socket.userData.userId);
+    console.log('Authenticated user:', socket.userData.userId, 'with photoUrl:', socket.userData.photoUrl);
 
     if (activeSockets.has(socket.userData.userId)) {
       console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
@@ -166,7 +166,7 @@ io.on('connection', (socket) => {
       firstName: socket.userData.firstName,
       username: socket.userData.username,
       lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl
+      photoUrl: socket.userData.photoUrl // Убедимся, что photoUrl передаётся в roomUsers
     });
 
     // Обновляем список пользователей в комнате
@@ -188,7 +188,12 @@ io.on('connection', (socket) => {
       }
 
       const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
-      socket.emit('messageHistory', messages);
+      // Убедимся, что photoUrl передаётся в сообщениях
+      const messagesWithPhoto = messages.map(msg => ({
+        ...msg._doc,
+        photoUrl: socket.userData.photoUrl || '' // Добавляем photoUrl, если он отсутствует
+      }));
+      socket.emit('messageHistory', messagesWithPhoto);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);
     }
@@ -208,7 +213,7 @@ io.on('connection', (socket) => {
         firstName: socket.userData.firstName || '',
         username: socket.userData.username || '',
         lastName: socket.userData.lastName || '',
-        photoUrl: socket.userData.photoUrl || '',
+        photoUrl: socket.userData.photoUrl || '', // Убедимся, что photoUrl передаётся
         room: message.room,
         timestamp: message.timestamp
       });

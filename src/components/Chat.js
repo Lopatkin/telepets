@@ -216,11 +216,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   useEffect(() => {
     if (!socket || !room) return;
 
-    console.log('Setting up socket listeners for room:', room);
+    console.log('Setting up socket listeners for room:', room, 'with photoUrl:', socket.userData?.photoUrl);
 
     window.Telegram.WebApp.ready();
 
     socket.on('messageHistory', (history) => {
+      console.log('Received messageHistory with photoUrls:', history.map(msg => msg.photoUrl));
       setMessages(prev => {
         const cached = messageCache[room] || [];
         const newMessages = [...cached, ...history].sort((a, b) => 
@@ -235,6 +236,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     });
 
     socket.on('message', (msg) => {
+      console.log('Received message with photoUrl:', msg.photoUrl);
       setMessages(prev => {
         const updated = [...prev, msg];
         setMessageCache(prevCache => ({
@@ -246,6 +248,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     });
 
     socket.on('roomUsers', (roomUsers) => {
+      console.log('Received roomUsers with photoUrls:', roomUsers.map(user => user.photoUrl));
       setUsers(roomUsers);
     });
 
@@ -265,7 +268,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       console.log('Cleaning up socket listeners for room:', room);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, userId, room, joinedRoomsRef]); // Добавили joinedRoomsRef в зависимости
+  }, [socket, userId, room, joinedRoomsRef]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -306,6 +309,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   };
 
   const getAvatar = (msg) => {
+    console.log('Getting avatar for msg:', msg); // Лог для отладки
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
     return msg.photoUrl ? (
       <Avatar src={msg.photoUrl} alt="Avatar" />
@@ -375,11 +379,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
           <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
-              {user.photoUrl ? (
-                <Avatar src={user.photoUrl} alt="Avatar" />
-              ) : (
-                <DefaultAvatar>{(user.firstName || user.userId || 'U').charAt(0).toUpperCase()}</DefaultAvatar>
-              )}
+              {getAvatar(user)} {/* Используем getAvatar для пользователей */}
               <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName>
             </UserItem>
           ))}

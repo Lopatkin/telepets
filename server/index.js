@@ -50,7 +50,7 @@ const calculateEnergy = (user) => {
   const now = new Date();
   const lastUpdated = new Date(user.lastUpdated);
   const minutesPassed = Math.floor((now - lastUpdated) / 60000); // минут прошло
-  const decrease = Math.floor(minutesPassed / 10); // 1% каждые 10 минут
+  const decrease = Math.floor(minutesPassed / 1); // 1% каждые 10 минут
   return Math.max(user.energy - decrease, 0); // не ниже 0
 };
 
@@ -152,7 +152,7 @@ io.on('connection', (socket) => {
       console.error('Error fetching messages:', err.message, err.stack);
     }
   });
-  
+
   // Обработка отправки сообщения
   socket.on('sendMessage', async (message) => {
     if (!socket.userData || !message || !message.room) {

@@ -215,15 +215,15 @@ function Chat({ userId, room, theme, socket }) {
 
   useEffect(() => {
     if (!socket || !room) return;
-  
+
     console.log('Setting up socket listeners for room:', room);
-  
+
     window.Telegram.WebApp.ready();
-  
+
     socket.on('messageHistory', (history) => {
       setMessages(prev => {
         const cached = messageCache[room] || [];
-        const newMessages = [...cached, ...history].sort((a, b) => 
+        const newMessages = [...cached, ...history].sort((a, b) =>
           new Date(a.timestamp) - new Date(b.timestamp)
         );
         setMessageCache(prevCache => ({
@@ -233,7 +233,7 @@ function Chat({ userId, room, theme, socket }) {
         return newMessages;
       });
     });
-  
+
     socket.on('message', (msg) => {
       setMessages(prev => {
         const updated = [...prev, msg];
@@ -244,28 +244,29 @@ function Chat({ userId, room, theme, socket }) {
         return updated;
       });
     });
-  
+
     socket.on('roomUsers', (roomUsers) => {
       setUsers(roomUsers);
     });
-  
+
     // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
     const cachedMessages = messageCache[room] || [];
-    if (cachedMessages.length === 0) {
+    if (!joinedRoomsRef.current.has(room) || cachedMessages.length === 0) {
       console.log('Emitting joinRoom for new room:', room);
       socket.emit('joinRoom', { room });
+      joinedRoomsRef.current.add(room); // Отмечаем, что вошли в комнату (если ещё не отмечали)
     } else {
       console.log('Rejoining room:', room, '— fetching updates');
       const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
       socket.emit('joinRoom', { room, lastTimestamp });
     }
-  
+
     return () => {
       console.log('Cleaning up socket listeners for room:', room);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, userId, room]);
-    
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);

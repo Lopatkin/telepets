@@ -27,7 +27,8 @@ function App() {
   const [energy, setEnergy] = useState(100); // Энергия пользователя
   const socketRef = useRef(null); // Сохраняем сокет в ref
   const prevRoomRef = useRef(null); // Отслеживание предыдущей комнаты
-  const joinedRoomsRef = useRef(new Set()); // Отслеживание комнат, в которые уже входили в этом сеансе
+  const joinedRoomsRef = useRef(new Set()); // Отслеживание комнат, в которые уже входили
+  const isJoiningRef = useRef(false); // Флаг, чтобы предотвратить дублирование joinRoom
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -105,7 +106,9 @@ function App() {
   }, []); // Пустой массив зависимостей — эффект выполняется один раз при монтировании
 
   const handleRoomSelect = (room) => {
-    if (!room || !socketRef.current || room === currentRoom) return; // Избегаем дублирования и отправки для той же комнаты
+    if (!room || !socketRef.current || room === currentRoom || isJoiningRef.current) return; // Избегаем дублирования
+    isJoiningRef.current = true; // Устанавливаем флаг
+
     setCurrentRoom(room);
     localStorage.setItem('currentRoom', room);
     setActiveTab('chat');
@@ -119,6 +122,12 @@ function App() {
       console.log(`Rejoining room: ${room} — using cached messages or fetching updates`);
       socketRef.current.emit('joinRoom', { room, lastTimestamp: null }); // Отправляем для обновления сообщений
     }
+
+    // Сбрасываем флаг после отправки (с небольшой задержкой, чтобы избежать дублирования)
+    setTimeout(() => {
+      isJoiningRef.current = false;
+    }, 1000); // Задержка 1 секунда, чтобы предотвратить повторные вызовы
+
     prevRoomRef.current = room; // Сохраняем текущую комнату
   };
 

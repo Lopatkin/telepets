@@ -50,7 +50,7 @@ const calculateEnergy = (user) => {
   const now = new Date();
   const lastUpdated = new Date(user.lastUpdated);
   const minutesPassed = Math.floor((now - lastUpdated) / 60000); // минут прошло
-  const decrease = Math.floor(minutesPassed / 1); // 1% каждые 10 минут
+  const decrease = Math.floor(minutesPassed / 10); // 1% каждые 10 минут
   return Math.max(user.energy - decrease, 0); // не ниже 0
 };
 
@@ -100,7 +100,6 @@ io.on('connection', (socket) => {
   });
 
   // Обработка входа в комнату
-  // В обработчике joinRoom
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {
     if (typeof room !== 'string') {
       console.error('Invalid room type:', room);
@@ -114,14 +113,16 @@ io.on('connection', (socket) => {
 
     // Проверяем, уже ли пользователь в этой комнате
     const userInRoom = Array.from(roomUsers[room] || []).some(user => user.userId === socket.userData.userId);
-    if (userInRoom) {
-      console.log(`User ${socket.userData.userId} already in room: ${room} — skipping`);
-      return; // Не дублируем логику, если пользователь уже в комнате
+    const isRejoining = userInRoom; // Флаг, что пользователь уже в комнате
+
+    if (isRejoining) {
+      console.log(`User ${socket.userData.userId} already in room: ${room} — rejoining to fetch messages`);
+    } else {
+      socket.join(room);
+      console.log(`User ${socket.userData.userId} joined room: ${room}`);
     }
 
-    socket.join(room);
-    console.log(`User ${socket.userData.userId} joined room: ${room}`);
-
+    // Всегда добавляем пользователя в roomUsers, даже при повторном входе, чтобы синхронизировать состояние
     if (!roomUsers[room]) roomUsers[room] = new Set();
     roomUsers[room].add({
       userId: socket.userData.userId,
@@ -131,6 +132,7 @@ io.on('connection', (socket) => {
       photoUrl: socket.userData.photoUrl
     });
 
+    // Обновляем список пользователей в комнате
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
 
     try {

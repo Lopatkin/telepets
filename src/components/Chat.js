@@ -214,16 +214,16 @@ function Chat({ userId, room, theme, socket }) {
   const [messageCache, setMessageCache] = useState({});
 
   useEffect(() => {
-    if (!socket) return;
-
+    if (!socket || !room) return;
+  
     console.log('Setting up socket listeners for room:', room);
-
+  
     window.Telegram.WebApp.ready();
-
+  
     socket.on('messageHistory', (history) => {
       setMessages(prev => {
         const cached = messageCache[room] || [];
-        const newMessages = [...cached, ...history].sort((a, b) =>
+        const newMessages = [...cached, ...history].sort((a, b) => 
           new Date(a.timestamp) - new Date(b.timestamp)
         );
         setMessageCache(prevCache => ({
@@ -233,7 +233,7 @@ function Chat({ userId, room, theme, socket }) {
         return newMessages;
       });
     });
-
+  
     socket.on('message', (msg) => {
       setMessages(prev => {
         const updated = [...prev, msg];
@@ -244,29 +244,30 @@ function Chat({ userId, room, theme, socket }) {
         return updated;
       });
     });
-
+  
     socket.on('roomUsers', (roomUsers) => {
       setUsers(roomUsers);
     });
-
-    if (room) {
+  
+    // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты
+    const cachedMessages = messageCache[room] || [];
+    if (cachedMessages.length === 0) {
       console.log('Emitting joinRoom for room:', room);
-      const cachedMessages = messageCache[room] || [];
-      if (cachedMessages.length > 0) {
-        setMessages(cachedMessages);
-        const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
-        socket.emit('joinRoom', { room, lastTimestamp });
-      } else {
-        socket.emit('joinRoom', { room });
-      }
+      socket.emit('joinRoom', { room });
+    } else {
+      console.log('Using cached messages for room:', room);
+      setMessages(cachedMessages);
+      const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
+      console.log('Emitting joinRoom with lastTimestamp for room:', room, lastTimestamp);
+      socket.emit('joinRoom', { room, lastTimestamp });
     }
-
+  
     return () => {
       console.log('Cleaning up socket listeners for room:', room);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, userId, room]);
-
+  
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);

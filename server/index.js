@@ -100,6 +100,7 @@ io.on('connection', (socket) => {
   });
 
   // Обработка входа в комнату
+  // В обработчике joinRoom
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {
     if (typeof room !== 'string') {
       console.error('Invalid room type:', room);
@@ -112,14 +113,9 @@ io.on('connection', (socket) => {
     }
 
     // Проверяем, уже ли пользователь в этой комнате
-    if (roomUsers[room] && roomUsers[room].has({
-      userId: socket.userData.userId,
-      firstName: socket.userData.firstName,
-      username: socket.userData.username,
-      lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl
-    })) {
-      console.log(`User ${socket.userData.userId} already in room: ${room}`);
+    const userInRoom = Array.from(roomUsers[room] || []).some(user => user.userId === socket.userData.userId);
+    if (userInRoom) {
+      console.log(`User ${socket.userData.userId} already in room: ${room} — skipping`);
       return; // Не дублируем логику, если пользователь уже в комнате
     }
 
@@ -156,7 +152,7 @@ io.on('connection', (socket) => {
       console.error('Error fetching messages:', err.message, err.stack);
     }
   });
-
+  
   // Обработка отправки сообщения
   socket.on('sendMessage', async (message) => {
     if (!socket.userData || !message || !message.room) {

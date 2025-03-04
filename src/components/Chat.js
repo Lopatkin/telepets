@@ -213,21 +213,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   // Кэш сообщений для каждой комнаты
   const [messageCache, setMessageCache] = useState({});
 
+  // Получаем photoUrl текущего пользователя из Telegram
+  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+  const currentUserPhotoUrl = telegramUser.photo_url || '';
+
   useEffect(() => {
     if (!socket || !room) return;
 
-    console.log('Setting up socket listeners for room:', room);
-
-    window.Telegram.WebApp.ready();
-    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || {};
-
-    const userData = {
-      userId: telegramUser.id?.toString() || userId,
-      firstName: telegramUser.first_name || '',
-      username: telegramUser.username || '',
-      lastName: telegramUser.last_name || '',
-      photoUrl: telegramUser.photo_url || '' // Прямо берём photoUrl из Telegram, как в Header.js
-    };
+    console.log('Setting up socket listeners for room:', room, 'with currentUserPhotoUrl:', currentUserPhotoUrl);
 
     socket.on('messageHistory', (history) => {
       console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
@@ -261,7 +254,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setUsers(roomUsers);
     });
 
-    // Аутентификация с использованием photoUrl из Telegram
+    // Аутентификация с использованием данных из Telegram
+    const userData = {
+      userId: telegramUser.id?.toString() || userId,
+      firstName: telegramUser.first_name || '',
+      username: telegramUser.username || '',
+      lastName: telegramUser.last_name || '',
+      photoUrl: currentUserPhotoUrl // Используем photoUrl из Telegram
+    };
     socket.emit('auth', userData);
 
     // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
@@ -305,7 +305,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
         text: message,
         room,
         timestamp: new Date().toISOString(),
-        photoUrl: window.Telegram.WebApp.initDataUnsafe?.user?.photo_url || '' // Добавляем photoUrl в отправляемое сообщение
+        photoUrl: currentUserPhotoUrl || '' // Используем photoUrl текущего пользователя из Telegram
       };
       socket.emit('sendMessage', newMessage);
       setMessage('');
@@ -322,10 +322,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   };
 
   const getAvatar = (msg) => {
-    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl }); // Лог для отладки
+    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl }); // Лог для отладки
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
-    return msg.photoUrl && msg.photoUrl.trim() ? (
-      <Avatar src={msg.photoUrl} alt="Avatar" />
+    
+    // Используем photoUrl из сообщения, если он есть, иначе берем photoUrl текущего пользователя
+    const avatarPhotoUrl = msg.photoUrl && msg.photoUrl.trim() ? msg.photoUrl : currentUserPhotoUrl;
+    
+    return avatarPhotoUrl ? (
+      <Avatar src={avatarPhotoUrl} alt="Avatar" />
     ) : (
       <DefaultAvatar>{initial}</DefaultAvatar>
     );

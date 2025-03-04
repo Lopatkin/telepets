@@ -213,10 +213,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   // Кэш сообщений для каждой комнаты
   const [messageCache, setMessageCache] = useState({});
 
+  // Получаем photoUrl текущего пользователя из Telegram
+  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+  const currentUserPhotoUrl = telegramUser.photo_url || '';
+
   useEffect(() => {
     if (!socket || !room) return;
 
-    console.log('Setting up socket listeners for room:', room);
+    console.log('Setting up socket listeners for room:', room, 'with currentUserPhotoUrl:', currentUserPhotoUrl);
 
     socket.on('messageHistory', (history) => {
       console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
@@ -251,13 +255,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     });
 
     // Аутентификация с использованием данных из Telegram
-    const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
     const userData = {
       userId: telegramUser.id?.toString() || userId,
       firstName: telegramUser.first_name || '',
       username: telegramUser.username || '',
       lastName: telegramUser.last_name || '',
-      photoUrl: telegramUser.photo_url || '' // Берем photoUrl из Telegram
+      photoUrl: currentUserPhotoUrl // Используем photoUrl из Telegram
     };
     socket.emit('auth', userData);
 
@@ -302,7 +305,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
         text: message,
         room,
         timestamp: new Date().toISOString(),
-        photoUrl: window.Telegram.WebApp.initDataUnsafe?.user?.photo_url || '' // Берем photoUrl текущего пользователя для отправки
+        photoUrl: currentUserPhotoUrl || '' // Используем photoUrl текущего пользователя для отправки
       };
       socket.emit('sendMessage', newMessage);
       setMessage('');
@@ -319,10 +322,19 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   };
 
   const getAvatar = (msg) => {
-    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl }); // Лог для отладки
+    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl }); // Лог для отладки
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
     
-    // Используем только photoUrl из сообщения, если он есть и не пуст
+    // Для собственных сообщений используем currentUserPhotoUrl, если msg.photoUrl отсутствует или пуст
+    if (msg.userId === userId) {
+      return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (
+        <Avatar src={currentUserPhotoUrl} alt="Avatar" />
+      ) : (
+        <DefaultAvatar>{initial}</DefaultAvatar>
+      );
+    }
+    
+    // Для сообщений других пользователей используем msg.photoUrl, если есть, иначе дефолтный аватар
     return msg.photoUrl && msg.photoUrl.trim() ? (
       <Avatar src={msg.photoUrl} alt="Avatar" />
     ) : (

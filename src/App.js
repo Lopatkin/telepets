@@ -29,6 +29,7 @@ function App() {
   const prevRoomRef = useRef(null); // Отслеживание предыдущей комнаты
   const joinedRoomsRef = useRef(new Set()); // Отслеживание комнат, в которые уже входили
   const isJoiningRef = useRef(false); // Флаг, чтобы предотвратить дублирование joinRoom
+  const isAuthenticatedRef = useRef(false); // Флаг для отслеживания аутентификации
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -38,7 +39,7 @@ function App() {
       const savedRoom = localStorage.getItem('currentRoom');
       if (telegramData?.user?.id) {
         const userData = {
-          userId: telegramData.user.id.toString(), // Изменили на userId
+          userId: telegramData.user.id.toString(), // Убедились, что используем userId
           firstName: telegramData.user.first_name || 'User',
           username: telegramData.user.username || '',
           lastName: telegramData.user.last_name || ''
@@ -46,61 +47,78 @@ function App() {
         setUser(userData);
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
         setTheme(savedTheme);
-        setCurrentRoom(savedRoom || `myhome_${userData.userId}`); // Изменили на userId
+        setCurrentRoom(savedRoom || `myhome_${userData.userId}`); // Убедились, что используем userId
 
-        // Инициализируем сокет один раз
-        socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
-        
-        socketRef.current.on('connect', () => console.log('Socket connected:', socketRef.current.id));
-        socketRef.current.on('disconnect', (reason) => console.log('Socket disconnected:', reason));
+        // Инициализируем сокет один раз, если ещё не инициализирован
+        if (!socketRef.current) {
+          socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
+          socketRef.current.on('connect', () => console.log('Socket connected:', socketRef.current.id));
+          socketRef.current.on('disconnect', (reason) => console.log('Socket disconnected:', reason));
 
-        // Аутентификация
-        socketRef.current.emit('auth', userData);
-
-        // Получение обновлений энергии
-        socketRef.current.on('energyUpdate', (newEnergy) => {
-          setEnergy(newEnergy);
-        });
-
-        // Запрос энергии при входе
-        socketRef.current.emit('getEnergy');
-
-        // Периодический запрос энергии каждые 10 минут
-        const energyInterval = setInterval(() => {
-          socketRef.current.emit('getEnergy');
-        }, 10 * 60 * 1000);
-
-        return () => {
-          if (socketRef.current) {
-            socketRef.current.disconnect();
-            console.log('Socket disconnected on unmount');
+          // Аутентификация только один раз, если ещё не аутентифицированы
+          if (!isAuthenticatedRef.current) {
+            socketRef.current.emit('auth', userData);
+            isAuthenticatedRef.current = true; // Устанавливаем флаг аутентификации
           }
-          clearInterval(energyInterval);
-        };
+
+          // Получение обновлений энергии
+          socketRef.current.on('energyUpdate', (newEnergy) => {
+            setEnergy(newEnergy);
+          });
+
+          // Запрос энергии при входе
+          socketRef.current.emit('getEnergy');
+
+          // Периодический запрос энергии каждые 10 минут
+          const energyInterval = setInterval(() => {
+            if (socketRef.current) {
+              socketRef.current.emit('getEnergy');
+            }
+          }, 10 * 60 * 1000);
+
+          return () => {
+            if (socketRef.current) {
+              socketRef.current.disconnect();
+              console.log('Socket disconnected on unmount');
+            }
+            clearInterval(energyInterval);
+          };
+        }
       } else {
         console.warn('Telegram Web App data not available');
-        const testUser = { userId: 'test123', firstName: 'Test User' }; // Изменили на userId
+        const testUser = { userId: 'test123', firstName: 'Test User' }; // Убедились, что используем userId
         setUser(testUser);
         setTelegramTheme('light');
         setTheme(savedTheme);
         setCurrentRoom(savedRoom || 'myhome_test123');
 
         // Инициализация для тестового пользователя
-        socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
-        socketRef.current.emit('auth', testUser);
-        socketRef.current.on('energyUpdate', (newEnergy) => setEnergy(newEnergy));
-        socketRef.current.emit('getEnergy');
+        if (!socketRef.current) {
+          socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
+          socketRef.current.on('connect', () => console.log('Socket connected:', socketRef.current.id));
+          socketRef.current.on('disconnect', (reason) => console.log('Socket disconnected:', reason));
 
-        const energyInterval = setInterval(() => {
-          socketRef.current.emit('getEnergy');
-        }, 10 * 60 * 1000);
-
-        return () => {
-          if (socketRef.current) {
-            socketRef.current.disconnect();
+          if (!isAuthenticatedRef.current) {
+            socketRef.current.emit('auth', testUser);
+            isAuthenticatedRef.current = true; // Устанавливаем флаг аутентификации
           }
-          clearInterval(energyInterval);
-        };
+
+          socketRef.current.on('energyUpdate', (newEnergy) => setEnergy(newEnergy));
+          socketRef.current.emit('getEnergy');
+
+          const energyInterval = setInterval(() => {
+            if (socketRef.current) {
+              socketRef.current.emit('getEnergy');
+            }
+          }, 10 * 60 * 1000);
+
+          return () => {
+            if (socketRef.current) {
+              socketRef.current.disconnect();
+            }
+            clearInterval(energyInterval);
+          };
+        }
       }
     }
   }, []); // Пустой массив зависимостей — эффект выполняется один раз при монтировании

@@ -222,6 +222,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
 
     console.log('Setting up socket listeners for room:', room, 'with currentUserPhotoUrl:', currentUserPhotoUrl);
 
+    // Проверяем, не подключены ли уже к комнате
     socket.on('messageHistory', (history) => {
       console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
       setMessages(prev => {
@@ -254,15 +255,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setUsers(roomUsers);
     });
 
-    // Аутентификация с использованием данных из Telegram
-    const userData = {
-      userId: telegramUser.id?.toString() || userId, // Убедились, что используем userId
-      firstName: telegramUser.first_name || '',
-      username: telegramUser.username || '',
-      lastName: telegramUser.last_name || '',
-      photoUrl: currentUserPhotoUrl // Используем photoUrl из Telegram
-    };
-    socket.emit('auth', userData);
+    // Аутентификация только если ещё не аутентифицированы (передаём через props или из App)
+    // Предполагаем, что аутентификация уже выполнена в App.js
+    // socket.emit('auth', userData); — убрали, т.к. аутентификация теперь в App.js
 
     // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
     const cachedMessages = messageCache[room] || [];
@@ -278,6 +273,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
 
     return () => {
       console.log('Cleaning up socket listeners for room:', room);
+      // Не очищаем сокет, т.к. он управляется в App.js
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, userId, room, joinedRoomsRef]);
@@ -412,6 +408,5 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     </ChatContainer>
   );
 }
-
 
 export default Chat;

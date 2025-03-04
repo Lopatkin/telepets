@@ -69,14 +69,15 @@ io.on('connection', (socket) => {
       return;
     }
 
+    const photoUrl = userData.photoUrl || ''; // Убедимся, что photoUrl всегда есть
     socket.userData = {
       userId: userData.id.toString(),
       firstName: userData.firstName || '',
       username: userData.username || '',
       lastName: userData.lastName || '',
-      photoUrl: userData.photoUrl || '' // Убедимся, что photoUrl передаётся
+      photoUrl: photoUrl // Сохраняем photoUrl
     };
-    console.log('Authenticated user:', socket.userData.userId, 'with photoUrl:', socket.userData.photoUrl);
+    console.log('Authenticated user:', socket.userData.userId, 'with photoUrl:', photoUrl);
 
     if (activeSockets.has(socket.userData.userId)) {
       console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
@@ -166,7 +167,7 @@ io.on('connection', (socket) => {
       firstName: socket.userData.firstName,
       username: socket.userData.username,
       lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl // Убедимся, что photoUrl передаётся в roomUsers
+      photoUrl: socket.userData.photoUrl || '' // Убедимся, что photoUrl всегда есть
     });
 
     // Обновляем список пользователей в комнате
@@ -188,11 +189,12 @@ io.on('connection', (socket) => {
       }
 
       const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
-      // Убедимся, что photoUrl передаётся в сообщениях
+      // Убедимся, что photoUrl передаётся в сообщениях, даже если он пуст
       const messagesWithPhoto = messages.map(msg => ({
         ...msg._doc,
-        photoUrl: socket.userData.photoUrl || '' // Добавляем photoUrl, если он отсутствует
+        photoUrl: msg.photoUrl || socket.userData.photoUrl || '' // Используем photoUrl из сообщения или socket.userData
       }));
+      console.log('Sending messageHistory with photoUrls:', messagesWithPhoto.map(msg => msg.photoUrl));
       socket.emit('messageHistory', messagesWithPhoto);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);
@@ -218,6 +220,7 @@ io.on('connection', (socket) => {
         timestamp: message.timestamp
       });
       await newMessage.save();
+      console.log('Sending message with photoUrl:', newMessage.photoUrl);
       io.to(message.room).emit('message', newMessage);
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);

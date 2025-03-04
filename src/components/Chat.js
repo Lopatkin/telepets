@@ -221,7 +221,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     window.Telegram.WebApp.ready();
 
     socket.on('messageHistory', (history) => {
-      console.log('Received messageHistory with photoUrls:', history.map(msg => msg.photoUrl));
+      console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
       setMessages(prev => {
         const cached = messageCache[room] || [];
         const newMessages = [...cached, ...history].sort((a, b) => 
@@ -236,7 +236,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     });
 
     socket.on('message', (msg) => {
-      console.log('Received message with photoUrl:', msg.photoUrl);
+      console.log('Received message with photoUrl:', { userId: msg.userId, photoUrl: msg.photoUrl });
       setMessages(prev => {
         const updated = [...prev, msg];
         setMessageCache(prevCache => ({
@@ -248,7 +248,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     });
 
     socket.on('roomUsers', (roomUsers) => {
-      console.log('Received roomUsers with photoUrls:', roomUsers.map(user => user.photoUrl));
+      console.log('Received roomUsers with photoUrls:', roomUsers.map(user => ({ userId: user.userId, photoUrl: user.photoUrl })));
       setUsers(roomUsers);
     });
 
@@ -309,9 +309,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   };
 
   const getAvatar = (msg) => {
-    console.log('Getting avatar for msg:', msg); // Лог для отладки
+    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl }); // Лог для отладки
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
-    return msg.photoUrl ? (
+    return msg.photoUrl && msg.photoUrl.trim() ? (
       <Avatar src={msg.photoUrl} alt="Avatar" />
     ) : (
       <DefaultAvatar>{initial}</DefaultAvatar>

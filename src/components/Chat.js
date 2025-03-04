@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import io from 'socket.io-client';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
@@ -19,7 +20,8 @@ const ChatContainer = styled.div`
 
 const MessagesContainer = styled.div`
   flex: 1;
-  overflow-y: auto;
+  max-height: calc(100% - 60px); /* Вычитаем высоту InputContainer */
+  overflow-y: auto; /* Включаем вертикальный скролл */
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -202,73 +204,55 @@ const UserName = styled.span`
   color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
 `;
 
-function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
+function Chat({ userId, room, theme }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
-  const messagesEndRef = useRef(null);
-  const modalRef = useRef(null);
-
-  // Кэш сообщений для каждой комнаты
-  const [messageCache, setMessageCache] = useState({});
+  const socketRef = useRef();
+  const messagesContainerRef = useRef(null);
 
   useEffect(() => {
-    if (!socket || !room) return;
-
-    console.log('Setting up socket listeners for room:', room);
-
     window.Telegram.WebApp.ready();
+    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || {};
 
-    socket.on('messageHistory', (history) => {
-      setMessages(prev => {
-        const cached = messageCache[room] || [];
-        const newMessages = [...cached, ...history].sort((a, b) => 
-          new Date(a.timestamp) - new Date(b.timestamp)
-        );
-        setMessageCache(prevCache => ({
-          ...prevCache,
-          [room]: newMessages
-        }));
-        return newMessages;
-      });
+    const userData = {
+      userId: telegramUser.id?.toString() || userId,
+      firstName: telegramUser.first_name || '',
+      username: telegramUser.username || '',
+      lastName: telegramUser.last_name || '',
+      photoUrl: telegramUser.photo_url || ''
+    };
+
+    socketRef.current = io('https://telepets.onrender.com');
+    socketRef.current.on('messageHistory', (history) => {
+      setMessages(history);
     });
 
-    socket.on('message', (msg) => {
-      setMessages(prev => {
-        const updated = [...prev, msg];
-        setMessageCache(prevCache => ({
-          ...prevCache,
-          [room]: updated
-        }));
-        return updated;
-      });
+    socketRef.current.on('message', (msg) => {
+      setMessages(prev => [...prev, msg]);
     });
 
-    socket.on('roomUsers', (roomUsers) => {
+    socketRef.current.on('roomUsers', (roomUsers) => {
       setUsers(roomUsers);
     });
 
-    // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
-    const cachedMessages = messageCache[room] || [];
-    if (!joinedRoomsRef.current.has(room) || cachedMessages.length === 0) {
-      console.log('Emitting joinRoom for new room:', room);
-      socket.emit('joinRoom', { room });
-      joinedRoomsRef.current.add(room); // Отмечаем, что вошли в комнату
-    } else {
-      console.log('Rejoining room:', room, '— fetching updates');
-      const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
-      socket.emit('joinRoom', { room, lastTimestamp });
+    socketRef.current.emit('auth', userData);
+
+    if (room) {
+      socketRef.current.emit('joinRoom', room);
     }
 
     return () => {
-      console.log('Cleaning up socket listeners for room:', room);
+      socketRef.current.disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, userId, room, joinedRoomsRef]); // Добавили joinedRoomsRef в зависимости
+  }, [userId, room]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight; // Прокрутка вниз
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -285,13 +269,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   }, []);
 
   const sendMessage = () => {
-    if (message.trim() && room && socket) {
+    if (message.trim() && room) {
       const newMessage = {
         text: message,
         room,
         timestamp: new Date().toISOString()
       };
-      socket.emit('sendMessage', newMessage);
+      socketRef.current.emit('sendMessage', newMessage);
       setMessage('');
     }
   };
@@ -338,7 +322,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
 
   return (
     <ChatContainer>
-      <MessagesContainer room={room} theme={theme}>
+      <MessagesContainer ref={messagesContainerRef} room={room} theme={theme}>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId} theme={theme}>
             {msg.userId !== userId && (
@@ -353,7 +337,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
             </MessageContent>
           </Message>
         ))}
-        <div ref={messagesEndRef} />
       </MessagesContainer>
       <InputContainer theme={theme}>
         <UsersButton onClick={toggleUserList}>

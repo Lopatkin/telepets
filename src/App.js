@@ -146,7 +146,7 @@ function App() {
     <AppContainer>
       <Header user={user} room={currentRoom} theme={appliedTheme} energy={energy} />
       <Content>
-        {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} theme={appliedTheme} socket={socketRef.current} />}
+        {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} theme={appliedTheme} socket={socketRef.current} joinedRoomsRef={joinedRoomsRef} />}
         {activeTab === 'actions' && <div>Действия</div>}
         {activeTab === 'housing' && <div>Жильё</div>}
         {activeTab === 'map' && <Map userId={user.id} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}

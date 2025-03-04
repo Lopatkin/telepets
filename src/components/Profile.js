@@ -8,7 +8,7 @@ const ProfileContainer = styled.div`
   align-items: center;
   text-align: center;
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#f5f5f5'};
-  min-height: 0; /* Предотвращает растягивание на всю высоту */
+  height: 100%;
 `;
 
 const Avatar = styled.img`
@@ -85,68 +85,7 @@ const ThemeLabel = styled.span`
   font-size: 16px;
 `;
 
-const ProgressWidget = styled.div`
-  width: 100%;
-  max-width: 300px;
-  margin-top: 20px;
-  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
-  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  border-radius: 8px;
-  padding: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const ProgressTitle = styled.h3`
-  font-size: 18px;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  margin: 0 0 10px 0;
-`;
-
-const ProgressBarContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 4px 0;
-  padding: 5px;
-  border-radius: 4px;
-`;
-
-const ProgressLabel = styled.span`
-  font-size: 12px;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#666'};
-  width: 80px; /* Увеличили ширину для текста и цифр */
-`;
-
-const ProgressBarOuter = styled.div`
-  width: 120px;
-  height: 8px;
-  background: ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  border-radius: 4px;
-  overflow: hidden;
-`;
-
-const ProgressBarFill = styled.div`
-  height: 100%;
-  width: ${props => props.value}%;
-  background: ${props => {
-    switch (props.type) {
-      case 'energy': return '#FFA500'; // Жёлто-оранжевый
-      case 'health': return '#FF0000'; // Красный
-      case 'mood': return '#007AFF'; // Синий
-      case 'fullness': return '#32CD32'; // Зелёно-салатовый
-      default: return '#007AFF';
-    }
-  }};
-  transition: width 0.3s ease;
-`;
-
-const EnergyValue = styled.span`
-  font-size: 12px;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#666'};
-  margin-left: 10px;
-`;
-
-function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, progressValues }) {
+function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange }) {
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
 
   const firstName = telegramUser.first_name || user.firstName || 'User';
@@ -183,34 +122,6 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
           <ThemeLabel>{telegramTheme === 'dark' ? 'Светлая' : 'Тёмная'}</ThemeLabel>
         </ThemeOption>
       </ThemeOptions>
-      <ProgressWidget theme={theme}>
-        <ProgressTitle theme={theme}>Состояние</ProgressTitle>
-        <ProgressBarContainer>
-          <ProgressLabel theme={theme}>Энергия</ProgressLabel>
-          <ProgressBarOuter theme={theme}>
-            <ProgressBarFill value={progressValues.energy} type="energy" />
-          </ProgressBarOuter>
-          <EnergyValue theme={theme}>{progressValues.energy}%</EnergyValue>
-        </ProgressBarContainer>
-        <ProgressBarContainer>
-          <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
-          <ProgressBarOuter theme={theme}>
-            <ProgressBarFill value={progressValues.health} type="health" />
-          </ProgressBarOuter>
-        </ProgressBarContainer>
-        <ProgressBarContainer>
-          <ProgressLabel theme={theme}>Настроение</ProgressLabel>
-          <ProgressBarOuter theme={theme}>
-            <ProgressBarFill value={progressValues.mood} type="mood" />
-          </ProgressBarOuter>
-        </ProgressBarContainer>
-        <ProgressBarContainer>
-          <ProgressLabel theme={theme}>Сытость</ProgressLabel>
-          <ProgressBarOuter theme={theme}>
-            <ProgressBarFill value={progressValues.fullness} type="fullness" />
-          </ProgressBarOuter>
-        </ProgressBarContainer>
-      </ProgressWidget>
     </ProfileContainer>
   );
 }

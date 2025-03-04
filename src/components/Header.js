@@ -82,6 +82,7 @@ const ProgressBarContainer = styled.div`
   align-items: center;
   gap: 10px;
   margin: 4px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 5px;
   border-radius: 4px;
 `;
@@ -92,7 +93,7 @@ const ProgressLabel = styled.span`
   width: 60px;
 `;
 
-const ProgressBarOuter = styled.div`
+const ProgressBar = styled.div`
   width: 120px;
   height: 8px;
   background: ${props => props.theme === 'dark' ? '#444' : '#ddd'};
@@ -100,22 +101,27 @@ const ProgressBarOuter = styled.div`
   overflow: hidden;
 `;
 
-const ProgressBarFill = styled.div`
-  height: 100%;
+const ProgressFill = styled.div`
   width: ${props => props.value}%;
+  height: 100%;
   background: ${props => {
     switch (props.type) {
-      case 'energy': return '#FFA500'; // Жёлто-оранжевый
-      case 'health': return '#FF0000'; // Красный
-      case 'mood': return '#007AFF'; // Синий
-      case 'fullness': return '#32CD32'; // Зелёно-салатовый
-      default: return '#007AFF';
+      case 'energy':
+        return '#FFA500';
+      case 'health':
+        return '#FF0000';
+      case 'mood':
+        return '#007AFF';
+      case 'fullness':
+        return '#32CD32';
+      default:
+        return '#007AFF';
     }
   }};
   transition: width 0.3s ease;
 `;
 
-function Header({ user, room, theme, energy }) {
+function Header({ user, room, theme }) {
   const [showProgress, setShowProgress] = useState(false);
 
   const roomName = room 
@@ -127,8 +133,9 @@ function Header({ user, room, theme, energy }) {
   const firstName = telegramUser.first_name || user.firstName || 'User';
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
 
+  // Статические значения прогресс-баров (энергия временно убрана)
   const progressValues = {
-    energy: energy,
+    energy: 50,
     health: 50,
     mood: 50,
     fullness: 50
@@ -168,27 +175,27 @@ function Header({ user, room, theme, energy }) {
         <ProgressModal theme={theme}>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Энергия</ProgressLabel>
-            <ProgressBarOuter theme={theme}>
-              <ProgressBarFill value={progressValues.energy} type="energy" />
-            </ProgressBarOuter>
+            <ProgressBar>
+              <ProgressFill type="energy" value={progressValues.energy} />
+            </ProgressBar>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
-            <ProgressBarOuter theme={theme}>
-              <ProgressBarFill value={progressValues.health} type="health" />
-            </ProgressBarOuter>
+            <ProgressBar>
+              <ProgressFill type="health" value={progressValues.health} />
+            </ProgressBar>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Настроение</ProgressLabel>
-            <ProgressBarOuter theme={theme}>
-              <ProgressBarFill value={progressValues.mood} type="mood" />
-            </ProgressBarOuter>
+            <ProgressBar>
+              <ProgressFill type="mood" value={progressValues.mood} />
+            </ProgressBar>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Сытость</ProgressLabel>
-            <ProgressBarOuter theme={theme}>
-              <ProgressBarFill value={progressValues.fullness} type="fullness" />
-            </ProgressBarOuter>
+            <ProgressBar>
+              <ProgressFill type="fullness" value={progressValues.fullness} />
+            </ProgressBar>
           </ProgressBarContainer>
         </ProgressModal>
       )}

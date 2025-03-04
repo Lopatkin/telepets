@@ -154,10 +154,10 @@ function App() {
     <AppContainer>
       <Header user={user} room={currentRoom} theme={appliedTheme} energy={energy} />
       <Content>
-        {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socketRef.current} joinedRoomsRef={joinedRoomsRef} />} // Изменили на userId
+        {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socketRef.current} joinedRoomsRef={joinedRoomsRef} />}
         {activeTab === 'actions' && <div>Действия</div>}
         {activeTab === 'housing' && <div>Жильё</div>}
-        {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />} // Изменили на userId
+        {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
         {activeTab === 'profile' && (
           <Profile 
             user={user} 
@@ -165,7 +165,7 @@ function App() {
             selectedTheme={theme} 
             telegramTheme={telegramTheme} 
             onThemeChange={handleThemeChange} 
-            progressValues={progressValues} // Передаём значения прогресс-баров
+            progressValues={progressValues} 
           />
         )}
       </Content>
@@ -173,6 +173,5 @@ function App() {
     </AppContainer>
   );
 }
-
 
 export default App;

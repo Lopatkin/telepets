@@ -15,8 +15,7 @@ const io = new Server(server, {
 });
 
 mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
+  // Убраны устаревшие опции useNewUrlParser и useUnifiedTopology
 })
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message));
@@ -56,6 +55,9 @@ const calculateEnergy = (user) => {
 
 // Хранилище активных сокетов для предотвращения дублирования
 const activeSockets = new Map();
+
+// Хранилище времени последнего входа в комнаты для каждого сокета
+const roomJoinTimes = new WeakMap(); // Используем WeakMap для ассоциации сокета с временами входа
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -99,11 +101,18 @@ io.on('connection', (socket) => {
     }
   });
 
-  // В обработчике joinRoom
+  // Обработка входа в комнату с буферизацией
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {
     if (typeof room !== 'string') {
       console.error('Invalid room type:', room);
       return;
+    }
+
+    // Ждём, пока пользователь аутентифицируется (максимум 2 секунды)
+    const maxWait = 2000; // 2 секунды
+    const startTime = Date.now();
+    while (!socket.userData && (Date.now() - startTime < maxWait)) {
+      await new Promise(resolve => setTimeout(resolve, 100)); // Пауза 100 мс
     }
 
     if (!socket.userData || !socket.userData.userId) {
@@ -115,8 +124,12 @@ io.on('connection', (socket) => {
     const userInRoom = Array.from(roomUsers[room] || []).some(user => user.userId === socket.userData.userId);
     const isRejoining = userInRoom;
 
-    // Сохраняем время последнего входа в комнату для этого сокета
-    const lastJoinTime = socket.rooms.get(room)?.joinTime || 0;
+    // Храним время последнего входа в комнату для этого сокета
+    if (!roomJoinTimes.has(socket)) {
+      roomJoinTimes.set(socket, new Map());
+    }
+    const roomTimes = roomJoinTimes.get(socket);
+    const lastJoinTime = roomTimes.get(room) || 0;
     const now = Date.now();
     const JOIN_COOLDOWN = 1000; // Минимальная задержка между входами в одну и ту же комнату (1 секунда)
 
@@ -132,12 +145,8 @@ io.on('connection', (socket) => {
       console.log(`User ${socket.userData.userId} joined room: ${room}`);
     }
 
-    // Обновляем или устанавливаем время последнего входа
-    if (!socket.rooms.get(room)) {
-      socket.rooms.set(room, { joinTime: now });
-    } else {
-      socket.rooms.get(room).joinTime = now;
-    }
+    // Обновляем время последнего входа
+    roomTimes.set(room, now);
 
     // Всегда добавляем пользователя в roomUsers, даже при повторном входе
     if (!roomUsers[room]) roomUsers[room] = new Set();
@@ -240,6 +249,11 @@ io.on('connection', (socket) => {
           io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
         });
       }
+    }
+
+    // Очищаем данные о времени входа в комнаты для этого сокета
+    if (roomJoinTimes.has(socket)) {
+      roomJoinTimes.delete(socket);
     }
   });
 });

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import io from 'socket.io-client';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
@@ -20,8 +19,7 @@ const ChatContainer = styled.div`
 
 const MessagesContainer = styled.div`
   flex: 1;
-  max-height: calc(100% - 60px); /* Вычитаем высоту InputContainer */
-  overflow-y: auto; /* Включаем вертикальный скролл */
+  overflow-y: auto;
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -204,55 +202,88 @@ const UserName = styled.span`
   color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
 `;
 
-function Chat({ userId, room, theme }) {
+function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
-  const socketRef = useRef();
-  const messagesContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const modalRef = useRef(null);
+
+  // Кэш сообщений для каждой комнаты
+  const [messageCache, setMessageCache] = useState({});
+
+  // Получаем photoUrl текущего пользователя из Telegram
+  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+  const currentUserPhotoUrl = telegramUser.photo_url || '';
 
   useEffect(() => {
-    window.Telegram.WebApp.ready();
-    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || {};
+    if (!socket || !room) return;
 
+    console.log('Setting up socket listeners for room:', room, 'with currentUserPhotoUrl:', currentUserPhotoUrl);
+
+    socket.on('messageHistory', (history) => {
+      console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
+      setMessages(prev => {
+        const cached = messageCache[room] || [];
+        const newMessages = [...cached, ...history].sort((a, b) => 
+          new Date(a.timestamp) - new Date(b.timestamp)
+        );
+        setMessageCache(prevCache => ({
+          ...prevCache,
+          [room]: newMessages
+        }));
+        return newMessages;
+      });
+    });
+
+    socket.on('message', (msg) => {
+      console.log('Received message with photoUrl:', { userId: msg.userId, photoUrl: msg.photoUrl });
+      setMessages(prev => {
+        const updated = [...prev, msg];
+        setMessageCache(prevCache => ({
+          ...prevCache,
+          [room]: updated
+        }));
+        return updated;
+      });
+    });
+
+    socket.on('roomUsers', (roomUsers) => {
+      console.log('Received roomUsers with photoUrls:', roomUsers.map(user => ({ userId: user.userId, photoUrl: user.photoUrl })));
+      setUsers(roomUsers);
+    });
+
+    // Аутентификация с использованием данных из Telegram
     const userData = {
       userId: telegramUser.id?.toString() || userId,
       firstName: telegramUser.first_name || '',
       username: telegramUser.username || '',
       lastName: telegramUser.last_name || '',
-      photoUrl: telegramUser.photo_url || ''
+      photoUrl: currentUserPhotoUrl // Используем photoUrl из Telegram
     };
+    socket.emit('auth', userData);
 
-    socketRef.current = io('https://telepets.onrender.com');
-    socketRef.current.on('messageHistory', (history) => {
-      setMessages(history);
-    });
-
-    socketRef.current.on('message', (msg) => {
-      setMessages(prev => [...prev, msg]);
-    });
-
-    socketRef.current.on('roomUsers', (roomUsers) => {
-      setUsers(roomUsers);
-    });
-
-    socketRef.current.emit('auth', userData);
-
-    if (room) {
-      socketRef.current.emit('joinRoom', room);
+    // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
+    const cachedMessages = messageCache[room] || [];
+    if (!joinedRoomsRef.current.has(room) || cachedMessages.length === 0) {
+      console.log('Emitting joinRoom for new room:', room);
+      socket.emit('joinRoom', { room, lastTimestamp: null });
+      joinedRoomsRef.current.add(room); // Отмечаем, что вошли в комнату
+    } else {
+      console.log('Rejoining room:', room, '— fetching updates');
+      const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
+      socket.emit('joinRoom', { room, lastTimestamp });
     }
 
     return () => {
-      socketRef.current.disconnect();
+      console.log('Cleaning up socket listeners for room:', room);
     };
-  }, [userId, room]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, userId, room, joinedRoomsRef]);
 
   useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (container) {
-      container.scrollTop = container.scrollHeight; // Прокрутка вниз
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
@@ -269,13 +300,14 @@ function Chat({ userId, room, theme }) {
   }, []);
 
   const sendMessage = () => {
-    if (message.trim() && room) {
+    if (message.trim() && room && socket) {
       const newMessage = {
         text: message,
         room,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        photoUrl: currentUserPhotoUrl || '' // Используем photoUrl текущего пользователя для отправки
       };
-      socketRef.current.emit('sendMessage', newMessage);
+      socket.emit('sendMessage', newMessage);
       setMessage('');
     }
   };
@@ -290,8 +322,20 @@ function Chat({ userId, room, theme }) {
   };
 
   const getAvatar = (msg) => {
+    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl }); // Лог для отладки
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
-    return msg.photoUrl ? (
+    
+    // Для собственных сообщений используем currentUserPhotoUrl, если msg.photoUrl отсутствует или пуст
+    if (msg.userId === userId) {
+      return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (
+        <Avatar src={currentUserPhotoUrl} alt="Avatar" />
+      ) : (
+        <DefaultAvatar>{initial}</DefaultAvatar>
+      );
+    }
+    
+    // Для сообщений других пользователей используем msg.photoUrl, если есть, иначе дефолтный аватар
+    return msg.photoUrl && msg.photoUrl.trim() ? (
       <Avatar src={msg.photoUrl} alt="Avatar" />
     ) : (
       <DefaultAvatar>{initial}</DefaultAvatar>
@@ -322,7 +366,7 @@ function Chat({ userId, room, theme }) {
 
   return (
     <ChatContainer>
-      <MessagesContainer ref={messagesContainerRef} room={room} theme={theme}>
+      <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId} theme={theme}>
             {msg.userId !== userId && (
@@ -337,6 +381,7 @@ function Chat({ userId, room, theme }) {
             </MessageContent>
           </Message>
         ))}
+        <div ref={messagesEndRef} />
       </MessagesContainer>
       <InputContainer theme={theme}>
         <UsersButton onClick={toggleUserList}>
@@ -358,11 +403,7 @@ function Chat({ userId, room, theme }) {
           <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
-              {user.photoUrl ? (
-                <Avatar src={user.photoUrl} alt="Avatar" />
-              ) : (
-                <DefaultAvatar>{(user.firstName || user.userId || 'U').charAt(0).toUpperCase()}</DefaultAvatar>
-              )}
+              {getAvatar(user)} {/* Сохраняем логику для списка пользователей, но пока не меняем */}
               <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName>
             </UserItem>
           ))}

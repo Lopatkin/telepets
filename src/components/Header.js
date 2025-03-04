@@ -106,7 +106,7 @@ const ProgressBarFill = styled.div`
   background: ${props => {
     switch (props.type) {
       case 'energy': return '#FFA500'; // Жёлто-оранжевый
-      case 'health': return '#8B0000'; // Тёмно-красный
+      case 'health': return '#FF0000'; // Красный
       case 'mood': return '#007AFF'; // Синий
       case 'fullness': return '#32CD32'; // Зелёно-салатовый
       default: return '#007AFF';

@@ -60,10 +60,17 @@ io.on('connection', (socket) => {
     console.log('Authenticated user:', userData.userId);
   });
 
-  socket.on('joinRoom', async (room) => {
+  socket.on('joinRoom', async ({ room, lastTimestamp }) => {
+    if (typeof room !== 'string') {
+      console.error('Invalid room type:', room);
+      return;
+    }
+    
+    // Присоединяем пользователя к комнате
     socket.join(room);
     console.log(`User ${socket.userData.userId} joined room: ${room}`);
-
+  
+    // Обновляем список пользователей в комнате
     if (!roomUsers[room]) roomUsers[room] = new Set();
     roomUsers[room].add({
       userId: socket.userData.userId,
@@ -72,13 +79,25 @@ io.on('connection', (socket) => {
       lastName: socket.userData.lastName,
       photoUrl: socket.userData.photoUrl
     });
-
+  
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
-
+  
     try {
-      const query = room.startsWith('myhome_') 
-        ? { room, userId: socket.userData.userId } 
-        : { room };
+      const query = {};
+      // Проверяем, что room — строка, и выполняем логику
+      if (typeof room === 'string' && room.startsWith('myhome_')) {
+        query.room = room;
+        query.userId = socket.userData.userId;
+      } else {
+        query.room = room;
+      }
+  
+      // Если передан lastTimestamp, добавляем фильтр по времени
+      if (lastTimestamp) {
+        query.timestamp = { $gt: new Date(lastTimestamp) };
+      }
+  
+      // Получаем сообщения из базы данных
       const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
       socket.emit('messageHistory', messages);
     } catch (err) {

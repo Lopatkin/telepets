@@ -216,7 +216,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   useEffect(() => {
     if (!socket || !room) return;
 
-    console.log('Setting up socket listeners for room:', room, 'with photoUrl:', socket.userData?.photoUrl);
+    console.log('Setting up socket listeners for room:', room);
 
     window.Telegram.WebApp.ready();
     const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || {};
@@ -226,7 +226,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       firstName: telegramUser.first_name || '',
       username: telegramUser.username || '',
       lastName: telegramUser.last_name || '',
-      photoUrl: telegramUser.photo_url || '' // Прямо берём photoUrl из Telegram, как в рабочей версии
+      photoUrl: telegramUser.photo_url || '' // Прямо берём photoUrl из Telegram, как в Header.js
     };
 
     socket.on('messageHistory', (history) => {
@@ -268,7 +268,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     const cachedMessages = messageCache[room] || [];
     if (!joinedRoomsRef.current.has(room) || cachedMessages.length === 0) {
       console.log('Emitting joinRoom for new room:', room);
-      socket.emit('joinRoom', { room });
+      socket.emit('joinRoom', { room, lastTimestamp: null });
       joinedRoomsRef.current.add(room); // Отмечаем, что вошли в комнату
     } else {
       console.log('Rejoining room:', room, '— fetching updates');
@@ -304,7 +304,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       const newMessage = {
         text: message,
         room,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        photoUrl: window.Telegram.WebApp.initDataUnsafe?.user?.photo_url || '' // Добавляем photoUrl в отправляемое сообщение
       };
       socket.emit('sendMessage', newMessage);
       setMessage('');
@@ -391,7 +392,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
           <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
-              {getAvatar(user)} {/* Используем getAvatar для пользователей */}
+              {getAvatar(user)} {/* Сохраняем логику для списка пользователей, но пока не меняем */}
               <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName>
             </UserItem>
           ))}

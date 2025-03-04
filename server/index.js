@@ -64,13 +64,13 @@ io.on('connection', (socket) => {
 
   // Обработка аутентификации
   socket.on('auth', async (userData) => {
-    if (!userData || !userData.id) {
+    if (!userData || !userData.userId) { // Изменили на userId вместо id
       console.error('Invalid user data:', userData);
       return;
     }
 
     socket.userData = {
-      userId: userData.id.toString(),
+      userId: userData.userId.toString(),
       firstName: userData.firstName || '',
       username: userData.username || '',
       lastName: userData.lastName || '',
@@ -115,7 +115,7 @@ io.on('connection', (socket) => {
       await new Promise(resolve => setTimeout(resolve, 100)); // Пауза 100 мс
     }
 
-    if (!socket.userData || !socket.userData.userId) {
+    if (!socket.userData || !socket.userData.userId) { // Изменили на userId
       console.error('User not authenticated for room join:', socket.id);
       return;
     }
@@ -151,7 +151,7 @@ io.on('connection', (socket) => {
     // Всегда добавляем пользователя в roomUsers, даже при повторном входе
     if (!roomUsers[room]) roomUsers[room] = new Set();
     roomUsers[room].add({
-      userId: socket.userData.userId,
+      userId: socket.userData.userId, // Изменили на userId
       firstName: socket.userData.firstName,
       username: socket.userData.username,
       lastName: socket.userData.lastName,
@@ -165,7 +165,7 @@ io.on('connection', (socket) => {
       const query = {};
       if (room.startsWith('myhome_')) {
         query.room = room;
-        query.userId = socket.userData.userId;
+        query.userId = socket.userData.userId; // Изменили на userId
       } else {
         query.room = room;
       }
@@ -192,7 +192,7 @@ io.on('connection', (socket) => {
 
     try {
       const newMessage = new Message({
-        userId: socket.userData.userId,
+        userId: socket.userData.userId, // Изменили на userId
         text: message.text,
         firstName: socket.userData.firstName || '',
         username: socket.userData.username || '',
@@ -210,15 +210,15 @@ io.on('connection', (socket) => {
 
   // Обработчик для получения энергии
   socket.on('getEnergy', async () => {
-    if (!socket.userData || !socket.userData.userId) {
+    if (!socket.userData || !socket.userData.userId) { // Изменили на userId
       console.error('User not authenticated for energy request:', socket.id);
       return;
     }
 
     try {
-      let user = await User.findOne({ userId: socket.userData.userId });
+      let user = await User.findOne({ userId: socket.userData.userId }); // Изменили на userId
       if (!user) {
-        user = new User({ userId: socket.userData.userId });
+        user = new User({ userId: socket.userData.userId }); // Изменили на userId
       }
       const newEnergy = calculateEnergy(user);
       user.energy = newEnergy;
@@ -234,15 +234,15 @@ io.on('connection', (socket) => {
   socket.on('disconnect', (reason) => {
     console.log('User disconnected:', socket.id, 'Reason:', reason);
 
-    if (socket.userData && socket.userData.userId) {
-      if (activeSockets.get(socket.userData.userId) === socket) {
-        activeSockets.delete(socket.userData.userId);
-        console.log(`Removed socket for user ${socket.userData.userId}`);
+    if (socket.userData && socket.userData.userId) { // Изменили на userId
+      if (activeSockets.get(socket.userData.userId) === socket) { // Изменили на userId
+        activeSockets.delete(socket.userData.userId); // Изменили на userId
+        console.log(`Removed socket for user ${socket.userData.userId}`); // Изменили на userId
 
         // Удаляем пользователя из всех комнат
         Object.keys(roomUsers).forEach(room => {
           roomUsers[room].forEach(user => {
-            if (user.userId === socket.userData.userId) {
+            if (user.userId === socket.userData.userId) { // Изменили на userId
               roomUsers[room].delete(user);
             }
           });

@@ -74,9 +74,9 @@ io.on('connection', (socket) => {
       firstName: userData.firstName || '',
       username: userData.username || '',
       lastName: userData.lastName || '',
-      photoUrl: userData.photoUrl || ''
+      photoUrl: userData.photoUrl || '' // Убедимся, что photoUrl всегда есть, даже если пустой
     };
-    console.log('Authenticated user:', socket.userData.userId);
+    console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
 
     if (activeSockets.has(socket.userData.userId)) {
       console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
@@ -155,7 +155,7 @@ io.on('connection', (socket) => {
       firstName: socket.userData.firstName,
       username: socket.userData.username,
       lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl
+      photoUrl: socket.userData.photoUrl // Убедимся, что photoUrl передаётся
     });
 
     // Обновляем список пользователей в комнате
@@ -197,9 +197,9 @@ io.on('connection', (socket) => {
         firstName: socket.userData.firstName || '',
         username: socket.userData.username || '',
         lastName: socket.userData.lastName || '',
-        photoUrl: socket.userData.photoUrl || '',
+        photoUrl: socket.userData.photoUrl || '', // Убедимся, что photoUrl всегда сохраняется, даже если пустой
         room: message.room,
-        timestamp: message.timestamp
+        timestamp: message.timestamp || new Date().toISOString() // Убедимся, что timestamp всегда есть
       });
       await newMessage.save();
       io.to(message.room).emit('message', newMessage);

@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGODB_URI, {
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message));
 
-// Схема сообщений
+// Схема сообщений (без изменений)
 const messageSchema = new mongoose.Schema({
   userId: String,
   text: String,
@@ -32,8 +32,25 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// Хранилище активных пользователей по комнатам
+// Новая схема пользователя для энергии
+const userSchema = new mongoose.Schema({
+  userId: { type: String, unique: true },
+  energy: { type: Number, default: 100, min: 0, max: 100 },
+  lastUpdated: { type: Date, default: Date.now }
+});
+const User = mongoose.model('User', userSchema);
+
+// Хранилище активных пользователей по комнатам (без изменений)
 const roomUsers = {};
+
+// Функция для расчёта энергии
+const calculateEnergy = (user) => {
+  const now = new Date();
+  const lastUpdated = new Date(user.lastUpdated);
+  const minutesPassed = Math.floor((now - lastUpdated) / 60000); // минут прошло
+  const decrease = Math.floor(minutesPassed / 1); // 1% каждые 10 минут
+  return Math.max(user.energy - decrease, 0); // не ниже 0
+};
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -43,7 +60,7 @@ io.on('connection', (socket) => {
     console.log('Authenticated user:', userData.userId);
   });
 
-  socket.on('joinRoom', async ({ room, lastTimestamp }) => {
+  socket.on('joinRoom', async (room) => {
     socket.join(room);
     console.log(`User ${socket.userData.userId} joined room: ${room}`);
 
@@ -62,15 +79,7 @@ io.on('connection', (socket) => {
       const query = room.startsWith('myhome_') 
         ? { room, userId: socket.userData.userId } 
         : { room };
-      
-      // Если передан lastTimestamp, запрашиваем только новые сообщения
-      if (lastTimestamp) {
-        query.timestamp = { $gt: new Date(lastTimestamp) };
-      }
-
-      const messages = await Message.find(query)
-        .sort({ timestamp: 1 })
-        .limit(lastTimestamp ? undefined : 100); // 100, если нет фильтра
+      const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
       socket.emit('messageHistory', messages);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);
@@ -93,6 +102,23 @@ io.on('connection', (socket) => {
       io.to(message.room).emit('message', newMessage);
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);
+    }
+  });
+
+  // Обработчик для получения энергии
+  socket.on('getEnergy', async () => {
+    try {
+      let user = await User.findOne({ userId: socket.userData.userId });
+      if (!user) {
+        user = new User({ userId: socket.userData.userId });
+      }
+      const newEnergy = calculateEnergy(user);
+      user.energy = newEnergy;
+      user.lastUpdated = new Date();
+      await user.save();
+      socket.emit('energyUpdate', newEnergy); // отправка клиенту
+    } catch (err) {
+      console.error('Error updating energy:', err.message, err.stack);
     }
   });
 

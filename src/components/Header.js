@@ -93,35 +93,13 @@ const ProgressLabel = styled.span`
   width: 60px;
 `;
 
-const ProgressBar = styled.div`
+const ProgressBar = styled.progress`
   width: 120px;
   height: 8px;
-  background: ${props => props.theme === 'dark' ? '#444' : '#ddd'};
   border-radius: 4px;
-  overflow: hidden;
 `;
 
-const ProgressFill = styled.div`
-  width: ${props => props.value}%;
-  height: 100%;
-  background: ${props => {
-    switch (props.type) {
-      case 'energy':
-        return '#FFA500';
-      case 'health':
-        return '#FF0000';
-      case 'mood':
-        return '#007AFF';
-      case 'fullness':
-        return '#32CD32';
-      default:
-        return '#007AFF';
-    }
-  }};
-  transition: width 0.3s ease;
-`;
-
-function Header({ user, room, theme }) {
+function Header({ user, room, theme, energy }) {
   const [showProgress, setShowProgress] = useState(false);
 
   const roomName = room 
@@ -133,9 +111,8 @@ function Header({ user, room, theme }) {
   const firstName = telegramUser.first_name || user.firstName || 'User';
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
 
-  // Статические значения прогресс-баров (энергия временно убрана)
   const progressValues = {
-    energy: 50,
+    energy: energy,
     health: 50,
     mood: 50,
     fullness: 50
@@ -175,27 +152,19 @@ function Header({ user, room, theme }) {
         <ProgressModal theme={theme}>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Энергия</ProgressLabel>
-            <ProgressBar>
-              <ProgressFill type="energy" value={progressValues.energy} />
-            </ProgressBar>
+            <ProgressBar value={progressValues.energy} max="100" />
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
-            <ProgressBar>
-              <ProgressFill type="health" value={progressValues.health} />
-            </ProgressBar>
+            <ProgressBar value={progressValues.health} max="100" />
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Настроение</ProgressLabel>
-            <ProgressBar>
-              <ProgressFill type="mood" value={progressValues.mood} />
-            </ProgressBar>
+            <ProgressBar value={progressValues.mood} max="100" />
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Сытость</ProgressLabel>
-            <ProgressBar>
-              <ProgressFill type="fullness" value={progressValues.fullness} />
-            </ProgressBar>
+            <ProgressBar value={progressValues.fullness} max="100" />
           </ProgressBarContainer>
         </ProgressModal>
       )}

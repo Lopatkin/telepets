@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import io from 'socket.io-client';
 import Chat from './components/Chat';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -23,6 +24,9 @@ function App() {
   const [currentRoom, setCurrentRoom] = useState(null);
   const [theme, setTheme] = useState('telegram');
   const [telegramTheme, setTelegramTheme] = useState('light');
+  const [energy, setEnergy] = useState(100); // Энергия пользователя
+
+  const socket = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -41,20 +45,42 @@ function App() {
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
         setTheme(savedTheme);
         setCurrentRoom(savedRoom || `myhome_${userData.id}`);
+
+        socket.emit('auth', userData);
       } else {
         console.warn('Telegram Web App data not available');
         setUser({ id: 'test123', firstName: 'Test User' });
         setTelegramTheme('light');
         setTheme(savedTheme);
         setCurrentRoom(savedRoom || 'myhome_test123');
+        socket.emit('auth', { userId: 'test123', firstName: 'Test User' });
       }
+
+      // Получение обновлений энергии
+      socket.on('energyUpdate', (newEnergy) => {
+        setEnergy(newEnergy);
+      });
+
+      // Запрос энергии при входе
+      socket.emit('getEnergy');
+
+      // Периодический запрос каждые 10 минут
+      const interval = setInterval(() => {
+        socket.emit('getEnergy');
+      }, 10 * 60 * 1000);
+
+      return () => {
+        socket.disconnect();
+        clearInterval(interval);
+      };
     }
-  }, []);
+  }, [socket]);
 
   const handleRoomSelect = (room) => {
     setCurrentRoom(room);
     localStorage.setItem('currentRoom', room);
     setActiveTab('chat');
+    socket.emit('joinRoom', room);
   };
 
   const handleThemeChange = (newTheme) => {
@@ -70,19 +96,12 @@ function App() {
 
   return (
     <AppContainer>
-      <Header user={user} room={currentRoom} theme={appliedTheme} />
+      <Header user={user} room={currentRoom} theme={appliedTheme} energy={energy} />
       <Content>
         {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} theme={appliedTheme} />}
         {activeTab === 'actions' && <div>Действия</div>}
         {activeTab === 'housing' && <div>Жильё</div>}
-        {activeTab === 'map' && (
-          <Map 
-            userId={user.id} 
-            onRoomSelect={handleRoomSelect} 
-            theme={appliedTheme} 
-            currentRoom={currentRoom} // Передаём текущую комнату
-          />
-        )}
+        {activeTab === 'map' && <Map userId={user.id} onRoomSelect={handleRoomSelect} theme={appliedTheme} />}
         {activeTab === 'profile' && (
           <Profile 
             user={user} 

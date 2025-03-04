@@ -57,7 +57,7 @@ const calculateEnergy = (user) => {
 const activeSockets = new Map();
 
 // Хранилище времени последнего входа в комнаты для каждого сокета
-const roomJoinTimes = new WeakMap(); // Используем WeakMap для ассоциации сокета с временами входа
+const roomJoinTimes = new WeakMap();
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -148,7 +148,18 @@ io.on('connection', (socket) => {
     // Обновляем время последнего входа
     roomTimes.set(room, now);
 
-    // Всегда добавляем пользователя в roomUsers, даже при повторном входе
+    // Очищаем старые записи пользователя в roomUsers, чтобы избежать дублирования
+    if (roomUsers[room]) {
+      const usersArray = Array.from(roomUsers[room]);
+      roomUsers[room].clear(); // Очищаем текущий Set
+      usersArray.forEach(user => {
+        if (user.userId !== socket.userData.userId) {
+          roomUsers[room].add(user); // Добавляем обратно всех, кроме текущего пользователя
+        }
+      });
+    }
+
+    // Добавляем пользователя один раз
     if (!roomUsers[room]) roomUsers[room] = new Set();
     roomUsers[room].add({
       userId: socket.userData.userId,

@@ -62,14 +62,13 @@ io.on('connection', (socket) => {
 
   // Обработка аутентификации
   socket.on('auth', async (userData) => {
-    if (!userData || !userData.id) { // Проверяем наличие id в userData
+    if (!userData || !userData.id) {
       console.error('Invalid user data:', userData);
       return;
     }
 
-    // Сохраняем userData в socket.userData
     socket.userData = {
-      userId: userData.id.toString(), // Убедимся, что userId — строка
+      userId: userData.id.toString(),
       firstName: userData.firstName || '',
       username: userData.username || '',
       lastName: userData.lastName || '',
@@ -77,17 +76,14 @@ io.on('connection', (socket) => {
     };
     console.log('Authenticated user:', socket.userData.userId);
 
-    // Проверяем, есть ли уже активное соединение для этого пользователя
     if (activeSockets.has(socket.userData.userId)) {
       console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
       const oldSocket = activeSockets.get(socket.userData.userId);
-      oldSocket.disconnect(); // Отключаем старое соединение
+      oldSocket.disconnect();
     }
 
-    // Сохраняем новое соединение
     activeSockets.set(socket.userData.userId, socket);
 
-    // Обновляем или создаём пользователя для энергии
     try {
       let user = await User.findOne({ userId: socket.userData.userId });
       if (!user) {
@@ -97,7 +93,7 @@ io.on('connection', (socket) => {
       user.energy = newEnergy;
       user.lastUpdated = new Date();
       await user.save();
-      socket.emit('energyUpdate', newEnergy); // Отправляем начальное значение энергии
+      socket.emit('energyUpdate', newEnergy);
     } catch (err) {
       console.error('Error initializing energy:', err.message, err.stack);
     }
@@ -110,10 +106,21 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Проверяем, аутентифицирован ли пользователь
     if (!socket.userData || !socket.userData.userId) {
       console.error('User not authenticated for room join:', socket.id);
       return;
+    }
+
+    // Проверяем, уже ли пользователь в этой комнате
+    if (roomUsers[room] && roomUsers[room].has({
+      userId: socket.userData.userId,
+      firstName: socket.userData.firstName,
+      username: socket.userData.username,
+      lastName: socket.userData.lastName,
+      photoUrl: socket.userData.photoUrl
+    })) {
+      console.log(`User ${socket.userData.userId} already in room: ${room}`);
+      return; // Не дублируем логику, если пользователь уже в комнате
     }
 
     socket.join(room);
@@ -202,21 +209,20 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id, 'Reason:', reason);
 
     if (socket.userData && socket.userData.userId) {
-      // Удаляем сокет из активных, если он был связан с пользователем
       if (activeSockets.get(socket.userData.userId) === socket) {
         activeSockets.delete(socket.userData.userId);
         console.log(`Removed socket for user ${socket.userData.userId}`);
-      }
 
-      // Удаляем пользователя из всех комнат
-      Object.keys(roomUsers).forEach(room => {
-        roomUsers[room].forEach(user => {
-          if (user.userId === socket.userData.userId) {
-            roomUsers[room].delete(user);
-          }
+        // Удаляем пользователя из всех комнат
+        Object.keys(roomUsers).forEach(room => {
+          roomUsers[room].forEach(user => {
+            if (user.userId === socket.userData.userId) {
+              roomUsers[room].delete(user);
+            }
+          });
+          io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
         });
-        io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
-      });
+      }
     }
   });
 });

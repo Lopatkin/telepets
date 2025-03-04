@@ -25,7 +25,7 @@ function App() {
   const [theme, setTheme] = useState('telegram');
   const [telegramTheme, setTelegramTheme] = useState('light');
   const [energy, setEnergy] = useState(100); // Энергия пользователя
-  const socketRef = useRef(null); // Сохраняем сокет в ref, чтобы избежать переподключений
+  const socketRef = useRef(null); // Сохраняем сокет в ref
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -103,12 +103,11 @@ function App() {
   }, []); // Пустой массив зависимостей — эффект выполняется один раз при монтировании
 
   const handleRoomSelect = (room) => {
+    if (!room || !socketRef.current) return; // Проверка на валидность room и socket
     setCurrentRoom(room);
     localStorage.setItem('currentRoom', room);
     setActiveTab('chat');
-    if (socketRef.current) {
-      socketRef.current.emit('joinRoom', { room, lastTimestamp: null }); // Передаём null для полной загрузки
-    }
+    socketRef.current.emit('joinRoom', { room, lastTimestamp: null }); // Отправляем только один раз
   };
 
   const handleThemeChange = (newTheme) => {

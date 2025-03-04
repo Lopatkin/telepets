@@ -216,13 +216,14 @@ function Chat({ userId, room, theme, socket }) {
   useEffect(() => {
     if (!socket) return;
 
+    console.log('Setting up socket listeners for room:', room);
+
     window.Telegram.WebApp.ready();
 
-    // Убираем неиспользуемую переменную userData
     socket.on('messageHistory', (history) => {
       setMessages(prev => {
         const cached = messageCache[room] || [];
-        const newMessages = [...cached, ...history].sort((a, b) => 
+        const newMessages = [...cached, ...history].sort((a, b) =>
           new Date(a.timestamp) - new Date(b.timestamp)
         );
         setMessageCache(prevCache => ({
@@ -249,6 +250,7 @@ function Chat({ userId, room, theme, socket }) {
     });
 
     if (room) {
+      console.log('Emitting joinRoom for room:', room);
       const cachedMessages = messageCache[room] || [];
       if (cachedMessages.length > 0) {
         setMessages(cachedMessages);
@@ -260,11 +262,10 @@ function Chat({ userId, room, theme, socket }) {
     }
 
     return () => {
-      // Очистка обработчиков не требуется, так как сокет управляется в App.js
+      console.log('Cleaning up socket listeners for room:', room);
     };
-    // Добавляем messageCache в зависимости, но это может вызвать бесконечный цикл
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, userId, room]); // Убрали messageCache из зависимостей, добавили комментарий ESLint
+  }, [socket, userId, room]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

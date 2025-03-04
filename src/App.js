@@ -38,7 +38,7 @@ function App() {
       const savedRoom = localStorage.getItem('currentRoom');
       if (telegramData?.user?.id) {
         const userData = {
-          id: telegramData.user.id.toString(),
+          userId: telegramData.user.id.toString(), // Изменили на userId
           firstName: telegramData.user.first_name || 'User',
           username: telegramData.user.username || '',
           lastName: telegramData.user.last_name || ''
@@ -46,7 +46,7 @@ function App() {
         setUser(userData);
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
         setTheme(savedTheme);
-        setCurrentRoom(savedRoom || `myhome_${userData.id}`);
+        setCurrentRoom(savedRoom || `myhome_${userData.userId}`); // Изменили на userId
 
         // Инициализируем сокет один раз
         socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
@@ -79,7 +79,7 @@ function App() {
         };
       } else {
         console.warn('Telegram Web App data not available');
-        const testUser = { id: 'test123', firstName: 'Test User' };
+        const testUser = { userId: 'test123', firstName: 'Test User' }; // Изменили на userId
         setUser(testUser);
         setTelegramTheme('light');
         setTheme(savedTheme);
@@ -142,14 +142,22 @@ function App() {
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
 
+  // Фиктивные значения для прогресс-баров
+  const progressValues = {
+    energy,
+    health: 50,
+    mood: 50,
+    fullness: 50
+  };
+
   return (
     <AppContainer>
       <Header user={user} room={currentRoom} theme={appliedTheme} energy={energy} />
       <Content>
-        {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} theme={appliedTheme} socket={socketRef.current} joinedRoomsRef={joinedRoomsRef} />}
+        {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socketRef.current} joinedRoomsRef={joinedRoomsRef} />} // Изменили на userId
         {activeTab === 'actions' && <div>Действия</div>}
         {activeTab === 'housing' && <div>Жильё</div>}
-        {activeTab === 'map' && <Map userId={user.id} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
+        {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />} // Изменили на userId
         {activeTab === 'profile' && (
           <Profile 
             user={user} 
@@ -157,6 +165,7 @@ function App() {
             selectedTheme={theme} 
             telegramTheme={telegramTheme} 
             onThemeChange={handleThemeChange} 
+            progressValues={progressValues} // Передаём значения прогресс-баров
           />
         )}
       </Content>

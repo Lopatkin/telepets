@@ -256,7 +256,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
 
     // Аутентификация с использованием данных из Telegram
     const userData = {
-      userId: telegramUser.id?.toString() || userId,
+      userId: telegramUser.id?.toString() || userId, // Изменили на userId
       firstName: telegramUser.first_name || '',
       username: telegramUser.username || '',
       lastName: telegramUser.last_name || '',
@@ -313,12 +313,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   };
 
   const getAuthorName = (msg) => {
-    if (msg.userId === userId) return '';
+    if (msg.userId === userId) return ''; // Изменили на userId
     const parts = [];
     if (msg.firstName) parts.push(msg.firstName);
     if (msg.username) parts.push(`@${msg.username}`);
     if (msg.lastName) parts.push(msg.lastName);
-    return parts.length > 0 ? parts.join(' ') : `User ${msg.userId}`;
+    return parts.length > 0 ? parts.join(' ') : `User ${msg.userId}`; // Изменили на userId
   };
 
   const getAvatar = (msg) => {
@@ -326,7 +326,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
     
     // Для собственных сообщений используем currentUserPhotoUrl, если msg.photoUrl отсутствует или пуст
-    if (msg.userId === userId) {
+    if (msg.userId === userId) { // Изменили на userId
       return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (
         <Avatar src={currentUserPhotoUrl} alt="Avatar" />
       ) : (
@@ -368,15 +368,15 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     <ChatContainer>
       <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
-          <Message key={index} isOwn={msg.userId === userId} theme={theme}>
-            {msg.userId !== userId && (
+          <Message key={index} isOwn={msg.userId === userId} theme={theme}> // Изменили на userId
+            {msg.userId !== userId && ( // Изменили на userId
               <MessageHeader>
                 {getAvatar(msg)}
                 <MessageName theme={theme}>{getAuthorName(msg)}</MessageName>
               </MessageHeader>
             )}
             <MessageContent>
-              <MessageText theme={theme} isOwn={msg.userId === userId}>{msg.text}</MessageText>
+              <MessageText theme={theme} isOwn={msg.userId === userId}>{msg.text}</MessageText> // Изменили на userId
               <Timestamp theme={theme}>{formatTimestamp(msg.timestamp)}</Timestamp>
             </MessageContent>
           </Message>
@@ -404,7 +404,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
           {users.map((user, index) => (
             <UserItem key={index}>
               {getAvatar(user)} {/* Сохраняем логику для списка пользователей, но пока не меняем */}
-              <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName>
+              <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName> // Изменили на userId
             </UserItem>
           ))}
         </UserListModal>

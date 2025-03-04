@@ -62,29 +62,36 @@ io.on('connection', (socket) => {
 
   // Обработка аутентификации
   socket.on('auth', async (userData) => {
-    if (!userData || !userData.userId) {
+    if (!userData || !userData.id) { // Проверяем наличие id в userData
       console.error('Invalid user data:', userData);
       return;
     }
 
-    socket.userData = userData;
-    console.log('Authenticated user:', userData.userId);
+    // Сохраняем userData в socket.userData
+    socket.userData = {
+      userId: userData.id.toString(), // Убедимся, что userId — строка
+      firstName: userData.firstName || '',
+      username: userData.username || '',
+      lastName: userData.lastName || '',
+      photoUrl: userData.photoUrl || ''
+    };
+    console.log('Authenticated user:', socket.userData.userId);
 
     // Проверяем, есть ли уже активное соединение для этого пользователя
-    if (activeSockets.has(userData.userId)) {
-      console.log(`User ${userData.userId} already connected with socket ${activeSockets.get(userData.userId)}. Disconnecting old socket.`);
-      const oldSocket = activeSockets.get(userData.userId);
+    if (activeSockets.has(socket.userData.userId)) {
+      console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
+      const oldSocket = activeSockets.get(socket.userData.userId);
       oldSocket.disconnect(); // Отключаем старое соединение
     }
 
     // Сохраняем новое соединение
-    activeSockets.set(userData.userId, socket);
+    activeSockets.set(socket.userData.userId, socket);
 
     // Обновляем или создаём пользователя для энергии
     try {
-      let user = await User.findOne({ userId: userData.userId });
+      let user = await User.findOne({ userId: socket.userData.userId });
       if (!user) {
-        user = new User({ userId: userData.userId });
+        user = new User({ userId: socket.userData.userId });
       }
       const newEnergy = calculateEnergy(user);
       user.energy = newEnergy;
@@ -103,8 +110,14 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Проверяем, аутентифицирован ли пользователь
+    if (!socket.userData || !socket.userData.userId) {
+      console.error('User not authenticated for room join:', socket.id);
+      return;
+    }
+
     socket.join(room);
-    console.log(`User ${socket.userData?.userId} joined room: ${room}`);
+    console.log(`User ${socket.userData.userId} joined room: ${room}`);
 
     if (!roomUsers[room]) roomUsers[room] = new Set();
     roomUsers[room].add({
@@ -164,6 +177,11 @@ io.on('connection', (socket) => {
 
   // Обработчик для получения энергии
   socket.on('getEnergy', async () => {
+    if (!socket.userData || !socket.userData.userId) {
+      console.error('User not authenticated for energy request:', socket.id);
+      return;
+    }
+
     try {
       let user = await User.findOne({ userId: socket.userData.userId });
       if (!user) {

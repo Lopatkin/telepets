@@ -213,17 +213,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   // Кэш сообщений для каждой комнаты
   const [messageCache, setMessageCache] = useState({});
 
-  // Получаем photoUrl текущего пользователя из Telegram
-  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-  const currentUserPhotoUrl = telegramUser.photo_url || '';
-
   useEffect(() => {
     if (!socket || !room) return;
 
-    console.log('Setting up socket listeners for room:', room, 'with currentUserPhotoUrl:', currentUserPhotoUrl);
+    console.log('Setting up socket listeners for room:', room);
+
+    window.Telegram.WebApp.ready();
 
     socket.on('messageHistory', (history) => {
-      console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
       setMessages(prev => {
         const cached = messageCache[room] || [];
         const newMessages = [...cached, ...history].sort((a, b) => 
@@ -238,7 +235,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     });
 
     socket.on('message', (msg) => {
-      console.log('Received message with photoUrl:', { userId: msg.userId, photoUrl: msg.photoUrl });
       setMessages(prev => {
         const updated = [...prev, msg];
         setMessageCache(prevCache => ({
@@ -250,25 +246,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     });
 
     socket.on('roomUsers', (roomUsers) => {
-      console.log('Received roomUsers with photoUrls:', roomUsers.map(user => ({ userId: user.userId, photoUrl: user.photoUrl })));
       setUsers(roomUsers);
     });
-
-    // Аутентификация с использованием данных из Telegram
-    const userData = {
-      userId: telegramUser.id?.toString() || userId,
-      firstName: telegramUser.first_name || '',
-      username: telegramUser.username || '',
-      lastName: telegramUser.last_name || '',
-      photoUrl: currentUserPhotoUrl // Используем photoUrl из Telegram
-    };
-    socket.emit('auth', userData);
 
     // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
     const cachedMessages = messageCache[room] || [];
     if (!joinedRoomsRef.current.has(room) || cachedMessages.length === 0) {
       console.log('Emitting joinRoom for new room:', room);
-      socket.emit('joinRoom', { room, lastTimestamp: null });
+      socket.emit('joinRoom', { room });
       joinedRoomsRef.current.add(room); // Отмечаем, что вошли в комнату
     } else {
       console.log('Rejoining room:', room, '— fetching updates');
@@ -280,7 +265,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       console.log('Cleaning up socket listeners for room:', room);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, userId, room, joinedRoomsRef]);
+  }, [socket, userId, room, joinedRoomsRef]); // Добавили joinedRoomsRef в зависимости
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -304,8 +289,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       const newMessage = {
         text: message,
         room,
-        timestamp: new Date().toISOString(),
-        photoUrl: currentUserPhotoUrl || '' // Используем photoUrl текущего пользователя для отправки
+        timestamp: new Date().toISOString()
       };
       socket.emit('sendMessage', newMessage);
       setMessage('');
@@ -322,20 +306,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   };
 
   const getAvatar = (msg) => {
-    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl }); // Лог для отладки
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
-    
-    // Для собственных сообщений используем currentUserPhotoUrl, если msg.photoUrl отсутствует или пуст
-    if (msg.userId === userId) {
-      return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (
-        <Avatar src={currentUserPhotoUrl} alt="Avatar" />
-      ) : (
-        <DefaultAvatar>{initial}</DefaultAvatar>
-      );
-    }
-    
-    // Для сообщений других пользователей используем msg.photoUrl, если есть, иначе дефолтный аватар
-    return msg.photoUrl && msg.photoUrl.trim() ? (
+    return msg.photoUrl ? (
       <Avatar src={msg.photoUrl} alt="Avatar" />
     ) : (
       <DefaultAvatar>{initial}</DefaultAvatar>
@@ -403,7 +375,11 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
           <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
-              {getAvatar(user)} {/* Сохраняем логику для списка пользователей, но пока не меняем */}
+              {user.photoUrl ? (
+                <Avatar src={user.photoUrl} alt="Avatar" />
+              ) : (
+                <DefaultAvatar>{(user.firstName || user.userId || 'U').charAt(0).toUpperCase()}</DefaultAvatar>
+              )}
               <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName>
             </UserItem>
           ))}

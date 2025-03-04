@@ -27,7 +27,7 @@ const messageSchema = new mongoose.Schema({
   firstName: String,
   username: String,
   lastName: String,
-  photoUrl: String, // Убедимся, что поле photoUrl есть в схеме
+  photoUrl: String,
   room: String,
   timestamp: { type: Date, default: Date.now }
 });
@@ -57,7 +57,7 @@ const calculateEnergy = (user) => {
 const activeSockets = new Map();
 
 // Хранилище времени последнего входа в комнаты для каждого сокета
-const roomJoinTimes = new WeakMap();
+const roomJoinTimes = new WeakMap(); // Используем WeakMap для ассоциации сокета с временами входа
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -74,9 +74,9 @@ io.on('connection', (socket) => {
       firstName: userData.firstName || '',
       username: userData.username || '',
       lastName: userData.lastName || '',
-      photoUrl: userData.photoUrl || '' // Прямо берём photoUrl из userData, как в рабочей версии
+      photoUrl: userData.photoUrl || ''
     };
-    console.log('Authenticated user:', socket.userData.userId, 'with photoUrl:', socket.userData.photoUrl);
+    console.log('Authenticated user:', socket.userData.userId);
 
     if (activeSockets.has(socket.userData.userId)) {
       console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
@@ -148,25 +148,14 @@ io.on('connection', (socket) => {
     // Обновляем время последнего входа
     roomTimes.set(room, now);
 
-    // Очищаем старые записи пользователя в roomUsers, чтобы избежать дублирования
-    if (roomUsers[room]) {
-      const usersArray = Array.from(roomUsers[room]);
-      roomUsers[room].clear(); // Очищаем текущий Set
-      usersArray.forEach(user => {
-        if (user.userId !== socket.userData.userId) {
-          roomUsers[room].add(user); // Добавляем обратно всех, кроме текущего пользователя
-        }
-      });
-    }
-
-    // Добавляем пользователя один раз
+    // Всегда добавляем пользователя в roomUsers, даже при повторном входе
     if (!roomUsers[room]) roomUsers[room] = new Set();
     roomUsers[room].add({
       userId: socket.userData.userId,
       firstName: socket.userData.firstName,
       username: socket.userData.username,
       lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl // Прямо берём photoUrl из socket.userData, как в рабочей версии
+      photoUrl: socket.userData.photoUrl
     });
 
     // Обновляем список пользователей в комнате
@@ -188,8 +177,6 @@ io.on('connection', (socket) => {
       }
 
       const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
-      // Простая передача сообщений, как в рабочей версии, без дополнительных преобразований
-      console.log('Sending messageHistory with photoUrls:', messages.map(msg => msg.photoUrl));
       socket.emit('messageHistory', messages);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);
@@ -210,12 +197,11 @@ io.on('connection', (socket) => {
         firstName: socket.userData.firstName || '',
         username: socket.userData.username || '',
         lastName: socket.userData.lastName || '',
-        photoUrl: socket.userData.photoUrl || '', // Прямо берём photoUrl из socket.userData, как в рабочей версии
+        photoUrl: socket.userData.photoUrl || '',
         room: message.room,
         timestamp: message.timestamp
       });
       await newMessage.save();
-      console.log('Sending message with photoUrl:', newMessage.photoUrl);
       io.to(message.room).emit('message', newMessage);
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);

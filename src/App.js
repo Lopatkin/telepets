@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
 import Chat from './components/Chat';
@@ -25,8 +25,7 @@ function App() {
   const [theme, setTheme] = useState('telegram');
   const [telegramTheme, setTelegramTheme] = useState('light');
   const [energy, setEnergy] = useState(100); // Энергия пользователя
-
-  const socket = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
+  const socketRef = useRef(null); // Сохраняем сокет в ref, чтобы избежать переподключений
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -46,41 +45,70 @@ function App() {
         setTheme(savedTheme);
         setCurrentRoom(savedRoom || `myhome_${userData.id}`);
 
-        socket.emit('auth', userData);
+        // Инициализируем сокет один раз
+        socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
+        
+        socketRef.current.on('connect', () => console.log('Socket connected:', socketRef.current.id));
+        socketRef.current.on('disconnect', (reason) => console.log('Socket disconnected:', reason));
+
+        // Аутентификация
+        socketRef.current.emit('auth', userData);
+
+        // Получение обновлений энергии
+        socketRef.current.on('energyUpdate', (newEnergy) => {
+          setEnergy(newEnergy);
+        });
+
+        // Запрос энергии при входе
+        socketRef.current.emit('getEnergy');
+
+        // Периодический запрос энергии каждые 10 минут
+        const energyInterval = setInterval(() => {
+          socketRef.current.emit('getEnergy');
+        }, 10 * 60 * 1000);
+
+        return () => {
+          if (socketRef.current) {
+            socketRef.current.disconnect();
+            console.log('Socket disconnected on unmount');
+          }
+          clearInterval(energyInterval);
+        };
       } else {
         console.warn('Telegram Web App data not available');
-        setUser({ id: 'test123', firstName: 'Test User' });
+        const testUser = { id: 'test123', firstName: 'Test User' };
+        setUser(testUser);
         setTelegramTheme('light');
         setTheme(savedTheme);
         setCurrentRoom(savedRoom || 'myhome_test123');
-        socket.emit('auth', { userId: 'test123', firstName: 'Test User' });
+
+        // Инициализация для тестового пользователя
+        socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
+        socketRef.current.emit('auth', testUser);
+        socketRef.current.on('energyUpdate', (newEnergy) => setEnergy(newEnergy));
+        socketRef.current.emit('getEnergy');
+
+        const energyInterval = setInterval(() => {
+          socketRef.current.emit('getEnergy');
+        }, 10 * 60 * 1000);
+
+        return () => {
+          if (socketRef.current) {
+            socketRef.current.disconnect();
+          }
+          clearInterval(energyInterval);
+        };
       }
-
-      // Получение обновлений энергии
-      socket.on('energyUpdate', (newEnergy) => {
-        setEnergy(newEnergy);
-      });
-
-      // Запрос энергии при входе
-      socket.emit('getEnergy');
-
-      // Периодический запрос каждые 10 минут
-      const interval = setInterval(() => {
-        socket.emit('getEnergy');
-      }, 10 * 60 * 1000);
-
-      return () => {
-        socket.disconnect();
-        clearInterval(interval);
-      };
     }
-  }, [socket]);
+  }, []); // Пустой массив зависимостей — эффект выполняется один раз при монтировании
 
   const handleRoomSelect = (room) => {
     setCurrentRoom(room);
     localStorage.setItem('currentRoom', room);
     setActiveTab('chat');
-    socket.emit('joinRoom', room);
+    if (socketRef.current) {
+      socketRef.current.emit('joinRoom', { room, lastTimestamp: null }); // Передаём null для полной загрузки
+    }
   };
 
   const handleThemeChange = (newTheme) => {
@@ -98,10 +126,10 @@ function App() {
     <AppContainer>
       <Header user={user} room={currentRoom} theme={appliedTheme} energy={energy} />
       <Content>
-        {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} theme={appliedTheme} />}
+        {activeTab === 'chat' && <Chat userId={user.id} room={currentRoom} theme={appliedTheme} socket={socketRef.current} />}
         {activeTab === 'actions' && <div>Действия</div>}
         {activeTab === 'housing' && <div>Жильё</div>}
-        {activeTab === 'map' && <Map userId={user.id} onRoomSelect={handleRoomSelect} theme={appliedTheme} />}
+        {activeTab === 'map' && <Map userId={user.id} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
         {activeTab === 'profile' && (
           <Profile 
             user={user} 

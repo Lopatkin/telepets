@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import io from 'socket.io-client';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
@@ -203,12 +202,11 @@ const UserName = styled.span`
   color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
 `;
 
-function Chat({ userId, room, theme }) {
+function Chat({ userId, room, theme, socket }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
-  const socketRef = useRef();
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
 
@@ -216,6 +214,8 @@ function Chat({ userId, room, theme }) {
   const [messageCache, setMessageCache] = useState({});
 
   useEffect(() => {
+    if (!socket) return;
+
     window.Telegram.WebApp.ready();
     const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || {};
 
@@ -227,9 +227,8 @@ function Chat({ userId, room, theme }) {
       photoUrl: telegramUser.photo_url || ''
     };
 
-    socketRef.current = io('https://telepets.onrender.com');
-    
-    socketRef.current.on('messageHistory', (history) => {
+    // Устанавливаем обработчики на существующий сокет
+    socket.on('messageHistory', (history) => {
       setMessages(prev => {
         const cached = messageCache[room] || [];
         const newMessages = [...cached, ...history].sort((a, b) => 
@@ -243,7 +242,7 @@ function Chat({ userId, room, theme }) {
       });
     });
 
-    socketRef.current.on('message', (msg) => {
+    socket.on('message', (msg) => {
       setMessages(prev => {
         const updated = [...prev, msg];
         setMessageCache(prevCache => ({
@@ -254,28 +253,26 @@ function Chat({ userId, room, theme }) {
       });
     });
 
-    socketRef.current.on('roomUsers', (roomUsers) => {
+    socket.on('roomUsers', (roomUsers) => {
       setUsers(roomUsers);
     });
 
-    socketRef.current.emit('auth', userData);
-
+    // Аутентификация уже выполнена в App.js, но можно обновить userData, если нужно
     if (room) {
       const cachedMessages = messageCache[room] || [];
       if (cachedMessages.length > 0) {
         setMessages(cachedMessages);
         const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
-        socketRef.current.emit('joinRoom', { room, lastTimestamp });
+        socket.emit('joinRoom', { room, lastTimestamp });
       } else {
-        socketRef.current.emit('joinRoom', { room });
+        socket.emit('joinRoom', { room });
       }
     }
 
     return () => {
-      socketRef.current.disconnect();
+      // Очистка обработчиков не требуется, так как сокет управляется в App.js
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, room]);
+  }, [socket, userId, room]); // Зависимости включают socket, userId и room
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -295,13 +292,13 @@ function Chat({ userId, room, theme }) {
   }, []);
 
   const sendMessage = () => {
-    if (message.trim() && room) {
+    if (message.trim() && room && socket) {
       const newMessage = {
         text: message,
         room,
         timestamp: new Date().toISOString()
       };
-      socketRef.current.emit('sendMessage', newMessage);
+      socket.emit('sendMessage', newMessage);
       setMessage('');
     }
   };

@@ -99,61 +99,64 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Обработка входа в комнату
-  socket.on('joinRoom', async ({ room, lastTimestamp }) => {
-    if (typeof room !== 'string') {
-      console.error('Invalid room type:', room);
-      return;
-    }
+// В обработчике joinRoom
+socket.on('joinRoom', async ({ room, lastTimestamp }) => {
+  if (typeof room !== 'string') {
+    console.error('Invalid room type:', room);
+    return;
+  }
 
-    if (!socket.userData || !socket.userData.userId) {
-      console.error('User not authenticated for room join:', socket.id);
-      return;
-    }
+  if (!socket.userData || !socket.userData.userId) {
+    console.error('User not authenticated for room join:', socket.id);
+    return;
+  }
 
-    // Проверяем, уже ли пользователь в этой комнате
-    const userInRoom = Array.from(roomUsers[room] || []).some(user => user.userId === socket.userData.userId);
-    const isRejoining = userInRoom; // Флаг, что пользователь уже в комнате
+  // Проверяем, уже ли пользователь в этой комнате
+  const userInRoom = Array.from(roomUsers[room] || []).some(user => user.userId === socket.userData.userId);
+  const isRejoining = userInRoom;
 
-    if (isRejoining) {
-      console.log(`User ${socket.userData.userId} already in room: ${room} — rejoining to fetch messages`);
-    } else {
-      socket.join(room);
-      console.log(`User ${socket.userData.userId} joined room: ${room}`);
-    }
+  if (isRejoining) {
+    console.log(`User ${socket.userData.userId} already in room: ${room} — rejoining to fetch messages`);
+  } else {
+    socket.join(room);
+    console.log(`User ${socket.userData.userId} joined room: ${room}`);
+  }
 
-    // Всегда добавляем пользователя в roomUsers, даже при повторном входе, чтобы синхронизировать состояние
-    if (!roomUsers[room]) roomUsers[room] = new Set();
-    roomUsers[room].add({
-      userId: socket.userData.userId,
-      firstName: socket.userData.firstName,
-      username: socket.userData.username,
-      lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl
-    });
-
-    // Обновляем список пользователей в комнате
-    io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
-
-    try {
-      const query = {};
-      if (room.startsWith('myhome_')) {
-        query.room = room;
-        query.userId = socket.userData.userId;
-      } else {
-        query.room = room;
-      }
-
-      if (lastTimestamp) {
-        query.timestamp = { $gt: new Date(lastTimestamp) };
-      }
-
-      const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
-      socket.emit('messageHistory', messages);
-    } catch (err) {
-      console.error('Error fetching messages:', err.message, err.stack);
-    }
+  // Всегда добавляем пользователя в roomUsers, даже при повторном входе
+  if (!roomUsers[room]) roomUsers[room] = new Set();
+  roomUsers[room].add({
+    userId: socket.userData.userId,
+    firstName: socket.userData.firstName,
+    username: socket.userData.username,
+    lastName: socket.userData.lastName,
+    photoUrl: socket.userData.photoUrl
   });
+
+  // Обновляем список пользователей в комнате
+  io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
+
+  try {
+    const query = {};
+    if (room.startsWith('myhome_')) {
+      query.room = room;
+      query.userId = socket.userData.userId;
+    } else {
+      query.room = room;
+    }
+
+    if (lastTimestamp) {
+      query.timestamp = { $gt: new Date(lastTimestamp) };
+    } else {
+      // Если lastTimestamp отсутствует, загружаем последние 100 сообщений
+      query.timestamp = { $exists: true }; // Убедимся, что загружаем только сообщения с timestamp
+    }
+
+    const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
+    socket.emit('messageHistory', messages);
+  } catch (err) {
+    console.error('Error fetching messages:', err.message, err.stack);
+  }
+});
 
   // Обработка отправки сообщения
   socket.on('sendMessage', async (message) => {

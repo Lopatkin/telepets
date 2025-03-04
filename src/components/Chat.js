@@ -249,16 +249,14 @@ function Chat({ userId, room, theme, socket }) {
       setUsers(roomUsers);
     });
   
-    // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты
+    // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
     const cachedMessages = messageCache[room] || [];
     if (cachedMessages.length === 0) {
-      console.log('Emitting joinRoom for room:', room);
+      console.log('Emitting joinRoom for new room:', room);
       socket.emit('joinRoom', { room });
     } else {
-      console.log('Using cached messages for room:', room);
-      setMessages(cachedMessages);
+      console.log('Rejoining room:', room, '— fetching updates');
       const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
-      console.log('Emitting joinRoom with lastTimestamp for room:', room, lastTimestamp);
       socket.emit('joinRoom', { room, lastTimestamp });
     }
   
@@ -267,7 +265,7 @@ function Chat({ userId, room, theme, socket }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, userId, room]);
-  
+    
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);

@@ -217,17 +217,8 @@ function Chat({ userId, room, theme, socket }) {
     if (!socket) return;
 
     window.Telegram.WebApp.ready();
-    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || {};
 
-    const userData = {
-      userId: telegramUser.id?.toString() || userId,
-      firstName: telegramUser.first_name || '',
-      username: telegramUser.username || '',
-      lastName: telegramUser.last_name || '',
-      photoUrl: telegramUser.photo_url || ''
-    };
-
-    // Устанавливаем обработчики на существующий сокет
+    // Убираем неиспользуемую переменную userData
     socket.on('messageHistory', (history) => {
       setMessages(prev => {
         const cached = messageCache[room] || [];
@@ -257,7 +248,6 @@ function Chat({ userId, room, theme, socket }) {
       setUsers(roomUsers);
     });
 
-    // Аутентификация уже выполнена в App.js, но можно обновить userData, если нужно
     if (room) {
       const cachedMessages = messageCache[room] || [];
       if (cachedMessages.length > 0) {
@@ -272,7 +262,9 @@ function Chat({ userId, room, theme, socket }) {
     return () => {
       // Очистка обработчиков не требуется, так как сокет управляется в App.js
     };
-  }, [socket, userId, room]); // Зависимости включают socket, userId и room
+    // Добавляем messageCache в зависимости, но это может вызвать бесконечный цикл
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, userId, room]); // Убрали messageCache из зависимостей, добавили комментарий ESLint
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

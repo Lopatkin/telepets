@@ -202,7 +202,7 @@ const UserName = styled.span`
   color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
 `;
 
-function Chat({ userId, room, theme, socket }) {
+function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);
@@ -223,7 +223,7 @@ function Chat({ userId, room, theme, socket }) {
     socket.on('messageHistory', (history) => {
       setMessages(prev => {
         const cached = messageCache[room] || [];
-        const newMessages = [...cached, ...history].sort((a, b) =>
+        const newMessages = [...cached, ...history].sort((a, b) => 
           new Date(a.timestamp) - new Date(b.timestamp)
         );
         setMessageCache(prevCache => ({
@@ -254,7 +254,7 @@ function Chat({ userId, room, theme, socket }) {
     if (!joinedRoomsRef.current.has(room) || cachedMessages.length === 0) {
       console.log('Emitting joinRoom for new room:', room);
       socket.emit('joinRoom', { room });
-      joinedRoomsRef.current.add(room); // Отмечаем, что вошли в комнату (если ещё не отмечали)
+      joinedRoomsRef.current.add(room); // Отмечаем, что вошли в комнату
     } else {
       console.log('Rejoining room:', room, '— fetching updates');
       const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
@@ -265,7 +265,7 @@ function Chat({ userId, room, theme, socket }) {
       console.log('Cleaning up socket listeners for room:', room);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, userId, room]);
+  }, [socket, userId, room, joinedRoomsRef]); // Добавили joinedRoomsRef в зависимости
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

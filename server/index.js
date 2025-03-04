@@ -69,15 +69,14 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const photoUrl = userData.photoUrl || ''; // Убедимся, что photoUrl всегда есть
     socket.userData = {
       userId: userData.id.toString(),
       firstName: userData.firstName || '',
       username: userData.username || '',
       lastName: userData.lastName || '',
-      photoUrl: photoUrl // Сохраняем photoUrl
+      photoUrl: userData.photoUrl || '' // Прямо берём photoUrl из userData, как в рабочей версии
     };
-    console.log('Authenticated user:', socket.userData.userId, 'with photoUrl:', photoUrl);
+    console.log('Authenticated user:', socket.userData.userId, 'with photoUrl:', socket.userData.photoUrl);
 
     if (activeSockets.has(socket.userData.userId)) {
       console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
@@ -167,7 +166,7 @@ io.on('connection', (socket) => {
       firstName: socket.userData.firstName,
       username: socket.userData.username,
       lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl || '' // Убедимся, что photoUrl всегда есть
+      photoUrl: socket.userData.photoUrl // Прямо берём photoUrl из socket.userData, как в рабочей версии
     });
 
     // Обновляем список пользователей в комнате
@@ -189,13 +188,9 @@ io.on('connection', (socket) => {
       }
 
       const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
-      // Убедимся, что photoUrl передаётся в сообщениях, даже если он пуст
-      const messagesWithPhoto = messages.map(msg => ({
-        ...msg._doc,
-        photoUrl: msg.photoUrl || socket.userData.photoUrl || '' // Используем photoUrl из сообщения или socket.userData
-      }));
-      console.log('Sending messageHistory with photoUrls:', messagesWithPhoto.map(msg => msg.photoUrl));
-      socket.emit('messageHistory', messagesWithPhoto);
+      // Простая передача сообщений, как в рабочей версии, без дополнительных преобразований
+      console.log('Sending messageHistory with photoUrls:', messages.map(msg => msg.photoUrl));
+      socket.emit('messageHistory', messages);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);
     }
@@ -215,7 +210,7 @@ io.on('connection', (socket) => {
         firstName: socket.userData.firstName || '',
         username: socket.userData.username || '',
         lastName: socket.userData.lastName || '',
-        photoUrl: socket.userData.photoUrl || '', // Убедимся, что photoUrl передаётся
+        photoUrl: socket.userData.photoUrl || '', // Прямо берём photoUrl из socket.userData, как в рабочей версии
         room: message.room,
         timestamp: message.timestamp
       });

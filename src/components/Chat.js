@@ -219,6 +219,15 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     console.log('Setting up socket listeners for room:', room, 'with photoUrl:', socket.userData?.photoUrl);
 
     window.Telegram.WebApp.ready();
+    const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user || {};
+
+    const userData = {
+      userId: telegramUser.id?.toString() || userId,
+      firstName: telegramUser.first_name || '',
+      username: telegramUser.username || '',
+      lastName: telegramUser.last_name || '',
+      photoUrl: telegramUser.photo_url || '' // Прямо берём photoUrl из Telegram, как в рабочей версии
+    };
 
     socket.on('messageHistory', (history) => {
       console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
@@ -251,6 +260,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       console.log('Received roomUsers with photoUrls:', roomUsers.map(user => ({ userId: user.userId, photoUrl: user.photoUrl })));
       setUsers(roomUsers);
     });
+
+    // Аутентификация с использованием photoUrl из Telegram
+    socket.emit('auth', userData);
 
     // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
     const cachedMessages = messageCache[room] || [];

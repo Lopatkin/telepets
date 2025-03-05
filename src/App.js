@@ -43,7 +43,7 @@ function App() {
           firstName: telegramData.user.first_name || 'User',
           username: telegramData.user.username || '',
           lastName: telegramData.user.last_name || '',
-          photoUrl: telegramData.user.photoUrl || ''
+          photoUrl: telegramData.user.photoUrl || 'tu97jy'
         };
         setUser(userData);
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');

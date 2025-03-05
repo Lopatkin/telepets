@@ -305,7 +305,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
         text: message,
         room,
         timestamp: new Date().toISOString(),
-        photoUrl: currentUserPhotoUrl || '' // Используем photoUrl текущего пользователя для отправки
+        photoUrl: currentUserPhotoUrl || '' 
       };
       socket.emit('sendMessage', newMessage);
       setMessage('');
@@ -313,20 +313,20 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   };
 
   const getAuthorName = (msg) => {
-    if (msg.userId === userId) return ''; // Изменили на userId
+    if (msg.userId === userId) return ''; 
     const parts = [];
     if (msg.firstName) parts.push(msg.firstName);
     if (msg.username) parts.push(`@${msg.username}`);
     if (msg.lastName) parts.push(msg.lastName);
-    return parts.length > 0 ? parts.join(' ') : `User ${msg.userId}`; // Изменили на userId
+    return parts.length > 0 ? parts.join(' ') : `User ${msg.userId}`; 
   };
 
   const getAvatar = (msg) => {
-    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl }); // Лог для отладки
+    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl }); 
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
     
     // Для собственных сообщений используем currentUserPhotoUrl, если msg.photoUrl отсутствует или пуст
-    if (msg.userId === userId) { // Изменили на userId
+    if (msg.userId === userId) { 
       return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (
         <Avatar src={currentUserPhotoUrl} alt="Avatar" />
       ) : (
@@ -369,7 +369,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId} theme={theme}> // Изменили на userId
-            {msg.userId !== userId && ( // Изменили на userId
+            {msg.userId !== userId && ( 
               <MessageHeader>
                 {getAvatar(msg)}
                 <MessageName theme={theme}>{getAuthorName(msg)}</MessageName>
@@ -403,8 +403,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
           <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
-              {getAvatar(user)} {/* Сохраняем логику для списка пользователей, но пока не меняем */}
-              <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName> // Изменили на userId
+              {getAvatar(user)} 
+              <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName> 
             </UserItem>
           ))}
         </UserListModal>

@@ -209,7 +209,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const [showUserList, setShowUserList] = useState(false);
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
-  const prevRoomRef = useRef(null); // Отслеживание предыдущей комнаты
 
   // Кэш сообщений для каждой комнаты
   const [messageCache, setMessageCache] = useState({});

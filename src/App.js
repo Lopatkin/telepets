@@ -163,7 +163,7 @@ function App() {
       console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
     }
   }, [activeTab, currentRoom, socketRef]);
-  
+
 
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);

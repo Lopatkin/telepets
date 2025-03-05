@@ -148,8 +148,14 @@ io.on('connection', (socket) => {
     // Обновляем время последнего входа
     roomTimes.set(room, now);
 
-    // Всегда добавляем пользователя в roomUsers, даже при повторном входе
     if (!roomUsers[room]) roomUsers[room] = new Set();
+    // Перед добавлением пользователя в roomUsers проверяем, есть ли он уже в комнате, и удаляем, если есть
+    roomUsers[room].forEach(user => {
+      if (user.userId === socket.userData.userId) {
+        roomUsers[room].delete(user);
+      }
+    });
+
     roomUsers[room].add({
       userId: socket.userData.userId, // Изменили на userId
       firstName: socket.userData.firstName,

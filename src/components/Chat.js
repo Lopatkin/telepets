@@ -222,7 +222,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
 
     console.log('Setting up socket listeners for room:', room, 'with currentUserPhotoUrl:', currentUserPhotoUrl);
 
-    // Проверяем, не подключены ли уже к комнате
     socket.on('messageHistory', (history) => {
       console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
       setMessages(prev => {
@@ -255,9 +254,15 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setUsers(roomUsers);
     });
 
-    // Аутентификация только если ещё не аутентифицированы (передаём через props или из App)
-    // Предполагаем, что аутентификация уже выполнена в App.js
-    // socket.emit('auth', userData); — убрали, т.к. аутентификация теперь в App.js
+    // Аутентификация с использованием данных из Telegram
+    const userData = {
+      userId: telegramUser.id?.toString() || userId, // Изменили на userId
+      firstName: telegramUser.first_name || '',
+      username: telegramUser.username || '',
+      lastName: telegramUser.last_name || '',
+      photoUrl: currentUserPhotoUrl // Используем photoUrl из Telegram
+    };
+    socket.emit('auth', userData);
 
     // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
     const cachedMessages = messageCache[room] || [];
@@ -273,7 +278,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
 
     return () => {
       console.log('Cleaning up socket listeners for room:', room);
-      // Не очищаем сокет, т.к. он управляется в App.js
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, userId, room, joinedRoomsRef]);
@@ -309,20 +313,20 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   };
 
   const getAuthorName = (msg) => {
-    if (msg.userId === userId) return '';
+    if (msg.userId === userId) return ''; // Изменили на userId
     const parts = [];
     if (msg.firstName) parts.push(msg.firstName);
     if (msg.username) parts.push(`@${msg.username}`);
     if (msg.lastName) parts.push(msg.lastName);
-    return parts.length > 0 ? parts.join(' ') : `User ${msg.userId}`;
+    return parts.length > 0 ? parts.join(' ') : `User ${msg.userId}`; // Изменили на userId
   };
 
   const getAvatar = (msg) => {
-    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
+    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl }); // Лог для отладки
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
     
     // Для собственных сообщений используем currentUserPhotoUrl, если msg.photoUrl отсутствует или пуст
-    if (msg.userId === userId) {
+    if (msg.userId === userId) { // Изменили на userId
       return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (
         <Avatar src={currentUserPhotoUrl} alt="Avatar" />
       ) : (
@@ -364,15 +368,15 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     <ChatContainer>
       <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
-          <Message key={index} isOwn={msg.userId === userId} theme={theme}>
-            {msg.userId !== userId && (
+          <Message key={index} isOwn={msg.userId === userId} theme={theme}> // Изменили на userId
+            {msg.userId !== userId && ( // Изменили на userId
               <MessageHeader>
                 {getAvatar(msg)}
                 <MessageName theme={theme}>{getAuthorName(msg)}</MessageName>
               </MessageHeader>
             )}
             <MessageContent>
-              <MessageText theme={theme} isOwn={msg.userId === userId}>{msg.text}</MessageText>
+              <MessageText theme={theme} isOwn={msg.userId === userId}>{msg.text}</MessageText> // Изменили на userId
               <Timestamp theme={theme}>{formatTimestamp(msg.timestamp)}</Timestamp>
             </MessageContent>
           </Message>
@@ -399,8 +403,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
           <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
-              {getAvatar(user)}
-              <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName>
+              {getAvatar(user)} {/* Сохраняем логику для списка пользователей, но пока не меняем */}
+              <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName> // Изменили на userId
             </UserItem>
           ))}
         </UserListModal>

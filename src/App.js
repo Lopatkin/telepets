@@ -42,7 +42,8 @@ function App() {
           userId: telegramData.user.id.toString(), // Убедились, что используем userId
           firstName: telegramData.user.first_name || 'User',
           username: telegramData.user.username || '',
-          lastName: telegramData.user.last_name || ''
+          lastName: telegramData.user.last_name || '',
+          photoUrl: telegramData.user.photoUrl || '',
         };
         setUser(userData);
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');

@@ -209,6 +209,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const [showUserList, setShowUserList] = useState(false);
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
+  const prevRoomRef = useRef(null); // Отслеживание предыдущей комнаты
 
   // Кэш сообщений для каждой комнаты
   const [messageCache, setMessageCache] = useState({});
@@ -217,6 +218,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const currentUserPhotoUrl = telegramUser.photo_url || '';
 
+  // В useEffect (замените весь useEffect на этот блок)
   useEffect(() => {
     if (!socket || !room) return;
 
@@ -254,10 +256,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       console.log('Received roomUsers with photoUrls:', roomUsers.map(user => ({ userId: user.userId, photoUrl: user.photoUrl })));
       setUsers(roomUsers);
     });
-
-    // Аутентификация только если ещё не аутентифицированы (передаём через props или из App)
-    // Предполагаем, что аутентификация уже выполнена в App.js
-    // socket.emit('auth', userData); — убрали, т.к. аутентификация теперь в App.js
 
     // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
     const cachedMessages = messageCache[room] || [];

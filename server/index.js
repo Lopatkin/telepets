@@ -108,6 +108,18 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Перед добавлением в новую комнату удаляем из всех других комнат
+    Object.keys(roomUsers).forEach(currentRoom => {
+      if (currentRoom !== room) {
+        roomUsers[currentRoom].forEach(user => {
+          if (user.userId === socket.userData.userId) {
+            roomUsers[currentRoom].delete(user);
+            io.to(currentRoom).emit('roomUsers', Array.from(roomUsers[currentRoom]));
+          }
+        });
+      }
+    });
+
     // Ждём, пока пользователь аутентифицируется (максимум 2 секунды)
     const maxWait = 2000; // 2 секунды
     const startTime = Date.now();
@@ -186,6 +198,19 @@ io.on('connection', (socket) => {
       socket.emit('messageHistory', messages);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);
+    }
+  });
+
+  // Добавляем обработчик для выхода из комнаты
+  socket.on('leaveRoom', (roomToLeave) => {
+    if (roomUsers[roomToLeave]) {
+      roomUsers[roomToLeave].forEach(user => {
+        if (user.userId === socket.userData.userId) {
+          roomUsers[roomToLeave].delete(user);
+          io.to(roomToLeave).emit('roomUsers', Array.from(roomUsers[roomToLeave]));
+          console.log(`User ${socket.userData.userId} left room: ${roomToLeave}`);
+        }
+      });
     }
   });
 

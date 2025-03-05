@@ -128,6 +128,11 @@ function App() {
     if (!room || !socketRef.current || room === currentRoom || isJoiningRef.current) return; // Избегаем дублирования
     isJoiningRef.current = true; // Устанавливаем флаг
 
+    // Выходим из текущей комнаты перед входом в новую
+    if (currentRoom && socketRef.current) {
+      socketRef.current.emit('leaveRoom', currentRoom);
+    }
+
     setCurrentRoom(room);
     localStorage.setItem('currentRoom', room);
     setActiveTab('chat');
@@ -178,13 +183,13 @@ function App() {
         {activeTab === 'housing' && <div>Жильё</div>}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
         {activeTab === 'profile' && (
-          <Profile 
-            user={user} 
-            theme={appliedTheme} 
-            selectedTheme={theme} 
-            telegramTheme={telegramTheme} 
-            onThemeChange={handleThemeChange} 
-            progressValues={progressValues} 
+          <Profile
+            user={user}
+            theme={appliedTheme}
+            selectedTheme={theme}
+            telegramTheme={telegramTheme}
+            onThemeChange={handleThemeChange}
+            progressValues={progressValues}
           />
         )}
       </Content>

@@ -227,7 +227,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
       setMessages(prev => {
         const cached = messageCache[room] || [];
-        const newMessages = [...cached, ...history].sort((a, b) => 
+        const newMessages = [...cached, ...history].sort((a, b) =>
           new Date(a.timestamp) - new Date(b.timestamp)
         );
         setMessageCache(prevCache => ({
@@ -271,8 +271,17 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       socket.emit('joinRoom', { room, lastTimestamp });
     }
 
+    // Очищаем предыдущую комнату при входе в новую
+    if (prevRoomRef.current && prevRoomRef.current !== room) {
+      socket.emit('leaveRoom', prevRoomRef.current);
+    }
+    prevRoomRef.current = room; // Обновляем текущую комнату
+
     return () => {
       console.log('Cleaning up socket listeners for room:', room);
+      if (room) {
+        socket.emit('leaveRoom', room); // Выходим из комнаты при размонтировании
+      }
       // Не очищаем сокет, т.к. он управляется в App.js
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -320,7 +329,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const getAvatar = (msg) => {
     console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
-    
+
     // Для собственных сообщений используем currentUserPhotoUrl, если msg.photoUrl отсутствует или пуст
     if (msg.userId === userId) {
       return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (
@@ -329,7 +338,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
         <DefaultAvatar>{initial}</DefaultAvatar>
       );
     }
-    
+
     // Для сообщений других пользователей используем msg.photoUrl, если есть, иначе дефолтный аватар
     return msg.photoUrl && msg.photoUrl.trim() ? (
       <Avatar src={msg.photoUrl} alt="Avatar" />

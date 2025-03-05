@@ -368,7 +368,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     <ChatContainer>
       <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
-          <Message key={index} isOwn={msg.userId === userId} theme={theme}> // Изменили на userId
+          <Message key={index} isOwn={msg.userId === userId} theme={theme}> 
             {msg.userId !== userId && ( 
               <MessageHeader>
                 {getAvatar(msg)}
@@ -376,7 +376,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
               </MessageHeader>
             )}
             <MessageContent>
-              <MessageText theme={theme} isOwn={msg.userId === userId}>{msg.text}</MessageText> // Изменили на userId
+              <MessageText theme={theme} isOwn={msg.userId === userId}>{msg.text}</MessageText> 
               <Timestamp theme={theme}>{formatTimestamp(msg.timestamp)}</Timestamp>
             </MessageContent>
           </Message>

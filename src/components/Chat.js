@@ -269,18 +269,10 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       socket.emit('joinRoom', { room, lastTimestamp });
     }
 
-    // Очищаем предыдущую комнату при входе в новую
-    if (prevRoomRef.current && prevRoomRef.current !== room) {
-      socket.emit('leaveRoom', prevRoomRef.current);
-    }
-    prevRoomRef.current = room; // Обновляем текущую комнату
-
+    // Убираем вызов leaveRoom при размонтировании, если пользователь просто переключается на другую вкладку
     return () => {
       console.log('Cleaning up socket listeners for room:', room);
-      if (room) {
-        socket.emit('leaveRoom', room); // Выходим из комнаты при размонтировании
-      }
-      // Не очищаем сокет, т.к. он управляется в App.js
+      // Не отправляем leaveRoom здесь, чтобы пользователь оставался в комнате при переключении вкладок
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, userId, room, joinedRoomsRef]);

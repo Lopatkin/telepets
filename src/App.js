@@ -128,7 +128,7 @@ function App() {
     if (!room || !socketRef.current || room === currentRoom || isJoiningRef.current) return; // Избегаем дублирования
     isJoiningRef.current = true; // Устанавливаем флаг
 
-    // Выходим из текущей комнаты перед входом в новую
+    // Выходим из текущей комнаты перед входом в новую, только если текущая комната существует
     if (currentRoom && socketRef.current) {
       socketRef.current.emit('leaveRoom', currentRoom);
     }
@@ -154,6 +154,15 @@ function App() {
 
     prevRoomRef.current = room; // Сохраняем текущую комнату
   };
+
+  // Добавляем useEffect для отслеживания активной вкладки и предотвращения выхода из комнаты
+  useEffect(() => {
+    // Если пользователь переключается на вкладку, отличную от 'chat', не выходим из комнаты
+    if (activeTab !== 'chat' && currentRoom && socketRef.current) {
+      // Не отправляем leaveRoom, оставляем пользователя в комнате
+      console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
+    }
+  }, [activeTab, currentRoom, socketRef]);
 
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);

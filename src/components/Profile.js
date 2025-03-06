@@ -29,6 +29,12 @@ const ProgressLabel = styled.span`
   text-align: left; /* Прижатие текста к левой стороне */
 `;
 
+const ProgressValue = styled.span`
+  font-size: 14px; /* Размер текста для значений */
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  margin-left: 10px; /* Отступ от прогресс-бара */
+`;
+
 const ProgressBar = styled.progress`
   width: 160px; /* Увеличена ширина прогресс-бара */
   height: 8px;
@@ -162,18 +168,22 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Энергия</ProgressLabel>
             <ProgressBar value={progressValues.energy || 0} max="100" type="energy" />
+            <ProgressValue theme={theme}>{progressValues.energy || 0}%</ProgressValue>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
             <ProgressBar value={progressValues.health || 0} max="100" type="health" />
+            <ProgressValue theme={theme}>{progressValues.health || 0}%</ProgressValue>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Настроение</ProgressLabel>
             <ProgressBar value={progressValues.mood || 0} max="100" type="mood" />
+            <ProgressValue theme={theme}>{progressValues.mood || 0}%</ProgressValue>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Сытость</ProgressLabel>
             <ProgressBar value={progressValues.fullness || 0} max="100" type="fullness" />
+            <ProgressValue theme={theme}>{progressValues.fullness || 0}%</ProgressValue>
           </ProgressBarContainer>
         </ProgressWidget>
       )}

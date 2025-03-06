@@ -97,13 +97,31 @@ const ProgressBar = styled.progress`
   width: 120px;
   height: 8px;
   border-radius: 4px;
+  &::-webkit-progress-bar {
+    background-color: #f0f0f0;
+    border-radius: 4px;
+  }
+  &::-webkit-progress-value {
+    ${props => props.type === 'energy' && `background-color: #FFA500;`} /* Жёлто-оранжевый */
+    ${props => props.type === 'health' && `background-color: #FF0000;`} /* Красный */
+    ${props => props.type === 'mood' && `background-color: #007AFF;`} /* Синий */
+    ${props => props.type === 'fullness' && `background-color: #32CD32;`} /* Зелёно-салатовый */
+    border-radius: 4px;
+  }
+  &::-moz-progress-bar {
+    ${props => props.type === 'energy' && `background-color: #FFA500;`} /* Жёлто-оранжевый */
+    ${props => props.type === 'health' && `background-color: #FF0000;`} /* Красный */
+    ${props => props.type === 'mood' && `background-color: #007AFF;`} /* Синий */
+    ${props => props.type === 'fullness' && `background-color: #32CD32;`} /* Зелёно-салатовый */
+    border-radius: 4px;
+  }
 `;
 
 function Header({ user, room, theme, energy }) {
   const [showProgress, setShowProgress] = useState(false);
 
-  const roomName = room 
-    ? (room.startsWith('myhome_') ? 'Мой дом' : room) 
+  const roomName = room
+    ? (room.startsWith('myhome_') ? 'Мой дом' : room)
     : 'Выберите комнату';
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
@@ -152,19 +170,19 @@ function Header({ user, room, theme, energy }) {
         <ProgressModal theme={theme}>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Энергия</ProgressLabel>
-            <ProgressBar value={progressValues.energy} max="100" />
+            <ProgressBar value={progressValues.energy} max="100" type="energy" />
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
-            <ProgressBar value={progressValues.health} max="100" />
+            <ProgressBar value={progressValues.health} max="100" type="health" />
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Настроение</ProgressLabel>
-            <ProgressBar value={progressValues.mood} max="100" />
+            <ProgressBar value={progressValues.mood} max="100" type="mood" />
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Сытость</ProgressLabel>
-            <ProgressBar value={progressValues.fullness} max="100" />
+            <ProgressBar value={progressValues.fullness} max="100" type="fullness" />
           </ProgressBarContainer>
         </ProgressModal>
       )}

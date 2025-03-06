@@ -44,13 +44,29 @@ const User = mongoose.model('User', userSchema);
 // Хранилище активных пользователей по комнатам
 const roomUsers = {};
 
+// Хранилище текущей комнаты для каждого пользователя
+const userCurrentRoom = new Map();
+
 // Функция для расчёта энергии
-const calculateEnergy = (user) => {
+const calculateEnergy = (user, currentRoom) => {
   const now = new Date();
   const lastUpdated = new Date(user.lastUpdated);
   const minutesPassed = Math.floor((now - lastUpdated) / 60000); // минут прошло
-  const decrease = Math.floor(minutesPassed / 10); // 1% каждые 10 минут
-  return Math.max(user.energy - decrease, 0); // не ниже 0
+  const intervalsPassed = Math.floor(minutesPassed / 10); // количество интервалов по 10 минут
+
+  let energyChange = 0;
+  if (currentRoom && currentRoom.startsWith('myhome_')) {
+    // Восстанавливаем 2% энергии за каждый интервал в "Мой дом"
+    energyChange = intervalsPassed * 2; // +2% за 10 минут
+  } else {
+    // Уменьшаем на 1% за каждый интервал вне "Мой дом"
+    energyChange = intervalsPassed * -1; // -1% за 10 минут
+  }
+
+  let newEnergy = user.energy + energyChange;
+  // Ограничиваем энергию между 0 и 100
+  newEnergy = Math.max(0, Math.min(100, newEnergy));
+  return newEnergy;
 };
 
 // Хранилище активных сокетов для предотвращения дублирования
@@ -64,7 +80,7 @@ io.on('connection', (socket) => {
 
   // Обработка аутентификации
   socket.on('auth', async (userData) => {
-    if (!userData || !userData.userId) { // Изменили на userId вместо id
+    if (!userData || !userData.userId) {
       console.error('Invalid user data:', userData);
       return;
     }
@@ -74,7 +90,7 @@ io.on('connection', (socket) => {
       firstName: userData.firstName || '',
       username: userData.username || '',
       lastName: userData.lastName || '',
-      photoUrl: userData.photoUrl || '' // Убедимся, что photoUrl всегда есть, даже если пустой
+      photoUrl: userData.photoUrl || ''
     };
     console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
 
@@ -91,7 +107,8 @@ io.on('connection', (socket) => {
       if (!user) {
         user = new User({ userId: socket.userData.userId });
       }
-      const newEnergy = calculateEnergy(user);
+      const currentRoom = userCurrentRoom.get(socket.userData.userId) || null;
+      const newEnergy = calculateEnergy(user, currentRoom);
       user.energy = newEnergy;
       user.lastUpdated = new Date();
       await user.save();
@@ -127,10 +144,13 @@ io.on('connection', (socket) => {
       await new Promise(resolve => setTimeout(resolve, 100)); // Пауза 100 мс
     }
 
-    if (!socket.userData || !socket.userData.userId) { // Изменили на userId
+    if (!socket.userData || !socket.userData.userId) {
       console.error('User not authenticated for room join:', socket.id);
       return;
     }
+
+    // Сохраняем текущую комнату пользователя
+    userCurrentRoom.set(socket.userData.userId, room);
 
     // Проверяем, уже ли пользователь в этой комнате
     const userInRoom = Array.from(roomUsers[room] || []).some(user => user.userId === socket.userData.userId);
@@ -169,11 +189,11 @@ io.on('connection', (socket) => {
     });
 
     roomUsers[room].add({
-      userId: socket.userData.userId, // Изменили на userId
+      userId: socket.userData.userId,
       firstName: socket.userData.firstName,
       username: socket.userData.username,
       lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl // Убедимся, что photoUrl передаётся
+      photoUrl: socket.userData.photoUrl
     });
 
     // Обновляем список пользователей в комнате
@@ -183,7 +203,7 @@ io.on('connection', (socket) => {
       const query = {};
       if (room.startsWith('myhome_')) {
         query.room = room;
-        query.userId = socket.userData.userId; // Изменили на userId
+        query.userId = socket.userData.userId;
       } else {
         query.room = room;
       }
@@ -191,7 +211,7 @@ io.on('connection', (socket) => {
       if (lastTimestamp) {
         query.timestamp = { $gt: new Date(lastTimestamp) };
       } else {
-        query.timestamp = { $exists: true }; // Загружаем только сообщения с timestamp
+        query.timestamp = { $exists: true };
       }
 
       const messages = await Message.find(query).sort({ timestamp: 1 }).limit(100);
@@ -241,17 +261,18 @@ io.on('connection', (socket) => {
 
   // Обработчик для получения энергии
   socket.on('getEnergy', async () => {
-    if (!socket.userData || !socket.userData.userId) { // Изменили на userId
+    if (!socket.userData || !socket.userData.userId) {
       console.error('User not authenticated for energy request:', socket.id);
       return;
     }
 
     try {
-      let user = await User.findOne({ userId: socket.userData.userId }); // Изменили на userId
+      let user = await User.findOne({ userId: socket.userData.userId });
       if (!user) {
-        user = new User({ userId: socket.userData.userId }); // Изменили на userId
+        user = new User({ userId: socket.userData.userId });
       }
-      const newEnergy = calculateEnergy(user);
+      const currentRoom = userCurrentRoom.get(socket.userData.userId) || null;
+      const newEnergy = calculateEnergy(user, currentRoom);
       user.energy = newEnergy;
       user.lastUpdated = new Date();
       await user.save();
@@ -265,20 +286,23 @@ io.on('connection', (socket) => {
   socket.on('disconnect', (reason) => {
     console.log('User disconnected:', socket.id, 'Reason:', reason);
 
-    if (socket.userData && socket.userData.userId) { // Изменили на userId
-      if (activeSockets.get(socket.userData.userId) === socket) { // Изменили на userId
-        activeSockets.delete(socket.userData.userId); // Изменили на userId
-        console.log(`Removed socket for user ${socket.userData.userId}`); // Изменили на userId
+    if (socket.userData && socket.userData.userId) {
+      if (activeSockets.get(socket.userData.userId) === socket) {
+        activeSockets.delete(socket.userData.userId);
+        console.log(`Removed socket for user ${socket.userData.userId}`);
 
         // Удаляем пользователя из всех комнат
         Object.keys(roomUsers).forEach(room => {
           roomUsers[room].forEach(user => {
-            if (user.userId === socket.userData.userId) { // Изменили на userId
+            if (user.userId === socket.userData.userId) {
               roomUsers[room].delete(user);
             }
           });
           io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
         });
+
+        // Очищаем текущую комнату пользователя
+        userCurrentRoom.delete(socket.userData.userId);
       }
     }
 

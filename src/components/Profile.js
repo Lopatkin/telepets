@@ -36,7 +36,7 @@ const ProgressValue = styled.span`
 `;
 
 const ProgressBar = styled.progress`
-  width: 160px; /* Увеличена ширина прогресс-бара */
+  width: 140px; /* Уменьшена ширина прогресс-бара с 160px до 140px */
   height: 8px;
   border-radius: 4px;
   &::-webkit-progress-bar {

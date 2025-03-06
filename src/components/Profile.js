@@ -1,6 +1,57 @@
 import React from 'react';
 import styled from 'styled-components';
 
+const ProgressWidget = styled.div`
+  width: 100%;
+  max-width: 300px;
+  margin-top: 20px;
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const ProgressBarContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 5px;
+  border-radius: 4px;
+`;
+
+const ProgressLabel = styled.span`
+  font-size: 12px;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#666'};
+  width: 60px;
+`;
+
+const ProgressBar = styled.progress`
+  width: 120px;
+  height: 8px;
+  border-radius: 4px;
+  &::-webkit-progress-bar {
+    background-color: #f0f0f0;
+    border-radius: 4px;
+  }
+  &::-webkit-progress-value {
+    ${props => props.type === 'energy' && `background-color: #FFA500;`} /* Жёлто-оранжевый */
+    ${props => props.type === 'health' && `background-color: #FF0000;`} /* Красный */
+    ${props => props.type === 'mood' && `background-color: #007AFF;`} /* Синий */
+    ${props => props.type === 'fullness' && `background-color: #32CD32;`} /* Зелёно-салатовый */
+    border-radius: 4px;
+  }
+  &::-moz-progress-bar {
+    ${props => props.type === 'energy' && `background-color: #FFA500;`} /* Жёлто-оранжевый */
+    ${props => props.type === 'health' && `background-color: #FF0000;`} /* Красный */
+    ${props => props.type === 'mood' && `background-color: #007AFF;`} /* Синий */
+    ${props => props.type === 'fullness' && `background-color: #32CD32;`} /* Зелёно-салатовый */
+    border-radius: 4px;
+  }
+`;
+
 const ProfileContainer = styled.div`
   padding: 20px;
   display: flex;
@@ -85,7 +136,7 @@ const ThemeLabel = styled.span`
   font-size: 16px;
 `;
 
-function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange }) {
+function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, progressValues }) {
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
 
   const firstName = telegramUser.first_name || user.firstName || 'User';
@@ -122,6 +173,26 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange }) {
           <ThemeLabel>{telegramTheme === 'dark' ? 'Светлая' : 'Тёмная'}</ThemeLabel>
         </ThemeOption>
       </ThemeOptions>
+      {progressValues && (
+        <ProgressWidget theme={theme}>
+          <ProgressBarContainer>
+            <ProgressLabel theme={theme}>Энергия</ProgressLabel>
+            <ProgressBar value={progressValues.energy || 0} max="100" type="energy" />
+          </ProgressBarContainer>
+          <ProgressBarContainer>
+            <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
+            <ProgressBar value={progressValues.health || 0} max="100" type="health" />
+          </ProgressBarContainer>
+          <ProgressBarContainer>
+            <ProgressLabel theme={theme}>Настроение</ProgressLabel>
+            <ProgressBar value={progressValues.mood || 0} max="100" type="mood" />
+          </ProgressBarContainer>
+          <ProgressBarContainer>
+            <ProgressLabel theme={theme}>Сытость</ProgressLabel>
+            <ProgressBar value={progressValues.fullness || 0} max="100" type="fullness" />
+          </ProgressBarContainer>
+        </ProgressWidget>
+      )}
     </ProfileContainer>
   );
 }

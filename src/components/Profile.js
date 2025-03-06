@@ -15,21 +15,22 @@ const ProgressWidget = styled.div`
 const ProgressBarContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 4px 0;
+  justify-content: space-between; /* Разделяем пространство между надписью и прогресс-баром */
+  margin: 8px 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 5px;
   border-radius: 4px;
 `;
 
 const ProgressLabel = styled.span`
-  font-size: 12px;
+  font-size: 16px; /* Увеличен размер текста надписей */
   color: ${props => props.theme === 'dark' ? '#ccc' : '#666'};
-  width: 60px;
+  width: 80px; /* Фиксированная ширина для прижатия к левому краю */
+  text-align: left; /* Прижатие текста к левой стороне */
 `;
 
 const ProgressBar = styled.progress`
-  width: 120px;
+  width: 160px; /* Увеличена ширина прогресс-бара */
   height: 8px;
   border-radius: 4px;
   &::-webkit-progress-bar {
@@ -156,23 +157,6 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
       <Name theme={theme}>{firstName} {lastName}</Name>
       {username && <Username theme={theme}>@{username}</Username>}
       <Info theme={theme}>ID: {user.id}</Info>
-      <ThemeOptions theme={theme}>
-        <ThemeTitle theme={theme}>Тема оформления</ThemeTitle>
-        <ThemeOption theme={theme}>
-          <ThemeRadio
-            checked={selectedTheme === 'telegram'}
-            onChange={() => onThemeChange('telegram')}
-          />
-          <ThemeLabel>Тема как в Telegram ({telegramTheme === 'dark' ? 'тёмная' : 'светлая'})</ThemeLabel>
-        </ThemeOption>
-        <ThemeOption theme={theme}>
-          <ThemeRadio
-            checked={selectedTheme === (telegramTheme === 'dark' ? 'light' : 'dark')}
-            onChange={() => onThemeChange(telegramTheme === 'dark' ? 'light' : 'dark')}
-          />
-          <ThemeLabel>{telegramTheme === 'dark' ? 'Светлая' : 'Тёмная'}</ThemeLabel>
-        </ThemeOption>
-      </ThemeOptions>
       {progressValues && (
         <ProgressWidget theme={theme}>
           <ProgressBarContainer>
@@ -193,6 +177,23 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
           </ProgressBarContainer>
         </ProgressWidget>
       )}
+      <ThemeOptions theme={theme}>
+        <ThemeTitle theme={theme}>Тема оформления</ThemeTitle>
+        <ThemeOption theme={theme}>
+          <ThemeRadio
+            checked={selectedTheme === 'telegram'}
+            onChange={() => onThemeChange('telegram')}
+          />
+          <ThemeLabel>Тема как в Telegram ({telegramTheme === 'dark' ? 'тёмная' : 'светлая'})</ThemeLabel>
+        </ThemeOption>
+        <ThemeOption theme={theme}>
+          <ThemeRadio
+            checked={selectedTheme === (telegramTheme === 'dark' ? 'light' : 'dark')}
+            onChange={() => onThemeChange(telegramTheme === 'dark' ? 'light' : 'dark')}
+          />
+          <ThemeLabel>{telegramTheme === 'dark' ? 'Светлая' : 'Тёмная'}</ThemeLabel>
+        </ThemeOption>
+      </ThemeOptions>
     </ProfileContainer>
   );
 }

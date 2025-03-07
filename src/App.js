@@ -6,6 +6,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import Profile from './components/Profile';
 import Map from './components/Map';
+import Actions from './components/Actions'; // Импорт нового компонента
 
 const AppContainer = styled.div`
   height: 100vh;
@@ -179,7 +180,7 @@ function App() {
       <Header user={user} room={currentRoom} theme={appliedTheme} />
       <Content>
         {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socketRef.current} joinedRoomsRef={joinedRoomsRef} />}
-        {activeTab === 'actions' && <div>Действия</div>}
+        {activeTab === 'actions' && <Actions theme={appliedTheme} />} {/* Подключение нового компонента */}
         {activeTab === 'housing' && <div>Жильё</div>}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
         {activeTab === 'profile' && (

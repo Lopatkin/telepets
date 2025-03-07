@@ -12,6 +12,8 @@ import villageImage from '../images/village.jpg';
 import npcBelochkaImage from '../images/npc_belochka.jpg';
 import npcFoxImage from '../images/npc_fox.jpg';
 import npcEzhikImage from '../images/npc_ezhik.jpg';
+import npcSecurityImage from '../images/npc_security.jpg';
+import npcGuardImage from '../images/npc_guard.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -237,7 +239,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     } else if (room === 'Лес') {
       const fox = {
         userId: 'npc_fox',
-        firstName: 'Лиса',
+        firstName: 'Лисичка',
         photoUrl: npcFoxImage,
       };
       const ezhik = {
@@ -248,16 +250,40 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setUsers(prevUsers => {
         const updatedUsers = [...prevUsers];
         if (!prevUsers.some(user => user.userId === 'npc_fox')) {
-          updatedUsers.unshift(fox); // Добавляем "Лису" первой
+          updatedUsers.unshift(fox); // Добавляем "Лисичку" первой
         }
         if (!prevUsers.some(user => user.userId === 'npc_ezhik')) {
           updatedUsers.unshift(ezhik); // Добавляем "Ёжика" первой
         }
         return updatedUsers;
       });
+    } else if (room === 'Район Дачный') {
+      const security = {
+        userId: 'npc_security',
+        firstName: 'Охранник',
+        photoUrl: npcSecurityImage,
+      };
+      setUsers(prevUsers => {
+        if (!prevUsers.some(user => user.userId === 'npc_security')) {
+          return [security, ...prevUsers];
+        }
+        return prevUsers;
+      });
+    } else if (room === 'Завод') {
+      const guard = {
+        userId: 'npc_guard',
+        firstName: 'Сторож',
+        photoUrl: npcGuardImage,
+      };
+      setUsers(prevUsers => {
+        if (!prevUsers.some(user => user.userId === 'npc_guard')) {
+          return [guard, ...prevUsers];
+        }
+        return prevUsers;
+      });
     } else {
-      // Удаляем всех NPC, если комната не "Парк" и не "Лес"
-      setUsers(prevUsers => prevUsers.filter(user => !['npc_belochka', 'npc_fox', 'npc_ezhik'].includes(user.userId)));
+      // Удаляем всех NPC, если комната не соответствует
+      setUsers(prevUsers => prevUsers.filter(user => !['npc_belochka', 'npc_fox', 'npc_ezhik', 'npc_security', 'npc_guard'].includes(user.userId)));
     }
   }, [room]);
 
@@ -298,11 +324,20 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     socket.on('roomUsers', (roomUsers) => {
       console.log('Received roomUsers with photoUrls:', roomUsers.map(user => ({ userId: user.userId, photoUrl: user.photoUrl })));
       // Обновляем пользователей, сохраняя NPC для соответствующих комнат
-      const updatedUsers = room === 'Парк'
-        ? [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage }, ...roomUsers]
-        : room === 'Лес'
-          ? [{ userId: 'npc_fox', firstName: 'Лиса', photoUrl: npcFoxImage }, { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage }, ...roomUsers]
-          : roomUsers;
+      let updatedUsers = roomUsers;
+      if (room === 'Парк') {
+        updatedUsers = [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage }, ...roomUsers];
+      } else if (room === 'Лес') {
+        updatedUsers = [
+          { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage },
+          { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage },
+          ...roomUsers
+        ];
+      } else if (room === 'Район Дачный') {
+        updatedUsers = [{ userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage }, ...roomUsers];
+      } else if (room === 'Завод') {
+        updatedUsers = [{ userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage }, ...roomUsers];
+      }
       setUsers(updatedUsers);
     });
 

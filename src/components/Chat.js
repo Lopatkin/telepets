@@ -27,21 +27,21 @@ const MessagesContainer = styled.div`
   display: flex;
   flex-direction: column;
   background: ${props => {
-    if (props.room === '?????????? ?????????') {
+    if (props.room === 'Автобусная остановка') {
       return `url(${busStationImage}) no-repeat center center fixed`;
     } else if (props.room && props.room.startsWith('myhome_')) {
       return `url(${myRoomImage}) no-repeat center center fixed`;
-    } else if (props.room === '??????') {
+    } else if (props.room === 'Вокзал') {
       return `url(${trainStationImage}) no-repeat center center fixed`;
-    } else if (props.room === '?? ?????') {
+    } else if (props.room === 'ЖК Сфера') {
       return `url(${zhkSferaImage}) no-repeat center center fixed`;
-    } else if (props.room === '?????') {
+    } else if (props.room === 'Завод') {
       return `url(${factoryImage}) no-repeat center center fixed`;
-    } else if (props.room === '???') {
+    } else if (props.room === 'Лес') {
       return `url(${forestImage}) no-repeat center center fixed`;
-    } else if (props.room === '????') {
+    } else if (props.room === 'Парк') {
       return `url(${parkImage}) no-repeat center center fixed`;
-    } else if (props.room === '????? ??????') {
+    } else if (props.room === 'Район Дачный') {
       return `url(${villageImage}) no-repeat center center fixed`;
     } else {
       return props.theme === 'dark' ? '#1A1A1A' : '#fff';
@@ -213,19 +213,19 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
 
-  // ??? ????????? ??? ?????? ???????
+  // Кэш сообщений для каждой комнаты
   const [messageCache, setMessageCache] = useState({});
 
-  // ???????? photoUrl ???????? ???????????? ?? Telegram
+  // Получаем photoUrl текущего пользователя из Telegram
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const currentUserPhotoUrl = telegramUser.photo_url || '';
 
-  // ????????? NPC ? ?????? ????????????? ? ??????????? ?? ???????
+  // Добавляем NPC в список пользователей в зависимости от комнаты
   useEffect(() => {
-    if (room === '????') {
+    if (room === 'Парк') {
       const belochka = {
         userId: 'npc_belochka',
-        firstName: '???????',
+        firstName: 'Белочка',
         photoUrl: npcBelochkaImage,
       };
       setUsers(prevUsers => {
@@ -234,40 +234,40 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
         }
         return prevUsers;
       });
-    } else if (room === '???') {
+    } else if (room === 'Лес') {
       const fox = {
         userId: 'npc_fox',
-        firstName: '????',
+        firstName: 'Лиса',
         photoUrl: npcFoxImage,
       };
       const ezhik = {
         userId: 'npc_ezhik',
-        firstName: '????',
+        firstName: 'Ёжик',
         photoUrl: npcEzhikImage,
       };
       setUsers(prevUsers => {
         const updatedUsers = [...prevUsers];
         if (!prevUsers.some(user => user.userId === 'npc_fox')) {
-          updatedUsers.unshift(fox); // ????????? "????" ??????
+          updatedUsers.unshift(fox); // Добавляем "Лису" первой
         }
         if (!prevUsers.some(user => user.userId === 'npc_ezhik')) {
-          updatedUsers.unshift(ezhik); // ????????? "?????" ??????
+          updatedUsers.unshift(ezhik); // Добавляем "Ёжика" первой
         }
         return updatedUsers;
       });
     } else {
-      // ??????? ???? NPC, ???? ??????? ?? "????" ? ?? "???"
+      // Удаляем всех NPC, если комната не "Парк" и не "Лес"
       setUsers(prevUsers => prevUsers.filter(user => !['npc_belochka', 'npc_fox', 'npc_ezhik'].includes(user.userId)));
     }
   }, [room]);
 
-  // ? useEffect (???????? ???? useEffect ?? ???? ????)
+  // В useEffect (замените весь useEffect на этот блок)
   useEffect(() => {
     if (!socket || !room) return;
 
     console.log('Setting up socket listeners for room:', room, 'with currentUserPhotoUrl:', currentUserPhotoUrl);
 
-    // ?????????, ?? ?????????? ?? ??? ? ???????
+    // Проверяем, не подключены ли уже к комнате
     socket.on('messageHistory', (history) => {
       console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
       setMessages(prev => {
@@ -297,31 +297,31 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
 
     socket.on('roomUsers', (roomUsers) => {
       console.log('Received roomUsers with photoUrls:', roomUsers.map(user => ({ userId: user.userId, photoUrl: user.photoUrl })));
-      // ????????? ?????????????, ???????? NPC ??? ??????????????? ??????
-      const updatedUsers = room === '????'
-        ? [{ userId: 'npc_belochka', firstName: '???????', photoUrl: npcBelochkaImage }, ...roomUsers]
-        : room === '???'
-          ? [{ userId: 'npc_fox', firstName: '????', photoUrl: npcFoxImage }, { userId: 'npc_ezhik', firstName: '????', photoUrl: npcEzhikImage }, ...roomUsers]
+      // Обновляем пользователей, сохраняя NPC для соответствующих комнат
+      const updatedUsers = room === 'Парк'
+        ? [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage }, ...roomUsers]
+        : room === 'Лес'
+          ? [{ userId: 'npc_fox', firstName: 'Лиса', photoUrl: npcFoxImage }, { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage }, ...roomUsers]
           : roomUsers;
       setUsers(updatedUsers);
     });
 
-    // ?????????, ?? ?????????? ?? ?? ??? joinRoom ??? ???? ??????? ? ???? ??????
+    // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
     const cachedMessages = messageCache[room] || [];
     if (!joinedRoomsRef.current.has(room) || cachedMessages.length === 0) {
       console.log('Emitting joinRoom for new room:', room);
       socket.emit('joinRoom', { room, lastTimestamp: null });
-      joinedRoomsRef.current.add(room); // ????????, ??? ????? ? ???????
+      joinedRoomsRef.current.add(room); // Отмечаем, что вошли в комнату
     } else {
       console.log('Rejoining room:', room, '— fetching updates');
       const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
       socket.emit('joinRoom', { room, lastTimestamp });
     }
 
-    // ??????? ????? leaveRoom ??? ???????????????, ???? ???????????? ?????? ????????????? ?? ?????? ???????
+    // Убираем вызов leaveRoom при размонтировании, если пользователь просто переключается на другую вкладку
     return () => {
       console.log('Cleaning up socket listeners for room:', room);
-      // ?? ?????????? leaveRoom ?????, ????? ???????????? ????????? ? ??????? ??? ???????????? ???????
+      // Не отправляем leaveRoom здесь, чтобы пользователь оставался в комнате при переключении вкладок
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, userId, room, joinedRoomsRef]);
@@ -349,7 +349,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
         text: message,
         room,
         timestamp: new Date().toISOString(),
-        photoUrl: currentUserPhotoUrl || '' // ?????????? photoUrl ???????? ???????????? ??? ????????
+        photoUrl: currentUserPhotoUrl || '' // Используем photoUrl текущего пользователя для отправки
       };
       socket.emit('sendMessage', newMessage);
       setMessage('');
@@ -369,7 +369,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
 
-    // ??? ??????????? ????????? ?????????? currentUserPhotoUrl, ???? msg.photoUrl ??????????? ??? ????
+    // Для собственных сообщений используем currentUserPhotoUrl, если msg.photoUrl отсутствует или пуст
     if (msg.userId === userId) {
       return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (
         <Avatar src={currentUserPhotoUrl} alt="Avatar" />
@@ -378,7 +378,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       );
     }
 
-    // ??? ????????? ?????? ????????????? ?????????? msg.photoUrl, ???? ????, ????? ????????? ??????
+    // Для сообщений других пользователей используем msg.photoUrl, если есть, иначе дефолтный аватар
     return msg.photoUrl && msg.photoUrl.trim() ? (
       <Avatar src={msg.photoUrl} alt="Avatar" />
     ) : (
@@ -436,7 +436,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-          placeholder={room ? "???????? ?????????..." : "???????? ??????? ?? ??????? ?????"}
+          placeholder={room ? "Напишите сообщение..." : "Выберите комнату на вкладке Карта"}
           disabled={!room}
           theme={theme}
         />
@@ -444,7 +444,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       </InputContainer>
       {showUserList && room && (
         <UserListModal ref={modalRef} onClick={handleModalClick} theme={theme}>
-          <ModalTitle theme={theme}>??????</ModalTitle>
+          <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
               {getAvatar(user)}

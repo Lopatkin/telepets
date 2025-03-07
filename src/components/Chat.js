@@ -14,6 +14,9 @@ import npcFoxImage from '../images/npc_fox.jpg';
 import npcEzhikImage from '../images/npc_ezhik.jpg';
 import npcSecurityImage from '../images/npc_security.jpg';
 import npcGuardImage from '../images/npc_guard.jpg';
+import barImage from '../images/bar.jpg';
+import cafeImage from '../images/cafe.jpg';
+import priyutImage from '../images/priyut.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -45,6 +48,12 @@ const MessagesContainer = styled.div`
       return `url(${parkImage}) no-repeat center center fixed`;
     } else if (props.room === 'Район Дачный') {
       return `url(${villageImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Бар "У бобра" (18+)') {
+      return `url(${barImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Кофейня "Ляля-Фа"') {
+      return `url(${cafeImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Приют для животных "Кошкин дом"') {
+      return `url(${priyutImage}) no-repeat center center fixed`;
     } else {
       return props.theme === 'dark' ? '#1A1A1A' : '#fff';
     }

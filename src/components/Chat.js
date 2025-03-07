@@ -17,6 +17,8 @@ import npcGuardImage from '../images/npc_guard.jpg';
 import barImage from '../images/bar.jpg';
 import cafeImage from '../images/cafe.jpg';
 import priyutImage from '../images/priyut.jpg';
+import albionImage from '../images/albion.jpg';
+import karnavalImage from '../images/karnaval.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -54,6 +56,10 @@ const MessagesContainer = styled.div`
       return `url(${cafeImage}) no-repeat center center fixed`;
     } else if (props.room === 'Приют для животных "Кошкин дом"') {
       return `url(${priyutImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Бизнес центр "Альбион"') {
+      return `url(${albionImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Торговый центр "Карнавал"') {
+      return `url(${karnavalImage}) no-repeat center center fixed`;
     } else {
       return props.theme === 'dark' ? '#1A1A1A' : '#fff';
     }

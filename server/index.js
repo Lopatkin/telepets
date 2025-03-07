@@ -33,13 +33,7 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// Схема пользователя для энергии
-const userSchema = new mongoose.Schema({
-  userId: { type: String, unique: true },
-  energy: { type: Number, default: 100, min: 0, max: 100 },
-  lastUpdated: { type: Date, default: Date.now }
-});
-const User = mongoose.model('User', userSchema);
+// Убрана схема пользователя для энергии (User)
 
 // Хранилище активных пользователей по комнатам
 const roomUsers = {};
@@ -47,27 +41,7 @@ const roomUsers = {};
 // Хранилище текущей комнаты для каждого пользователя
 const userCurrentRoom = new Map();
 
-// Функция для расчёта энергии
-const calculateEnergy = (user, currentRoom) => {
-  const now = new Date();
-  const lastUpdated = new Date(user.lastUpdated);
-  const minutesPassed = Math.floor((now - lastUpdated) / 60000); // минут прошло
-  const intervalsPassed = Math.floor(minutesPassed / 10); // количество интервалов по 10 минут
-
-  let energyChange = 0;
-  if (currentRoom && currentRoom.startsWith('myhome_')) {
-    // Восстанавливаем 2% энергии за каждый интервал в "Мой дом"
-    energyChange = intervalsPassed * 2; // +2% за 10 минут
-  } else {
-    // Уменьшаем на 1% за каждый интервал вне "Мой дом"
-    energyChange = intervalsPassed * -1; // -1% за 10 минут
-  }
-
-  let newEnergy = user.energy + energyChange;
-  // Ограничиваем энергию между 0 и 100
-  newEnergy = Math.max(0, Math.min(100, newEnergy));
-  return newEnergy;
-};
+// Убрана функция calculateEnergy
 
 // Хранилище активных сокетов для предотвращения дублирования
 const activeSockets = new Map();
@@ -101,21 +75,6 @@ io.on('connection', (socket) => {
     }
 
     activeSockets.set(socket.userData.userId, socket);
-
-    try {
-      let user = await User.findOne({ userId: socket.userData.userId });
-      if (!user) {
-        user = new User({ userId: socket.userData.userId });
-      }
-      const currentRoom = userCurrentRoom.get(socket.userData.userId) || null;
-      const newEnergy = calculateEnergy(user, currentRoom);
-      user.energy = newEnergy;
-      user.lastUpdated = new Date();
-      await user.save();
-      socket.emit('energyUpdate', newEnergy);
-    } catch (err) {
-      console.error('Error initializing energy:', err.message, err.stack);
-    }
   });
 
   // Обработка входа в комнату с буферизацией
@@ -243,14 +202,14 @@ io.on('connection', (socket) => {
 
     try {
       const newMessage = new Message({
-        userId: socket.userData.userId, // Изменили на userId
+        userId: socket.userData.userId,
         text: message.text,
         firstName: socket.userData.firstName || '',
         username: socket.userData.username || '',
         lastName: socket.userData.lastName || '',
-        photoUrl: socket.userData.photoUrl || '', // Убедимся, что photoUrl всегда сохраняется, даже если пустой
+        photoUrl: socket.userData.photoUrl || '',
         room: message.room,
-        timestamp: message.timestamp || new Date().toISOString() // Убедимся, что timestamp всегда есть
+        timestamp: message.timestamp || new Date().toISOString()
       });
       await newMessage.save();
       io.to(message.room).emit('message', newMessage);
@@ -259,28 +218,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Обработчик для получения энергии
-  socket.on('getEnergy', async () => {
-    if (!socket.userData || !socket.userData.userId) {
-      console.error('User not authenticated for energy request:', socket.id);
-      return;
-    }
-
-    try {
-      let user = await User.findOne({ userId: socket.userData.userId });
-      if (!user) {
-        user = new User({ userId: socket.userData.userId });
-      }
-      const currentRoom = userCurrentRoom.get(socket.userData.userId) || null;
-      const newEnergy = calculateEnergy(user, currentRoom);
-      user.energy = newEnergy;
-      user.lastUpdated = new Date();
-      await user.save();
-      socket.emit('energyUpdate', newEnergy);
-    } catch (err) {
-      console.error('Error updating energy:', err.message, err.stack);
-    }
-  });
+  // Убран обработчик getEnergy
 
   // Обработка отключения
   socket.on('disconnect', (reason) => {

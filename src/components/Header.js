@@ -102,14 +102,12 @@ const ProgressBar = styled.progress`
     border-radius: 4px;
   }
   &::-webkit-progress-value {
-    ${props => props.type === 'energy' && `background-color: #FFA500;`} /* Жёлто-оранжевый */
     ${props => props.type === 'health' && `background-color: #FF0000;`} /* Красный */
     ${props => props.type === 'mood' && `background-color: #007AFF;`} /* Синий */
     ${props => props.type === 'fullness' && `background-color: #32CD32;`} /* Зелёно-салатовый */
     border-radius: 4px;
   }
   &::-moz-progress-bar {
-    ${props => props.type === 'energy' && `background-color: #FFA500;`} /* Жёлто-оранжевый */
     ${props => props.type === 'health' && `background-color: #FF0000;`} /* Красный */
     ${props => props.type === 'mood' && `background-color: #007AFF;`} /* Синий */
     ${props => props.type === 'fullness' && `background-color: #32CD32;`} /* Зелёно-салатовый */
@@ -117,7 +115,7 @@ const ProgressBar = styled.progress`
   }
 `;
 
-function Header({ user, room, theme, energy }) {
+function Header({ user, room, theme }) {
   const [showProgress, setShowProgress] = useState(false);
 
   const roomName = room
@@ -130,14 +128,13 @@ function Header({ user, room, theme, energy }) {
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
 
   const progressValues = {
-    energy: energy,
     health: 50,
     mood: 50,
     fullness: 50
   };
 
   const averageValue = Math.round(
-    (progressValues.energy + progressValues.health + progressValues.mood + progressValues.fullness) / 4
+    (progressValues.health + progressValues.mood + progressValues.fullness) / 3
   );
 
   const toggleProgressModal = (e) => {
@@ -168,10 +165,6 @@ function Header({ user, room, theme, energy }) {
       </AvatarContainer>
       {showProgress && (
         <ProgressModal theme={theme}>
-          <ProgressBarContainer>
-            <ProgressLabel theme={theme}>Энергия</ProgressLabel>
-            <ProgressBar value={progressValues.energy} max="100" type="energy" />
-          </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
             <ProgressBar value={progressValues.health} max="100" type="health" />

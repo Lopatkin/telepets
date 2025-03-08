@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { FaComments, FaTasks, FaHome, FaMap, FaUser } from 'react-icons/fa';
+import { FaComments, FaTasks, FaBox, FaMap, FaUser } from 'react-icons/fa'; // Заменили FaHome на FaBox
 
 const FooterContainer = styled.div`
   position: sticky;
@@ -43,7 +43,7 @@ function Footer({ activeTab, setActiveTab, theme }) {
   const tabs = [
     { key: 'chat', icon: <FaComments /> },
     { key: 'actions', icon: <FaTasks /> },
-    { key: 'housing', icon: <FaHome /> },
+    { key: 'housing', icon: <FaBox /> }, // Заменили FaHome на FaBox
     { key: 'map', icon: <FaMap /> },
     { key: 'profile', icon: <FaUser /> }
   ];

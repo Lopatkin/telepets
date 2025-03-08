@@ -6,7 +6,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import Profile from './components/Profile';
 import Map from './components/Map';
-import Actions from './components/Actions'; // Импорт нового компонента
+import Actions from './components/Actions';
 
 const AppContainer = styled.div`
   height: 100vh;
@@ -25,11 +25,11 @@ function App() {
   const [currentRoom, setCurrentRoom] = useState(null);
   const [theme, setTheme] = useState('telegram');
   const [telegramTheme, setTelegramTheme] = useState('light');
-  const socketRef = useRef(null); // Сохраняем сокет в ref
-  const prevRoomRef = useRef(null); // Отслеживание предыдущей комнаты
-  const joinedRoomsRef = useRef(new Set()); // Отслеживание комнат, в которые уже входили
-  const isJoiningRef = useRef(false); // Флаг, чтобы предотвратить дублирование joinRoom
-  const isAuthenticatedRef = useRef(false); // Флаг для отслеживания аутентификации
+  const socketRef = useRef(null);
+  const prevRoomRef = useRef(null);
+  const joinedRoomsRef = useRef(new Set());
+  const isJoiningRef = useRef(false);
+  const isAuthenticatedRef = useRef(false);
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -39,7 +39,6 @@ function App() {
       const userId = telegramData?.user?.id?.toString();
       let savedRoom = null;
 
-      // Загружаем комнату из localStorage, специфичную для userId
       if (userId) {
         const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
         savedRoom = storedRooms[userId] || null;
@@ -58,16 +57,14 @@ function App() {
         setTheme(savedTheme);
         setCurrentRoom(savedRoom || `myhome_${userData.userId}`);
 
-        // Инициализируем сокет один раз, если ещё не инициализирован
         if (!socketRef.current) {
           socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
           socketRef.current.on('connect', () => console.log('Socket connected:', socketRef.current.id));
           socketRef.current.on('disconnect', (reason) => console.log('Socket disconnected:', reason));
 
-          // Аутентификация только один раз, если ещё не аутентифицированы
           if (!isAuthenticatedRef.current) {
             socketRef.current.emit('auth', userData);
-            isAuthenticatedRef.current = true; // Устанавливаем флаг аутентификации
+            isAuthenticatedRef.current = true;
           }
 
           return () => {
@@ -84,12 +81,10 @@ function App() {
         setTelegramTheme('light');
         setTheme(savedTheme);
 
-        // Для тестового пользователя также используем userId
         const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
         savedRoom = storedRooms[testUser.userId] || null;
         setCurrentRoom(savedRoom || 'myhome_test123');
 
-        // Инициализация для тестового пользователя
         if (!socketRef.current) {
           socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com');
           socketRef.current.on('connect', () => console.log('Socket connected:', socketRef.current.id));
@@ -97,7 +92,7 @@ function App() {
 
           if (!isAuthenticatedRef.current) {
             socketRef.current.emit('auth', testUser);
-            isAuthenticatedRef.current = true; // Устанавливаем флаг аутентификации
+            isAuthenticatedRef.current = true;
           }
 
           return () => {
@@ -108,20 +103,18 @@ function App() {
         }
       }
     }
-  }, []); // Пустой массив зависимостей — эффект выполняется один раз при монтировании
+  }, []);
 
   const handleRoomSelect = (room) => {
-    if (!room || !socketRef.current || room === currentRoom || isJoiningRef.current) return; // Избегаем дублирования
-    isJoiningRef.current = true; // Устанавливаем флаг
+    if (!room || !socketRef.current || room === currentRoom || isJoiningRef.current) return;
+    isJoiningRef.current = true;
 
-    // Выходим из текущей комнаты перед входом в новую, только если текущая комната существует
     if (currentRoom && socketRef.current) {
       socketRef.current.emit('leaveRoom', currentRoom);
     }
 
     setCurrentRoom(room);
 
-    // Сохраняем комнату для текущего userId
     if (user?.userId) {
       const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
       storedRooms[user.userId] = room;
@@ -130,29 +123,24 @@ function App() {
 
     setActiveTab('chat');
 
-    // Проверяем, не входили ли уже в эту комнату в этом сеансе
     if (!joinedRoomsRef.current.has(room)) {
       console.log(`Emitting joinRoom for new room: ${room}`);
       socketRef.current.emit('joinRoom', { room, lastTimestamp: null });
-      joinedRoomsRef.current.add(room); // Отмечаем, что вошли в комнату
+      joinedRoomsRef.current.add(room);
     } else {
       console.log(`Rejoining room: ${room} — using cached messages or fetching updates`);
-      socketRef.current.emit('joinRoom', { room, lastTimestamp: null }); // Отправляем для обновления сообщений
+      socketRef.current.emit('joinRoom', { room, lastTimestamp: null });
     }
 
-    // Сбрасываем флаг после отправки (с небольшой задержкой, чтобы избежать дублирования)
     setTimeout(() => {
       isJoiningRef.current = false;
-    }, 1000); // Задержка 1 секунда, чтобы предотвратить повторные вызовы
+    }, 1000);
 
-    prevRoomRef.current = room; // Сохраняем текущую комнату
+    prevRoomRef.current = room;
   };
 
-  // Добавляем useEffect для отслеживания активной вкладки и предотвращения выхода из комнаты
   useEffect(() => {
-    // Если пользователь переключается на вкладку, отличную от 'chat', не выходим из комнаты
     if (activeTab !== 'chat' && currentRoom && socketRef.current) {
-      // Не отправляем leaveRoom, оставляем пользователя в комнате
       console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
     }
   }, [activeTab, currentRoom, socketRef]);
@@ -168,7 +156,6 @@ function App() {
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
 
-  // Фиктивные значения для прогресс-баров (без энергии)
   const progressValues = {
     health: 50,
     mood: 50,
@@ -180,8 +167,8 @@ function App() {
       <Header user={user} room={currentRoom} theme={appliedTheme} />
       <Content>
         {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socketRef.current} joinedRoomsRef={joinedRoomsRef} />}
-        {activeTab === 'actions' && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} />} {/* Передача currentRoom и userId */}
-        {activeTab === 'housing' && <div>Жильё</div>}
+        {activeTab === 'actions' && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} />}
+        {activeTab === 'housing' && <div>Инвентарь</div>} {/* Переименовано на "Инвентарь" */}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
         {activeTab === 'profile' && (
           <Profile

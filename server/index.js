@@ -95,6 +95,9 @@ io.on('connection', (socket) => {
     activeSockets.set(socket.userData.userId, socket);
 
     const userOwnerKey = `user_${socket.userData.userId}`;
+    const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
+
+    // Инициализация лимитов для пользователя
     const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
     if (!userLimit) {
       await InventoryLimit.create({
@@ -117,6 +120,16 @@ io.on('connection', (socket) => {
       );
     }
 
+    // Инициализация лимитов для "Мой дом"
+    const myHomeLimit = await InventoryLimit.findOne({ owner: myHomeOwnerKey });
+    if (!myHomeLimit) {
+      await InventoryLimit.create({
+        owner: myHomeOwnerKey,
+        maxWeight: 20
+      });
+    }
+
+    // Инициализация лимитов для остальных комнат
     const rooms = [
       'Автобусная остановка',
       'Бар "У бобра" (18+)',

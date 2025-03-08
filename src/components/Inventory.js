@@ -93,10 +93,10 @@ const ItemList = styled.div`
   display: grid;
   gap: 15px;
   ${props => props.subTab === 'personal' && `
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr; /* 1 элемент на строке */
   `}
   ${props => props.subTab === 'location' && `
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr); /* 2 элемента на строке */
   `}
 `;
 
@@ -106,7 +106,6 @@ const ItemCard = styled.div`
   padding: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
-  cursor: pointer;
   animation: ${props => {
     if (props.isAnimating === 'move') return fadeOutRight;
     if (props.isAnimating === 'pickup') return fadeOutLeft;
@@ -126,6 +125,15 @@ const ItemTitle = styled.h4`
   font-size: 14px;
   margin: 0 0 5px 0;
   color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const ItemDetail = styled.p`
+  font-size: 12px;
+  margin: 2px 0;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -224,12 +232,6 @@ const CloseButton = styled.button`
   &:hover {
     opacity: 0.9;
   }
-`;
-
-const DetailText = styled.p`
-  font-size: 14px;
-  margin: 5px 0;
-  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
 `;
 
 function Inventory({ userId, currentRoom, theme, socket }) {
@@ -402,9 +404,13 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             key={item._id}
             theme={theme}
             isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-            onClick={() => openModal(item)}
           >
             <ItemTitle theme={theme}>{item.name}</ItemTitle>
+            <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
+            <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
+            <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
+            <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
+            <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
             <ActionButtons>
               {locationOwnerKey && (
                 <MoveButton
@@ -426,8 +432,10 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             key={item._id}
             theme={theme}
             isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+            onClick={() => openModal(item)}
           >
             <ItemTitle theme={theme}>{item.name}</ItemTitle>
+            <ItemDetail theme={theme}>{item.description}</ItemDetail>
             <ActionButtons>
               <PickupButton
                 onClick={() => handlePickupItem(item._id)}
@@ -453,16 +461,16 @@ function Inventory({ userId, currentRoom, theme, socket }) {
           </div>
         )}
       </ItemList>
-      <Modal isOpen={!!selectedItem} theme={theme}>
+      <Modal isOpen={activeSubTab === 'location' && !!selectedItem} theme={theme}>
         {selectedItem && (
           <ModalContent theme={theme}>
             <CloseButton onClick={closeModal}>Закрыть</CloseButton>
             <ItemTitle theme={theme}>{selectedItem.name}</ItemTitle>
-            <DetailText theme={theme}>Описание: {selectedItem.description}</DetailText>
-            <DetailText theme={theme}>Редкость: {selectedItem.rarity}</DetailText>
-            <DetailText theme={theme}>Вес: {selectedItem.weight}</DetailText>
-            <DetailText theme={theme}>Стоимость: {selectedItem.cost}</DetailText>
-            <DetailText theme={theme}>Эффект: {selectedItem.effect}</DetailText>
+            <ItemDetail theme={theme}>Описание: {selectedItem.description}</ItemDetail>
+            <ItemDetail theme={theme}>Редкость: {selectedItem.rarity}</ItemDetail>
+            <ItemDetail theme={theme}>Вес: {selectedItem.weight}</ItemDetail>
+            <ItemDetail theme={theme}>Стоимость: {selectedItem.cost}</ItemDetail>
+            <ItemDetail theme={theme}>Эффект: {selectedItem.effect}</ItemDetail>
           </ModalContent>
         )}
       </Modal>

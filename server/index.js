@@ -10,13 +10,11 @@ const io = new Server(server, {
     origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
     methods: ["GET", "POST"]
   },
-  pingTimeout: 60000, // Увеличим таймаут до 60 секунд
-  pingInterval: 25000 // Интервал проверки соединения — 25 секунд
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
-mongoose.connect(process.env.MONGODB_URI, {
-  // Убраны устаревшие опции useNewUrlParser и useUnifiedTopology
-})
+mongoose.connect(process.env.MONGODB_URI, {})
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message));
 
@@ -33,7 +31,27 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// Убрана схема пользователя для энергии (User)
+// Схема предметов
+const itemSchema = new mongoose.Schema({
+  name: String,
+  description: String,
+  rarity: String,
+  weight: String,
+  cost: String,
+  effect: String,
+  owner: String, // "user_<userId>" для пользователя или название комнаты
+});
+
+const Item = mongoose.model('Item', itemSchema);
+
+// Схема для хранения ограничений по весу
+const inventoryLimitSchema = new mongoose.Schema({
+  owner: String, // "user_<userId>" для пользователя или название комнаты
+  maxWeight: Number, // Максимальный вес в кг
+  currentWeight: { type: Number, default: 0 } // Текущий вес
+});
+
+const InventoryLimit = mongoose.model('InventoryLimit', inventoryLimitSchema);
 
 // Хранилище активных пользователей по комнатам
 const roomUsers = {};
@@ -41,18 +59,18 @@ const roomUsers = {};
 // Хранилище текущей комнаты для каждого пользователя
 const userCurrentRoom = new Map();
 
-// Убрана функция calculateEnergy
-
 // Хранилище активных сокетов для предотвращения дублирования
 const activeSockets = new Map();
 
 // Хранилище времени последнего входа в комнаты для каждого сокета
-const roomJoinTimes = new WeakMap(); // Используем WeakMap для ассоциации сокета с временами входа
+const roomJoinTimes = new WeakMap();
+
+// Кэш предметов
+const itemCache = new Map();
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  // Обработка аутентификации
   socket.on('auth', async (userData) => {
     if (!userData || !userData.userId) {
       console.error('Invalid user data:', userData);
@@ -75,16 +93,64 @@ io.on('connection', (socket) => {
     }
 
     activeSockets.set(socket.userData.userId, socket);
+
+    // Инициализация предметов пользователя
+    const userOwnerKey = `user_${socket.userData.userId}`;
+    const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
+    if (!userLimit) {
+      await InventoryLimit.create({
+        owner: userOwnerKey,
+        maxWeight: 10 // Максимальный вес для пользователя — 10 кг
+      });
+      // Добавляем предмет "Палка" для пользователя
+      const stick = new Item({
+        name: 'Палка',
+        description: 'Многофункциональная вещь',
+        rarity: 'Обычный',
+        weight: '2 кг',
+        cost: '5 кредитов',
+        effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
+        owner: userOwnerKey
+      });
+      await stick.save();
+      await InventoryLimit.updateOne(
+        { owner: userOwnerKey },
+        { $inc: { currentWeight: 2 } }
+      );
+    }
+
+    // Инициализация лимитов для комнат
+    const rooms = [
+      'Автобусная остановка',
+      'Бар "У бобра" (18+)',
+      'Бизнес центр "Альбион"',
+      'Вокзал',
+      'ЖК Сфера',
+      'Завод',
+      'Кофейня "Ляля-Фа"',
+      'Лес',
+      'Парк',
+      'Приют для животных "Кошкин дом"',
+      'Район Дачный',
+      'Торговый центр "Карнавал"',
+    ];
+    for (const room of rooms) {
+      const roomLimit = await InventoryLimit.findOne({ owner: room });
+      if (!roomLimit) {
+        await InventoryLimit.create({
+          owner: room,
+          maxWeight: 20 // Максимальный вес для комнаты — 20 кг
+        });
+      }
+    }
   });
 
-  // Обработка входа в комнату с буферизацией
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {
     if (typeof room !== 'string') {
       console.error('Invalid room type:', room);
       return;
     }
 
-    // Перед добавлением в новую комнату удаляем из всех других комнат
     Object.keys(roomUsers).forEach(currentRoom => {
       if (currentRoom !== room) {
         roomUsers[currentRoom].forEach(user => {
@@ -96,11 +162,10 @@ io.on('connection', (socket) => {
       }
     });
 
-    // Ждём, пока пользователь аутентифицируется (максимум 2 секунды)
-    const maxWait = 2000; // 2 секунды
+    const maxWait = 2000;
     const startTime = Date.now();
     while (!socket.userData && (Date.now() - startTime < maxWait)) {
-      await new Promise(resolve => setTimeout(resolve, 100)); // Пауза 100 мс
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     if (!socket.userData || !socket.userData.userId) {
@@ -108,25 +173,22 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Сохраняем текущую комнату пользователя
     userCurrentRoom.set(socket.userData.userId, room);
 
-    // Проверяем, уже ли пользователь в этой комнате
     const userInRoom = Array.from(roomUsers[room] || []).some(user => user.userId === socket.userData.userId);
     const isRejoining = userInRoom;
 
-    // Храним время последнего входа в комнату для этого сокета
     if (!roomJoinTimes.has(socket)) {
       roomJoinTimes.set(socket, new Map());
     }
     const roomTimes = roomJoinTimes.get(socket);
     const lastJoinTime = roomTimes.get(room) || 0;
     const now = Date.now();
-    const JOIN_COOLDOWN = 1000; // Минимальная задержка между входами в одну и ту же комнату (1 секунда)
+    const JOIN_COOLDOWN = 1000;
 
     if (isRejoining && (now - lastJoinTime < JOIN_COOLDOWN)) {
       console.log(`User ${socket.userData.userId} attempted to rejoin room: ${room} too quickly — skipping`);
-      return; // Пропускаем, если повторный вход слишком быстрый
+      return;
     }
 
     if (isRejoining) {
@@ -136,11 +198,9 @@ io.on('connection', (socket) => {
       console.log(`User ${socket.userData.userId} joined room: ${room}`);
     }
 
-    // Обновляем время последнего входа
     roomTimes.set(room, now);
 
     if (!roomUsers[room]) roomUsers[room] = new Set();
-    // Перед добавлением пользователя в roomUsers проверяем, есть ли он уже в комнате, и удаляем, если есть
     roomUsers[room].forEach(user => {
       if (user.userId === socket.userData.userId) {
         roomUsers[room].delete(user);
@@ -155,7 +215,6 @@ io.on('connection', (socket) => {
       photoUrl: socket.userData.photoUrl
     });
 
-    // Обновляем список пользователей в комнате
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
 
     try {
@@ -180,7 +239,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Добавляем обработчик для выхода из комнаты
   socket.on('leaveRoom', (roomToLeave) => {
     if (roomUsers[roomToLeave]) {
       roomUsers[roomToLeave].forEach(user => {
@@ -193,7 +251,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Обработка отправки сообщения
   socket.on('sendMessage', async (message) => {
     if (!socket.userData || !message || !message.room) {
       console.error('Invalid message data:', message);
@@ -218,9 +275,32 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Убран обработчик getEnergy
+  // Получение предметов
+  socket.on('getItems', async ({ owner }) => {
+    try {
+      if (itemCache.has(owner)) {
+        socket.emit('items', itemCache.get(owner));
+        return;
+      }
 
-  // Обработка отключения
+      const items = await Item.find({ owner });
+      itemCache.set(owner, items);
+      socket.emit('items', items);
+    } catch (err) {
+      console.error('Error fetching items:', err.message, err.stack);
+    }
+  });
+
+  // Получение лимитов инвентаря
+  socket.on('getInventoryLimit', async ({ owner }) => {
+    try {
+      const limit = await InventoryLimit.findOne({ owner });
+      socket.emit('inventoryLimit', limit);
+    } catch (err) {
+      console.error('Error fetching inventory limit:', err.message, err.stack);
+    }
+  });
+
   socket.on('disconnect', (reason) => {
     console.log('User disconnected:', socket.id, 'Reason:', reason);
 
@@ -229,7 +309,6 @@ io.on('connection', (socket) => {
         activeSockets.delete(socket.userData.userId);
         console.log(`Removed socket for user ${socket.userData.userId}`);
 
-        // Удаляем пользователя из всех комнат
         Object.keys(roomUsers).forEach(room => {
           roomUsers[room].forEach(user => {
             if (user.userId === socket.userData.userId) {
@@ -239,12 +318,10 @@ io.on('connection', (socket) => {
           io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
         });
 
-        // Очищаем текущую комнату пользователя
         userCurrentRoom.delete(socket.userData.userId);
       }
     }
 
-    // Очищаем данные о времени входа в комнаты для этого сокета
     if (roomJoinTimes.has(socket)) {
       roomJoinTimes.delete(socket);
     }

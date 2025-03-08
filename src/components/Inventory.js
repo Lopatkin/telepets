@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { FaArrowRight, FaTrash, FaPlus } from 'react-icons/fa'; // Импортируем иконки
 
 // Анимация исчезновения с движением вправо (для текущего пользователя)
 const fadeOutRight = keyframes`
@@ -102,7 +103,7 @@ const ItemList = styled.div`
 const ItemCard = styled.div`
   background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
   border-radius: 8px;
-  padding: 15px;
+  padding: 10px; /* Уменьшен padding для экономии места */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
   cursor: pointer;
@@ -122,38 +123,49 @@ const ItemCard = styled.div`
 `;
 
 const ItemTitle = styled.h4`
-  font-size: 16px;
-  margin: 0 0 10px 0;
+  font-size: 14px; /* Уменьшен размер шрифта */
+  margin: 0 0 5px 0;
   color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const ItemDetail = styled.p`
-  font-size: 14px;
+  font-size: 12px; /* Уменьшен размер шрифта */
   margin: 0;
   color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const WeightLimit = styled.div`
-  margin-bottom: 20px;
-  font-size: 14px;
+  margin-bottom: 10px; /* Уменьшен margin */
+  font-size: 12px; /* Уменьшен размер шрифта */
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
 `;
 
 const ActionButtons = styled.div`
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 5px; /* Уменьшен gap */
+  margin-top: 5px; /* Уменьшен margin */
 `;
 
 const ActionButton = styled.button`
   position: relative;
-  padding: 8px 12px;
+  padding: 5px; /* Уменьшен padding */
+  width: 30px; /* Фиксированная ширина для иконок */
+  height: 30px; /* Фиксированная высота для иконок */
   border: none;
   border-radius: 4px;
   cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
   font-size: 14px;
   transition: background 0.2s;
   opacity: ${props => (props.disabled ? 0.5 : 1)};
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     opacity: ${props => (props.disabled ? 0.5 : 0.9)};
@@ -403,12 +415,12 @@ function Inventory({ userId, currentRoom, theme, socket }) {
                   onClick={() => handleMoveItem(item._id, locationOwnerKey)}
                   disabled={isActionCooldown}
                 >
-                  Оставить на локации
+                  <FaArrowRight /> {/* Иконка для "Оставить на локации" */}
                   {isActionCooldown && <ProgressBar />}
                 </MoveButton>
               )}
               <DeleteButton onClick={() => handleDeleteItem(item._id)}>
-                Удалить
+                <FaTrash /> {/* Иконка для "Удалить" */}
               </DeleteButton>
             </ActionButtons>
           </ItemCard>
@@ -426,11 +438,11 @@ function Inventory({ userId, currentRoom, theme, socket }) {
                 onClick={() => handlePickupItem(item._id)}
                 disabled={isActionCooldown}
               >
-                Подобрать
+                <FaPlus /> {/* Иконка для "Подобрать" */}
                 {isActionCooldown && <ProgressBar />}
               </PickupButton>
               <DeleteButton onClick={() => handleDeleteItem(item._id)}>
-                Удалить
+                <FaTrash /> {/* Иконка для "Удалить" */}
               </DeleteButton>
             </ActionButtons>
           </ItemCard>

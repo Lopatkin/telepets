@@ -8,13 +8,15 @@ const MapContainer = styled.div`
   flex-direction: column;
   padding: 10px;
   box-sizing: border-box; /* Учитываем padding в высоте */
+  position: relative; /* Для контекста sticky */
 `;
 
 const RoomList = styled.ul`
   list-style: none;
   padding: 0;
-  margin: 0 0 10px 0; /* Отступ снизу для отделения от кнопки */
-  flex: 1; /* Растягиваем список, но не больше доступного */
+  margin: 0 0 60px 0; /* Отступ снизу для кнопки */
+  flex: 1; /* Растягиваем список, но оставляем место для кнопки */
+  overflow-y: auto; /* Добавляем прокрутку для списка комнат */
 `;
 
 const RoomItem = styled.li`
@@ -47,6 +49,10 @@ const HomeButton = styled.button`
   font-size: 18px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: background 0.2s;
+  width: 100%; /* Полная ширина контейнера */
+  position: sticky; /* Фиксируем кнопку */
+  bottom: 10px; /* Отступ от нижнего края */
+  margin-top: 10px; /* Небольшой отступ сверху для визуального разделения */
 
   &:hover {
     background: #005BBB;
@@ -60,16 +66,16 @@ const RoomName = styled.span`
 function Map({ userId, onRoomSelect, theme, currentRoom }) {
   const rooms = [
     'Автобусная остановка',
+    'Бар "У бобра" (18+)',
+    'Бизнес центр "Альбион"',
     'Вокзал',
     'ЖК Сфера',
     'Завод',
+    'Кофейня "Ляля-Фа"',
     'Лес',
     'Парк',
-    'Район Дачный',
-    'Бар "У бобра" (18+)',
-    'Бизнес центр "Альбион"',
-    'Кофейня "Ляля-Фа"',
     'Приют для животных "Кошкин дом"',
+    'Район Дачный',
     'Торговый центр "Карнавал"',
   ].sort(); // Сортировка по алфавиту
 

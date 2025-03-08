@@ -39,16 +39,16 @@ const itemSchema = new mongoose.Schema({
   weight: String,
   cost: String,
   effect: String,
-  owner: String, // "user_<userId>" для пользователя или название комнаты
+  owner: String,
 });
 
 const Item = mongoose.model('Item', itemSchema);
 
 // Схема для хранения ограничений по весу
 const inventoryLimitSchema = new mongoose.Schema({
-  owner: String, // "user_<userId>" для пользователя или название комнаты
-  maxWeight: Number, // Максимальный вес в кг
-  currentWeight: { type: Number, default: 0 } // Текущий вес
+  owner: String,
+  maxWeight: Number,
+  currentWeight: { type: Number, default: 0 }
 });
 
 const InventoryLimit = mongoose.model('InventoryLimit', inventoryLimitSchema);
@@ -94,15 +94,13 @@ io.on('connection', (socket) => {
 
     activeSockets.set(socket.userData.userId, socket);
 
-    // Инициализация предметов пользователя
     const userOwnerKey = `user_${socket.userData.userId}`;
     const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
     if (!userLimit) {
       await InventoryLimit.create({
         owner: userOwnerKey,
-        maxWeight: 10 // Максимальный вес для пользователя — 10 кг
+        maxWeight: 10
       });
-      // Добавляем предмет "Палка" для пользователя
       const stick = new Item({
         name: 'Палка',
         description: 'Многофункциональная вещь',
@@ -119,7 +117,6 @@ io.on('connection', (socket) => {
       );
     }
 
-    // Инициализация лимитов для комнат
     const rooms = [
       'Автобусная остановка',
       'Бар "У бобра" (18+)',
@@ -139,7 +136,7 @@ io.on('connection', (socket) => {
       if (!roomLimit) {
         await InventoryLimit.create({
           owner: room,
-          maxWeight: 20 // Максимальный вес для комнаты — 20 кг
+          maxWeight: 20
         });
       }
     }
@@ -298,6 +295,157 @@ io.on('connection', (socket) => {
       socket.emit('inventoryLimit', limit);
     } catch (err) {
       console.error('Error fetching inventory limit:', err.message, err.stack);
+    }
+  });
+
+  // Перемещение предмета
+  socket.on('moveItem', async ({ itemId, newOwner }) => {
+    try {
+      const item = await Item.findById(itemId);
+      if (!item) {
+        socket.emit('error', { message: 'Предмет не найден' });
+        return;
+      }
+
+      const oldOwner = item.owner;
+      const itemWeight = parseFloat(item.weight) || 0;
+
+      const oldOwnerLimit = await InventoryLimit.findOne({ owner: oldOwner });
+      const newOwnerLimit = await InventoryLimit.findOne({ owner: newOwner });
+
+      if (!oldOwnerLimit || !newOwnerLimit) {
+        socket.emit('error', { message: 'Лимиты инвентаря не найдены' });
+        return;
+      }
+
+      if (newOwnerLimit.currentWeight + itemWeight > newOwnerLimit.maxWeight) {
+        socket.emit('error', { message: 'Превышен лимит веса в новом месте' });
+        return;
+      }
+
+      // Обновляем владельца предмета
+      item.owner = newOwner;
+      await item.save();
+
+      // Обновляем вес
+      await InventoryLimit.updateOne(
+        { owner: oldOwner },
+        { $inc: { currentWeight: -itemWeight } }
+      );
+      await InventoryLimit.updateOne(
+        { owner: newOwner },
+        { $inc: { currentWeight: itemWeight } }
+      );
+
+      // Обновляем кэш
+      const oldOwnerItems = itemCache.get(oldOwner) || [];
+      itemCache.set(oldOwner, oldOwnerItems.filter(i => i._id.toString() !== itemId));
+      const newOwnerItems = itemCache.get(newOwner) || [];
+      itemCache.set(newOwner, [...newOwnerItems, item]);
+
+      // Обновляем лимиты на клиенте
+      const updatedOldLimit = await InventoryLimit.findOne({ owner: oldOwner });
+      const updatedNewLimit = await InventoryLimit.findOne({ owner: newOwner });
+      socket.emit('inventoryLimit', updatedOldLimit);
+      socket.emit('inventoryLimit', updatedNewLimit);
+
+      // Уведомляем клиента об успешном перемещении
+      socket.emit('items', itemCache.get(oldOwner));
+      socket.emit('items', itemCache.get(newOwner));
+    } catch (err) {
+      console.error('Error moving item:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при перемещении предмета' });
+    }
+  });
+
+  // Подбор предмета
+  socket.on('pickupItem', async ({ itemId }) => {
+    try {
+      const item = await Item.findById(itemId);
+      if (!item) {
+        socket.emit('error', { message: 'Предмет не найден' });
+        return;
+      }
+
+      const userOwnerKey = `user_${socket.userData.userId}`;
+      const oldOwner = item.owner;
+      const itemWeight = parseFloat(item.weight) || 0;
+
+      const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
+      if (userLimit.currentWeight + itemWeight > userLimit.maxWeight) {
+        socket.emit('error', { message: 'Превышен лимит веса у пользователя' });
+        return;
+      }
+
+      const oldOwnerLimit = await InventoryLimit.findOne({ owner: oldOwner });
+      if (!oldOwnerLimit) {
+        socket.emit('error', { message: 'Лимиты инвентаря не найдены' });
+        return;
+      }
+
+      // Обновляем владельца предмета
+      item.owner = userOwnerKey;
+      await item.save();
+
+      // Обновляем вес
+      await InventoryLimit.updateOne(
+        { owner: oldOwner },
+        { $inc: { currentWeight: -itemWeight } }
+      );
+      await InventoryLimit.updateOne(
+        { owner: userOwnerKey },
+        { $inc: { currentWeight: itemWeight } }
+      );
+
+      // Обновляем кэш
+      const oldOwnerItems = itemCache.get(oldOwner) || [];
+      itemCache.set(oldOwner, oldOwnerItems.filter(i => i._id.toString() !== itemId));
+      const userItems = itemCache.get(userOwnerKey) || [];
+      itemCache.set(userOwnerKey, [...userItems, item]);
+
+      // Обновляем лимиты на клиенте
+      const updatedOldLimit = await InventoryLimit.findOne({ owner: oldOwner });
+      const updatedUserLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
+      socket.emit('inventoryLimit', updatedOldLimit);
+      socket.emit('inventoryLimit', updatedUserLimit);
+
+      socket.emit('items', itemCache.get(oldOwner));
+      socket.emit('items', itemCache.get(userOwnerKey));
+    } catch (err) {
+      console.error('Error picking up item:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при подборе предмета' });
+    }
+  });
+
+  // Удаление предмета
+  socket.on('deleteItem', async ({ itemId }) => {
+    try {
+      const item = await Item.findById(itemId);
+      if (!item) {
+        socket.emit('error', { message: 'Предмет не найден' });
+        return;
+      }
+
+      const owner = item.owner;
+      const itemWeight = parseFloat(item.weight) || 0;
+
+      await Item.deleteOne({ _id: itemId });
+
+      await InventoryLimit.updateOne(
+        { owner },
+        { $inc: { currentWeight: -itemWeight } }
+      );
+
+      const ownerItems = itemCache.get(owner) || [];
+      itemCache.set(owner, ownerItems.filter(i => i._id.toString() !== itemId));
+
+      const updatedLimit = await InventoryLimit.findOne({ owner });
+      socket.emit('inventoryLimit', updatedLimit);
+
+      socket.emit('items', itemCache.get(owner));
+    } catch (err) {
+      console.error('Error deleting item:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при удалении предмета' });
     }
   });
 

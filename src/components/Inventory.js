@@ -61,35 +61,67 @@ const WeightLimit = styled.div`
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
 `;
 
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+`;
+
+const ActionButton = styled.button`
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
+const MoveButton = styled(ActionButton)`
+  background: #007AFF;
+  color: white;
+`;
+
+const PickupButton = styled(ActionButton)`
+  background: #32CD32;
+  color: white;
+`;
+
+const DeleteButton = styled(ActionButton)`
+  background: #FF0000;
+  color: white;
+`;
+
 function Inventory({ userId, currentRoom, theme, socket }) {
   const [activeSubTab, setActiveSubTab] = useState('personal');
   const [personalItems, setPersonalItems] = useState([]);
   const [locationItems, setLocationItems] = useState([]);
   const [personalLimit, setPersonalLimit] = useState(null);
   const [locationLimit, setLocationLimit] = useState(null);
+  const [error, setError] = useState(null);
+
+  const userOwnerKey = `user_${userId}`;
+  const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
   useEffect(() => {
     if (!socket || !userId) return;
-
-    const userOwnerKey = `user_${userId}`;
-    const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
     // Получение предметов пользователя
     socket.emit('getItems', { owner: userOwnerKey });
     socket.on('items', (items) => {
       if (items.some(item => item.owner === userOwnerKey)) {
         setPersonalItems(items);
+      } else if (items.some(item => item.owner === locationOwnerKey)) {
+        setLocationItems(items);
       }
     });
 
     // Получение предметов локации
     if (locationOwnerKey) {
       socket.emit('getItems', { owner: locationOwnerKey });
-      socket.on('items', (items) => {
-        if (items.some(item => item.owner === locationOwnerKey)) {
-          setLocationItems(items);
-        }
-      });
     }
 
     // Получение лимитов
@@ -97,23 +129,39 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     socket.on('inventoryLimit', (limit) => {
       if (limit.owner === userOwnerKey) {
         setPersonalLimit(limit);
+      } else if (limit.owner === locationOwnerKey) {
+        setLocationLimit(limit);
       }
     });
 
     if (locationOwnerKey) {
       socket.emit('getInventoryLimit', { owner: locationOwnerKey });
-      socket.on('inventoryLimit', (limit) => {
-        if (limit.owner === locationOwnerKey) {
-          setLocationLimit(limit);
-        }
-      });
     }
+
+    // Обработка ошибок
+    socket.on('error', ({ message }) => {
+      setError(message);
+      setTimeout(() => setError(null), 3000);
+    });
 
     return () => {
       socket.off('items');
       socket.off('inventoryLimit');
+      socket.off('error');
     };
-  }, [socket, userId, currentRoom]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey]);
+
+  const handleMoveItem = (itemId, newOwner) => {
+    socket.emit('moveItem', { itemId, newOwner });
+  };
+
+  const handlePickupItem = (itemId) => {
+    socket.emit('pickupItem', { itemId });
+  };
+
+  const handleDeleteItem = (itemId) => {
+    socket.emit('deleteItem', { itemId });
+  };
 
   return (
     <InventoryContainer theme={theme}>
@@ -133,6 +181,11 @@ function Inventory({ userId, currentRoom, theme, socket }) {
           Локация
         </Tab>
       </Tabs>
+      {error && (
+        <div style={{ color: 'red', textAlign: 'center', marginBottom: '10px' }}>
+          {error}
+        </div>
+      )}
       {activeSubTab === 'personal' && personalLimit && (
         <WeightLimit theme={theme}>
           Вес: {personalLimit.currentWeight} кг / {personalLimit.maxWeight} кг
@@ -152,6 +205,16 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
             <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
             <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
+            <ActionButtons>
+              {locationOwnerKey && (
+                <MoveButton onClick={() => handleMoveItem(item._id, locationOwnerKey)}>
+                  Оставить на локации
+                </MoveButton>
+              )}
+              <DeleteButton onClick={() => handleDeleteItem(item._id)}>
+                Удалить
+              </DeleteButton>
+            </ActionButtons>
           </ItemCard>
         ))}
         {activeSubTab === 'location' && locationItems.map(item => (
@@ -162,6 +225,14 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
             <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
             <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
+            <ActionButtons>
+              <PickupButton onClick={() => handlePickupItem(item._id)}>
+                Подобрать
+              </PickupButton>
+              <DeleteButton onClick={() => handleDeleteItem(item._id)}>
+                Удалить
+              </DeleteButton>
+            </ActionButtons>
           </ItemCard>
         ))}
         {activeSubTab === 'personal' && personalItems.length === 0 && (

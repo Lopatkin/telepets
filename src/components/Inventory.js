@@ -103,7 +103,7 @@ const ItemList = styled.div`
 const ItemCard = styled.div`
   background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
   border-radius: 8px;
-  padding: 10px; /* Уменьшен padding для экономии места */
+  padding: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
   cursor: pointer;
@@ -123,7 +123,7 @@ const ItemCard = styled.div`
 `;
 
 const ItemTitle = styled.h4`
-  font-size: 14px; /* Уменьшен размер шрифта */
+  font-size: 14px;
   margin: 0 0 5px 0;
   color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
   white-space: nowrap;
@@ -131,32 +131,23 @@ const ItemTitle = styled.h4`
   text-overflow: ellipsis;
 `;
 
-const ItemDetail = styled.p`
-  font-size: 12px; /* Уменьшен размер шрифта */
-  margin: 0;
-  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
 const WeightLimit = styled.div`
-  margin-bottom: 10px; /* Уменьшен margin */
-  font-size: 12px; /* Уменьшен размер шрифта */
+  margin-bottom: 10px;
+  font-size: 12px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
 `;
 
 const ActionButtons = styled.div`
   display: flex;
-  gap: 5px; /* Уменьшен gap */
-  margin-top: 5px; /* Уменьшен margin */
+  gap: 5px;
+  margin-top: 5px;
 `;
 
 const ActionButton = styled.button`
   position: relative;
-  padding: 5px; /* Уменьшен padding */
-  width: 30px; /* Фиксированная ширина для иконок */
-  height: 30px; /* Фиксированная высота для иконок */
+  padding: 5px;
+  width: 30px;
+  height: 30px;
   border: none;
   border-radius: 4px;
   cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
@@ -408,19 +399,18 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             onClick={() => openModal(item)}
           >
             <ItemTitle theme={theme}>{item.name}</ItemTitle>
-            <ItemDetail theme={theme}>{item.description}</ItemDetail>
             <ActionButtons>
               {locationOwnerKey && (
                 <MoveButton
                   onClick={() => handleMoveItem(item._id, locationOwnerKey)}
                   disabled={isActionCooldown}
                 >
-                  <FaArrowRight /> {/* Иконка для "Оставить на локации" */}
+                  <FaArrowRight />
                   {isActionCooldown && <ProgressBar />}
                 </MoveButton>
               )}
               <DeleteButton onClick={() => handleDeleteItem(item._id)}>
-                <FaTrash /> {/* Иконка для "Удалить" */}
+                <FaTrash />
               </DeleteButton>
             </ActionButtons>
           </ItemCard>
@@ -432,17 +422,16 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
           >
             <ItemTitle theme={theme}>{item.name}</ItemTitle>
-            <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
             <ActionButtons>
               <PickupButton
                 onClick={() => handlePickupItem(item._id)}
                 disabled={isActionCooldown}
               >
-                <FaPlus /> {/* Иконка для "Подобрать" */}
+                <FaPlus />
                 {isActionCooldown && <ProgressBar />}
               </PickupButton>
               <DeleteButton onClick={() => handleDeleteItem(item._id)}>
-                <FaTrash /> {/* Иконка для "Удалить" */}
+                <FaTrash />
               </DeleteButton>
             </ActionButtons>
           </ItemCard>

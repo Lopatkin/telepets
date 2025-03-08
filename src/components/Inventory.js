@@ -226,6 +226,12 @@ const CloseButton = styled.button`
   }
 `;
 
+const DetailText = styled.p`
+  font-size: 14px;
+  margin: 5px 0;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+`;
+
 function Inventory({ userId, currentRoom, theme, socket }) {
   const [activeSubTab, setActiveSubTab] = useState('personal');
   const [personalItems, setPersonalItems] = useState([]);
@@ -452,11 +458,11 @@ function Inventory({ userId, currentRoom, theme, socket }) {
           <ModalContent theme={theme}>
             <CloseButton onClick={closeModal}>Закрыть</CloseButton>
             <ItemTitle theme={theme}>{selectedItem.name}</ItemTitle>
-            <ItemDetail theme={theme}>Описание: {selectedItem.description}</ItemDetail>
-            <ItemDetail theme={theme}>Редкость: {selectedItem.rarity}</ItemDetail>
-            <ItemDetail theme={theme}>Вес: {selectedItem.weight}</ItemDetail>
-            <ItemDetail theme={theme}>Стоимость: {selectedItem.cost}</ItemDetail>
-            <ItemDetail theme={theme}>Эффект: {selectedItem.effect}</ItemDetail>
+            <DetailText theme={theme}>Описание: {selectedItem.description}</DetailText>
+            <DetailText theme={theme}>Редкость: {selectedItem.rarity}</DetailText>
+            <DetailText theme={theme}>Вес: {selectedItem.weight}</DetailText>
+            <DetailText theme={theme}>Стоимость: {selectedItem.cost}</DetailText>
+            <DetailText theme={theme}>Эффект: {selectedItem.effect}</DetailText>
           </ModalContent>
         )}
       </Modal>

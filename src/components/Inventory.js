@@ -1,5 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
+
+// Анимация исчезновения с движением вправо
+const fadeOutRight = keyframes`
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+`;
+
+// Анимация исчезновения с движением влево
+const fadeOutLeft = keyframes`
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+`;
 
 const InventoryContainer = styled.div`
   height: 100%;
@@ -41,6 +65,14 @@ const ItemCard = styled.div`
   border-radius: 8px;
   padding: 15px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  animation: ${props => {
+    if (props.isAnimating === 'move') return fadeOutRight;
+    if (props.isAnimating === 'pickup') return fadeOutLeft;
+    return 'none';
+  }};
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
 `;
 
 const ItemTitle = styled.h4`
@@ -102,6 +134,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const [personalLimit, setPersonalLimit] = useState(null);
   const [locationLimit, setLocationLimit] = useState(null);
   const [error, setError] = useState(null);
+  const [animatingItem, setAnimatingItem] = useState(null); // { itemId, action }
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
@@ -148,15 +181,29 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate]);
 
   const handleMoveItem = (itemId, newOwner) => {
-    const updatedPersonalItems = personalItems.filter(item => item._id.toString() !== itemId);
-    setPersonalItems(updatedPersonalItems); // Локальное обновление
-    socket.emit('moveItem', { itemId, newOwner });
+    // Запускаем анимацию исчезновения вправо
+    setAnimatingItem({ itemId, action: 'move' });
+
+    // После завершения анимации (500ms) обновляем состояние и отправляем запрос
+    setTimeout(() => {
+      const updatedPersonalItems = personalItems.filter(item => item._id.toString() !== itemId);
+      setPersonalItems(updatedPersonalItems);
+      setAnimatingItem(null); // Сбрасываем состояние анимации
+      socket.emit('moveItem', { itemId, newOwner });
+    }, 500); // Длительность анимации
   };
 
   const handlePickupItem = (itemId) => {
-    const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
-    setLocationItems(updatedLocationItems); // Локальное обновление
-    socket.emit('pickupItem', { itemId });
+    // Запускаем анимацию исчезновения влево
+    setAnimatingItem({ itemId, action: 'pickup' });
+
+    // После завершения анимации (500ms) обновляем состояние и отправляем запрос
+    setTimeout(() => {
+      const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
+      setLocationItems(updatedLocationItems);
+      setAnimatingItem(null); // Сбрасываем состояние анимации
+      socket.emit('pickupItem', { itemId });
+    }, 500); // Длительность анимации
   };
 
   const handleDeleteItem = (itemId) => {
@@ -203,7 +250,11 @@ function Inventory({ userId, currentRoom, theme, socket }) {
       )}
       <ItemList>
         {activeSubTab === 'personal' && personalItems.map(item => (
-          <ItemCard key={item._id} theme={theme}>
+          <ItemCard
+            key={item._id}
+            theme={theme}
+            isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+          >
             <ItemTitle theme={theme}>{item.name}</ItemTitle>
             <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
             <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
@@ -223,7 +274,11 @@ function Inventory({ userId, currentRoom, theme, socket }) {
           </ItemCard>
         ))}
         {activeSubTab === 'location' && locationItems.map(item => (
-          <ItemCard key={item._id} theme={theme}>
+          <ItemCard
+            key={item._id}
+            theme={theme}
+            isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+          >
             <ItemTitle theme={theme}>{item.name}</ItemTitle>
             <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
             <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>

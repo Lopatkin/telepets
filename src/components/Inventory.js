@@ -109,20 +109,21 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   useEffect(() => {
     if (!socket || !userId) return;
 
-    // Получение предметов пользователя
-    socket.emit('getItems', { owner: userOwnerKey });
-    socket.on('items', (items) => {
+    // Обработчик получения предметов
+    const handleItemsUpdate = (items) => {
       if (items.some(item => item.owner === userOwnerKey)) {
         setPersonalItems(items);
       } else if (items.some(item => item.owner === locationOwnerKey)) {
         setLocationItems(items);
       }
-    });
+    };
 
-    // Получение предметов локации
-    if (locationOwnerKey) {
-      socket.emit('getItems', { owner: locationOwnerKey });
-    }
+    // Получение начальных данных
+    socket.emit('getItems', { owner: userOwnerKey });
+    socket.emit('getItems', { owner: locationOwnerKey });
+
+    // Подписка на обновления предметов
+    socket.on('items', handleItemsUpdate);
 
     // Получение лимитов
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
@@ -134,9 +135,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
       }
     });
 
-    if (locationOwnerKey) {
-      socket.emit('getInventoryLimit', { owner: locationOwnerKey });
-    }
+    socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
     // Обработка ошибок
     socket.on('error', ({ message }) => {
@@ -144,8 +143,9 @@ function Inventory({ userId, currentRoom, theme, socket }) {
       setTimeout(() => setError(null), 3000);
     });
 
+    // Очистка подписок
     return () => {
-      socket.off('items');
+      socket.off('items', handleItemsUpdate);
       socket.off('inventoryLimit');
       socket.off('error');
     };

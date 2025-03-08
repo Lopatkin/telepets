@@ -104,7 +104,7 @@ io.on('connection', (socket) => {
     if (!userLimit) {
       await InventoryLimit.create({
         owner: userOwnerKey,
-        maxWeight: 10
+        maxWeight: 40 // Лимит для личных вещей: 40 кг
       });
       const stick = new Item({
         name: 'Палка',
@@ -126,7 +126,7 @@ io.on('connection', (socket) => {
     if (!myHomeLimit) {
       await InventoryLimit.create({
         owner: myHomeOwnerKey,
-        maxWeight: 20
+        maxWeight: 500 // Лимит для "Мой дом": 500 кг
       });
     }
 
@@ -149,7 +149,7 @@ io.on('connection', (socket) => {
       if (!roomLimit) {
         await InventoryLimit.create({
           owner: room,
-          maxWeight: 20
+          maxWeight: 10000 // Лимит для всех остальных комнат: 10 000 кг
         });
       }
     }
@@ -365,11 +365,8 @@ io.on('connection', (socket) => {
       // Широковещательная отправка обновлений всем в комнате
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
-        // Уведомляем всех о действиях с предметом
         io.to(currentRoom).emit('itemAction', { action: 'remove', owner: oldOwner, itemId });
         io.to(currentRoom).emit('itemAction', { action: 'add', owner: newOwner, item });
-
-        // Обновляем списки предметов
         io.to(currentRoom).emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) });
         io.to(currentRoom).emit('items', { owner: newOwner, items: itemCache.get(newOwner) });
         io.to(currentRoom).emit('inventoryLimit', updatedOldLimit);
@@ -384,13 +381,11 @@ io.on('connection', (socket) => {
   // Подбор предмета
   socket.on('pickupItem', async ({ itemId }) => {
     try {
-      // Проверка блокировки предмета
       if (itemLocks.has(itemId)) {
         socket.emit('error', { message: 'Этот предмет уже обрабатывается другим пользователем' });
         return;
       }
 
-      // Блокировка предмета
       itemLocks.set(itemId, true);
 
       const item = await Item.findById(itemId);
@@ -418,11 +413,9 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Обновляем владельца предмета
       item.owner = userOwnerKey;
       await item.save();
 
-      // Обновляем вес
       await InventoryLimit.updateOne(
         { owner: oldOwner },
         { $inc: { currentWeight: -itemWeight } }
@@ -432,26 +425,20 @@ io.on('connection', (socket) => {
         { $inc: { currentWeight: itemWeight } }
       );
 
-      // Обновляем кэш
       const oldOwnerItems = itemCache.get(oldOwner) || [];
       itemCache.set(oldOwner, oldOwnerItems.filter(i => i._id.toString() !== itemId));
       const userItems = itemCache.get(userOwnerKey) || [];
       itemCache.set(userOwnerKey, [...userItems, item]);
 
-      // Обновляем лимиты на клиенте
       const updatedOldLimit = await InventoryLimit.findOne({ owner: oldOwner });
       const updatedUserLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
       socket.emit('inventoryLimit', updatedOldLimit);
       socket.emit('inventoryLimit', updatedUserLimit);
 
-      // Широковещательная отправка обновлений всем в комнате
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
-        // Уведомляем всех о действиях с предметом
         io.to(currentRoom).emit('itemAction', { action: 'remove', owner: oldOwner, itemId });
         io.to(currentRoom).emit('itemAction', { action: 'add', owner: userOwnerKey, item });
-
-        // Обновляем списки предметов
         io.to(currentRoom).emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) });
         io.to(currentRoom).emit('items', { owner: userOwnerKey, items: itemCache.get(userOwnerKey) });
         io.to(currentRoom).emit('inventoryLimit', updatedOldLimit);
@@ -499,13 +486,9 @@ io.on('connection', (socket) => {
       const updatedLimit = await InventoryLimit.findOne({ owner });
       socket.emit('inventoryLimit', updatedLimit);
 
-      // Широковещательная отправка обновлений всем в комнате
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
-        // Уведомляем всех о действиях с предметом
         io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemId });
-
-        // Обновляем списки предметов
         io.to(currentRoom).emit('items', { owner, items: itemCache.get(owner) });
         io.to(currentRoom).emit('inventoryLimit', updatedLimit);
       }

@@ -14,7 +14,7 @@ const MapContainer = styled.div`
 const RoomList = styled.ul`
   list-style: none;
   padding: 0;
-  margin: 0 0 30px 0; /* Отступ снизу для кнопки */
+  margin: 0 0 10px 0; /* Отступ снизу для кнопки */
   flex: 1; /* Растягиваем список, но оставляем место для кнопки */
   overflow-y: auto; /* Добавляем прокрутку для списка комнат */
 `;

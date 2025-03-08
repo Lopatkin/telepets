@@ -14,7 +14,7 @@ const MapContainer = styled.div`
 const RoomList = styled.ul`
   list-style: none;
   padding: 0;
-  margin: 0 0 60px 0; /* Отступ снизу для кнопки */
+  margin: 0 0 30px 0; /* Отступ снизу для кнопки */
   flex: 1; /* Растягиваем список, но оставляем место для кнопки */
   overflow-y: auto; /* Добавляем прокрутку для списка комнат */
 `;
@@ -52,7 +52,7 @@ const HomeButton = styled.button`
   width: 100%; /* Полная ширина контейнера */
   position: sticky; /* Фиксируем кнопку */
   bottom: 10px; /* Отступ от нижнего края */
-  margin-top: 1px; /* Небольшой отступ сверху для визуального разделения */
+  margin-top: 10px; /* Небольшой отступ сверху для визуального разделения */
 
   &:hover {
     background: #005BBB;

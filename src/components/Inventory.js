@@ -62,16 +62,20 @@ const fillProgress = keyframes`
 
 const InventoryContainer = styled.div`
   height: 100%;
-  padding: 5px;
+  padding: 20px;
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#f5f5f5'};
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  overflow-y: auto;
 `;
 
 const Tabs = styled.div`
   display: flex;
   border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  margin-bottom: 20px;
+  position: sticky;
+  top: 20px; /* Прикрепляем к верхнему краю с учётом padding контейнера */
+  background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#f5f5f5'};
+  z-index: 10; /* Убеждаемся, что вкладки выше контента */
+  margin: -20px -20px 20px -20px; /* Компенсируем padding контейнера */
+  padding: 0 20px; /* Восстанавливаем внутренние отступы */
 `;
 
 const Tab = styled.button`
@@ -87,6 +91,11 @@ const Tab = styled.button`
   &:hover {
     background: ${props => props.active ? '#005BBB' : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
   }
+`;
+
+const ItemListContainer = styled.div`
+  max-height: calc(100% - 70px); /* Вычитаем высоту вкладок и отступов */
+  overflow-y: auto; /* Прокрутка только для списка */
 `;
 
 const ItemList = styled.div`
@@ -395,70 +404,72 @@ function Inventory({ userId, currentRoom, theme, socket }) {
           Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
         </WeightLimit>
       )}
-      <ItemList subTab={activeSubTab}>
-        {activeSubTab === 'personal' && personalItems.map(item => (
-          <ItemCard
-            key={item._id}
-            theme={theme}
-            isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-          >
-            <ItemTitle theme={theme}>{item.name}</ItemTitle>
-            <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
-            <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
-            <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
-            <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
-            <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
-            <ActionButtons>
-              {locationOwnerKey && (
-                <MoveButton
-                  onClick={() => handleMoveItem(item._id, locationOwnerKey)}
+      <ItemListContainer>
+        <ItemList subTab={activeSubTab}>
+          {activeSubTab === 'personal' && personalItems.map(item => (
+            <ItemCard
+              key={item._id}
+              theme={theme}
+              isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+            >
+              <ItemTitle theme={theme}>{item.name}</ItemTitle>
+              <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
+              <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
+              <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
+              <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
+              <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
+              <ActionButtons>
+                {locationOwnerKey && (
+                  <MoveButton
+                    onClick={() => handleMoveItem(item._id, locationOwnerKey)}
+                    disabled={isActionCooldown}
+                  >
+                    <FaArrowRight />
+                    {isActionCooldown && <ProgressBar />}
+                  </MoveButton>
+                )}
+                <DeleteButton onClick={() => handleDeleteItem(item._id)}>
+                  <FaTrash />
+                </DeleteButton>
+              </ActionButtons>
+            </ItemCard>
+          ))}
+          {activeSubTab === 'location' && locationItems.map(item => (
+            <ItemCard
+              key={item._id}
+              theme={theme}
+              isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+            >
+              <ItemInfo theme={theme} onClick={() => openModal(item)}>
+                <ItemTitle theme={theme}>{item.name}</ItemTitle>
+                <ItemDetail theme={theme}>{item.description}</ItemDetail>
+              </ItemInfo>
+              <ActionButtons>
+                <PickupButton
+                  onClick={() => handlePickupItem(item._id)}
                   disabled={isActionCooldown}
                 >
-                  <FaArrowRight />
+                  <FaPlus />
                   {isActionCooldown && <ProgressBar />}
-                </MoveButton>
-              )}
-              <DeleteButton onClick={() => handleDeleteItem(item._id)}>
-                <FaTrash />
-              </DeleteButton>
-            </ActionButtons>
-          </ItemCard>
-        ))}
-        {activeSubTab === 'location' && locationItems.map(item => (
-          <ItemCard
-            key={item._id}
-            theme={theme}
-            isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-          >
-            <ItemInfo theme={theme} onClick={() => openModal(item)}>
-              <ItemTitle theme={theme}>{item.name}</ItemTitle>
-              <ItemDetail theme={theme}>{item.description}</ItemDetail>
-            </ItemInfo>
-            <ActionButtons>
-              <PickupButton
-                onClick={() => handlePickupItem(item._id)}
-                disabled={isActionCooldown}
-              >
-                <FaPlus />
-                {isActionCooldown && <ProgressBar />}
-              </PickupButton>
-              <DeleteButton onClick={() => handleDeleteItem(item._id)}>
-                <FaTrash />
-              </DeleteButton>
-            </ActionButtons>
-          </ItemCard>
-        ))}
-        {activeSubTab === 'personal' && personalItems.length === 0 && (
-          <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-            У вас пока нет предметов
-          </div>
-        )}
-        {activeSubTab === 'location' && locationItems.length === 0 && (
-          <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-            На этой локации нет предметов
-          </div>
-        )}
-      </ItemList>
+                </PickupButton>
+                <DeleteButton onClick={() => handleDeleteItem(item._id)}>
+                  <FaTrash />
+                </DeleteButton>
+              </ActionButtons>
+            </ItemCard>
+          ))}
+          {activeSubTab === 'personal' && personalItems.length === 0 && (
+            <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+              У вас пока нет предметов
+            </div>
+          )}
+          {activeSubTab === 'location' && locationItems.length === 0 && (
+            <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+              На этой локации нет предметов
+            </div>
+          )}
+        </ItemList>
+      </ItemListContainer>
       <Modal isOpen={activeSubTab === 'location' && !!selectedItem} theme={theme} onClick={closeModal}>
         {selectedItem && (
           <ModalContent theme={theme}>

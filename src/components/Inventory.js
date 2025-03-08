@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 
-// Анимация исчезновения с движением вправо
+// Анимация исчезновения с движением вправо (для текущего пользователя)
 const fadeOutRight = keyframes`
   0% {
     opacity: 1;
@@ -13,7 +13,7 @@ const fadeOutRight = keyframes`
   }
 `;
 
-// Анимация исчезновения с движением влево
+// Анимация исчезновения с движением влево (для текущего пользователя)
 const fadeOutLeft = keyframes`
   0% {
     opacity: 1;
@@ -22,6 +22,30 @@ const fadeOutLeft = keyframes`
   100% {
     opacity: 0;
     transform: translateX(-100px);
+  }
+`;
+
+// Анимация уменьшения в точку (для других пользователей)
+const shrinkToPoint = keyframes`
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+`;
+
+// Анимация появления с увеличением из точки (для других пользователей)
+const growFromPoint = keyframes`
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 `;
 
@@ -69,6 +93,8 @@ const ItemCard = styled.div`
   animation: ${props => {
     if (props.isAnimating === 'move') return fadeOutRight;
     if (props.isAnimating === 'pickup') return fadeOutLeft;
+    if (props.isAnimating === 'shrink') return shrinkToPoint;
+    if (props.isAnimating === 'grow') return growFromPoint;
     return 'none';
   }};
   animation-duration: 0.5s;
@@ -135,6 +161,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const [locationLimit, setLocationLimit] = useState(null);
   const [error, setError] = useState(null);
   const [animatingItem, setAnimatingItem] = useState(null); // { itemId, action }
+  const [pendingItems, setPendingItems] = useState([]); // Предметы, ожидающие добавления после анимации
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
@@ -145,15 +172,41 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     if (owner === userOwnerKey) {
       setPersonalItems(items);
     } else if (owner === locationOwnerKey) {
-      setLocationItems(items);
+      // Не обновляем список сразу, если есть предметы в pendingItems
+      if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
+        setLocationItems(items);
+      }
     }
-  }, [userOwnerKey, locationOwnerKey]);
+  }, [userOwnerKey, locationOwnerKey, pendingItems]);
 
   // Обработчик обновления лимитов
   const handleLimitUpdate = useCallback((limit) => {
     if (limit.owner === userOwnerKey) setPersonalLimit(limit);
     else if (limit.owner === locationOwnerKey) setLocationLimit(limit);
   }, [userOwnerKey, locationOwnerKey]);
+
+  // Обработчик действий с предметами (для анимаций у других пользователей)
+  const handleItemAction = useCallback((data) => {
+    const { action, owner, itemId, item } = data;
+
+    if (action === 'remove' && owner === locationOwnerKey) {
+      // Запускаем анимацию исчезновения (уменьшение в точку)
+      setAnimatingItem({ itemId, action: 'shrink' });
+      setTimeout(() => {
+        setLocationItems(prevItems => prevItems.filter(i => i._id.toString() !== itemId));
+        setAnimatingItem(null);
+      }, 500); // Длительность анимации
+    } else if (action === 'add' && owner === locationOwnerKey) {
+      // Добавляем предмет в pendingItems для анимации появления
+      setPendingItems(prev => [...prev, item]);
+      setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
+      setTimeout(() => {
+        setLocationItems(prevItems => [...prevItems, item]);
+        setPendingItems(prev => prev.filter(i => i._id.toString() !== item._id.toString()));
+        setAnimatingItem(null);
+      }, 500); // Длительность анимации
+    }
+  }, [locationOwnerKey]);
 
   useEffect(() => {
     if (!socket || !userId) return;
@@ -167,6 +220,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     // Подписка на обновления
     socket.on('items', handleItemsUpdate);
     socket.on('inventoryLimit', handleLimitUpdate);
+    socket.on('itemAction', handleItemAction);
     socket.on('error', ({ message }) => {
       setError(message);
       setTimeout(() => setError(null), 3000);
@@ -176,9 +230,10 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     return () => {
       socket.off('items', handleItemsUpdate);
       socket.off('inventoryLimit', handleLimitUpdate);
+      socket.off('itemAction', handleItemAction);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate, handleItemAction]);
 
   const handleMoveItem = (itemId, newOwner) => {
     // Запускаем анимацию исчезновения вправо
@@ -188,9 +243,9 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     setTimeout(() => {
       const updatedPersonalItems = personalItems.filter(item => item._id.toString() !== itemId);
       setPersonalItems(updatedPersonalItems);
-      setAnimatingItem(null); // Сбрасываем состояние анимации
+      setAnimatingItem(null);
       socket.emit('moveItem', { itemId, newOwner });
-    }, 500); // Длительность анимации
+    }, 500);
   };
 
   const handlePickupItem = (itemId) => {
@@ -201,9 +256,9 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     setTimeout(() => {
       const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
       setLocationItems(updatedLocationItems);
-      setAnimatingItem(null); // Сбрасываем состояние анимации
+      setAnimatingItem(null);
       socket.emit('pickupItem', { itemId });
-    }, 500); // Длительность анимации
+    }, 500);
   };
 
   const handleDeleteItem = (itemId) => {
@@ -211,7 +266,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
       ? personalItems.filter(item => item._id.toString() !== itemId)
       : locationItems.filter(item => item._id.toString() !== itemId);
     if (activeSubTab === 'personal') setPersonalItems(updatedItems);
-    else setLocationItems(updatedItems); // Локальное обновление
+    else setLocationItems(updatedItems);
     socket.emit('deleteItem', { itemId });
   };
 

@@ -52,7 +52,7 @@ const HomeButton = styled.button`
   width: 100%; /* Полная ширина контейнера */
   position: sticky; /* Фиксируем кнопку */
   bottom: 10px; /* Отступ от нижнего края */
-  margin-top: 10px; /* Небольшой отступ сверху для визуального разделения */
+  margin-top: 1px; /* Небольшой отступ сверху для визуального разделения */
 
   &:hover {
     background: #005BBB;

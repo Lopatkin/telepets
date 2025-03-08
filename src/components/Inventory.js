@@ -49,6 +49,16 @@ const growFromPoint = keyframes`
   }
 `;
 
+// Анимация заполнения прогресс-бара
+const fillProgress = keyframes`
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+`;
+
 const InventoryContainer = styled.div`
   height: 100%;
   padding: 20px;
@@ -126,6 +136,7 @@ const ActionButtons = styled.div`
 `;
 
 const ActionButton = styled.button`
+  position: relative;
   padding: 8px 12px;
   border: none;
   border-radius: 4px;
@@ -137,6 +148,15 @@ const ActionButton = styled.button`
   &:hover {
     opacity: ${props => (props.disabled ? 0.5 : 0.9)};
   }
+`;
+
+const ProgressBar = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  animation: ${fillProgress} 1.5s linear forwards; // Длительность задержки: 1.5 секунды
 `;
 
 const MoveButton = styled(ActionButton)`
@@ -232,49 +252,39 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate, handleItemAction]);
 
   const handleMoveItem = (itemId, newOwner) => {
-    if (isActionCooldown) return; // Блокируем действие во время задержки
+    if (isActionCooldown) return;
 
-    // Устанавливаем задержку
     setIsActionCooldown(true);
-
-    // Запускаем анимацию исчезновения вправо
     setAnimatingItem({ itemId, action: 'move' });
 
-    // После завершения анимации (500ms) обновляем состояние и отправляем запрос
     setTimeout(() => {
       const updatedPersonalItems = personalItems.filter(item => item._id.toString() !== itemId);
       setPersonalItems(updatedPersonalItems);
       setAnimatingItem(null);
       socket.emit('moveItem', { itemId, newOwner });
 
-      // Устанавливаем дополнительную задержку 1 секунду после анимации
       setTimeout(() => {
-        setIsActionCooldown(false); // Разблокируем действия
-      }, 1000); // Задержка 1 секунда
-    }, 500); // Длительность анимации
+        setIsActionCooldown(false);
+      }, 1000);
+    }, 500);
   };
 
   const handlePickupItem = (itemId) => {
-    if (isActionCooldown) return; // Блокируем действие во время задержки
+    if (isActionCooldown) return;
 
-    // Устанавливаем задержку
     setIsActionCooldown(true);
-
-    // Запускаем анимацию исчезновения влево
     setAnimatingItem({ itemId, action: 'pickup' });
 
-    // После завершения анимации (500ms) обновляем состояние и отправляем запрос
     setTimeout(() => {
       const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
       setLocationItems(updatedLocationItems);
       setAnimatingItem(null);
       socket.emit('pickupItem', { itemId });
 
-      // Устанавливаем дополнительную задержку 1 секунду после анимации
       setTimeout(() => {
-        setIsActionCooldown(false); // Разблокируем действия
-      }, 1000); // Задержка 1 секунда
-    }, 500); // Длительность анимации
+        setIsActionCooldown(false);
+      }, 1000);
+    }, 500);
   };
 
   const handleDeleteItem = (itemId) => {
@@ -339,6 +349,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
                   disabled={isActionCooldown}
                 >
                   Оставить на локации
+                  {isActionCooldown && <ProgressBar />}
                 </MoveButton>
               )}
               <DeleteButton onClick={() => handleDeleteItem(item._id)}>
@@ -365,6 +376,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
                 disabled={isActionCooldown}
               >
                 Подобрать
+                {isActionCooldown && <ProgressBar />}
               </PickupButton>
               <DeleteButton onClick={() => handleDeleteItem(item._id)}>
                 Удалить
@@ -386,5 +398,6 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     </InventoryContainer>
   );
 }
+
 
 export default Inventory;

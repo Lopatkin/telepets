@@ -97,7 +97,6 @@ io.on('connection', (socket) => {
     const userOwnerKey = `user_${socket.userData.userId}`;
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
 
-    // Инициализация лимитов для пользователя
     const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
     if (!userLimit) {
       await InventoryLimit.create({
@@ -120,7 +119,6 @@ io.on('connection', (socket) => {
       );
     }
 
-    // Инициализация лимитов для "Мой дом"
     const myHomeLimit = await InventoryLimit.findOne({ owner: myHomeOwnerKey });
     if (!myHomeLimit) {
       await InventoryLimit.create({
@@ -129,7 +127,6 @@ io.on('connection', (socket) => {
       });
     }
 
-    // Инициализация лимитов для остальных комнат
     const rooms = [
       'Автобусная остановка',
       'Бар "У бобра" (18+)',
@@ -362,9 +359,14 @@ io.on('connection', (socket) => {
       socket.emit('inventoryLimit', updatedOldLimit);
       socket.emit('inventoryLimit', updatedNewLimit);
 
-      // Уведомляем клиента об успешном перемещении
-      socket.emit('items', itemCache.get(oldOwner));
-      socket.emit('items', itemCache.get(newOwner));
+      // Широковещательная отправка обновлений всем в комнате
+      const currentRoom = userCurrentRoom.get(socket.userData.userId);
+      if (currentRoom) {
+        io.to(currentRoom).emit('items', itemCache.get(oldOwner));
+        io.to(currentRoom).emit('items', itemCache.get(newOwner));
+        io.to(currentRoom).emit('inventoryLimit', updatedOldLimit);
+        io.to(currentRoom).emit('inventoryLimit', updatedNewLimit);
+      }
     } catch (err) {
       console.error('Error moving item:', err.message, err.stack);
       socket.emit('error', { message: 'Ошибка при перемещении предмета' });
@@ -422,8 +424,14 @@ io.on('connection', (socket) => {
       socket.emit('inventoryLimit', updatedOldLimit);
       socket.emit('inventoryLimit', updatedUserLimit);
 
-      socket.emit('items', itemCache.get(oldOwner));
-      socket.emit('items', itemCache.get(userOwnerKey));
+      // Широковещательная отправка обновлений всем в комнате
+      const currentRoom = userCurrentRoom.get(socket.userData.userId);
+      if (currentRoom) {
+        io.to(currentRoom).emit('items', itemCache.get(oldOwner));
+        io.to(currentRoom).emit('items', itemCache.get(userOwnerKey));
+        io.to(currentRoom).emit('inventoryLimit', updatedOldLimit);
+        io.to(currentRoom).emit('inventoryLimit', updatedUserLimit);
+      }
     } catch (err) {
       console.error('Error picking up item:', err.message, err.stack);
       socket.emit('error', { message: 'Ошибка при подборе предмета' });
@@ -455,7 +463,12 @@ io.on('connection', (socket) => {
       const updatedLimit = await InventoryLimit.findOne({ owner });
       socket.emit('inventoryLimit', updatedLimit);
 
-      socket.emit('items', itemCache.get(owner));
+      // Широковещательная отправка обновлений всем в комнате
+      const currentRoom = userCurrentRoom.get(socket.userData.userId);
+      if (currentRoom) {
+        io.to(currentRoom).emit('items', itemCache.get(owner));
+        io.to(currentRoom).emit('inventoryLimit', updatedLimit);
+      }
     } catch (err) {
       console.error('Error deleting item:', err.message, err.stack);
       socket.emit('error', { message: 'Ошибка при удалении предмета' });

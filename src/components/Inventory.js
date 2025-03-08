@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 
 const InventoryContainer = styled.div`
@@ -106,38 +106,32 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
+  // Обработчик обновления предметов
+  const handleItemsUpdate = useCallback((items) => {
+    const userItems = items.filter(item => item.owner === userOwnerKey);
+    const locationItemsFiltered = items.filter(item => item.owner === locationOwnerKey);
+    if (userItems.length > 0) setPersonalItems(userItems);
+    if (locationItemsFiltered.length > 0) setLocationItems(locationItemsFiltered);
+  }, [userOwnerKey, locationOwnerKey]);
+
+  // Обработчик обновления лимитов
+  const handleLimitUpdate = useCallback((limit) => {
+    if (limit.owner === userOwnerKey) setPersonalLimit(limit);
+    else if (limit.owner === locationOwnerKey) setLocationLimit(limit);
+  }, [userOwnerKey, locationOwnerKey]);
+
   useEffect(() => {
     if (!socket || !userId) return;
 
-    // Обработчик получения предметов
-    const handleItemsUpdate = (items) => {
-      if (items.some(item => item.owner === userOwnerKey)) {
-        setPersonalItems(items);
-      } else if (items.some(item => item.owner === locationOwnerKey)) {
-        setLocationItems(items);
-      }
-    };
-
-    // Получение начальных данных
+    // Инициализация данных
     socket.emit('getItems', { owner: userOwnerKey });
     socket.emit('getItems', { owner: locationOwnerKey });
-
-    // Подписка на обновления предметов
-    socket.on('items', handleItemsUpdate);
-
-    // Получение лимитов
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
-    socket.on('inventoryLimit', (limit) => {
-      if (limit.owner === userOwnerKey) {
-        setPersonalLimit(limit);
-      } else if (limit.owner === locationOwnerKey) {
-        setLocationLimit(limit);
-      }
-    });
-
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
-    // Обработка ошибок
+    // Подписка на обновления
+    socket.on('items', handleItemsUpdate);
+    socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('error', ({ message }) => {
       setError(message);
       setTimeout(() => setError(null), 3000);
@@ -146,20 +140,29 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     // Очистка подписок
     return () => {
       socket.off('items', handleItemsUpdate);
-      socket.off('inventoryLimit');
+      socket.off('inventoryLimit', handleLimitUpdate);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate]);
 
   const handleMoveItem = (itemId, newOwner) => {
+    const updatedPersonalItems = personalItems.filter(item => item._id.toString() !== itemId);
+    setPersonalItems(updatedPersonalItems); // Локальное обновление
     socket.emit('moveItem', { itemId, newOwner });
   };
 
   const handlePickupItem = (itemId) => {
+    const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
+    setLocationItems(updatedLocationItems); // Локальное обновление
     socket.emit('pickupItem', { itemId });
   };
 
   const handleDeleteItem = (itemId) => {
+    const updatedItems = activeSubTab === 'personal'
+      ? personalItems.filter(item => item._id.toString() !== itemId)
+      : locationItems.filter(item => item._id.toString() !== itemId);
+    if (activeSubTab === 'personal') setPersonalItems(updatedItems);
+    else setLocationItems(updatedItems); // Локальное обновление
     socket.emit('deleteItem', { itemId });
   };
 

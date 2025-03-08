@@ -133,18 +133,16 @@ const ItemTitle = styled.h4`
   font-size: 14px;
   margin: 0 0 5px 0;
   color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-wrap: break-word; /* Перенос слов */
+  overflow-wrap: break-word; /* Альтернатива для совместимости */
 `;
 
 const ItemDetail = styled.p`
   font-size: 12px;
   margin: 2px 0;
   color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-wrap: break-word; /* Перенос слов */
+  overflow-wrap: break-word; /* Альтернатива для совместимости */
 `;
 
 const WeightLimit = styled.div`
@@ -214,6 +212,10 @@ const Modal = styled.div`
   justify-content: center;
   align-items: center;
   z-index: 1000;
+
+  &:hover {
+    cursor: pointer; /* Указатель для закрытия при клике */
+  }
 `;
 
 const ModalContent = styled.div`
@@ -224,22 +226,6 @@ const ModalContent = styled.div`
   max-height: 80vh;
   overflow-y: auto;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 5px 10px;
-  background: #FF0000;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  &:hover {
-    opacity: 0.9;
-  }
 `;
 
 function Inventory({ userId, currentRoom, theme, socket }) {
@@ -369,8 +355,11 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     setSelectedItem(item);
   };
 
-  const closeModal = () => {
-    setSelectedItem(null);
+  const closeModal = (e) => {
+    // Закрываем модальное окно только при клике вне ModalContent
+    if (e.target === e.currentTarget) {
+      setSelectedItem(null);
+    }
   };
 
   return (
@@ -470,10 +459,9 @@ function Inventory({ userId, currentRoom, theme, socket }) {
           </div>
         )}
       </ItemList>
-      <Modal isOpen={activeSubTab === 'location' && !!selectedItem} theme={theme}>
+      <Modal isOpen={activeSubTab === 'location' && !!selectedItem} theme={theme} onClick={closeModal}>
         {selectedItem && (
           <ModalContent theme={theme}>
-            <CloseButton onClick={closeModal}>Закрыть</CloseButton>
             <ItemTitle theme={theme}>{selectedItem.name}</ItemTitle>
             <ItemDetail theme={theme}>Описание: {selectedItem.description}</ItemDetail>
             <ItemDetail theme={theme}>Редкость: {selectedItem.rarity}</ItemDetail>

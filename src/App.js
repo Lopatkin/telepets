@@ -51,7 +51,7 @@ function App() {
           firstName: telegramData.user.first_name || 'User',
           username: telegramData.user.username || '',
           lastName: telegramData.user.last_name || '',
-          photoUrl: telegramData.user.photo_url || 'tu97jy'
+          photoUrl: telegramData.user.photo_url || ''
         };
         setUser(userData);
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
@@ -180,7 +180,7 @@ function App() {
       <Header user={user} room={currentRoom} theme={appliedTheme} />
       <Content>
         {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socketRef.current} joinedRoomsRef={joinedRoomsRef} />}
-        {activeTab === 'actions' && <Actions theme={appliedTheme} />} {/* Подключение нового компонента */}
+        {activeTab === 'actions' && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} />} {/* Передача currentRoom и userId */}
         {activeTab === 'housing' && <div>Жильё</div>}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
         {activeTab === 'profile' && (

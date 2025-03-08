@@ -146,7 +146,7 @@ const actions = [
   },
 ];
 
-function Actions({ theme }) {
+function Actions({ theme, currentRoom, userId }) {
   const [selectedAction, setSelectedAction] = useState(null);
 
   const handleActionClick = (action) => {
@@ -162,15 +162,23 @@ function Actions({ theme }) {
     setSelectedAction(null); // Закрываем модальное окно после действия
   };
 
+  // Проверяем, находится ли пользователь в комнате "Мой дом"
+  const isMyHome = currentRoom && currentRoom.startsWith(`myhome_${userId}`);
+
   return (
     <ActionsContainer theme={theme}>
       <ActionGrid>
-        {actions.map((action, index) => (
+        {isMyHome && actions.map((action, index) => (
           <ActionCard key={action.id} theme={theme} onClick={() => handleActionClick(action)}>
             <ActionTitle theme={theme}>{action.title}</ActionTitle>
             <ActionDescription theme={theme}>{action.description}</ActionDescription>
           </ActionCard>
         ))}
+        {!isMyHome && (
+          <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+            Действия доступны только в "Мой дом"
+          </div>
+        )}
       </ActionGrid>
       {selectedAction && (
         <ModalOverlay onClick={handleCloseModal}>

@@ -103,7 +103,7 @@ const ActionButton = styled.button`
   }
 `;
 
-const actions = [
+const homeActions = [
   {
     id: 1,
     title: 'Поспать',
@@ -146,6 +146,33 @@ const actions = [
   },
 ];
 
+const busStopActions = [
+  {
+    id: 6,
+    title: 'Присесть',
+    description: 'Присесть на скамейку',
+    modalTitle: 'Присесть',
+    modalDescription: 'Вы садитесь на скамейку в ожидании автобуса.',
+    buttonText: 'Сесть',
+  },
+  {
+    id: 7,
+    title: 'Почитать объявления',
+    description: 'На остановке много расклеенных объявлений.',
+    modalTitle: 'Почитать',
+    modalDescription: 'Пока ждёте транспорт Вы решаете почитать объявления, расклеенные на остановке. Вдруг что-то полезное или интересное?',
+    buttonText: 'Почитать',
+  },
+  {
+    id: 8,
+    title: 'Закурить',
+    description: 'Хоть это и вредно',
+    modalTitle: 'Закурить',
+    modalDescription: 'Как известно, если закурить сигарету, то автобус тут же приедет. Проверите?',
+    buttonText: 'Закурить',
+  },
+];
+
 function Actions({ theme, currentRoom, userId }) {
   const [selectedAction, setSelectedAction] = useState(null);
 
@@ -162,21 +189,27 @@ function Actions({ theme, currentRoom, userId }) {
     setSelectedAction(null); // Закрываем модальное окно после действия
   };
 
-  // Проверяем, находится ли пользователь в комнате "Мой дом"
-  const isMyHome = currentRoom && currentRoom.startsWith(`myhome_${userId}`);
+  // Определяем доступные действия в зависимости от текущей комнаты
+  let availableActions = [];
+  if (currentRoom && currentRoom.startsWith(`myhome_${userId}`)) {
+    availableActions = homeActions;
+  } else if (currentRoom === 'Автобусная остановка') {
+    availableActions = busStopActions;
+  }
 
   return (
     <ActionsContainer theme={theme}>
       <ActionGrid>
-        {isMyHome && actions.map((action, index) => (
-          <ActionCard key={action.id} theme={theme} onClick={() => handleActionClick(action)}>
-            <ActionTitle theme={theme}>{action.title}</ActionTitle>
-            <ActionDescription theme={theme}>{action.description}</ActionDescription>
-          </ActionCard>
-        ))}
-        {!isMyHome && (
+        {availableActions.length > 0 ? (
+          availableActions.map((action, index) => (
+            <ActionCard key={action.id} theme={theme} onClick={() => handleActionClick(action)}>
+              <ActionTitle theme={theme}>{action.title}</ActionTitle>
+              <ActionDescription theme={theme}>{action.description}</ActionDescription>
+            </ActionCard>
+          ))
+        ) : (
           <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-            Действия доступны только в "Мой дом"
+            Действия недоступны в этой комнате
           </div>
         )}
       </ActionGrid>

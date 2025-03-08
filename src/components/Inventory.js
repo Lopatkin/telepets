@@ -107,11 +107,13 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
   // Обработчик обновления предметов
-  const handleItemsUpdate = useCallback((items) => {
-    const userItems = items.filter(item => item.owner === userOwnerKey);
-    const locationItemsFiltered = items.filter(item => item.owner === locationOwnerKey);
-    if (userItems.length > 0) setPersonalItems(userItems);
-    if (locationItemsFiltered.length > 0) setLocationItems(locationItemsFiltered);
+  const handleItemsUpdate = useCallback((data) => {
+    const { owner, items } = data;
+    if (owner === userOwnerKey) {
+      setPersonalItems(items);
+    } else if (owner === locationOwnerKey) {
+      setLocationItems(items);
+    }
   }, [userOwnerKey, locationOwnerKey]);
 
   // Обработчик обновления лимитов

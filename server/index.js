@@ -286,13 +286,13 @@ io.on('connection', (socket) => {
   socket.on('getItems', async ({ owner }) => {
     try {
       if (itemCache.has(owner)) {
-        socket.emit('items', itemCache.get(owner));
+        socket.emit('items', { owner, items: itemCache.get(owner) });
         return;
       }
 
       const items = await Item.find({ owner });
       itemCache.set(owner, items);
-      socket.emit('items', items);
+      socket.emit('items', { owner, items });
     } catch (err) {
       console.error('Error fetching items:', err.message, err.stack);
     }
@@ -362,8 +362,8 @@ io.on('connection', (socket) => {
       // Широковещательная отправка обновлений всем в комнате
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
-        io.to(currentRoom).emit('items', itemCache.get(oldOwner));
-        io.to(currentRoom).emit('items', itemCache.get(newOwner));
+        io.to(currentRoom).emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) });
+        io.to(currentRoom).emit('items', { owner: newOwner, items: itemCache.get(newOwner) });
         io.to(currentRoom).emit('inventoryLimit', updatedOldLimit);
         io.to(currentRoom).emit('inventoryLimit', updatedNewLimit);
       }
@@ -427,8 +427,8 @@ io.on('connection', (socket) => {
       // Широковещательная отправка обновлений всем в комнате
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
-        io.to(currentRoom).emit('items', itemCache.get(oldOwner));
-        io.to(currentRoom).emit('items', itemCache.get(userOwnerKey));
+        io.to(currentRoom).emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) });
+        io.to(currentRoom).emit('items', { owner: userOwnerKey, items: itemCache.get(userOwnerKey) });
         io.to(currentRoom).emit('inventoryLimit', updatedOldLimit);
         io.to(currentRoom).emit('inventoryLimit', updatedUserLimit);
       }
@@ -466,7 +466,7 @@ io.on('connection', (socket) => {
       // Широковещательная отправка обновлений всем в комнате
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
-        io.to(currentRoom).emit('items', itemCache.get(owner));
+        io.to(currentRoom).emit('items', { owner, items: itemCache.get(owner) });
         io.to(currentRoom).emit('inventoryLimit', updatedLimit);
       }
     } catch (err) {

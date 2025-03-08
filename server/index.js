@@ -68,6 +68,9 @@ const roomJoinTimes = new WeakMap();
 // Кэш предметов
 const itemCache = new Map();
 
+// Хранилище блокировок предметов
+const itemLocks = new Map();
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -376,8 +379,18 @@ io.on('connection', (socket) => {
   // Подбор предмета
   socket.on('pickupItem', async ({ itemId }) => {
     try {
+      // Проверка блокировки предмета
+      if (itemLocks.has(itemId)) {
+        socket.emit('error', { message: 'Этот предмет уже обрабатывается другим пользователем' });
+        return;
+      }
+
+      // Блокировка предмета
+      itemLocks.set(itemId, true);
+
       const item = await Item.findById(itemId);
       if (!item) {
+        itemLocks.delete(itemId); // Разблокировка при ошибке
         socket.emit('error', { message: 'Предмет не найден' });
         return;
       }
@@ -388,12 +401,14 @@ io.on('connection', (socket) => {
 
       const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
       if (userLimit.currentWeight + itemWeight > userLimit.maxWeight) {
+        itemLocks.delete(itemId); // Разблокировка при ошибке
         socket.emit('error', { message: 'Превышен лимит веса у пользователя' });
         return;
       }
 
       const oldOwnerLimit = await InventoryLimit.findOne({ owner: oldOwner });
       if (!oldOwnerLimit) {
+        itemLocks.delete(itemId); // Разблокировка при ошибке
         socket.emit('error', { message: 'Лимиты инвентаря не найдены' });
         return;
       }
@@ -432,8 +447,12 @@ io.on('connection', (socket) => {
         io.to(currentRoom).emit('inventoryLimit', updatedOldLimit);
         io.to(currentRoom).emit('inventoryLimit', updatedUserLimit);
       }
+
+      // Разблокировка предмета
+      itemLocks.delete(itemId);
     } catch (err) {
       console.error('Error picking up item:', err.message, err.stack);
+      itemLocks.delete(itemId); // Разблокировка при ошибке
       socket.emit('error', { message: 'Ошибка при подборе предмета' });
     }
   });
@@ -441,8 +460,18 @@ io.on('connection', (socket) => {
   // Удаление предмета
   socket.on('deleteItem', async ({ itemId }) => {
     try {
+      // Проверка блокировки предмета
+      if (itemLocks.has(itemId)) {
+        socket.emit('error', { message: 'Этот предмет уже обрабатывается другим пользователем' });
+        return;
+      }
+
+      // Блокировка предмета
+      itemLocks.set(itemId, true);
+
       const item = await Item.findById(itemId);
       if (!item) {
+        itemLocks.delete(itemId); // Разблокировка при ошибке
         socket.emit('error', { message: 'Предмет не найден' });
         return;
       }
@@ -469,8 +498,12 @@ io.on('connection', (socket) => {
         io.to(currentRoom).emit('items', { owner, items: itemCache.get(owner) });
         io.to(currentRoom).emit('inventoryLimit', updatedLimit);
       }
+
+      // Разблокировка предмета
+      itemLocks.delete(itemId);
     } catch (err) {
       console.error('Error deleting item:', err.message, err.stack);
+      itemLocks.delete(itemId); // Разблокировка при ошибке
       socket.emit('error', { message: 'Ошибка при удалении предмета' });
     }
   });

@@ -121,6 +121,14 @@ const ItemCard = styled.div`
   }
 `;
 
+const ItemInfo = styled.div`
+  cursor: pointer;
+
+  &:hover {
+    background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#f0f0f0'};
+  }
+`;
+
 const ItemTitle = styled.h4`
   font-size: 14px;
   margin: 0 0 5px 0;
@@ -432,10 +440,11 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             key={item._id}
             theme={theme}
             isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-            onClick={() => openModal(item)}
           >
-            <ItemTitle theme={theme}>{item.name}</ItemTitle>
-            <ItemDetail theme={theme}>{item.description}</ItemDetail>
+            <ItemInfo theme={theme} onClick={() => openModal(item)}>
+              <ItemTitle theme={theme}>{item.name}</ItemTitle>
+              <ItemDetail theme={theme}>{item.description}</ItemDetail>
+            </ItemInfo>
             <ActionButtons>
               <PickupButton
                 onClick={() => handlePickupItem(item._id)}

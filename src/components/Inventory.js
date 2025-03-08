@@ -90,8 +90,13 @@ const Tab = styled.button`
 
 const ItemList = styled.div`
   display: grid;
-  grid-template-columns: 1fr;
   gap: 15px;
+  ${props => props.subTab === 'personal' && `
+    grid-template-columns: repeat(3, 1fr);
+  `}
+  ${props => props.subTab === 'location' && `
+    grid-template-columns: 1fr;
+  `}
 `;
 
 const ItemCard = styled.div`
@@ -100,6 +105,7 @@ const ItemCard = styled.div`
   padding: 15px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: relative;
+  cursor: pointer;
   animation: ${props => {
     if (props.isAnimating === 'move') return fadeOutRight;
     if (props.isAnimating === 'pickup') return fadeOutLeft;
@@ -109,6 +115,10 @@ const ItemCard = styled.div`
   }};
   animation-duration: 0.5s;
   animation-fill-mode: forwards;
+
+  &:hover {
+    background: ${props => props.theme === 'dark' ? '#333' : '#f0f0f0'};
+  }
 `;
 
 const ItemTitle = styled.h4`
@@ -119,7 +129,7 @@ const ItemTitle = styled.h4`
 
 const ItemDetail = styled.p`
   font-size: 14px;
-  margin: 5px 0;
+  margin: 0;
   color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
 `;
 
@@ -156,7 +166,7 @@ const ProgressBar = styled.div`
   left: 0;
   height: 100%;
   background: rgba(255, 255, 255, 0.3);
-  animation: ${fillProgress} 1.5s linear forwards; // Длительность задержки: 1.5 секунды
+  animation: ${fillProgress} 1.5s linear forwards;
 `;
 
 const MoveButton = styled(ActionButton)`
@@ -174,6 +184,45 @@ const DeleteButton = styled(ActionButton)`
   color: white;
 `;
 
+const Modal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: ${props => (props.isOpen ? 'flex' : 'none')};
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  background: #FF0000;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
 function Inventory({ userId, currentRoom, theme, socket }) {
   const [activeSubTab, setActiveSubTab] = useState('personal');
   const [personalItems, setPersonalItems] = useState([]);
@@ -184,6 +233,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const [animatingItem, setAnimatingItem] = useState(null); // { itemId, action }
   const [pendingItems, setPendingItems] = useState([]); // Предметы, ожидающие добавления после анимации
   const [isActionCooldown, setIsActionCooldown] = useState(false); // Состояние задержки
+  const [selectedItem, setSelectedItem] = useState(null); // Выбранный предмет для модального окна
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
@@ -296,6 +346,14 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     socket.emit('deleteItem', { itemId });
   };
 
+  const openModal = (item) => {
+    setSelectedItem(item);
+  };
+
+  const closeModal = () => {
+    setSelectedItem(null);
+  };
+
   return (
     <InventoryContainer theme={theme}>
       <Tabs>
@@ -329,19 +387,16 @@ function Inventory({ userId, currentRoom, theme, socket }) {
           Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
         </WeightLimit>
       )}
-      <ItemList>
+      <ItemList subTab={activeSubTab}>
         {activeSubTab === 'personal' && personalItems.map(item => (
           <ItemCard
             key={item._id}
             theme={theme}
             isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+            onClick={() => openModal(item)}
           >
             <ItemTitle theme={theme}>{item.name}</ItemTitle>
-            <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
-            <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
-            <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
-            <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
-            <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
+            <ItemDetail theme={theme}>{item.description}</ItemDetail>
             <ActionButtons>
               {locationOwnerKey && (
                 <MoveButton
@@ -366,10 +421,6 @@ function Inventory({ userId, currentRoom, theme, socket }) {
           >
             <ItemTitle theme={theme}>{item.name}</ItemTitle>
             <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
-            <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
-            <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
-            <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
-            <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
             <ActionButtons>
               <PickupButton
                 onClick={() => handlePickupItem(item._id)}
@@ -395,9 +446,21 @@ function Inventory({ userId, currentRoom, theme, socket }) {
           </div>
         )}
       </ItemList>
+      <Modal isOpen={!!selectedItem} theme={theme}>
+        {selectedItem && (
+          <ModalContent theme={theme}>
+            <CloseButton onClick={closeModal}>Закрыть</CloseButton>
+            <ItemTitle theme={theme}>{selectedItem.name}</ItemTitle>
+            <ItemDetail theme={theme}>Описание: {selectedItem.description}</ItemDetail>
+            <ItemDetail theme={theme}>Редкость: {selectedItem.rarity}</ItemDetail>
+            <ItemDetail theme={theme}>Вес: {selectedItem.weight}</ItemDetail>
+            <ItemDetail theme={theme}>Стоимость: {selectedItem.cost}</ItemDetail>
+            <ItemDetail theme={theme}>Эффект: {selectedItem.effect}</ItemDetail>
+          </ModalContent>
+        )}
+      </Modal>
     </InventoryContainer>
   );
 }
-
 
 export default Inventory;

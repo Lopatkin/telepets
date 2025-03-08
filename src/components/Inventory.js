@@ -62,7 +62,7 @@ const fillProgress = keyframes`
 
 const InventoryContainer = styled.div`
   height: 100%;
-  padding: 20px;
+  padding: 5px;
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#f5f5f5'};
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   overflow-y: auto;

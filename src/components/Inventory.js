@@ -129,12 +129,13 @@ const ActionButton = styled.button`
   padding: 8px 12px;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
+  cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
   font-size: 14px;
   transition: background 0.2s;
+  opacity: ${props => (props.disabled ? 0.5 : 1)};
 
   &:hover {
-    opacity: 0.9;
+    opacity: ${props => (props.disabled ? 0.5 : 0.9)};
   }
 `;
 
@@ -162,6 +163,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const [error, setError] = useState(null);
   const [animatingItem, setAnimatingItem] = useState(null); // { itemId, action }
   const [pendingItems, setPendingItems] = useState([]); // Предметы, ожидающие добавления после анимации
+  const [isActionCooldown, setIsActionCooldown] = useState(false); // Состояние задержки
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
@@ -172,7 +174,6 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     if (owner === userOwnerKey) {
       setPersonalItems(items);
     } else if (owner === locationOwnerKey) {
-      // Не обновляем список сразу, если есть предметы в pendingItems
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
         setLocationItems(items);
       }
@@ -190,34 +191,30 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     const { action, owner, itemId, item } = data;
 
     if (action === 'remove' && owner === locationOwnerKey) {
-      // Запускаем анимацию исчезновения (уменьшение в точку)
       setAnimatingItem({ itemId, action: 'shrink' });
       setTimeout(() => {
         setLocationItems(prevItems => prevItems.filter(i => i._id.toString() !== itemId));
         setAnimatingItem(null);
-      }, 500); // Длительность анимации
+      }, 500);
     } else if (action === 'add' && owner === locationOwnerKey) {
-      // Добавляем предмет в pendingItems для анимации появления
       setPendingItems(prev => [...prev, item]);
       setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
       setTimeout(() => {
         setLocationItems(prevItems => [...prevItems, item]);
         setPendingItems(prev => prev.filter(i => i._id.toString() !== item._id.toString()));
         setAnimatingItem(null);
-      }, 500); // Длительность анимации
+      }, 500);
     }
   }, [locationOwnerKey]);
 
   useEffect(() => {
     if (!socket || !userId) return;
 
-    // Инициализация данных
     socket.emit('getItems', { owner: userOwnerKey });
     socket.emit('getItems', { owner: locationOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
-    // Подписка на обновления
     socket.on('items', handleItemsUpdate);
     socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
@@ -226,7 +223,6 @@ function Inventory({ userId, currentRoom, theme, socket }) {
       setTimeout(() => setError(null), 3000);
     });
 
-    // Очистка подписок
     return () => {
       socket.off('items', handleItemsUpdate);
       socket.off('inventoryLimit', handleLimitUpdate);
@@ -236,6 +232,11 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate, handleItemAction]);
 
   const handleMoveItem = (itemId, newOwner) => {
+    if (isActionCooldown) return; // Блокируем действие во время задержки
+
+    // Устанавливаем задержку
+    setIsActionCooldown(true);
+
     // Запускаем анимацию исчезновения вправо
     setAnimatingItem({ itemId, action: 'move' });
 
@@ -245,10 +246,20 @@ function Inventory({ userId, currentRoom, theme, socket }) {
       setPersonalItems(updatedPersonalItems);
       setAnimatingItem(null);
       socket.emit('moveItem', { itemId, newOwner });
-    }, 500);
+
+      // Устанавливаем дополнительную задержку 1 секунду после анимации
+      setTimeout(() => {
+        setIsActionCooldown(false); // Разблокируем действия
+      }, 1000); // Задержка 1 секунда
+    }, 500); // Длительность анимации
   };
 
   const handlePickupItem = (itemId) => {
+    if (isActionCooldown) return; // Блокируем действие во время задержки
+
+    // Устанавливаем задержку
+    setIsActionCooldown(true);
+
     // Запускаем анимацию исчезновения влево
     setAnimatingItem({ itemId, action: 'pickup' });
 
@@ -258,7 +269,12 @@ function Inventory({ userId, currentRoom, theme, socket }) {
       setLocationItems(updatedLocationItems);
       setAnimatingItem(null);
       socket.emit('pickupItem', { itemId });
-    }, 500);
+
+      // Устанавливаем дополнительную задержку 1 секунду после анимации
+      setTimeout(() => {
+        setIsActionCooldown(false); // Разблокируем действия
+      }, 1000); // Задержка 1 секунда
+    }, 500); // Длительность анимации
   };
 
   const handleDeleteItem = (itemId) => {
@@ -318,7 +334,10 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
             <ActionButtons>
               {locationOwnerKey && (
-                <MoveButton onClick={() => handleMoveItem(item._id, locationOwnerKey)}>
+                <MoveButton
+                  onClick={() => handleMoveItem(item._id, locationOwnerKey)}
+                  disabled={isActionCooldown}
+                >
                   Оставить на локации
                 </MoveButton>
               )}
@@ -341,7 +360,10 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
             <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
             <ActionButtons>
-              <PickupButton onClick={() => handlePickupItem(item._id)}>
+              <PickupButton
+                onClick={() => handlePickupItem(item._id)}
+                disabled={isActionCooldown}
+              >
                 Подобрать
               </PickupButton>
               <DeleteButton onClick={() => handleDeleteItem(item._id)}>

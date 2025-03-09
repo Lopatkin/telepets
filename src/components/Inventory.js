@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FaArrowRight, FaTrash, FaPlus } from 'react-icons/fa'; // Импортируем иконки
+import { FaArrowRight, FaTrash, FaPlus, FaCheck, FaTimes } from 'react-icons/fa'; // Добавляем FaCheck и FaTimes для модального окна
 
 // Анимация исчезновения с движением вправо (для текущего пользователя)
 const fadeOutRight = keyframes`
@@ -47,6 +47,29 @@ const growFromPoint = keyframes`
   100% {
     opacity: 1;
     transform: scale(1);
+  }
+`;
+
+// Анимация расщепления на куски и исчезновения
+const splitAndFade = keyframes`
+  0% {
+    opacity: 1;
+    transform: scale(1) translate(0, 0);
+  }
+  33% {
+    opacity: 0.7;
+    transform: scale(1.2);
+    clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+  }
+  66% {
+    opacity: 0.4;
+    transform: scale(1.5) translate(20px, -20px);
+    clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2) translate(40px, 40px);
+    clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
   }
 `;
 
@@ -111,9 +134,10 @@ const ItemCard = styled.div`
     if (props.isAnimating === 'pickup') return fadeOutLeft;
     if (props.isAnimating === 'shrink') return shrinkToPoint;
     if (props.isAnimating === 'grow') return growFromPoint;
+    if (props.isAnimating === 'split') return splitAndFade;
     return 'none';
   }};
-  animation-duration: 0.5s;
+  animation-duration: 0.7s; /* Увеличили длительность для расщепления */
   animation-fill-mode: forwards;
 
   &:hover {
@@ -214,7 +238,7 @@ const Modal = styled.div`
   z-index: 1000;
 
   &:hover {
-    cursor: pointer; /* Указатель для закрытия при клике */
+    cursor: ${props => props.isConfirm ? 'auto' : 'pointer'}; /* Указатель для закрытия при клике, если не подтверждение */
   }
 `;
 
@@ -226,6 +250,34 @@ const ModalContent = styled.div`
   max-height: 80vh;
   overflow-y: auto;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  text-align: center;
+`;
+
+const ConfirmModalContent = styled(ModalContent)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ConfirmText = styled.p`
+  font-size: 16px;
+  margin-bottom: 20px;
+`;
+
+const ConfirmButtons = styled.div`
+  display: flex;
+  gap: 20px;
+`;
+
+const ConfirmButton = styled(ActionButton)`
+  width: 80px;
+  height: 40px;
+  background: ${props => props.type === 'yes' ? '#32CD32' : '#FF0000'};
+  color: white;
+
+  &:hover {
+    opacity: ${props => props.disabled ? 0.5 : 0.9};
+  }
 `;
 
 function Inventory({ userId, currentRoom, theme, socket }) {
@@ -239,6 +291,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const [pendingItems, setPendingItems] = useState([]); // Предметы, ожидающие добавления после анимации
   const [isActionCooldown, setIsActionCooldown] = useState(false); // Состояние задержки для всех действий
   const [selectedItem, setSelectedItem] = useState(null); // Выбранный предмет для модального окна
+  const [confirmDelete, setConfirmDelete] = useState(null); // { itemId, owner }
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
@@ -345,22 +398,28 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const handleDeleteItem = (itemId) => {
     if (isActionCooldown) return;
 
+    setConfirmDelete({ itemId, owner: userOwnerKey });
+  };
+
+  const confirmDeleteItem = (confirmed) => {
+    if (!confirmed || !confirmDelete) return;
+
+    const { itemId, owner } = confirmDelete;
     setIsActionCooldown(true);
-    setAnimatingItem({ itemId, action: 'move' }); // Используем существующую анимацию для удаления
+    setAnimatingItem({ itemId, action: 'split' });
 
     setTimeout(() => {
-      const updatedItems = activeSubTab === 'personal'
-        ? personalItems.filter(item => item._id.toString() !== itemId)
-        : locationItems.filter(item => item._id.toString() !== itemId);
-      if (activeSubTab === 'personal') setPersonalItems(updatedItems);
-      else setLocationItems(updatedItems);
+      const updatedItems = personalItems.filter(item => item._id.toString() !== itemId);
+      setPersonalItems(updatedItems);
       setAnimatingItem(null);
       socket.emit('deleteItem', { itemId });
 
       setTimeout(() => {
         setIsActionCooldown(false);
       }, 1000);
-    }, 500);
+    }, 700); // Синхронизация с длительностью анимации (0.7s)
+
+    setConfirmDelete(null);
   };
 
   const openModal = (item) => {
@@ -371,6 +430,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     // Закрываем модальное окно только при клике вне ModalContent
     if (e.target === e.currentTarget) {
       setSelectedItem(null);
+      setConfirmDelete(null);
     }
   };
 
@@ -472,7 +532,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
           </div>
         )}
       </ItemList>
-      <Modal isOpen={activeSubTab === 'location' && !!selectedItem} theme={theme} onClick={closeModal}>
+      <Modal isOpen={!!selectedItem || !!confirmDelete} theme={theme} onClick={closeModal} isConfirm={!!confirmDelete}>
         {selectedItem && (
           <ModalContent theme={theme}>
             <ItemTitle theme={theme}>{selectedItem.name}</ItemTitle>
@@ -482,6 +542,19 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             <ItemDetail theme={theme}>Стоимость: {selectedItem.cost}</ItemDetail>
             <ItemDetail theme={theme}>Эффект: {selectedItem.effect}</ItemDetail>
           </ModalContent>
+        )}
+        {confirmDelete && (
+          <ConfirmModalContent theme={theme}>
+            <ConfirmText>Вы уверены, что хотите удалить этот предмет?</ConfirmText>
+            <ConfirmButtons>
+              <ConfirmButton type="yes" onClick={() => confirmDeleteItem(true)} disabled={isActionCooldown}>
+                <FaCheck /> Да
+              </ConfirmButton>
+              <ConfirmButton type="no" onClick={() => confirmDeleteItem(false)} disabled={isActionCooldown}>
+                <FaTimes /> Нет
+              </ConfirmButton>
+            </ConfirmButtons>
+          </ConfirmModalContent>
         )}
       </Modal>
     </InventoryContainer>

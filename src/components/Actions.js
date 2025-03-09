@@ -89,18 +89,33 @@ const CloseButton = styled.button`
 `;
 
 const ActionButton = styled.button`
-  background: #007AFF;
+  background: ${props => props.disabled ? '#ccc' : '#007AFF'};
   color: white;
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   font-size: 14px;
   width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
-    background: #0056b3;
+    background: ${props => props.disabled ? '#ccc' : '#0056b3'};
   }
+`;
+
+// Прогресс-бар для таймера
+const ProgressBar = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  width: ${props => props.progress}%;
+  transition: width ${props => props.duration}ms linear;
 `;
 
 const Notification = styled.div`
@@ -115,6 +130,12 @@ const Notification = styled.div`
   z-index: 1001;
   opacity: ${props => (props.show ? 1 : 0)};
   transition: opacity 0.5s;
+`;
+
+const TimerDisplay = styled.div`
+  font-size: 12px;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+  margin-top: 5px;
 `;
 
 const homeActions = [
@@ -194,13 +215,38 @@ const forestActions = [
     description: 'Палка - очень полезный предмет',
     modalTitle: 'Найти палку',
     modalDescription: 'Вы ходите по лесу и ищете палку. Палка - полезный и многофункциональный предмет, может пригодиться в самых разных жизненных ситуациях.',
-    buttonText: 'Найти',
+    buttonText: 'Подобрать', // Обновлён на "Подобрать" для единообразия с Inventory
   },
 ];
 
 function Actions({ theme, currentRoom, userId, socket }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
+  const [isCooldown, setIsCooldown] = useState(false); // Состояние для блокировки кнопки
+  const [timeLeft, setTimeLeft] = useState(0); // Остаток времени в секундах
+  const [progress, setProgress] = useState(100); // Прогресс для прогресс-бара
+
+  const COOLDOWN_DURATION = 20 * 1000; // 20 секунд в миллисекундах
+
+  // Таймер обратного отсчёта
+  useEffect(() => {
+    let timer;
+    if (isCooldown && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          const newTime = prev - 1;
+          if (newTime <= 0) {
+            setIsCooldown(false);
+            setProgress(100);
+            return 0;
+          }
+          setProgress((newTime / (COOLDOWN_DURATION / 1000)) * 100); // Обновление прогресса
+          return newTime;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [isCooldown, timeLeft]);
 
   const handleActionClick = (action) => {
     setSelectedAction(action);
@@ -211,16 +257,15 @@ function Actions({ theme, currentRoom, userId, socket }) {
   };
 
   const handleButtonClick = () => {
-    if (!socket) {
-      console.error('Socket is not initialized');
-      setNotification({ show: true, message: 'Ошибка: Соединение с сервером отсутствует' });
+    if (!socket || isCooldown) {
+      console.error('Socket is not initialized or action is on cooldown');
+      setNotification({ show: true, message: 'Действие недоступно, подождите' });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
       return;
     }
 
     if (selectedAction.title === 'Найти палку') {
       const newItem = {
-        // Удаляем _id, пусть MongoDB генерирует его
         name: 'Палка',
         description: 'Многофункциональная вещь',
         rarity: 'Обычный',
@@ -232,6 +277,9 @@ function Actions({ theme, currentRoom, userId, socket }) {
         if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          setIsCooldown(true); // Активируем режим ожидания
+          setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000)); // Устанавливаем 20 секунд
+          setProgress(100); // Начинаем с 100%
         } else {
           setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
@@ -274,7 +322,15 @@ function Actions({ theme, currentRoom, userId, socket }) {
             <CloseButton theme={theme} onClick={handleCloseModal}><FaTimes /></CloseButton>
             <ModalTitle theme={theme}>{selectedAction.modalTitle}</ModalTitle>
             <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>
-            <ActionButton onClick={handleButtonClick}>{selectedAction.buttonText}</ActionButton>
+            <ActionButton onClick={handleButtonClick} disabled={isCooldown}>
+              {selectedAction.buttonText}
+              {isCooldown && <ProgressBar progress={progress} duration={COOLDOWN_DURATION} />}
+            </ActionButton>
+            {isCooldown && (
+              <TimerDisplay theme={theme}>
+                Осталось: {timeLeft} сек
+              </TimerDisplay>
+            )}
           </ModalContent>
         </ModalOverlay>
       )}

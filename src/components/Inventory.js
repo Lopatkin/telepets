@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FaArrowRight, FaTrash, FaPlus } from 'react-icons/fa'; // Убрали FaCheck и FaTimes, так как иконки больше не нужны
+import { FaArrowRight, FaTrash } from 'react-icons/fa'; // Убрали FaPlus, так как он больше не используется
 
 // Анимация исчезновения с движением вправо (для текущего пользователя)
 const fadeOutRight = keyframes`
@@ -147,7 +147,7 @@ const ItemCard = styled.div`
     if (props.isAnimating === 'split') return splitAndFade;
     return 'none';
   }};
-  animation-duration: 1s; /* Увеличили длительность для более детализированной анимации */
+  animation-duration: 1s;
   animation-fill-mode: forwards;
 
   &:hover {
@@ -167,16 +167,16 @@ const ItemTitle = styled.h4`
   font-size: 14px;
   margin: 0 0 5px 0;
   color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
-  word-wrap: break-word; /* Перенос слов */
-  overflow-wrap: break-word; /* Альтернатива для совместимости */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 `;
 
 const ItemDetail = styled.p`
   font-size: 12px;
   margin: 2px 0;
   color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
-  word-wrap: break-word; /* Перенос слов */
-  overflow-wrap: break-word; /* Альтернатива для совместимости */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 `;
 
 const WeightLimit = styled.div`
@@ -193,13 +193,12 @@ const ActionButtons = styled.div`
 
 const ActionButton = styled.button`
   position: relative;
-  padding: 5px;
-  width: 30px;
+  padding: 5px 10px; /* Увеличили padding для текста */
   height: 30px;
   border: none;
   border-radius: 4px;
   cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
-  font-size: 14px;
+  font-size: 12px; /* Уменьшили шрифт для компактности */
   transition: background 0.2s;
   opacity: ${props => (props.disabled ? 0.5 : 1)};
   display: flex;
@@ -248,7 +247,7 @@ const Modal = styled.div`
   z-index: 1000;
 
   &:hover {
-    cursor: ${props => props.isConfirm ? 'auto' : 'pointer'}; /* Указатель для закрытия при клике, если не подтверждение */
+    cursor: ${props => props.isConfirm ? 'auto' : 'pointer'};
   }
 `;
 
@@ -284,8 +283,8 @@ const ConfirmButton = styled(ActionButton)`
   height: 40px;
   background: ${props => props.type === 'yes' ? '#32CD32' : '#FF0000'};
   color: white;
-  font-size: 16px; /* Увеличиваем размер текста для читаемости */
-  padding: 0; /* Убираем внутренние отступы, чтобы текст выглядел аккуратно */
+  font-size: 16px;
+  padding: 0;
 
   &:hover {
     opacity: ${props => props.disabled ? 0.5 : 0.9};
@@ -299,16 +298,15 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const [personalLimit, setPersonalLimit] = useState(null);
   const [locationLimit, setLocationLimit] = useState(null);
   const [error, setError] = useState(null);
-  const [animatingItem, setAnimatingItem] = useState(null); // { itemId, action }
-  const [pendingItems, setPendingItems] = useState([]); // Предметы, ожидающие добавления после анимации
-  const [isActionCooldown, setIsActionCooldown] = useState(false); // Состояние задержки для всех действий
-  const [selectedItem, setSelectedItem] = useState(null); // Выбранный предмет для модального окна
-  const [confirmDelete, setConfirmDelete] = useState(null); // Сохраняем только itemId
+  const [animatingItem, setAnimatingItem] = useState(null);
+  const [pendingItems, setPendingItems] = useState([]);
+  const [isActionCooldown, setIsActionCooldown] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
-  // Обработчик обновления предметов
   const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
     if (owner === userOwnerKey) {
@@ -320,13 +318,11 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     }
   }, [userOwnerKey, locationOwnerKey, pendingItems]);
 
-  // Обработчик обновления лимитов
   const handleLimitUpdate = useCallback((limit) => {
     if (limit.owner === userOwnerKey) setPersonalLimit(limit);
     else if (limit.owner === locationOwnerKey) setLocationLimit(limit);
   }, [userOwnerKey, locationOwnerKey]);
 
-  // Обработчик действий с предметами (для анимаций у других пользователей)
   const handleItemAction = useCallback((data) => {
     const { action, owner, itemId, item } = data;
 
@@ -428,10 +424,9 @@ function Inventory({ userId, currentRoom, theme, socket }) {
         setTimeout(() => {
           setIsActionCooldown(false);
         }, 1000);
-      }, 1000); // Синхронизация с длительностью анимации (1s)
+      }, 1000);
     }
 
-    // Всегда сбрасываем confirmDelete, чтобы закрыть модальное окно
     setConfirmDelete(null);
   };
 
@@ -440,7 +435,6 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   };
 
   const closeModal = (e) => {
-    // Закрываем модальное окно только при клике вне ModalContent
     if (e.target === e.currentTarget) {
       setSelectedItem(null);
       setConfirmDelete(null);
@@ -499,7 +493,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
                   onClick={() => handleMoveItem(item._id, locationOwnerKey)}
                   disabled={isActionCooldown}
                 >
-                  <FaArrowRight />
+                  Выложить
                   {isActionCooldown && <ProgressBar />}
                 </MoveButton>
               )}
@@ -507,7 +501,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
                 onClick={() => handleDeleteItem(item._id)}
                 disabled={isActionCooldown}
               >
-                <FaTrash />
+                Сломать
                 {isActionCooldown && <ProgressBar />}
               </DeleteButton>
             </ActionButtons>
@@ -528,7 +522,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
                 onClick={() => handlePickupItem(item._id)}
                 disabled={isActionCooldown}
               >
-                <FaPlus />
+                Подобрать
                 {isActionCooldown && <ProgressBar />}
               </PickupButton>
             </ActionButtons>
@@ -558,7 +552,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
         )}
         {confirmDelete && (
           <ConfirmModalContent theme={theme}>
-            <ConfirmText>Вы уверены, что хотите удалить этот предмет?</ConfirmText>
+            <ConfirmText>Вы уверены, что хотите сломать этот предмет?</ConfirmText>
             <ConfirmButtons>
               <ConfirmButton type="yes" onClick={() => confirmDeleteItem(true)} disabled={isActionCooldown}>
                 Да

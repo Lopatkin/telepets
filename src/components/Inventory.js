@@ -237,7 +237,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const [error, setError] = useState(null);
   const [animatingItem, setAnimatingItem] = useState(null); // { itemId, action }
   const [pendingItems, setPendingItems] = useState([]); // Предметы, ожидающие добавления после анимации
-  const [isActionCooldown, setIsActionCooldown] = useState(false); // Состояние задержки
+  const [isActionCooldown, setIsActionCooldown] = useState(false); // Состояние задержки для всех действий
   const [selectedItem, setSelectedItem] = useState(null); // Выбранный предмет для модального окна
 
   const userOwnerKey = `user_${userId}`;
@@ -343,12 +343,24 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   };
 
   const handleDeleteItem = (itemId) => {
-    const updatedItems = activeSubTab === 'personal'
-      ? personalItems.filter(item => item._id.toString() !== itemId)
-      : locationItems.filter(item => item._id.toString() !== itemId);
-    if (activeSubTab === 'personal') setPersonalItems(updatedItems);
-    else setLocationItems(updatedItems);
-    socket.emit('deleteItem', { itemId });
+    if (isActionCooldown) return;
+
+    setIsActionCooldown(true);
+    setAnimatingItem({ itemId, action: 'move' }); // Используем существующую анимацию для удаления
+
+    setTimeout(() => {
+      const updatedItems = activeSubTab === 'personal'
+        ? personalItems.filter(item => item._id.toString() !== itemId)
+        : locationItems.filter(item => item._id.toString() !== itemId);
+      if (activeSubTab === 'personal') setPersonalItems(updatedItems);
+      else setLocationItems(updatedItems);
+      setAnimatingItem(null);
+      socket.emit('deleteItem', { itemId });
+
+      setTimeout(() => {
+        setIsActionCooldown(false);
+      }, 1000);
+    }, 500);
   };
 
   const openModal = (item) => {
@@ -418,8 +430,12 @@ function Inventory({ userId, currentRoom, theme, socket }) {
                   {isActionCooldown && <ProgressBar />}
                 </MoveButton>
               )}
-              <DeleteButton onClick={() => handleDeleteItem(item._id)}>
+              <DeleteButton
+                onClick={() => handleDeleteItem(item._id)}
+                disabled={isActionCooldown}
+              >
                 <FaTrash />
+                {isActionCooldown && <ProgressBar />}
               </DeleteButton>
             </ActionButtons>
           </ItemCard>
@@ -442,9 +458,6 @@ function Inventory({ userId, currentRoom, theme, socket }) {
                 <FaPlus />
                 {isActionCooldown && <ProgressBar />}
               </PickupButton>
-              <DeleteButton onClick={() => handleDeleteItem(item._id)}>
-                <FaTrash />
-              </DeleteButton>
             </ActionButtons>
           </ItemCard>
         ))}

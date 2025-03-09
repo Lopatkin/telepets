@@ -110,7 +110,7 @@ io.on('connection', (socket) => {
         name: 'Палка',
         description: 'Многофункциональная вещь',
         rarity: 'Обычный',
-        weight: '2 кг',
+        weight: '1 кг',
         cost: '5 кредитов',
         effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
         owner: userOwnerKey

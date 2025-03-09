@@ -173,7 +173,19 @@ const busStopActions = [
   },
 ];
 
-function Actions({ theme, currentRoom, userId }) {
+// Новый массив действий для комнаты "Лес"
+const forestActions = [
+  {
+    id: 9,
+    title: 'Найти палку',
+    description: 'Палка - очень полезный предмет',
+    modalTitle: 'Найти палку',
+    modalDescription: 'Вы ходите по лесу и ищете палку. Палка - полезный и многофункциональный предмет, может пригодиться в самых разных жизненных ситуациях.',
+    buttonText: 'Найти',
+  },
+];
+
+function Actions({ theme, currentRoom, userId, socket }) {
   const [selectedAction, setSelectedAction] = useState(null);
 
   const handleActionClick = (action) => {
@@ -185,7 +197,20 @@ function Actions({ theme, currentRoom, userId }) {
   };
 
   const handleButtonClick = () => {
-    console.log(`Выполнено действие: ${selectedAction.modalTitle}`);
+    if (selectedAction.title === 'Найти палку') {
+      const newItem = {
+        _id: `stick_${Date.now()}`, // Уникальный ID для предмета
+        name: 'Палка',
+        description: 'Многофункциональная вещь',
+        rarity: 'Обычный',
+        weight: 1,
+        cost: 5,
+        effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
+      };
+      socket.emit('addItem', { owner: `user_${userId}`, item: newItem });
+    } else {
+      console.log(`Выполнено действие: ${selectedAction.modalTitle}`);
+    }
     setSelectedAction(null); // Закрываем модальное окно после действия
   };
 
@@ -195,13 +220,15 @@ function Actions({ theme, currentRoom, userId }) {
     availableActions = homeActions;
   } else if (currentRoom === 'Автобусная остановка') {
     availableActions = busStopActions;
+  } else if (currentRoom === 'Лес') {
+    availableActions = forestActions;
   }
 
   return (
     <ActionsContainer theme={theme}>
       <ActionGrid>
         {availableActions.length > 0 ? (
-          availableActions.map((action, index) => (
+          availableActions.map((action) => (
             <ActionCard key={action.id} theme={theme} onClick={() => handleActionClick(action)}>
               <ActionTitle theme={theme}>{action.title}</ActionTitle>
               <ActionDescription theme={theme}>{action.description}</ActionDescription>

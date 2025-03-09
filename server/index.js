@@ -31,13 +31,13 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// Схема предметов
+// Схема предметов (изменили weight и cost на Number)
 const itemSchema = new mongoose.Schema({
   name: String,
   description: String,
   rarity: String,
-  weight: String,
-  cost: String,
+  weight: Number, // Изменили с String на Number
+  cost: Number,   // Изменили с String на Number
   effect: String,
   owner: String,
 });
@@ -110,15 +110,15 @@ io.on('connection', (socket) => {
         name: 'Палка',
         description: 'Многофункциональная вещь',
         rarity: 'Обычный',
-        weight: '1 кг',
-        cost: '5 кредитов',
+        weight: 1, // Теперь number
+        cost: 5,   // Теперь number
         effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
         owner: userOwnerKey
       });
       await stick.save();
       await InventoryLimit.updateOne(
         { owner: userOwnerKey },
-        { $inc: { currentWeight: 2 } }
+        { $inc: { currentWeight: 1 } } // Исправлено с 2 на 1, так как вес палки 1 кг
       );
     }
 
@@ -311,6 +311,75 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Добавление предмета
+  socket.on('addItem', async ({ owner, item }) => {
+    try {
+      // Проверяем, не обрабатывается ли уже этот предмет
+      if (itemLocks.has(item._id)) {
+        socket.emit('error', { message: 'Этот предмет уже обрабатывается' });
+        return;
+      }
+
+      itemLocks.set(item._id, true);
+
+      // Проверяем лимит веса
+      const ownerLimit = await InventoryLimit.findOne({ owner });
+      if (!ownerLimit) {
+        itemLocks.delete(item._id);
+        socket.emit('error', { message: 'Лимиты инвентаря не найдены' });
+        return;
+      }
+
+      const itemWeight = parseFloat(item.weight) || 0;
+      if (ownerLimit.currentWeight + itemWeight > ownerLimit.maxWeight) {
+        itemLocks.delete(item._id);
+        socket.emit('error', { message: 'Превышен лимит веса' });
+        return;
+      }
+
+      // Сохраняем предмет в базе данных
+      const newItem = new Item({
+        _id: item._id, // Используем переданный _id
+        name: item.name,
+        description: item.description,
+        rarity: item.rarity,
+        weight: item.weight,
+        cost: item.cost,
+        effect: item.effect,
+        owner: owner
+      });
+      await newItem.save();
+
+      // Обновляем текущий вес
+      await InventoryLimit.updateOne(
+        { owner },
+        { $inc: { currentWeight: itemWeight } }
+      );
+
+      // Обновляем кэш
+      const ownerItems = itemCache.get(owner) || [];
+      itemCache.set(owner, [...ownerItems, newItem]);
+
+      // Обновляем лимиты на клиенте
+      const updatedLimit = await InventoryLimit.findOne({ owner });
+      socket.emit('inventoryLimit', updatedLimit);
+
+      // Отправляем событие всем клиентам в текущей комнате
+      const currentRoom = userCurrentRoom.get(socket.userData.userId);
+      if (currentRoom) {
+        io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: newItem });
+        io.to(currentRoom).emit('items', { owner, items: itemCache.get(owner) });
+        io.to(currentRoom).emit('inventoryLimit', updatedLimit);
+      }
+
+      itemLocks.delete(item._id);
+    } catch (err) {
+      console.error('Error adding item:', err.message, err.stack);
+      itemLocks.delete(item._id);
+      socket.emit('error', { message: 'Ошибка при добавлении предмета' });
+    }
+  });
+
   // Перемещение предмета
   socket.on('moveItem', async ({ itemId, newOwner }) => {
     try {
@@ -336,11 +405,9 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Обновляем владельца предмета
       item.owner = newOwner;
       await item.save();
 
-      // Обновляем вес
       await InventoryLimit.updateOne(
         { owner: oldOwner },
         { $inc: { currentWeight: -itemWeight } }
@@ -350,19 +417,16 @@ io.on('connection', (socket) => {
         { $inc: { currentWeight: itemWeight } }
       );
 
-      // Обновляем кэш
       const oldOwnerItems = itemCache.get(oldOwner) || [];
       itemCache.set(oldOwner, oldOwnerItems.filter(i => i._id.toString() !== itemId));
       const newOwnerItems = itemCache.get(newOwner) || [];
       itemCache.set(newOwner, [...newOwnerItems, item]);
 
-      // Обновляем лимиты на клиенте
       const updatedOldLimit = await InventoryLimit.findOne({ owner: oldOwner });
       const updatedNewLimit = await InventoryLimit.findOne({ owner: newOwner });
       socket.emit('inventoryLimit', updatedOldLimit);
       socket.emit('inventoryLimit', updatedNewLimit);
 
-      // Широковещательная отправка обновлений всем в комнате
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
         io.to(currentRoom).emit('itemAction', { action: 'remove', owner: oldOwner, itemId });

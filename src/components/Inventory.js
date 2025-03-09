@@ -291,7 +291,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const [pendingItems, setPendingItems] = useState([]); // Предметы, ожидающие добавления после анимации
   const [isActionCooldown, setIsActionCooldown] = useState(false); // Состояние задержки для всех действий
   const [selectedItem, setSelectedItem] = useState(null); // Выбранный предмет для модального окна
-  const [confirmDelete, setConfirmDelete] = useState(null); // { itemId, owner }
+  const [confirmDelete, setConfirmDelete] = useState(null); // Сохраняем только itemId
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
@@ -398,13 +398,13 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const handleDeleteItem = (itemId) => {
     if (isActionCooldown) return;
 
-    setConfirmDelete({ itemId, owner: userOwnerKey });
+    setConfirmDelete(itemId);
   };
 
   const confirmDeleteItem = (confirmed) => {
     if (!confirmed || !confirmDelete) return;
 
-    const { itemId, owner } = confirmDelete;
+    const itemId = confirmDelete;
     setIsActionCooldown(true);
     setAnimatingItem({ itemId, action: 'split' });
 

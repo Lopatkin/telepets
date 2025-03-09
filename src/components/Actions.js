@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Добавлен useEffect
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 

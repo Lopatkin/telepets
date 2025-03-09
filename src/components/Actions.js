@@ -280,6 +280,6 @@ function Actions({ theme, currentRoom, userId, socket }) {
 }
 
 // Импорт mongoose для генерации ObjectId (добавьте в зависимости, если используется на клиенте)
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 
 export default Actions;

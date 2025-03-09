@@ -215,16 +215,16 @@ const forestActions = [
     description: 'Палка - очень полезный предмет',
     modalTitle: 'Найти палку',
     modalDescription: 'Вы ходите по лесу и ищете палку. Палка - полезный и многофункциональный предмет, может пригодиться в самых разных жизненных ситуациях.',
-    buttonText: 'Подобрать', // Обновлён на "Подобрать" для единообразия с Inventory
+    buttonText: 'Подобрать',
   },
 ];
 
 function Actions({ theme, currentRoom, userId, socket }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
-  const [isCooldown, setIsCooldown] = useState(false); // Состояние для блокировки кнопки
-  const [timeLeft, setTimeLeft] = useState(0); // Остаток времени в секундах
-  const [progress, setProgress] = useState(100); // Прогресс для прогресс-бара
+  const [isCooldown, setIsCooldown] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [progress, setProgress] = useState(100);
 
   const COOLDOWN_DURATION = 20 * 1000; // 20 секунд в миллисекундах
 
@@ -240,13 +240,13 @@ function Actions({ theme, currentRoom, userId, socket }) {
             setProgress(100);
             return 0;
           }
-          setProgress((newTime / (COOLDOWN_DURATION / 1000)) * 100); // Обновление прогресса
+          setProgress((newTime / (COOLDOWN_DURATION / 1000)) * 100);
           return newTime;
         });
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isCooldown, timeLeft]);
+  }, [isCooldown, timeLeft, COOLDOWN_DURATION]); // Добавлена зависимость COOLDOWN_DURATION
 
   const handleActionClick = (action) => {
     setSelectedAction(action);
@@ -277,9 +277,9 @@ function Actions({ theme, currentRoom, userId, socket }) {
         if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-          setIsCooldown(true); // Активируем режим ожидания
-          setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000)); // Устанавливаем 20 секунд
-          setProgress(100); // Начинаем с 100%
+          setIsCooldown(true);
+          setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
+          setProgress(100);
         } else {
           setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);

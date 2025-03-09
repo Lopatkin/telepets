@@ -312,34 +312,31 @@ io.on('connection', (socket) => {
   });
 
   // Добавление предмета
-  socket.on('addItem', async ({ owner, item }) => {
+  socket.on('addItem', async ({ owner, item }, callback) => {
     try {
-      // Проверяем, не обрабатывается ли уже этот предмет
       if (itemLocks.has(item._id)) {
-        socket.emit('error', { message: 'Этот предмет уже обрабатывается' });
+        if (callback) callback({ success: false, message: 'Этот предмет уже обрабатывается' });
         return;
       }
 
       itemLocks.set(item._id, true);
 
-      // Проверяем лимит веса
       const ownerLimit = await InventoryLimit.findOne({ owner });
       if (!ownerLimit) {
         itemLocks.delete(item._id);
-        socket.emit('error', { message: 'Лимиты инвентаря не найдены' });
+        if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
         return;
       }
 
       const itemWeight = parseFloat(item.weight) || 0;
       if (ownerLimit.currentWeight + itemWeight > ownerLimit.maxWeight) {
         itemLocks.delete(item._id);
-        socket.emit('error', { message: 'Превышен лимит веса' });
+        if (callback) callback({ success: false, message: 'Превышен лимит веса' });
         return;
       }
 
-      // Сохраняем предмет в базе данных
       const newItem = new Item({
-        _id: item._id, // Используем переданный _id
+        _id: item._id, // Используем переданный _id (uuid)
         name: item.name,
         description: item.description,
         rarity: item.rarity,
@@ -350,21 +347,17 @@ io.on('connection', (socket) => {
       });
       await newItem.save();
 
-      // Обновляем текущий вес
       await InventoryLimit.updateOne(
         { owner },
         { $inc: { currentWeight: itemWeight } }
       );
 
-      // Обновляем кэш
       const ownerItems = itemCache.get(owner) || [];
       itemCache.set(owner, [...ownerItems, newItem]);
 
-      // Обновляем лимиты на клиенте
       const updatedLimit = await InventoryLimit.findOne({ owner });
       socket.emit('inventoryLimit', updatedLimit);
 
-      // Отправляем событие всем клиентам в текущей комнате
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
         io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: newItem });
@@ -372,11 +365,12 @@ io.on('connection', (socket) => {
         io.to(currentRoom).emit('inventoryLimit', updatedLimit);
       }
 
+      if (callback) callback({ success: true });
       itemLocks.delete(item._id);
     } catch (err) {
       console.error('Error adding item:', err.message, err.stack);
       itemLocks.delete(item._id);
-      socket.emit('error', { message: 'Ошибка при добавлении предмета' });
+      if (callback) callback({ success: false, message: 'Ошибка при добавлении предмета' });
     }
   });
 

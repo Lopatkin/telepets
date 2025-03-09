@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
+import { v4 as uuidv4 } from 'uuid'; // Установите через npm install uuid
 
 const ActionsContainer = styled.div`
   height: 100%;
@@ -103,6 +104,20 @@ const ActionButton = styled.button`
   }
 `;
 
+const Notification = styled.div`
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #32CD32;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 1001;
+  opacity: ${props => (props.show ? 1 : 0)};
+  transition: opacity 0.5s;
+`;
+
 const homeActions = [
   {
     id: 1,
@@ -187,6 +202,7 @@ const forestActions = [
 
 function Actions({ theme, currentRoom, userId, socket }) {
   const [selectedAction, setSelectedAction] = useState(null);
+  const [notification, setNotification] = useState({ show: false, message: '' });
 
   const handleActionClick = (action) => {
     setSelectedAction(action);
@@ -199,7 +215,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
   const handleButtonClick = () => {
     if (selectedAction.title === 'Найти палку') {
       const newItem = {
-        _id: `stick_${Date.now()}`, // Уникальный ID для предмета
+        _id: uuidv4(), // Используем uuid вместо mongoose.ObjectId
         name: 'Палка',
         description: 'Многофункциональная вещь',
         rarity: 'Обычный',
@@ -207,7 +223,15 @@ function Actions({ theme, currentRoom, userId, socket }) {
         cost: 5,
         effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
       };
-      socket.emit('addItem', { owner: `user_${userId}`, item: newItem });
+      socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
+        if (response.success) {
+          setNotification({ show: true, message: 'Вы нашли палку!' });
+          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        } else {
+          setNotification({ show: true, message: response.message || 'Ошибка при добавлении предмета' });
+          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        }
+      });
     } else {
       console.log(`Выполнено действие: ${selectedAction.modalTitle}`);
     }
@@ -250,8 +274,12 @@ function Actions({ theme, currentRoom, userId, socket }) {
           </ModalContent>
         </ModalOverlay>
       )}
+      <Notification show={notification.show}>{notification.message}</Notification>
     </ActionsContainer>
   );
 }
+
+// Импорт mongoose для генерации ObjectId (добавьте в зависимости, если используется на клиенте)
+const mongoose = require('mongoose');
 
 export default Actions;

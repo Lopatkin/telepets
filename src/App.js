@@ -31,41 +31,37 @@ function App() {
   const joinedRoomsRef = useRef(new Set());
   const isJoiningRef = useRef(false);
   const isAuthenticatedRef = useRef(false);
-  const [socket, setSocket] = useState(null); // Состояние для сокета
+  const [socket, setSocket] = useState(null);
 
+  // Инициализация сокета (один раз при монтировании)
   useEffect(() => {
     const initializeSocket = () => {
-      if (socketRef.current) return; // Не переинициализируем, если уже есть соединение
+      if (socketRef.current) return;
 
       socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com', {
         cors: {
           origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
           methods: ["GET", "POST"]
         },
-        reconnection: true, // Включаем автоматическое переподключение
+        reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000
       });
 
       socketRef.current.on('connect', () => {
         console.log('Socket connected:', socketRef.current.id);
-        setSocket(socketRef.current); // Устанавливаем сокет в состояние
-        if (!isAuthenticatedRef.current && user) {
-          socketRef.current.emit('auth', user);
-          isAuthenticatedRef.current = true;
-        }
+        setSocket(socketRef.current);
       });
 
       socketRef.current.on('disconnect', (reason) => {
         console.log('Socket disconnected:', reason);
-        setSocket(null); // Сбрасываем состояние при отключении
+        setSocket(null);
       });
 
       socketRef.current.on('connect_error', (error) => {
         console.error('Connection error:', error.message);
       });
 
-      // Очистка при размонтировании
       return () => {
         if (socketRef.current) {
           socketRef.current.disconnect();
@@ -74,6 +70,19 @@ function App() {
       };
     };
 
+    initializeSocket();
+  }, []); // Пустой массив зависимостей, чтобы эффект срабатывал только один раз
+
+  // Аутентификация пользователя, когда user изменяется
+  useEffect(() => {
+    if (socket && user && !isAuthenticatedRef.current) {
+      socket.emit('auth', user);
+      isAuthenticatedRef.current = true;
+    }
+  }, [socket, user]); // Зависимости: socket и user
+
+  // Инициализация Telegram и установка начального состояния
+  useEffect(() => {
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
       const telegramData = window.Telegram.WebApp.initDataUnsafe;
@@ -98,7 +107,6 @@ function App() {
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
         setTheme(savedTheme);
         setCurrentRoom(savedRoom || `myhome_${userData.userId}`);
-        initializeSocket(); // Инициализируем сокет
       } else {
         console.warn('Telegram Web App data not available');
         const testUser = { userId: 'test123', firstName: 'Test User' };
@@ -106,7 +114,6 @@ function App() {
         setTelegramTheme('light');
         setTheme(savedTheme);
         setCurrentRoom(savedRoom || 'myhome_test123');
-        initializeSocket(); // Инициализируем сокет
       }
     } else {
       console.warn('Telegram Web App not detected, using test mode');
@@ -115,9 +122,8 @@ function App() {
       setTelegramTheme('light');
       setTheme('telegram');
       setCurrentRoom('myhome_test123');
-      initializeSocket(); // Инициализируем сокет
     }
-  }, []); // Пустой массив зависимостей, чтобы эффект срабатывал только при монтировании
+  }, []); // Пустой массив зависимостей для инициализации Telegram
 
   const handleRoomSelect = (room) => {
     if (!room || !socket || room === currentRoom || isJoiningRef.current) return;
@@ -176,7 +182,6 @@ function App() {
     fullness: 50
   };
 
-  // Передаём socket только если он определён
   return (
     <AppContainer>
       <Header user={user} room={currentRoom} theme={appliedTheme} />

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
-import { v4 as uuidv4 } from 'uuid'; // Установите через npm install uuid
+import { v4 as uuidv4 } from 'uuid'; // Для генерации уникальных ID
 
 const ActionsContainer = styled.div`
   height: 100%;
@@ -213,9 +213,16 @@ function Actions({ theme, currentRoom, userId, socket }) {
   };
 
   const handleButtonClick = () => {
+    if (!socket) {
+      console.error('Socket is not initialized');
+      setNotification({ show: true, message: 'Ошибка: Соединение с сервером отсутствует' });
+      setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+      return;
+    }
+
     if (selectedAction.title === 'Найти палку') {
       const newItem = {
-        _id: uuidv4(), // Используем uuid вместо mongoose.ObjectId
+        _id: uuidv4(), // Генерируем уникальный ID
         name: 'Палка',
         description: 'Многофункциональная вещь',
         rarity: 'Обычный',
@@ -224,21 +231,20 @@ function Actions({ theme, currentRoom, userId, socket }) {
         effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
       };
       socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
-        if (response.success) {
+        if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         } else {
-          setNotification({ show: true, message: response.message || 'Ошибка при добавлении предмета' });
+          setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         }
       });
     } else {
       console.log(`Выполнено действие: ${selectedAction.modalTitle}`);
     }
-    setSelectedAction(null); // Закрываем модальное окно после действия
+    setSelectedAction(null);
   };
 
-  // Определяем доступные действия в зависимости от текущей комнаты
   let availableActions = [];
   if (currentRoom && currentRoom.startsWith(`myhome_${userId}`)) {
     availableActions = homeActions;
@@ -278,8 +284,5 @@ function Actions({ theme, currentRoom, userId, socket }) {
     </ActionsContainer>
   );
 }
-
-// Импорт mongoose для генерации ObjectId (добавьте в зависимости, если используется на клиенте)
-// const mongoose = require('mongoose');
 
 export default Actions;

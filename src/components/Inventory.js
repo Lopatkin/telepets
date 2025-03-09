@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FaArrowRight, FaTrash, FaPlus, FaCheck, FaTimes } from 'react-icons/fa'; // Добавляем FaCheck и FaTimes для модального окна
+import { FaArrowRight, FaTrash, FaPlus } from 'react-icons/fa'; // Убрали FaCheck и FaTimes, так как иконки больше не нужны
 
 // Анимация исчезновения с движением вправо (для текущего пользователя)
 const fadeOutRight = keyframes`
@@ -50,26 +50,36 @@ const growFromPoint = keyframes`
   }
 `;
 
-// Анимация расщепления на куски и исчезновения
+// Анимация расщепления на куски и исчезновения с более сложными стадиями
 const splitAndFade = keyframes`
   0% {
     opacity: 1;
     transform: scale(1) translate(0, 0);
   }
-  33% {
-    opacity: 0.7;
-    transform: scale(1.2);
-    clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+  20% {
+    opacity: 0.9;
+    transform: scale(1.1);
+    clip-path: polygon(0% 0%, 40% 0%, 30% 100%, 0% 100%); /* Первый кусок */
   }
-  66% {
-    opacity: 0.4;
-    transform: scale(1.5) translate(20px, -20px);
-    clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);
+  40% {
+    opacity: 0.7;
+    transform: scale(1.3) translate(10px, -15px);
+    clip-path: polygon(40% 0%, 70% 0%, 60% 100%, 30% 100%); /* Второй кусок */
+  }
+  60% {
+    opacity: 0.5;
+    transform: scale(1.5) translate(-20px, 20px);
+    clip-path: polygon(70% 0%, 100% 0%, 100% 100%, 60% 100%); /* Третий кусок */
+  }
+  80% {
+    opacity: 0.3;
+    transform: scale(1.7) translate(30px, -30px);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 40%, 0% 60%); /* Четвёртый кусок */
   }
   100% {
     opacity: 0;
-    transform: scale(2) translate(40px, 40px);
-    clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
+    transform: scale(2) translate(-40px, 40px);
+    clip-path: polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%); /* Полное исчезновение */
   }
 `;
 
@@ -137,7 +147,7 @@ const ItemCard = styled.div`
     if (props.isAnimating === 'split') return splitAndFade;
     return 'none';
   }};
-  animation-duration: 0.7s; /* Увеличили длительность для расщепления */
+  animation-duration: 1s; /* Увеличили длительность для более детализированной анимации */
   animation-fill-mode: forwards;
 
   &:hover {
@@ -274,6 +284,8 @@ const ConfirmButton = styled(ActionButton)`
   height: 40px;
   background: ${props => props.type === 'yes' ? '#32CD32' : '#FF0000'};
   color: white;
+  font-size: 16px; /* Увеличиваем размер текста для читаемости */
+  padding: 0; /* Убираем внутренние отступы, чтобы текст выглядел аккуратно */
 
   &:hover {
     opacity: ${props => props.disabled ? 0.5 : 0.9};
@@ -402,23 +414,24 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   };
 
   const confirmDeleteItem = (confirmed) => {
-    if (!confirmed || !confirmDelete) return;
-
-    const itemId = confirmDelete;
-    setIsActionCooldown(true);
-    setAnimatingItem({ itemId, action: 'split' });
-
-    setTimeout(() => {
-      const updatedItems = personalItems.filter(item => item._id.toString() !== itemId);
-      setPersonalItems(updatedItems);
-      setAnimatingItem(null);
-      socket.emit('deleteItem', { itemId });
+    if (confirmed && confirmDelete) {
+      const itemId = confirmDelete;
+      setIsActionCooldown(true);
+      setAnimatingItem({ itemId, action: 'split' });
 
       setTimeout(() => {
-        setIsActionCooldown(false);
-      }, 1000);
-    }, 700); // Синхронизация с длительностью анимации (0.7s)
+        const updatedItems = personalItems.filter(item => item._id.toString() !== itemId);
+        setPersonalItems(updatedItems);
+        setAnimatingItem(null);
+        socket.emit('deleteItem', { itemId });
 
+        setTimeout(() => {
+          setIsActionCooldown(false);
+        }, 1000);
+      }, 1000); // Синхронизация с длительностью анимации (1s)
+    }
+
+    // Всегда сбрасываем confirmDelete, чтобы закрыть модальное окно
     setConfirmDelete(null);
   };
 
@@ -548,10 +561,10 @@ function Inventory({ userId, currentRoom, theme, socket }) {
             <ConfirmText>Вы уверены, что хотите удалить этот предмет?</ConfirmText>
             <ConfirmButtons>
               <ConfirmButton type="yes" onClick={() => confirmDeleteItem(true)} disabled={isActionCooldown}>
-                <FaCheck /> Да
+                Да
               </ConfirmButton>
               <ConfirmButton type="no" onClick={() => confirmDeleteItem(false)} disabled={isActionCooldown}>
-                <FaTimes /> Нет
+                Нет
               </ConfirmButton>
             </ConfirmButtons>
           </ConfirmModalContent>

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { FaArrowRight, FaTrash } from 'react-icons/fa'; // Убрали FaPlus, так как он больше не используется
 
 // Анимация исчезновения с движением вправо (для текущего пользователя)
 const fadeOutRight = keyframes`

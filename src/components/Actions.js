@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
-import { v4 as uuidv4 } from 'uuid'; // Для генерации уникальных ID
 
 const ActionsContainer = styled.div`
   height: 100%;
@@ -188,7 +187,6 @@ const busStopActions = [
   },
 ];
 
-// Новый массив действий для комнаты "Лес"
 const forestActions = [
   {
     id: 9,
@@ -222,7 +220,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
 
     if (selectedAction.title === 'Найти палку') {
       const newItem = {
-        _id: uuidv4(), // Генерируем уникальный ID
+        // Удаляем _id, пусть MongoDB генерирует его
         name: 'Палка',
         description: 'Многофункциональная вещь',
         rarity: 'Обычный',

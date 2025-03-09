@@ -314,29 +314,31 @@ io.on('connection', (socket) => {
   // Добавление предмета
   socket.on('addItem', async ({ owner, item }, callback) => {
     try {
-      if (itemLocks.has(item._id)) {
+      if (item._id && itemLocks.has(item._id)) {
         if (callback) callback({ success: false, message: 'Этот предмет уже обрабатывается' });
         return;
       }
 
-      itemLocks.set(item._id, true);
+      if (item._id) {
+        itemLocks.set(item._id, true);
+      }
 
       const ownerLimit = await InventoryLimit.findOne({ owner });
       if (!ownerLimit) {
-        itemLocks.delete(item._id);
+        if (item._id) itemLocks.delete(item._id);
         if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
         return;
       }
 
       const itemWeight = parseFloat(item.weight) || 0;
       if (ownerLimit.currentWeight + itemWeight > ownerLimit.maxWeight) {
-        itemLocks.delete(item._id);
+        if (item._id) itemLocks.delete(item._id);
         if (callback) callback({ success: false, message: 'Превышен лимит веса' });
         return;
       }
 
+      // Создаём новый предмет, не передаём _id, если он есть, чтобы MongoDB сгенерировал его
       const newItem = new Item({
-        _id: item._id, // Используем переданный _id (uuid)
         name: item.name,
         description: item.description,
         rarity: item.rarity,
@@ -366,10 +368,10 @@ io.on('connection', (socket) => {
       }
 
       if (callback) callback({ success: true });
-      itemLocks.delete(item._id);
+      if (item._id) itemLocks.delete(item._id);
     } catch (err) {
       console.error('Error adding item:', err.message, err.stack);
-      itemLocks.delete(item._id);
+      if (item._id) itemLocks.delete(item._id);
       if (callback) callback({ success: false, message: 'Ошибка при добавлении предмета' });
     }
   });

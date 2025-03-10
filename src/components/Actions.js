@@ -27,6 +27,9 @@ const ActionCard = styled.div`
   transition: transform 0.2s;
   position: relative;
   opacity: ${props => (props.disabled ? 0.5 : 1)};
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 
   &:hover {
     transform: ${props => (props.disabled ? 'none' : 'translateY(-5px)')};
@@ -116,7 +119,7 @@ const ProgressBar = styled.div`
   height: 100%;
   background: rgba(255, 255, 255, 0.3);
   width: ${props => props.progress}%;
-  transition: width ${props => props.duration}ms linear;
+  transition: width 1s linear; /* Обновляем каждую секунду */
   z-index: 1;
 `;
 
@@ -137,10 +140,9 @@ const Notification = styled.div`
 const TimerDisplay = styled.div`
   font-size: 12px;
   color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
-  position: absolute;
-  bottom: 5px;
-  left: 50%;
-  transform: translateX(-50%);
+  margin-top: 10px;
+  text-align: center;
+  white-space: nowrap; /* Запрещаем перенос текста */
   z-index: 2;
 `;
 
@@ -261,21 +263,23 @@ function Actions({ theme, currentRoom, userId, socket }) {
     let timer;
     if (isCooldown && timeLeft > 0) {
       timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          const newTime = prev - 1;
-          if (newTime <= 0) {
-            setIsCooldown(false);
-            setProgress(100);
-            localStorage.removeItem(COOLDOWN_KEY); // Очищаем localStorage
-            return 0;
-          }
-          setProgress((newTime / (COOLDOWN_DURATION / 1000)) * 100);
-          return newTime;
-        });
+        const elapsed = Date.now() - JSON.parse(localStorage.getItem(COOLDOWN_KEY)).startTime;
+        const remaining = COOLDOWN_DURATION - elapsed;
+
+        if (remaining <= 0) {
+          setIsCooldown(false);
+          setTimeLeft(0);
+          setProgress(0);
+          localStorage.removeItem(COOLDOWN_KEY);
+          clearInterval(timer);
+        } else {
+          setTimeLeft(Math.ceil(remaining / 1000));
+          setProgress((remaining / COOLDOWN_DURATION) * 100);
+        }
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isCooldown, timeLeft, COOLDOWN_DURATION, COOLDOWN_KEY]);
+  }, [isCooldown, COOLDOWN_DURATION, COOLDOWN_KEY]);
 
   const handleActionClick = (action) => {
     if (isCooldown && action.title === 'Найти палку') {
@@ -348,11 +352,13 @@ function Actions({ theme, currentRoom, userId, socket }) {
               onClick={() => handleActionClick(action)}
               disabled={isCooldown && action.title === 'Найти палку'}
             >
-              <ActionTitle theme={theme}>{action.title}</ActionTitle>
-              <ActionDescription theme={theme}>{action.description}</ActionDescription>
+              <div>
+                <ActionTitle theme={theme}>{action.title}</ActionTitle>
+                <ActionDescription theme={theme}>{action.description}</ActionDescription>
+              </div>
               {isCooldown && action.title === 'Найти палку' && (
                 <>
-                  <ProgressBar progress={progress} duration={COOLDOWN_DURATION} />
+                  <ProgressBar progress={progress} />
                   <TimerDisplay theme={theme}>
                     Осталось: {timeLeft} сек
                   </TimerDisplay>

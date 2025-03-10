@@ -32,8 +32,9 @@ function App() {
   const isJoiningRef = useRef(false);
   const isAuthenticatedRef = useRef(false);
   const [socket, setSocket] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Новое состояние
 
-  // Инициализация сокета (один раз при монтировании)
+  // Инициализация сокета
   useEffect(() => {
     const initializeSocket = () => {
       if (socketRef.current) return;
@@ -56,10 +57,22 @@ function App() {
       socketRef.current.on('disconnect', (reason) => {
         console.log('Socket disconnected:', reason);
         setSocket(null);
+        setIsAuthenticated(false); // Сбрасываем состояние аутентификации
       });
 
       socketRef.current.on('connect_error', (error) => {
         console.error('Connection error:', error.message);
+      });
+
+      // Подтверждение успешной аутентификации
+      socketRef.current.on('authSuccess', () => {
+        console.log('Authentication successful');
+        setIsAuthenticated(true);
+        isAuthenticatedRef.current = true;
+      });
+
+      socketRef.current.on('error', ({ message }) => {
+        console.error('Server error:', message);
       });
 
       return () => {
@@ -71,15 +84,16 @@ function App() {
     };
 
     initializeSocket();
-  }, []); // Пустой массив зависимостей, чтобы эффект срабатывал только один раз
+  }, []);
 
-  // Аутентификация пользователя, когда user изменяется
+  // Аутентификация пользователя
   useEffect(() => {
     if (socket && user && !isAuthenticatedRef.current) {
-      socket.emit('auth', user);
-      isAuthenticatedRef.current = true;
+      socket.emit('auth', user, () => {
+        // Сервер должен отправить 'authSuccess' после успешной аутентификации
+      });
     }
-  }, [socket, user]); // Зависимости: socket и user
+  }, [socket, user]);
 
   // Инициализация Telegram и установка начального состояния
   useEffect(() => {
@@ -123,10 +137,13 @@ function App() {
       setTheme('telegram');
       setCurrentRoom('myhome_test123');
     }
-  }, []); // Пустой массив зависимостей для инициализации Telegram
+  }, []);
 
   const handleRoomSelect = (room) => {
-    if (!room || !socket || room === currentRoom || isJoiningRef.current) return;
+    if (!room || !socket || room === currentRoom || isJoiningRef.current || !isAuthenticated) {
+      console.log('Cannot join room: authentication not completed or other conditions not met');
+      return;
+    }
     isJoiningRef.current = true;
 
     if (currentRoom && socket) {

@@ -74,9 +74,10 @@ const itemLocks = new Map();
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  socket.on('auth', async (userData) => {
+  socket.on('auth', async (userData, callback) => {
     if (!userData || !userData.userId) {
       console.error('Invalid user data:', userData);
+      if (callback) callback({ success: false, message: 'Некорректные данные пользователя' });
       return;
     }
 
@@ -110,15 +111,15 @@ io.on('connection', (socket) => {
         name: 'Палка',
         description: 'Многофункциональная вещь',
         rarity: 'Обычный',
-        weight: 1, // Теперь number
-        cost: 5,   // Теперь number
+        weight: 1,
+        cost: 5,
         effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
         owner: userOwnerKey
       });
       await stick.save();
       await InventoryLimit.updateOne(
         { owner: userOwnerKey },
-        { $inc: { currentWeight: 1 } } // Исправлено с 2 на 1, так как вес палки 1 кг
+        { $inc: { currentWeight: 1 } }
       );
     }
 
@@ -153,14 +154,28 @@ io.on('connection', (socket) => {
         });
       }
     }
+
+    // Отправляем подтверждение успешной аутентификации
+    socket.emit('authSuccess');
+    if (callback) callback({ success: true });
   });
 
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {
+    // Проверка на валидность комнаты
     if (typeof room !== 'string') {
       console.error('Invalid room type:', room);
+      socket.emit('error', { message: 'Некорректное название комнаты' });
       return;
     }
 
+    // Проверка на наличие socket.userData
+    if (!socket.userData || !socket.userData.userId) {
+      console.error('User not authenticated for room join:', socket.id);
+      socket.emit('error', { message: 'Пользователь не аутентифицирован' });
+      return;
+    }
+
+    // Удаление пользователя из других комнат
     Object.keys(roomUsers).forEach(currentRoom => {
       if (currentRoom !== room) {
         roomUsers[currentRoom].forEach(user => {
@@ -183,11 +198,14 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Установка текущей комнаты для пользователя
     userCurrentRoom.set(socket.userData.userId, room);
 
+    // Проверка, находится ли пользователь уже в комнате
     const userInRoom = Array.from(roomUsers[room] || []).some(user => user.userId === socket.userData.userId);
     const isRejoining = userInRoom;
 
+    // Проверка на кулдаун для повторного входа
     if (!roomJoinTimes.has(socket)) {
       roomJoinTimes.set(socket, new Map());
     }
@@ -210,6 +228,7 @@ io.on('connection', (socket) => {
 
     roomTimes.set(room, now);
 
+    // Удаление старой записи пользователя из комнаты (если есть)
     if (!roomUsers[room]) roomUsers[room] = new Set();
     roomUsers[room].forEach(user => {
       if (user.userId === socket.userData.userId) {
@@ -217,6 +236,7 @@ io.on('connection', (socket) => {
       }
     });
 
+    // Добавление пользователя в комнату
     roomUsers[room].add({
       userId: socket.userData.userId,
       firstName: socket.userData.firstName,
@@ -227,6 +247,7 @@ io.on('connection', (socket) => {
 
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
 
+    // Получение истории сообщений
     try {
       const query = {};
       if (room.startsWith('myhome_')) {
@@ -246,6 +267,7 @@ io.on('connection', (socket) => {
       socket.emit('messageHistory', messages);
     } catch (err) {
       console.error('Error fetching messages:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
     }
   });
 

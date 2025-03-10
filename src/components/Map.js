@@ -2,21 +2,21 @@ import React from 'react';
 import styled from 'styled-components';
 
 const MapContainer = styled.div`
-  height: 100%; /* Оставляем высоту 100% */
+  height: 100%;
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#fff'};
   display: flex;
   flex-direction: column;
   padding: 10px;
-  box-sizing: border-box; /* Учитываем padding в высоте */
-  position: relative; /* Для контекста sticky */
+  box-sizing: border-box;
+  position: relative;
 `;
 
 const RoomList = styled.ul`
   list-style: none;
   padding: 0;
-  margin: 0 0 10px 0; /* Отступ снизу для кнопки */
-  flex: 1; /* Растягиваем список, но оставляем место для кнопки */
-  overflow-y: auto; /* Добавляем прокрутку для списка комнат */
+  margin: 0 0 10px 0;
+  flex: 1;
+  overflow-y: auto;
 `;
 
 const RoomItem = styled.li`
@@ -49,10 +49,10 @@ const HomeButton = styled.button`
   font-size: 18px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: background 0.2s;
-  width: 100%; /* Полная ширина контейнера */
-  position: sticky; /* Фиксируем кнопку */
-  bottom: 10px; /* Отступ от нижнего края */
-  margin-top: 10px; /* Небольшой отступ сверху для визуального разделения */
+  width: 100%;
+  position: sticky;
+  bottom: 10px;
+  margin-top: 10px;
 
   &:hover {
     background: #005BBB;
@@ -74,6 +74,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     'Кофейня "Ляля-Фа"',
     'Лес',
     'Парк',
+    'Полигон утилизации', // Новая комната
     'Приют для животных "Кошкин дом"',
     'Район Дачный',
     'Торговый центр "Карнавал"',

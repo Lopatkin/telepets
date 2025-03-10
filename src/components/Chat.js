@@ -19,6 +19,7 @@ import cafeImage from '../images/cafe.jpg';
 import priyutImage from '../images/priyut.jpg';
 import albionImage from '../images/albion.jpg';
 import karnavalImage from '../images/karnaval.jpg';
+import poligonImage from '../images/poligon.jpg'; // Добавляем новую картинку
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -60,6 +61,8 @@ const MessagesContainer = styled.div`
       return `url(${albionImage}) no-repeat center center fixed`;
     } else if (props.room === 'Торговый центр "Карнавал"') {
       return `url(${karnavalImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Полигон утилизации') { // Новая комната
+      return `url(${poligonImage}) no-repeat center center fixed`;
     } else {
       return props.theme === 'dark' ? '#1A1A1A' : '#fff';
     }

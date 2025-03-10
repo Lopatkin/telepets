@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Добавлен useEffect
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 
@@ -23,11 +23,13 @@ const ActionCard = styled.div`
   border-radius: 8px;
   padding: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
+  cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
   transition: transform 0.2s;
+  position: relative;
+  opacity: ${props => (props.disabled ? 0.5 : 1)};
 
   &:hover {
-    transform: translateY(-5px);
+    transform: ${props => (props.disabled ? 'none' : 'translateY(-5px)')};
   }
 `;
 
@@ -107,7 +109,6 @@ const ActionButton = styled.button`
   }
 `;
 
-// Прогресс-бар для таймера
 const ProgressBar = styled.div`
   position: absolute;
   top: 0;
@@ -116,6 +117,7 @@ const ProgressBar = styled.div`
   background: rgba(255, 255, 255, 0.3);
   width: ${props => props.progress}%;
   transition: width ${props => props.duration}ms linear;
+  z-index: 1;
 `;
 
 const Notification = styled.div`
@@ -135,7 +137,11 @@ const Notification = styled.div`
 const TimerDisplay = styled.div`
   font-size: 12px;
   color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
-  margin-top: 5px;
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
 `;
 
 const homeActions = [
@@ -227,6 +233,28 @@ function Actions({ theme, currentRoom, userId, socket }) {
   const [progress, setProgress] = useState(100);
 
   const COOLDOWN_DURATION = 20 * 1000; // 20 секунд в миллисекундах
+  const COOLDOWN_KEY = `findStickCooldown_${userId}`; // Уникальный ключ для localStorage
+
+  // Восстановление состояния таймера при монтировании компонента
+  useEffect(() => {
+    const savedCooldown = localStorage.getItem(COOLDOWN_KEY);
+    if (savedCooldown) {
+      const { startTime } = JSON.parse(savedCooldown);
+      const elapsed = Date.now() - startTime;
+      const remaining = COOLDOWN_DURATION - elapsed;
+
+      if (remaining > 0) {
+        setIsCooldown(true);
+        setTimeLeft(Math.ceil(remaining / 1000));
+        setProgress((remaining / COOLDOWN_DURATION) * 100);
+      } else {
+        localStorage.removeItem(COOLDOWN_KEY);
+        setIsCooldown(false);
+        setTimeLeft(0);
+        setProgress(100);
+      }
+    }
+  }, [COOLDOWN_DURATION, COOLDOWN_KEY]);
 
   // Таймер обратного отсчёта
   useEffect(() => {
@@ -238,6 +266,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
           if (newTime <= 0) {
             setIsCooldown(false);
             setProgress(100);
+            localStorage.removeItem(COOLDOWN_KEY); // Очищаем localStorage
             return 0;
           }
           setProgress((newTime / (COOLDOWN_DURATION / 1000)) * 100);
@@ -246,9 +275,14 @@ function Actions({ theme, currentRoom, userId, socket }) {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isCooldown, timeLeft, COOLDOWN_DURATION]); // Добавлена зависимость COOLDOWN_DURATION
+  }, [isCooldown, timeLeft, COOLDOWN_DURATION, COOLDOWN_KEY]);
 
   const handleActionClick = (action) => {
+    if (isCooldown && action.title === 'Найти палку') {
+      setNotification({ show: true, message: 'Действие недоступно, подождите' });
+      setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+      return;
+    }
     setSelectedAction(action);
   };
 
@@ -257,9 +291,9 @@ function Actions({ theme, currentRoom, userId, socket }) {
   };
 
   const handleButtonClick = () => {
-    if (!socket || isCooldown) {
-      console.error('Socket is not initialized or action is on cooldown');
-      setNotification({ show: true, message: 'Действие недоступно, подождите' });
+    if (!socket) {
+      console.error('Socket is not initialized');
+      setNotification({ show: true, message: 'Ошибка соединения' });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
       return;
     }
@@ -277,9 +311,12 @@ function Actions({ theme, currentRoom, userId, socket }) {
         if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          // Запускаем таймер и прогресс-бар только после успешного ответа
           setIsCooldown(true);
           setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
           setProgress(100);
+          // Сохраняем время начала задержки в localStorage
+          localStorage.setItem(COOLDOWN_KEY, JSON.stringify({ startTime: Date.now() }));
         } else {
           setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
@@ -305,9 +342,22 @@ function Actions({ theme, currentRoom, userId, socket }) {
       <ActionGrid>
         {availableActions.length > 0 ? (
           availableActions.map((action) => (
-            <ActionCard key={action.id} theme={theme} onClick={() => handleActionClick(action)}>
+            <ActionCard
+              key={action.id}
+              theme={theme}
+              onClick={() => handleActionClick(action)}
+              disabled={isCooldown && action.title === 'Найти палку'}
+            >
               <ActionTitle theme={theme}>{action.title}</ActionTitle>
               <ActionDescription theme={theme}>{action.description}</ActionDescription>
+              {isCooldown && action.title === 'Найти палку' && (
+                <>
+                  <ProgressBar progress={progress} duration={COOLDOWN_DURATION} />
+                  <TimerDisplay theme={theme}>
+                    Осталось: {timeLeft} сек
+                  </TimerDisplay>
+                </>
+              )}
             </ActionCard>
           ))
         ) : (
@@ -322,15 +372,9 @@ function Actions({ theme, currentRoom, userId, socket }) {
             <CloseButton theme={theme} onClick={handleCloseModal}><FaTimes /></CloseButton>
             <ModalTitle theme={theme}>{selectedAction.modalTitle}</ModalTitle>
             <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>
-            <ActionButton onClick={handleButtonClick} disabled={isCooldown}>
+            <ActionButton onClick={handleButtonClick}>
               {selectedAction.buttonText}
-              {isCooldown && <ProgressBar progress={progress} duration={COOLDOWN_DURATION} />}
             </ActionButton>
-            {isCooldown && (
-              <TimerDisplay theme={theme}>
-                Осталось: {timeLeft} сек
-              </TimerDisplay>
-            )}
           </ModalContent>
         </ModalOverlay>
       )}

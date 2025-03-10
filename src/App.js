@@ -10,27 +10,13 @@ import Actions from './components/Actions';
 import Inventory from './components/Inventory';
 
 // Анимация появления (снизу вверх с прозрачностью)
-const fadeInUp = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+const fadeInRight = keyframes`
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
 `;
-
-// Анимация исчезновения (вниз с прозрачностью)
-const fadeOutDown = keyframes`
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(20px);
-  }
+const fadeOutLeft = keyframes`
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-20px); }
 `;
 
 const AppContainer = styled.div`
@@ -52,7 +38,7 @@ const TabContent = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  animation: ${props => (props.isEntering ? fadeInUp : fadeOutDown)} 0.3s ease-in-out forwards;
+  animation: ${props => (props.isEntering ? fadeInRight : fadeOutLeft)} 0.3s ease-in-out forwards;
 `;
 
 function App() {

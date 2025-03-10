@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import io from 'socket.io-client';
 import Chat from './components/Chat';
 import Header from './components/Header';
@@ -9,15 +9,50 @@ import Map from './components/Map';
 import Actions from './components/Actions';
 import Inventory from './components/Inventory';
 
+// Анимация появления (снизу вверх с прозрачностью)
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+// Анимация исчезновения (вниз с прозрачностью)
+const fadeOutDown = keyframes`
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+`;
+
 const AppContainer = styled.div`
   height: 100vh;
   display: flex;
   flex-direction: column;
 `;
 
+// Обновлённый Content с анимацией
 const Content = styled.div`
   flex: 1;
   overflow-y: auto;
+  position: relative;
+`;
+
+const TabContent = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  animation: ${props => (props.isEntering ? fadeInUp : fadeOutDown)} 0.3s ease-in-out forwards;
 `;
 
 function App() {
@@ -32,9 +67,10 @@ function App() {
   const isJoiningRef = useRef(false);
   const isAuthenticatedRef = useRef(false);
   const [socket, setSocket] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Новое состояние
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [prevTab, setPrevTab] = useState(null); // Для отслеживания предыдущей вкладки
 
-  // Инициализация сокета
+  // Инициализация сокета (без изменений)
   useEffect(() => {
     const initializeSocket = () => {
       if (socketRef.current) return;
@@ -57,14 +93,13 @@ function App() {
       socketRef.current.on('disconnect', (reason) => {
         console.log('Socket disconnected:', reason);
         setSocket(null);
-        setIsAuthenticated(false); // Сбрасываем состояние аутентификации
+        setIsAuthenticated(false);
       });
 
       socketRef.current.on('connect_error', (error) => {
         console.error('Connection error:', error.message);
       });
 
-      // Подтверждение успешной аутентификации
       socketRef.current.on('authSuccess', () => {
         console.log('Authentication successful');
         setIsAuthenticated(true);
@@ -86,16 +121,14 @@ function App() {
     initializeSocket();
   }, []);
 
-  // Аутентификация пользователя
+  // Аутентификация пользователя (без изменений)
   useEffect(() => {
     if (socket && user && !isAuthenticatedRef.current) {
-      socket.emit('auth', user, () => {
-        // Сервер должен отправить 'authSuccess' после успешной аутентификации
-      });
+      socket.emit('auth', user, () => {});
     }
   }, [socket, user]);
 
-  // Инициализация Telegram и установка начального состояния
+  // Инициализация Telegram (без изменений)
   useEffect(() => {
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
@@ -187,6 +220,12 @@ function App() {
     localStorage.setItem('theme', newTheme);
   };
 
+  // Обновляем setActiveTab для отслеживания предыдущей вкладки
+  const handleTabChange = (tab) => {
+    setPrevTab(activeTab);
+    setActiveTab(tab);
+  };
+
   if (!user) {
     return <div>Loading...</div>;
   }
@@ -199,26 +238,45 @@ function App() {
     fullness: 50
   };
 
+  const renderTabContent = () => {
+    const tabs = {
+      chat: <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socket} joinedRoomsRef={joinedRoomsRef} />,
+      actions: socket && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} socket={socket} />,
+      housing: socket && <Inventory userId={user.userId} currentRoom={currentRoom} theme={appliedTheme} socket={socket} />,
+      map: <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />,
+      profile: (
+        <Profile
+          user={user}
+          theme={appliedTheme}
+          selectedTheme={theme}
+          telegramTheme={telegramTheme}
+          onThemeChange={handleThemeChange}
+          progressValues={progressValues}
+        />
+      )
+    };
+
+    return (
+      <>
+        {prevTab && (
+          <TabContent key={`${prevTab}-out`} isEntering={false}>
+            {tabs[prevTab]}
+          </TabContent>
+        )}
+        <TabContent key={`${activeTab}-in`} isEntering={true}>
+          {tabs[activeTab]}
+        </TabContent>
+      </>
+    );
+  };
+
   return (
     <AppContainer>
       <Header user={user} room={currentRoom} theme={appliedTheme} />
       <Content>
-        {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socket} joinedRoomsRef={joinedRoomsRef} />}
-        {activeTab === 'actions' && socket && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} socket={socket} />}
-        {activeTab === 'housing' && socket && <Inventory userId={user.userId} currentRoom={currentRoom} theme={appliedTheme} socket={socket} />}
-        {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
-        {activeTab === 'profile' && (
-          <Profile
-            user={user}
-            theme={appliedTheme}
-            selectedTheme={theme}
-            telegramTheme={telegramTheme}
-            onThemeChange={handleThemeChange}
-            progressValues={progressValues}
-          />
-        )}
+        {renderTabContent()}
       </Content>
-      <Footer activeTab={activeTab} setActiveTab={setActiveTab} theme={appliedTheme} />
+      <Footer activeTab={activeTab} setActiveTab={handleTabChange} theme={appliedTheme} />
     </AppContainer>
   );
 }

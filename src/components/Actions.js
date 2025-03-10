@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Добавлен useEffect
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 
@@ -246,7 +246,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isCooldown, timeLeft, COOLDOWN_DURATION]); // Добавлена зависимость COOLDOWN_DURATION
+  }, [isCooldown, timeLeft, COOLDOWN_DURATION]);
 
   const handleActionClick = (action) => {
     setSelectedAction(action);
@@ -265,6 +265,11 @@ function Actions({ theme, currentRoom, userId, socket }) {
     }
 
     if (selectedAction.title === 'Найти палку') {
+      console.log('Attempting to find stick...'); // Отладочный вывод
+      setIsCooldown(true); // Активируем cooldown сразу
+      setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
+      setProgress(100);
+
       const newItem = {
         name: 'Палка',
         description: 'Многофункциональная вещь',
@@ -274,15 +279,17 @@ function Actions({ theme, currentRoom, userId, socket }) {
         effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
       };
       socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
+        console.log('Server response:', response); // Отладочный вывод
         if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-          setIsCooldown(true);
-          setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
-          setProgress(100);
         } else {
           setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          // Если сервер вернул ошибку, сбрасываем cooldown
+          setIsCooldown(false);
+          setTimeLeft(0);
+          setProgress(100);
         }
       });
     } else {

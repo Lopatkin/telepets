@@ -279,7 +279,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isCooldown, COOLDOWN_DURATION, COOLDOWN_KEY]);
+  }, [isCooldown, COOLDOWN_DURATION, COOLDOWN_KEY, timeLeft]);
 
   const handleActionClick = (action) => {
     if (isCooldown && action.title === 'Найти палку') {

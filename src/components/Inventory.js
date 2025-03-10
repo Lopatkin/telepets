@@ -586,4 +586,10 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   );
 }
 
+// Добавляем отсутствующую кнопку PickupButton (была упомянута, но не определена)
+const PickupButton = styled(ActionButton)`
+  background: #32CD32;
+  color: white;
+`;
+
 export default Inventory;

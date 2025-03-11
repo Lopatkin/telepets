@@ -303,6 +303,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
 
   const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
+    console.log('Received items update:', { owner, items }); // Добавляем логирование для отладки
     if (owner === userOwnerKey) {
       setPersonalItems(items);
     } else if (owner === locationOwnerKey) {

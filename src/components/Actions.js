@@ -342,9 +342,11 @@ function Actions({ theme, currentRoom, userId, socket }) {
         if (response.success) {
           setNotification({ show: true, message: response.message });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          socket.emit('getItems', { owner: `user_${userId}` });
         } else {
           setNotification({ show: true, message: response.message || 'Ошибка при утилизации' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          
         }
       });
     } else {

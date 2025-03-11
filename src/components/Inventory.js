@@ -515,13 +515,16 @@ function Inventory({ userId, currentRoom, theme, socket }) {
                   {isActionCooldown && <ProgressBar />}
                 </MoveButton>
               )}
-              <DeleteButton
-                onClick={() => handleDeleteItem(item._id)}
-                disabled={isActionCooldown}
-              >
-                Сломать
-                {isActionCooldown && <ProgressBar />}
-              </DeleteButton>
+              {/* Условие: кнопка "Сломать" не отображается для предмета "Мусор" */}
+              {item.name !== 'Мусор' && (
+                <DeleteButton
+                  onClick={() => handleDeleteItem(item._id)}
+                  disabled={isActionCooldown}
+                >
+                  Сломать
+                  {isActionCooldown && <ProgressBar />}
+                </DeleteButton>
+              )}
             </ActionButtons>
           </ItemCard>
         ))}

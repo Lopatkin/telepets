@@ -651,18 +651,30 @@ io.on('connection', (socket) => {
         { $inc: { currentWeight: -itemWeight } }
       );
 
+      // Создаём "Мусор" только если предмет не "Мусор" сам по себе
+      if (item.name !== 'Мусор') {
+        const trashItem = new Item({
+          name: 'Мусор',
+          description: 'Раньше это было чем-то полезным',
+          rarity: 'Бесполезный',
+          weight: itemWeight,
+          cost: 1,
+          effect: 'Чувство обременения чем-то бесполезным',
+          owner: owner
+        });
+        await trashItem.save();
+        console.log('Created trash item:', trashItem);
+      }
+
       const ownerItems = itemCache.get(owner) || [];
-      itemCache.set(owner, ownerItems.filter(i => i._id.toString() !== itemId));
+      itemCache.set(owner, ownerItems.filter(i => i._id.toString() !== itemId).concat(item.name !== 'Мусор' ? [trashItem] : []));
 
       const updatedLimit = await InventoryLimit.findOne({ owner });
       socket.emit('inventoryLimit', updatedLimit);
 
-      const currentRoom = userCurrentRoom.get(socket.userData.userId);
-      if (currentRoom) {
-        io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemId });
-        io.to(currentRoom).emit('items', { owner, items: itemCache.get(owner) });
-        io.to(currentRoom).emit('inventoryLimit', updatedLimit);
-      }
+      const updatedItems = await Item.find({ owner });
+      console.log('Sending updated items after delete:', updatedItems);
+      io.to(owner).emit('items', { owner, items: updatedItems });
 
       itemLocks.delete(itemId);
     } catch (err) {

@@ -343,8 +343,6 @@ function Actions({ theme, currentRoom, userId, socket }) {
           setNotification({ show: true, message: response.message });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
           socket.emit('getItems', { owner: `user_${userId}` });
-          // Добавим дополнительное обновление через 100 мс
-          setTimeout(() => socket.emit('getItems', { owner: `user_${userId}` }), 100);
         } else {
           setNotification({ show: true, message: response.message || 'Ошибка при утилизации' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);

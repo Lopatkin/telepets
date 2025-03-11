@@ -421,29 +421,9 @@ function Inventory({ userId, currentRoom, theme, socket }) {
         const updatedItems = personalItems.filter(item => item._id.toString() !== itemId);
         setPersonalItems(updatedItems);
 
-        // Создание нового предмета "Мусор" на основе удалённого предмета
-        const trashItem = {
-          name: 'Мусор',
-          description: 'Раньше это было чем-то полезным',
-          rarity: 'Бесполезный',
-          weight: itemToDelete.weight, // Сохраняем вес удалённого предмета
-          cost: 1,
-          effect: 'Чувство обременения чем-то бесполезным',
-        };
-
-        // Добавляем новый предмет "Мусор" в личные вещи
-        socket.emit('addItem', { owner: userOwnerKey, item: trashItem }, (response) => {
-          if (response && response.success) {
-            socket.emit('getItems', { owner: userOwnerKey }); // Обновляем список предметов
-          } else {
-            setError(response?.message || 'Ошибка при добавлении мусора');
-            setTimeout(() => setError(null), 3000);
-          }
-        });
-
-        setAnimatingItem(null);
         socket.emit('deleteItem', { itemId });
 
+        setAnimatingItem(null);
         setTimeout(() => {
           setIsActionCooldown(false);
         }, 1000);

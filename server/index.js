@@ -177,63 +177,6 @@ io.on('connection', (socket) => {
     if (callback) callback({ success: true });
   });
 
-  // Добавляем обработчик события 'utilizeTrash'
-  socket.on('utilizeTrash', async (callback) => {
-    if (!socket.userData || !socket.userData.userId) {
-      if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
-      return;
-    }
-
-    const userOwnerKey = `user_${socket.userData.userId}`;
-
-    try {
-      // Находим все предметы "Мусор" в инвентаре пользователя
-      const trashItems = await Item.find({ owner: userOwnerKey, name: 'Мусор' });
-      console.log('Trash items found:', trashItems); // Логируем найденный мусор
-      if (trashItems.length === 0) {
-        if (callback) callback({ success: false, message: 'У вас нет мусора для утилизации' });
-        return;
-      }
-
-      // Подсчитываем общую стоимость мусора
-      const totalCost = trashItems.reduce((sum, item) => sum + (item.cost || 0), 0);
-
-      // Удаляем все предметы "Мусор"
-      await Item.deleteMany({ owner: userOwnerKey, name: 'Мусор' });
-      console.log('Trash items deleted for:', userOwnerKey); // Логируем удаление
-
-      // Обновляем текущий вес инвентаря
-      const totalWeight = trashItems.reduce((sum, item) => sum + (item.weight || 0), 0);
-      await InventoryLimit.updateOne(
-        { owner: userOwnerKey },
-        { $inc: { currentWeight: -totalWeight } }
-      );
-
-      // Начисляем кредиты пользователю
-      const updatedCredits = await UserCredits.findOneAndUpdate(
-        { userId: socket.userData.userId },
-        { $inc: { credits: totalCost } },
-        { new: true }
-      );
-
-      // Отправляем обновление кредитов клиенту
-      socket.emit('creditsUpdate', updatedCredits.credits);
-
-      // Отправляем обновлённый список предметов всем клиентам
-      const updatedItems = await Item.find({ owner: userOwnerKey });
-      console.log('Sending updated items:', updatedItems); // Логируем отправляемый список
-      io.to(userOwnerKey).emit('items', { owner: userOwnerKey, items: updatedItems });
-
-      if (callback) callback({
-        success: true,
-        message: `Утилизировано ${trashItems.length} предметов мусора. Начислено ${totalCost} кредитов!`
-      });
-    } catch (err) {
-      console.error('Error utilizing trash:', err.message);
-      if (callback) callback({ success: false, message: 'Ошибка при утилизации мусора' });
-    }
-  });
-
   // Добавляем событие для получения текущего количества кредитов
   socket.on('getCredits', async (callback) => {
     if (!socket.userData || !socket.userData.userId) {
@@ -651,30 +594,18 @@ io.on('connection', (socket) => {
         { $inc: { currentWeight: -itemWeight } }
       );
 
-      let trashItem = null; // Объявляем переменную заранее
-      if (item.name !== 'Мусор') {
-        trashItem = new Item({
-          name: 'Мусор',
-          description: 'Раньше это было чем-то полезным',
-          rarity: 'Бесполезный',
-          weight: itemWeight,
-          cost: 1,
-          effect: 'Чувство обременения чем-то бесполезным',
-          owner: owner
-        });
-        await trashItem.save();
-        console.log('Created trash item:', trashItem);
-      }
-
       const ownerItems = itemCache.get(owner) || [];
-      itemCache.set(owner, ownerItems.filter(i => i._id.toString() !== itemId).concat(trashItem ? [trashItem] : []));
+      itemCache.set(owner, ownerItems.filter(i => i._id.toString() !== itemId));
 
       const updatedLimit = await InventoryLimit.findOne({ owner });
       socket.emit('inventoryLimit', updatedLimit);
 
-      const updatedItems = await Item.find({ owner });
-      console.log('Sending updated items after delete:', updatedItems);
-      io.to(owner).emit('items', { owner, items: updatedItems });
+      const currentRoom = userCurrentRoom.get(socket.userData.userId);
+      if (currentRoom) {
+        io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemId });
+        io.to(currentRoom).emit('items', { owner, items: itemCache.get(owner) });
+        io.to(currentRoom).emit('inventoryLimit', updatedLimit);
+      }
 
       itemLocks.delete(itemId);
     } catch (err) {

@@ -303,15 +303,15 @@ function Inventory({ userId, currentRoom, theme, socket }) {
 
   const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
-    console.log('Received items update:', { owner, items }); // Логируем полученные данные
+    console.log('Received items update:', { owner, items });
     if (owner === userOwnerKey) {
-      console.log('Updating personalItems with:', items); // Логируем перед обновлением
-      setPersonalItems(items); // Устанавливаем новый список предметов
-      setAnimatingItem(null); // Сбрасываем анимацию, если она была
+      console.log('Updating personalItems with:', items);
+      setPersonalItems([...items]); // Создаём новый массив для триггера ререндера
+      setAnimatingItem(null);
     } else if (owner === locationOwnerKey) {
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
         console.log('Updating locationItems with:', items);
-        setLocationItems(items);
+        setLocationItems([...items]); // Аналогично для локации
       }
     }
   }, [userOwnerKey, locationOwnerKey, pendingItems]);

@@ -189,6 +189,7 @@ io.on('connection', (socket) => {
     try {
       // Находим все предметы "Мусор" в инвентаре пользователя
       const trashItems = await Item.find({ owner: userOwnerKey, name: 'Мусор' });
+      console.log('Trash items found:', trashItems); // Логируем найденный мусор
       if (trashItems.length === 0) {
         if (callback) callback({ success: false, message: 'У вас нет мусора для утилизации' });
         return;
@@ -199,6 +200,7 @@ io.on('connection', (socket) => {
 
       // Удаляем все предметы "Мусор"
       await Item.deleteMany({ owner: userOwnerKey, name: 'Мусор' });
+      console.log('Trash items deleted for:', userOwnerKey); // Логируем удаление
 
       // Обновляем текущий вес инвентаря
       const totalWeight = trashItems.reduce((sum, item) => sum + (item.weight || 0), 0);
@@ -219,6 +221,7 @@ io.on('connection', (socket) => {
 
       // Отправляем обновлённый список предметов всем клиентам
       const updatedItems = await Item.find({ owner: userOwnerKey });
+      console.log('Sending updated items:', updatedItems); // Логируем отправляемый список
       io.to(userOwnerKey).emit('items', { owner: userOwnerKey, items: updatedItems });
 
       if (callback) callback({

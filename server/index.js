@@ -177,6 +177,60 @@ io.on('connection', (socket) => {
     if (callback) callback({ success: true });
   });
 
+  // Добавляем обработчик события 'utilizeTrash'
+  socket.on('utilizeTrash', async (callback) => {
+    if (!socket.userData || !socket.userData.userId) {
+      if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
+      return;
+    }
+
+    const userOwnerKey = `user_${socket.userData.userId}`;
+
+    try {
+      // Находим все предметы "Мусор" в инвентаре пользователя
+      const trashItems = await Item.find({ owner: userOwnerKey, name: 'Мусор' });
+      if (trashItems.length === 0) {
+        if (callback) callback({ success: false, message: 'У вас нет мусора для утилизации' });
+        return;
+      }
+
+      // Подсчитываем общую стоимость мусора
+      const totalCost = trashItems.reduce((sum, item) => sum + (item.cost || 0), 0);
+
+      // Удаляем все предметы "Мусор"
+      await Item.deleteMany({ owner: userOwnerKey, name: 'Мусор' });
+
+      // Обновляем текущий вес инвентаря
+      const totalWeight = trashItems.reduce((sum, item) => sum + (item.weight || 0), 0);
+      await InventoryLimit.updateOne(
+        { owner: userOwnerKey },
+        { $inc: { currentWeight: -totalWeight } }
+      );
+
+      // Начисляем кредиты пользователю
+      const updatedCredits = await UserCredits.findOneAndUpdate(
+        { userId: socket.userData.userId },
+        { $inc: { credits: totalCost } },
+        { new: true }
+      );
+
+      // Отправляем обновление кредитов клиенту
+      socket.emit('creditsUpdate', updatedCredits.credits);
+
+      // Отправляем обновлённый список предметов всем клиентам
+      const updatedItems = await Item.find({ owner: userOwnerKey });
+      io.to(userOwnerKey).emit('items', { owner: userOwnerKey, items: updatedItems });
+
+      if (callback) callback({
+        success: true,
+        message: `Утилизировано ${trashItems.length} предметов мусора. Начислено ${totalCost} кредитов!`
+      });
+    } catch (err) {
+      console.error('Error utilizing trash:', err.message);
+      if (callback) callback({ success: false, message: 'Ошибка при утилизации мусора' });
+    }
+  });
+
   // Добавляем событие для получения текущего количества кредитов
   socket.on('getCredits', async (callback) => {
     if (!socket.userData || !socket.userData.userId) {

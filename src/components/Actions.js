@@ -337,6 +337,16 @@ function Actions({ theme, currentRoom, userId, socket }) {
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         }
       });
+    } else if (selectedAction.title === 'Утилизировать мусор') {
+      socket.emit('utilizeTrash', (response) => {
+        if (response.success) {
+          setNotification({ show: true, message: response.message });
+          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        } else {
+          setNotification({ show: true, message: response.message || 'Ошибка при утилизации' });
+          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        }
+      });
     } else {
       console.log(`Выполнено действие: ${selectedAction.modalTitle}`);
     }

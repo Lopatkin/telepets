@@ -303,11 +303,14 @@ function Inventory({ userId, currentRoom, theme, socket }) {
 
   const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
-    console.log('Received items update:', { owner, items }); // Добавляем логирование для отладки
+    console.log('Received items update:', { owner, items }); // Логируем полученные данные
     if (owner === userOwnerKey) {
-      setPersonalItems(items);
+      console.log('Updating personalItems with:', items); // Логируем перед обновлением
+      setPersonalItems(items); // Устанавливаем новый список предметов
+      setAnimatingItem(null); // Сбрасываем анимацию, если она была
     } else if (owner === locationOwnerKey) {
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
+        console.log('Updating locationItems with:', items);
         setLocationItems(items);
       }
     }
@@ -350,6 +353,7 @@ function Inventory({ userId, currentRoom, theme, socket }) {
     socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
     socket.on('error', ({ message }) => {
+      console.log('Received error from server:', message); // Логируем ошибки сервера
       setError(message);
       setTimeout(() => setError(null), 3000);
     });

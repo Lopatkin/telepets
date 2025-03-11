@@ -589,29 +589,85 @@ io.on('connection', (socket) => {
 
       await Item.deleteOne({ _id: itemId });
 
+      // Создаём "Мусор", если удалённый предмет не был "Мусором"
+      let trashItem = null;
+      if (item.name !== 'Мусор') {
+        trashItem = new Item({
+          name: 'Мусор',
+          description: 'Раньше это было чем-то полезным',
+          rarity: 'Бесполезный',
+          weight: itemWeight,
+          cost: 1,
+          effect: 'Чувство обременения чем-то бесполезным',
+          owner: owner
+        });
+        await trashItem.save();
+        console.log('Created trash item:', trashItem);
+      }
+
       await InventoryLimit.updateOne(
         { owner },
-        { $inc: { currentWeight: -itemWeight } }
+        { $inc: { currentWeight: trashItem ? 0 : -itemWeight } } // Если создали "Мусор", вес остаётся, иначе уменьшаем
       );
 
       const ownerItems = itemCache.get(owner) || [];
-      itemCache.set(owner, ownerItems.filter(i => i._id.toString() !== itemId));
+      itemCache.set(owner, ownerItems.filter(i => i._id.toString() !== itemId).concat(trashItem ? [trashItem] : []));
 
       const updatedLimit = await InventoryLimit.findOne({ owner });
       socket.emit('inventoryLimit', updatedLimit);
 
-      const currentRoom = userCurrentRoom.get(socket.userData.userId);
-      if (currentRoom) {
-        io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemId });
-        io.to(currentRoom).emit('items', { owner, items: itemCache.get(owner) });
-        io.to(currentRoom).emit('inventoryLimit', updatedLimit);
-      }
+      const updatedItems = await Item.find({ owner });
+      console.log('Sending updated items after delete:', updatedItems);
+      io.to(owner).emit('items', { owner, items: updatedItems });
 
       itemLocks.delete(itemId);
     } catch (err) {
       console.error('Error deleting item:', err.message, err.stack);
       itemLocks.delete(itemId);
       socket.emit('error', { message: 'Ошибка при удалении предмета' });
+    }
+  });
+
+  // Утилизация мусора
+  socket.on('utilizeTrash', async (callback) => {
+    if (!socket.userData || !socket.userData.userId) {
+      if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
+      return;
+    }
+
+    try {
+      const owner = `user_${socket.userData.userId}`;
+      const trashItems = await Item.find({ owner, name: 'Мусор' });
+
+      if (trashItems.length === 0) {
+        if (callback) callback({ success: false, message: 'У вас нет мусора для утилизации' });
+        return;
+      }
+
+      let totalWeight = 0;
+      for (const item of trashItems) {
+        totalWeight += parseFloat(item.weight) || 0;
+        await Item.deleteOne({ _id: item._id });
+      }
+
+      await InventoryLimit.updateOne(
+        { owner },
+        { $inc: { currentWeight: -totalWeight } }
+      );
+
+      const updatedItems = await Item.find({ owner });
+      itemCache.set(owner, updatedItems);
+      console.log('Trash items deleted for:', owner);
+      console.log('Sending updated items:', updatedItems);
+      io.to(owner).emit('items', { owner, items: updatedItems });
+
+      const updatedLimit = await InventoryLimit.findOne({ owner });
+      io.to(owner).emit('inventoryLimit', updatedLimit);
+
+      if (callback) callback({ success: true, message: 'Мусор успешно утилизирован' });
+    } catch (err) {
+      console.error('Error utilizing trash:', err.message, err.stack);
+      if (callback) callback({ success: false, message: 'Ошибка при утилизации мусора' });
     }
   });
 

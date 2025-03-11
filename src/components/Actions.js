@@ -326,14 +326,23 @@ function Actions({ theme, currentRoom, userId, socket }) {
         if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-          // Запускаем таймер и прогресс-бар только после успешного ответа
           setIsCooldown(true);
           setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
           setProgress(100);
-          // Сохраняем время начала задержки в localStorage
           localStorage.setItem(COOLDOWN_KEY, JSON.stringify({ startTime: Date.now() }));
         } else {
           setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
+          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        }
+      });
+    } else if (selectedAction.title === 'Утилизировать мусор') {
+      socket.emit('utilizeTrash', (response) => {
+        if (response && response.success) {
+          setNotification({ show: true, message: response.message });
+          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          socket.emit('getItems', { owner: `user_${userId}` }); // Обновляем список предметов
+        } else {
+          setNotification({ show: true, message: response?.message || 'Ошибка при утилизации' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         }
       });

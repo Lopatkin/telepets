@@ -301,10 +301,16 @@ function Inventory({ userId, currentRoom, theme, socket }) {
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
+  // Обновляем handleItemsUpdate, чтобы синхронизировать с сервером и заменить временный "Мусор"
   const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
     if (owner === userOwnerKey) {
-      setPersonalItems(items);
+      // Заменяем временный "Мусор" на серверный, если он есть
+      const updatedItems = items.map(item => ({
+        ...item,
+        _id: item._id.toString(), // Убеждаемся, что ID в строковом формате
+      }));
+      setPersonalItems(updatedItems);
     } else if (owner === locationOwnerKey) {
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
         setLocationItems(items);
@@ -413,9 +419,24 @@ function Inventory({ userId, currentRoom, theme, socket }) {
       setAnimatingItem({ itemId, action: 'split' });
 
       setTimeout(() => {
+        // Удаляем предмет из списка
         const updatedItems = personalItems.filter(item => item._id.toString() !== itemId);
-        setPersonalItems(updatedItems);
 
+        // Создаём временный "Мусор" с уникальным временным ID
+        const trashItem = {
+          _id: `temp_${Date.now()}`, // Временный ID, чтобы избежать конфликтов
+          name: 'Мусор',
+          description: 'Раньше это было чем-то полезным',
+          rarity: 'Бесполезный',
+          weight: itemToDelete.weight,
+          cost: 1,
+          effect: 'Чувство обременения чем-то бесполезным',
+        };
+
+        // Добавляем "Мусор" в локальный список сразу
+        setPersonalItems([...updatedItems, trashItem]);
+
+        // Отправляем запрос на удаление предмета
         socket.emit('deleteItem', { itemId });
 
         setAnimatingItem(null);

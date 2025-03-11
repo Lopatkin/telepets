@@ -51,6 +51,13 @@ const inventoryLimitSchema = new mongoose.Schema({
   currentWeight: { type: Number, default: 0 }
 });
 
+const userCreditsSchema = new mongoose.Schema({
+  userId: { type: String, unique: true }, // Уникальный ID пользователя
+  credits: { type: Number, default: 0, min: 0 } // Количество кредитов, не отрицательное
+});
+
+const UserCredits = mongoose.model('UserCredits', userCreditsSchema);
+
 const InventoryLimit = mongoose.model('InventoryLimit', inventoryLimitSchema);
 
 // Хранилище активных пользователей по комнатам
@@ -100,6 +107,15 @@ io.on('connection', (socket) => {
 
     const userOwnerKey = `user_${socket.userData.userId}`;
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
+
+    // Проверяем и создаём запись о кредитах для пользователя
+    const userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
+    if (!userCredits) {
+      await UserCredits.create({
+        userId: socket.userData.userId,
+        credits: 0 // Изначально 0 кредитов
+      });
+    }
 
     const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
     if (!userLimit) {
@@ -159,6 +175,21 @@ io.on('connection', (socket) => {
     // Отправляем подтверждение успешной аутентификации
     socket.emit('authSuccess');
     if (callback) callback({ success: true });
+  });
+
+  // Добавляем событие для получения текущего количества кредитов
+  socket.on('getCredits', async (callback) => {
+    if (!socket.userData || !socket.userData.userId) {
+      if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
+      return;
+    }
+    try {
+      const userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
+      if (callback) callback({ success: true, credits: userCredits ? userCredits.credits : 0 });
+    } catch (err) {
+      console.error('Error fetching credits:', err.message);
+      if (callback) callback({ success: false, message: 'Ошибка при получении кредитов' });
+    }
   });
 
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {

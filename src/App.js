@@ -201,7 +201,7 @@ function App() {
 
   return (
     <AppContainer>
-      <Header user={user} room={currentRoom} theme={appliedTheme} />
+      <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
       <Content>
         {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socket} joinedRoomsRef={joinedRoomsRef} />}
         {activeTab === 'actions' && socket && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} socket={socket} />}

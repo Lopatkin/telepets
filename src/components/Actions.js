@@ -227,6 +227,17 @@ const forestActions = [
   },
 ];
 
+const disposalActions = [
+  {
+    id: 10,
+    title: 'Утилизировать мусор',
+    description: 'Избавьтесь от ненужного хлама',
+    modalTitle: 'Утилизировать мусор',
+    modalDescription: 'Вы сдаёте мусор на переработку. Это очищает ваш инвентарь от предметов с названием "Мусор".',
+    buttonText: 'Утилизировать',
+  },
+];
+
 function Actions({ theme, currentRoom, userId, socket }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
@@ -339,6 +350,8 @@ function Actions({ theme, currentRoom, userId, socket }) {
     availableActions = busStopActions;
   } else if (currentRoom === 'Лес') {
     availableActions = forestActions;
+  } else if (currentRoom === 'Полигон утилизации') { // Добавляем новую комнату
+    availableActions = disposalActions;
   }
 
   return (

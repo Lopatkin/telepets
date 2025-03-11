@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { FaCoins } from 'react-icons/fa'; // Иконка монетки
 
 const HeaderContainer = styled.div`
   position: sticky;
@@ -115,8 +116,22 @@ const ProgressBar = styled.progress`
   }
 `;
 
-function Header({ user, room, theme }) {
+// Добавляем стили для отображения кредитов
+const CreditsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 10px;
+`;
+
+const CreditsText = styled.span`
+  font-size: 14px;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+`;
+
+function Header({ user, room, theme, socket }) { // Добавляем пропс socket
   const [showProgress, setShowProgress] = useState(false);
+  const [credits, setCredits] = useState(0); // Состояние для кредитов
 
   const roomName = room
     ? (room.startsWith('myhome_') ? 'Мой дом' : room)
@@ -132,6 +147,28 @@ function Header({ user, room, theme }) {
     mood: 50,
     fullness: 50
   };
+
+  // Получаем кредиты при монтировании компонента
+  useEffect(() => {
+    if (socket && user?.userId) {
+      socket.emit('getCredits', (response) => {
+        if (response.success) {
+          setCredits(response.credits);
+        } else {
+          console.error('Failed to fetch credits:', response.message);
+        }
+      });
+
+      // Подписываемся на возможные обновления кредитов (если они будут реализованы позже)
+      socket.on('creditsUpdate', (newCredits) => {
+        setCredits(newCredits);
+      });
+
+      return () => {
+        socket.off('creditsUpdate');
+      };
+    }
+  }, [socket, user]);
 
   const averageValue = Math.round(
     (progressValues.health + progressValues.mood + progressValues.fullness) / 3
@@ -155,6 +192,10 @@ function Header({ user, room, theme }) {
   return (
     <HeaderContainer theme={theme}>
       <RoomTitle theme={theme}>{roomName}</RoomTitle>
+      <CreditsContainer>
+        <FaCoins color="#FFD700" /> {/* Золотая монетка */}
+        <CreditsText theme={theme}>{credits}</CreditsText>
+      </CreditsContainer>
       <AvatarContainer className="avatar-container" onClick={toggleProgressModal}>
         {photoUrl ? (
           <Avatar src={photoUrl} alt="User avatar" />

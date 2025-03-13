@@ -483,6 +483,20 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
     return stickCount >= requiredSticks && boardCount >= requiredBoards;
   };
 
+  // Проверка всех условий для активации кнопки "СТАРТ"
+  const canStartCrafting = () => {
+    if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return false;
+    const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
+    const requiredSticks = item.materials.sticks;
+    const requiredBoards = item.materials.boards;
+
+    const slidersCorrect = sliderValues.sticks === requiredSticks && sliderValues.boards === requiredBoards;
+    const checkboxesChecked = checkboxes.prepareMachine && checkboxes.measureAndMark && checkboxes.secureMaterials;
+    const materialsAvailable = hasEnoughMaterials();
+
+    return slidersCorrect && checkboxesChecked && materialsAvailable;
+  };
+
   const handleButtonClick = () => {
     if (!socket) {
       console.error('Socket is not initialized');
@@ -541,18 +555,23 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
         return;
       }
 
-      // Пока оставляем как заглушку, реальная логика будет в handleStartClick
+      if (!hasEnoughMaterials()) {
+        setNotification({ show: true, message: 'Недостаточно материалов в инвентаре!' });
+        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        return;
+      }
+
       setNotification({ show: true, message: `Нажмите "СТАРТ" для создания: ${selectedCraftItem}` });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
     } else {
       console.log(`Выполнено действие: ${selectedAction.modalTitle}`);
     }
-    // Не закрываем модальное окно, чтобы игрок мог нажать "СТАРТ"
+    // Не закрываем модальное окно
   };
 
   const handleStartClick = () => {
-    if (!hasEnoughMaterials()) {
-      setNotification({ show: true, message: 'Недостаточно материалов в инвентаре!' });
+    if (!canStartCrafting()) {
+      setNotification({ show: true, message: 'Не все условия выполнены!' });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
       return;
     }
@@ -717,7 +736,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
                 <ActionButton onClick={handleButtonClick} disabled={true}>
                   {selectedAction.buttonText}
                 </ActionButton>
-                <StartButton onClick={handleStartClick} disabled={!hasEnoughMaterials()}>
+                <StartButton onClick={handleStartClick} disabled={!canStartCrafting()}>
                   СТАРТ
                 </StartButton>
               </>

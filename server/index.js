@@ -18,7 +18,7 @@ mongoose.connect(process.env.MONGODB_URI, {})
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message));
 
-// Схема сообщений
+// Схемы остаются без изменений
 const messageSchema = new mongoose.Schema({
   userId: String,
   text: String,
@@ -31,51 +31,36 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// Схема предметов (изменили weight и cost на Number)
 const itemSchema = new mongoose.Schema({
   name: String,
   description: String,
   rarity: String,
-  weight: Number, // Изменили с String на Number
-  cost: Number,   // Изменили с String на Number
+  weight: Number,
+  cost: Number,
   effect: String,
   owner: String,
 });
-
 const Item = mongoose.model('Item', itemSchema);
 
-// Схема для хранения ограничений по весу
 const inventoryLimitSchema = new mongoose.Schema({
   owner: String,
   maxWeight: Number,
   currentWeight: { type: Number, default: 0 }
 });
-
-const userCreditsSchema = new mongoose.Schema({
-  userId: { type: String, unique: true }, // Уникальный ID пользователя
-  credits: { type: Number, default: 0, min: 0 } // Количество кредитов, не отрицательное
-});
-
-const UserCredits = mongoose.model('UserCredits', userCreditsSchema);
-
 const InventoryLimit = mongoose.model('InventoryLimit', inventoryLimitSchema);
 
-// Хранилище активных пользователей по комнатам
+const userCreditsSchema = new mongoose.Schema({
+  userId: { type: String, unique: true },
+  credits: { type: Number, default: 0, min: 0 }
+});
+const UserCredits = mongoose.model('UserCredits', userCreditsSchema);
+
+// Хранилища остаются без изменений
 const roomUsers = {};
-
-// Хранилище текущей комнаты для каждого пользователя
 const userCurrentRoom = new Map();
-
-// Хранилище активных сокетов для предотвращения дублирования
 const activeSockets = new Map();
-
-// Хранилище времени последнего входа в комнаты для каждого сокета
 const roomJoinTimes = new WeakMap();
-
-// Кэш предметов
 const itemCache = new Map();
-
-// Хранилище блокировок предметов
 const itemLocks = new Map();
 
 io.on('connection', (socket) => {
@@ -165,9 +150,15 @@ io.on('connection', (socket) => {
       'Район Дачный',
       'Торговый центр "Карнавал"',
     ];
-    console.log('Available rooms:', rooms);
+    console.log('Available static rooms:', rooms);
     console.log('Received lastRoom:', userData.lastRoom);
-    const defaultRoom = userData.lastRoom && rooms.includes(userData.lastRoom) ? userData.lastRoom : 'Полигон утилизации';
+
+    // Проверяем, является ли lastRoom личным домом пользователя или статической комнатой
+    const isMyHome = userData.lastRoom && userData.lastRoom === `myhome_${socket.userData.userId}`;
+    const isStaticRoom = userData.lastRoom && rooms.includes(userData.lastRoom);
+    const defaultRoom = (isMyHome || isStaticRoom) ? userData.lastRoom : 'Полигон утилизации';
+    console.log('Is lastRoom a personal home?', isMyHome);
+    console.log('Is lastRoom a static room?', isStaticRoom);
     console.log('Selected defaultRoom:', defaultRoom);
 
     socket.join(defaultRoom);
@@ -203,7 +194,6 @@ io.on('connection', (socket) => {
     if (callback) callback({ success: true });
   });
 
-  // Добавляем событие для получения текущего количества кредитов
   socket.on('getCredits', async (callback) => {
     if (!socket.userData || !socket.userData.userId) {
       if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
@@ -219,21 +209,18 @@ io.on('connection', (socket) => {
   });
 
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {
-    // Проверка на валидность комнаты
     if (typeof room !== 'string') {
       console.error('Invalid room type:', room);
       socket.emit('error', { message: 'Некорректное название комнаты' });
       return;
     }
 
-    // Проверка на наличие socket.userData
     if (!socket.userData || !socket.userData.userId) {
       console.error('User not authenticated for room join:', socket.id);
       socket.emit('error', { message: 'Пользователь не аутентифицирован' });
       return;
     }
 
-    // Удаление пользователя из других комнат
     Object.keys(roomUsers).forEach(currentRoom => {
       if (currentRoom !== room) {
         roomUsers[currentRoom].forEach(user => {
@@ -245,25 +232,11 @@ io.on('connection', (socket) => {
       }
     });
 
-    const maxWait = 2000;
-    const startTime = Date.now();
-    while (!socket.userData && (Date.now() - startTime < maxWait)) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-
-    if (!socket.userData || !socket.userData.userId) {
-      console.error('User not authenticated for room join:', socket.id);
-      return;
-    }
-
-    // Установка текущей комнаты для пользователя
     userCurrentRoom.set(socket.userData.userId, room);
 
-    // Проверка, находится ли пользователь уже в комнате
     const userInRoom = Array.from(roomUsers[room] || []).some(user => user.userId === socket.userData.userId);
     const isRejoining = userInRoom;
 
-    // Проверка на кулдаун для повторного входа
     if (!roomJoinTimes.has(socket)) {
       roomJoinTimes.set(socket, new Map());
     }
@@ -286,7 +259,6 @@ io.on('connection', (socket) => {
 
     roomTimes.set(room, now);
 
-    // Удаление старой записи пользователя из комнаты (если есть)
     if (!roomUsers[room]) roomUsers[room] = new Set();
     roomUsers[room].forEach(user => {
       if (user.userId === socket.userData.userId) {
@@ -294,7 +266,6 @@ io.on('connection', (socket) => {
       }
     });
 
-    // Добавление пользователя в комнату
     roomUsers[room].add({
       userId: socket.userData.userId,
       firstName: socket.userData.firstName,
@@ -305,7 +276,6 @@ io.on('connection', (socket) => {
 
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
 
-    // Получение истории сообщений
     try {
       const query = {};
       if (room.startsWith('myhome_')) {
@@ -365,7 +335,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Получение предметов
   socket.on('getItems', async ({ owner }) => {
     try {
       if (itemCache.has(owner)) {
@@ -381,7 +350,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Получение лимитов инвентаря
   socket.on('getInventoryLimit', async ({ owner }) => {
     try {
       const limit = await InventoryLimit.findOne({ owner });
@@ -391,7 +359,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Добавление предмета
   socket.on('addItem', async ({ owner, item }, callback) => {
     try {
       if (item._id && itemLocks.has(item._id)) {
@@ -417,7 +384,6 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Создаём новый предмет, не передаём _id, если он есть, чтобы MongoDB сгенерировал его
       const newItem = new Item({
         name: item.name,
         description: item.description,
@@ -456,7 +422,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Перемещение предмета
   socket.on('moveItem', async ({ itemId, newOwner }) => {
     try {
       const item = await Item.findById(itemId);
@@ -518,7 +483,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Подбор предмета
   socket.on('pickupItem', async ({ itemId }) => {
     try {
       if (itemLocks.has(itemId)) {
@@ -593,7 +557,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Удаление предмета
   socket.on('deleteItem', async ({ itemId }) => {
     try {
       if (itemLocks.has(itemId)) {
@@ -615,7 +578,6 @@ io.on('connection', (socket) => {
 
       await Item.deleteOne({ _id: itemId });
 
-      // Создаём "Мусор", если удалённый предмет не был "Мусором"
       let trashItem = null;
       if (item.name !== 'Мусор') {
         trashItem = new Item({
@@ -633,7 +595,7 @@ io.on('connection', (socket) => {
 
       await InventoryLimit.updateOne(
         { owner },
-        { $inc: { currentWeight: trashItem ? 0 : -itemWeight } } // Если создали "Мусор", вес остаётся, иначе уменьшаем
+        { $inc: { currentWeight: trashItem ? 0 : -itemWeight } }
       );
 
       const ownerItems = itemCache.get(owner) || [];
@@ -654,8 +616,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Утилизация мусора
-  // Утилизация мусора
   socket.on('utilizeTrash', async (callback) => {
     if (!socket.userData || !socket.userData.userId) {
       if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
@@ -702,7 +662,6 @@ io.on('connection', (socket) => {
       const updatedLimit = await InventoryLimit.findOne({ owner });
       io.to(owner).emit('inventoryLimit', updatedLimit);
 
-      // Отправляем обновление кредитов напрямую клиенту
       socket.emit('creditsUpdate', userCredits.credits);
       console.log('Sent creditsUpdate to client:', userCredits.credits);
 

@@ -2,6 +2,57 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 
+const SliderContainer = styled.div`
+  margin-bottom: 20px;
+  width: 100%;
+`;
+
+const SliderLabel = styled.label`
+  display: block;
+  font-size: 14px;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+  margin-bottom: 5px;
+`;
+
+const Slider = styled.input.attrs({ type: 'range' })`
+  width: 100%;
+  -webkit-appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  background: ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  outline: none;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #007AFF;
+    cursor: pointer;
+  }
+
+  &::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #007AFF;
+    cursor: pointer;
+  }
+`;
+
+const SliderValue = styled.span`
+  font-size: 12px;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  margin-left: 10px;
+`;
+
 // Добавляем новый стиль для выпадающего списка
 const Select = styled.select`
   width: 100%;
@@ -282,6 +333,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
   const [timeLeft, setTimeLeft] = useState(0);
   const [progress, setProgress] = useState(100);
   const [selectedCraftItem, setSelectedCraftItem] = useState('Доска'); // По умолчанию "Доска"
+  const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 }); // Значения ползунков
 
   const COOLDOWN_DURATION = 20 * 1000; // 20 секунд в миллисекундах
   const COOLDOWN_KEY = `findStickCooldown_${userId}`; // Уникальный ключ для localStorage
@@ -340,6 +392,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
     // Сбрасываем выбор предмета при открытии модального окна
     if (action.title === 'Столярная мастерская') {
       setSelectedCraftItem(action.craftableItems[0].name);
+      setSliderValues({ sticks: 0, boards: 0 });
     }
   };
 
@@ -349,6 +402,11 @@ function Actions({ theme, currentRoom, userId, socket }) {
 
   const handleCraftItemChange = (e) => {
     setSelectedCraftItem(e.target.value);
+    setSliderValues({ sticks: 0, boards: 0 });
+  };
+
+  const handleSliderChange = (type, value) => {
+    setSliderValues(prev => ({ ...prev, [type]: parseInt(value, 10) }));
   };
 
   const handleButtonClick = () => {
@@ -393,7 +451,17 @@ function Actions({ theme, currentRoom, userId, socket }) {
         }
       });
     } else if (selectedAction.title === 'Столярная мастерская') {
-      console.log(`Выбрано создание: ${selectedCraftItem}`);
+      const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
+      const requiredSticks = item.materials.sticks;
+      const requiredBoards = item.materials.boards;
+
+      // Проверяем, совпадают ли значения ползунков с требуемыми материалами
+      if (sliderValues.sticks !== requiredSticks || sliderValues.boards !== requiredBoards) {
+        setNotification({ show: true, message: 'Установите правильное количество материалов!' });
+        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        return;
+      }
+
       setNotification({ show: true, message: `Вы начали создавать: ${selectedCraftItem}` });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
     } else {
@@ -423,6 +491,50 @@ function Actions({ theme, currentRoom, userId, socket }) {
     if (item.materials.sticks > 0) materials.push(`${item.materials.sticks} палки`);
     if (item.materials.boards > 0) materials.push(`${item.materials.boards} доски`);
     return materials.length > 0 ? `Необходимо: ${materials.join(', ')}` : 'Материалы не требуются';
+  };
+
+  const renderSliders = () => {
+    if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return null;
+    const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
+    const sliders = [];
+
+    if (item.materials.sticks > 0) {
+      sliders.push(
+        <SliderContainer key="sticks">
+          <SliderLabel theme={theme}>
+            Палки: {sliderValues.sticks}
+            <SliderValue theme={theme}>/ {item.materials.sticks}</SliderValue>
+          </SliderLabel>
+          <Slider
+            min="0"
+            max="10"
+            value={sliderValues.sticks}
+            onChange={(e) => handleSliderChange('sticks', e.target.value)}
+            theme={theme}
+          />
+        </SliderContainer>
+      );
+    }
+
+    if (item.materials.boards > 0) {
+      sliders.push(
+        <SliderContainer key="boards">
+          <SliderLabel theme={theme}>
+            Доски: {sliderValues.boards}
+            <SliderValue theme={theme}>/ {item.materials.boards}</SliderValue>
+          </SliderLabel>
+          <Slider
+            min="0"
+            max="10"
+            value={sliderValues.boards}
+            onChange={(e) => handleSliderChange('boards', e.target.value)}
+            theme={theme}
+          />
+        </SliderContainer>
+      );
+    }
+
+    return sliders;
   };
 
   return (
@@ -475,6 +587,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
                   ))}
                 </Select>
                 <MaterialsText theme={theme}>{getMaterialsText()}</MaterialsText>
+                {renderSliders()}
               </>
             ) : (
               <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>

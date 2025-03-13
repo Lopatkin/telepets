@@ -326,7 +326,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages]); // Добавляем messages в зависимости
 
   const sendMessage = () => {
     if (message.trim() && room && socket) {

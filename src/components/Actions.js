@@ -2,6 +2,24 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 
+const CheckboxContainer = styled.div`
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+`;
+
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  margin-right: 10px;
+`;
+
 const SliderContainer = styled.div`
   margin-bottom: 20px;
   width: 100%;
@@ -334,6 +352,11 @@ function Actions({ theme, currentRoom, userId, socket }) {
   const [progress, setProgress] = useState(100);
   const [selectedCraftItem, setSelectedCraftItem] = useState('Доска'); // По умолчанию "Доска"
   const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 }); // Значения ползунков
+  const [checkboxes, setCheckboxes] = useState({
+    prepareMachine: false,
+    measureAndMark: false,
+    secureMaterials: false,
+  }); // Состояние чекбоксов
 
   const COOLDOWN_DURATION = 20 * 1000; // 20 секунд в миллисекундах
   const COOLDOWN_KEY = `findStickCooldown_${userId}`; // Уникальный ключ для localStorage
@@ -393,6 +416,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
     if (action.title === 'Столярная мастерская') {
       setSelectedCraftItem(action.craftableItems[0].name);
       setSliderValues({ sticks: 0, boards: 0 });
+      setCheckboxes({ prepareMachine: false, measureAndMark: false, secureMaterials: false }); // Сбрасываем чекбоксы
     }
   };
 
@@ -403,10 +427,15 @@ function Actions({ theme, currentRoom, userId, socket }) {
   const handleCraftItemChange = (e) => {
     setSelectedCraftItem(e.target.value);
     setSliderValues({ sticks: 0, boards: 0 });
+    setCheckboxes({ prepareMachine: false, measureAndMark: false, secureMaterials: false }); // Сбрасываем чекбоксы при смене предмета
   };
 
   const handleSliderChange = (type, value) => {
     setSliderValues(prev => ({ ...prev, [type]: parseInt(value, 10) }));
+  };
+
+  const handleCheckboxChange = (key) => {
+    setCheckboxes(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleButtonClick = () => {
@@ -458,6 +487,13 @@ function Actions({ theme, currentRoom, userId, socket }) {
       // Проверяем, совпадают ли значения ползунков с требуемыми материалами
       if (sliderValues.sticks !== requiredSticks || sliderValues.boards !== requiredBoards) {
         setNotification({ show: true, message: 'Установите правильное количество материалов!' });
+        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        return;
+      }
+
+      // Проверяем чекбоксы
+      if (!checkboxes.prepareMachine || !checkboxes.measureAndMark || !checkboxes.secureMaterials) {
+        setNotification({ show: true, message: 'Необходимо выполнить все шаги подготовки!' });
         setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         return;
       }
@@ -537,6 +573,36 @@ function Actions({ theme, currentRoom, userId, socket }) {
     return sliders;
   };
 
+  // Функция для рендера чекбоксов
+  const renderCheckboxes = () => {
+    if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return null;
+    return (
+      <CheckboxContainer>
+        <CheckboxLabel theme={theme}>
+          <Checkbox
+            checked={checkboxes.prepareMachine}
+            onChange={() => handleCheckboxChange('prepareMachine')}
+          />
+          Подготовить станок
+        </CheckboxLabel>
+        <CheckboxLabel theme={theme}>
+          <Checkbox
+            checked={checkboxes.measureAndMark}
+            onChange={() => handleCheckboxChange('measureAndMark')}
+          />
+          Отмерить и разметить
+        </CheckboxLabel>
+        <CheckboxLabel theme={theme}>
+          <Checkbox
+            checked={checkboxes.secureMaterials}
+            onChange={() => handleCheckboxChange('secureMaterials')}
+          />
+          Закрепить материалы
+        </CheckboxLabel>
+      </CheckboxContainer>
+    );
+  };
+
   return (
     <ActionsContainer theme={theme}>
       <ActionGrid>
@@ -588,6 +654,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
                 </Select>
                 <MaterialsText theme={theme}>{getMaterialsText()}</MaterialsText>
                 {renderSliders()}
+                {renderCheckboxes()}
               </>
             ) : (
               <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>

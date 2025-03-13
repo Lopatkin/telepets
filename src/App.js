@@ -31,25 +31,25 @@ const LoadingContainer = styled.div`
 `;
 
 // Стили для спиннера
-const Spinner = styled.div`
-  width: 40px;
-  height: 40px;
-  background: #007AFF;
-  border-radius: 50%;
-  animation: pulse 1.5s ease-in-out infinite;
+// const Spinner = styled.div`
+//   width: 40px;
+//   height: 40px;
+//   background: #007AFF;
+//   border-radius: 50%;
+//   animation: pulse 1.5s ease-in-out infinite;
 
-  @keyframes pulse {
-    0% { transform: scale(0.8); opacity: 0.7; }
-    50% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(0.8); opacity: 0.7; }
-  }
-`;
+//   @keyframes pulse {
+//     0% { transform: scale(0.8); opacity: 0.7; }
+//     50% { transform: scale(1); opacity: 1; }
+//     100% { transform: scale(0.8); opacity: 0.7; }
+//   }
+// `;
 
-const LoadingText = styled.div`
-  margin-top: 10px;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  font-size: 16px;
-`;
+// const LoadingText = styled.div`
+//   margin-top: 10px;
+//   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+//   font-size: 16px;
+// `;
 
 function App() {
   const [user, setUser] = useState(null);

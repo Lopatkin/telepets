@@ -8,6 +8,7 @@ import Profile from './components/Profile';
 import Map from './components/Map';
 import Actions from './components/Actions';
 import Inventory from './components/Inventory';
+import { ClipLoader } from 'react-spinners';
 
 const AppContainer = styled.div`
   height: 100vh;
@@ -198,8 +199,7 @@ function App() {
   if (!user || !isAuthenticated || !currentRoom) {
     return (
       <LoadingContainer theme={theme === 'telegram' ? telegramTheme : theme}>
-        <Spinner />
-        <LoadingText>Загрузка...</LoadingText>
+        <ClipLoader color="#007AFF" size={40} />
       </LoadingContainer>
     );
   }

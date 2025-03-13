@@ -96,7 +96,11 @@ function App() {
 
   useEffect(() => {
     if (socket && user && !isAuthenticated) {
-      socket.emit('auth', user);
+      // Получаем сохранённую комнату из localStorage
+      const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
+      const lastRoom = storedRooms[user.userId] || 'Автобусная остановка'; // Дефолт, если нет сохранённой
+      console.log('Sending auth with last room:', lastRoom);
+      socket.emit('auth', { ...user, lastRoom });
     }
   }, [socket, user, isAuthenticated]);
 

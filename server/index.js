@@ -175,9 +175,9 @@ io.on('connection', (socket) => {
         });
       }
     }
-    
-    // Автоматически присоединяем пользователя к дефолтной комнате
-    const defaultRoom = 'Полигон утилизации'; // Дефолтная комната
+
+    // Используем последнюю комнату пользователя, если она передана, иначе дефолтную
+    const defaultRoom = userData.lastRoom && rooms.includes(userData.lastRoom) ? userData.lastRoom : 'Автобусная остановка';
     socket.join(defaultRoom);
     userCurrentRoom.set(socket.userData.userId, defaultRoom);
 

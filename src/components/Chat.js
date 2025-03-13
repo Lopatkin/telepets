@@ -304,19 +304,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setUsers(updatedUsers);
     });
 
-    // Если кэш пуст и комната ещё не была запрошена, явно вызываем joinRoom
-    if (!messageCacheRef.current[room]?.length && !joinedRoomsRef.current.has(room)) {
-      console.log(`Initial joinRoom for room: ${room}`);
-      socket.emit('joinRoom', { room, lastTimestamp: null });
-      joinedRoomsRef.current.add(room);
-    }
-
     return () => {
       socket.off('messageHistory');
       socket.off('message');
       socket.off('roomUsers');
     };
-  }, [socket, userId, room, joinedRoomsRef]);
+  }, [socket, userId, room]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

@@ -65,6 +65,8 @@ function App() {
         setIsAuthenticated(true);
         setCurrentRoom(defaultRoom);
         joinedRoomsRef.current.add(defaultRoom);
+        // Явно запрашиваем данные для дефолтной комнаты
+        socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
       });
 
       socketRef.current.on('error', ({ message }) => {

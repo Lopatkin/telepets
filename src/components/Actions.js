@@ -375,7 +375,7 @@ const workshopActions = [
   },
 ];
 
-function Actions({ theme, currentRoom, userId, socket }) {
+function Actions({ theme, currentRoom, userId, socket, personalItems }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [isCooldown, setIsCooldown] = useState(false);

@@ -21,7 +21,6 @@ const Content = styled.div`
   overflow-y: auto;
 `;
 
-// Контейнер для спиннера загрузки
 const LoadingContainer = styled.div`
   height: 100vh;
   display: flex;
@@ -71,11 +70,10 @@ function App() {
       });
 
       socketRef.current.on('authSuccess', ({ defaultRoom }) => {
-        console.log('Authentication successful, default room:', defaultRoom);
+        console.log('Authentication successful, received defaultRoom:', defaultRoom);
         setIsAuthenticated(true);
         setCurrentRoom(defaultRoom);
         joinedRoomsRef.current.add(defaultRoom);
-        // Явно запрашиваем данные для дефолтной комнаты
         socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
       });
 
@@ -96,10 +94,11 @@ function App() {
 
   useEffect(() => {
     if (socket && user && !isAuthenticated) {
-      // Получаем сохранённую комнату из localStorage
       const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
-      const lastRoom = storedRooms[user.userId] || 'Автобусная остановка'; // Дефолт, если нет сохранённой
-      console.log('Sending auth with last room:', lastRoom);
+      const lastRoom = storedRooms[user.userId] || 'Полигон утилизации';
+      console.log('Stored rooms in localStorage:', storedRooms);
+      console.log('Last room for user', user.userId, ':', lastRoom);
+      console.log('Sending auth with user data:', { ...user, lastRoom });
       socket.emit('auth', { ...user, lastRoom });
     }
   }, [socket, user, isAuthenticated]);
@@ -118,6 +117,7 @@ function App() {
           lastName: telegramData.user.last_name || '',
           photoUrl: telegramData.user.photo_url || ''
         };
+        console.log('Telegram user data:', userData);
         setUser(userData);
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
         setTheme(savedTheme);
@@ -153,6 +153,7 @@ function App() {
       const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
       storedRooms[user.userId] = room;
       localStorage.setItem('userRooms', JSON.stringify(storedRooms));
+      console.log('Saved room to localStorage:', storedRooms);
     }
 
     setActiveTab('chat');
@@ -178,7 +179,6 @@ function App() {
     localStorage.setItem('theme', newTheme);
   };
 
-  // Условие для отображения спиннера
   if (!user || !isAuthenticated || !currentRoom) {
     return (
       <LoadingContainer theme={theme === 'telegram' ? telegramTheme : theme}>

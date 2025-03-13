@@ -95,6 +95,7 @@ io.on('connection', (socket) => {
       lastName: userData.lastName || '',
       photoUrl: userData.photoUrl || ''
     };
+    console.log('Received auth data:', userData);
     console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
 
     if (activeSockets.has(socket.userData.userId)) {
@@ -108,7 +109,6 @@ io.on('connection', (socket) => {
     const userOwnerKey = `user_${socket.userData.userId}`;
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
 
-    // Проверяем и создаём запись о кредитах для пользователя
     let userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
     if (!userCredits) {
       userCredits = await UserCredits.create({
@@ -117,7 +117,6 @@ io.on('connection', (socket) => {
       });
     }
 
-    // Отправляем текущее количество кредитов клиенту после авторизации
     socket.emit('creditsUpdate', userCredits.credits);
     console.log('Sent initial credits to client:', userCredits.credits);
 
@@ -147,7 +146,7 @@ io.on('connection', (socket) => {
     if (!myHomeLimit) {
       await InventoryLimit.create({
         owner: myHomeOwnerKey,
-        maxWeight: 500 // Лимит для "Мой дом": 500 кг
+        maxWeight: 500
       });
     }
 
@@ -166,18 +165,11 @@ io.on('connection', (socket) => {
       'Район Дачный',
       'Торговый центр "Карнавал"',
     ];
-    for (const room of rooms) {
-      const roomLimit = await InventoryLimit.findOne({ owner: room });
-      if (!roomLimit) {
-        await InventoryLimit.create({
-          owner: room,
-          maxWeight: 10000 // Лимит для всех остальных комнат: 10 000 кг
-        });
-      }
-    }
+    console.log('Available rooms:', rooms);
+    console.log('Received lastRoom:', userData.lastRoom);
+    const defaultRoom = userData.lastRoom && rooms.includes(userData.lastRoom) ? userData.lastRoom : 'Полигон утилизации';
+    console.log('Selected defaultRoom:', defaultRoom);
 
-    // Используем последнюю комнату пользователя, если она передана, иначе дефолтную
-    const defaultRoom = userData.lastRoom && rooms.includes(userData.lastRoom) ? userData.lastRoom : 'Автобусная остановка';
     socket.join(defaultRoom);
     userCurrentRoom.set(socket.userData.userId, defaultRoom);
 
@@ -199,7 +191,6 @@ io.on('connection', (socket) => {
     io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
     console.log(`User ${socket.userData.userId} auto-joined room: ${defaultRoom}`);
 
-    // Отправляем историю сообщений для дефолтной комнаты
     try {
       const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
       socket.emit('messageHistory', messages);
@@ -208,7 +199,7 @@ io.on('connection', (socket) => {
       socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
     }
 
-    socket.emit('authSuccess', { defaultRoom }); // Передаем дефолтную комнату клиенту
+    socket.emit('authSuccess', { defaultRoom });
     if (callback) callback({ success: true });
   });
 

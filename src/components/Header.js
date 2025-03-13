@@ -153,19 +153,21 @@ function Header({ user, room, theme, socket }) { // Добавляем проп�
     if (socket && user?.userId) {
       socket.emit('getCredits', (response) => {
         if (response.success) {
+          console.log('Initial credits received:', response.credits);
           setCredits(response.credits);
         } else {
           console.error('Failed to fetch credits:', response.message);
         }
       });
 
-      // Подписываемся на возможные обновления кредитов (если они будут реализованы позже)
       socket.on('creditsUpdate', (newCredits) => {
+        console.log('Credits updated via socket:', newCredits);
         setCredits(newCredits);
       });
 
       return () => {
         socket.off('creditsUpdate');
+        console.log('Unsubscribed from creditsUpdate');
       };
     }
   }, [socket, user]);

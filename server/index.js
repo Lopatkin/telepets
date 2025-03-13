@@ -629,6 +629,7 @@ io.on('connection', (socket) => {
   });
 
   // Утилизация мусора
+  // Утилизация мусора
   socket.on('utilizeTrash', async (callback) => {
     if (!socket.userData || !socket.userData.userId) {
       if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
@@ -648,23 +649,21 @@ io.on('connection', (socket) => {
       let totalCredits = 0;
       for (const item of trashItems) {
         totalWeight += parseFloat(item.weight) || 0;
-        totalCredits += parseFloat(item.cost) || 0; // Суммируем стоимость каждого "Мусора"
+        totalCredits += parseFloat(item.cost) || 0;
         await Item.deleteOne({ _id: item._id });
       }
 
-      // Начисляем кредиты на основе общей стоимости
-      const creditsEarned = Math.floor(totalCredits); // Округляем вниз, если вдруг cost будет дробным
+      const creditsEarned = Math.floor(totalCredits);
 
       await InventoryLimit.updateOne(
         { owner },
         { $inc: { currentWeight: -totalWeight } }
       );
 
-      // Обновляем кредиты пользователя
       const userCredits = await UserCredits.findOneAndUpdate(
         { userId: socket.userData.userId },
         { $inc: { credits: creditsEarned } },
-        { new: true, upsert: true } // Создаём запись, если её нет
+        { new: true, upsert: true }
       );
 
       const updatedItems = await Item.find({ owner });
@@ -677,8 +676,9 @@ io.on('connection', (socket) => {
       const updatedLimit = await InventoryLimit.findOne({ owner });
       io.to(owner).emit('inventoryLimit', updatedLimit);
 
-      // Отправляем обновление кредитов клиенту
-      io.to(owner).emit('creditsUpdate', userCredits.credits);
+      // Отправляем обновление кредитов напрямую клиенту
+      socket.emit('creditsUpdate', userCredits.credits);
+      console.log('Sent creditsUpdate to client:', userCredits.credits);
 
       if (callback) callback({ success: true, message: `Мусор утилизирован. Получено ${creditsEarned} кредитов.` });
     } catch (err) {

@@ -20,6 +20,30 @@ const Content = styled.div`
   overflow-y: auto;
 `;
 
+// Контейнер для спиннера загрузки
+const LoadingContainer = styled.div`
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#fff'};
+`;
+
+// Стили для спиннера
+const Spinner = styled.div`
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3; /* Светло-серый фон */
+  border-top: 4px solid #007AFF; /* Синий акцент */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
 function App() {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('chat');
@@ -164,8 +188,13 @@ function App() {
     localStorage.setItem('theme', newTheme);
   };
 
+  // Условие для отображения спиннера
   if (!user || !isAuthenticated || !currentRoom) {
-    return <div>Loading...</div>;
+    return (
+      <LoadingContainer theme={theme === 'telegram' ? telegramTheme : theme}>
+        <Spinner />
+      </LoadingContainer>
+    );
   }
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;

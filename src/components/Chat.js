@@ -19,7 +19,7 @@ import cafeImage from '../images/cafe.jpg';
 import priyutImage from '../images/priyut.jpg';
 import albionImage from '../images/albion.jpg';
 import karnavalImage from '../images/karnaval.jpg';
-import poligonImage from '../images/poligon.jpg'; // Добавляем новую картинку
+import poligonImage from '../images/poligon.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -232,7 +232,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const [showUserList, setShowUserList] = useState(false);
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
-  const [messageCache, setMessageCache] = useState({});
+  const messageCacheRef = useRef({}); // Заменяем useState на useRef для кэша
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const currentUserPhotoUrl = telegramUser.photo_url || '';
@@ -269,9 +269,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     socket.on('messageHistory', (history) => {
       console.log('Received message history:', history);
       setMessages(prev => {
-        const cached = messageCache[room] || [];
+        const cached = messageCacheRef.current[room] || [];
         const newMessages = [...cached, ...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        setMessageCache(prevCache => ({ ...prevCache, [room]: newMessages }));
+        messageCacheRef.current[room] = newMessages; // Обновляем кэш через ref
         return newMessages;
       });
     });
@@ -280,7 +280,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       console.log('Received message:', msg);
       setMessages(prev => {
         const updated = [...prev, msg];
-        setMessageCache(prevCache => ({ ...prevCache, [room]: updated }));
+        messageCacheRef.current[room] = updated; // Обновляем кэш через ref
         return updated;
       });
     });
@@ -304,14 +304,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setUsers(updatedUsers);
     });
 
-    // Отключаем правило exhaustive-deps, так как messageCache обновляется внутри коллбэков и не требует зависимости
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => {
       socket.off('messageHistory');
       socket.off('message');
       socket.off('roomUsers');
     };
-  }, [socket, userId, room]);
+  }, [socket, userId, room]); // messageCacheRef не нужно в зависимостях, так как это ref
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

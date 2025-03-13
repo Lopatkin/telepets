@@ -266,6 +266,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
 
     console.log('Setting up socket listeners for room:', room);
 
+    // Восстанавливаем сообщения из кэша при монтировании
+    const cachedMessages = messageCacheRef.current[room] || [];
+    if (cachedMessages.length > 0 && messages.length === 0) {
+      console.log('Restoring messages from cache:', cachedMessages);
+      setMessages(cachedMessages);
+    }
+
     socket.on('messageHistory', (history) => {
       console.log('Received message history:', history);
       setMessages(prev => {
@@ -304,6 +311,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setUsers(updatedUsers);
     });
 
+    // Если кэш пуст или данных нет, запрашиваем историю
+    if (!messageCacheRef.current[room]?.length) {
+      console.log(`Requesting joinRoom for room: ${room} due to empty cache`);
+      socket.emit('joinRoom', { room, lastTimestamp: null });
+    }
+
     return () => {
       socket.off('messageHistory');
       socket.off('message');
@@ -314,19 +327,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        setShowUserList(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, []);
 
   const sendMessage = () => {
     if (message.trim() && room && socket) {

@@ -322,7 +322,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       socket.off('message');
       socket.off('roomUsers');
     };
-  }, [socket, userId, room]);
+  }, [socket, userId, room, messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

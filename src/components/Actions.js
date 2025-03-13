@@ -364,7 +364,7 @@ const workshopActions = [
     description: 'Создавайте деревянные изделия',
     modalTitle: 'Столярная мастерская',
     modalDescription: 'Используйте инструменты, чтобы смастерить что-то полезное',
-    buttonText: 'Создать', // Обновляем текст кнопки
+    buttonText: 'Создать', // Обновляем текст кнопк
     craftableItems: [
       { name: 'Доска', materials: { sticks: 2, boards: 0 } },
       { name: 'Стул', materials: { sticks: 4, boards: 1 } },
@@ -373,6 +373,7 @@ const workshopActions = [
       { name: 'Кровать', materials: { sticks: 4, boards: 6 } },
     ],
   },
+
 ];
 
 function Actions({ theme, currentRoom, userId, socket, personalItems }) {

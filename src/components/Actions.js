@@ -312,7 +312,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
       return;
     }
-
+  
     if (selectedAction.title === 'Найти палку') {
       const newItem = {
         name: 'Палка',
@@ -338,7 +338,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
     } else if (selectedAction.title === 'Утилизировать мусор') {
       socket.emit('utilizeTrash', (response) => {
         if (response && response.success) {
-          setNotification({ show: true, message: response.message });
+          setNotification({ show: true, message: response.message }); // Используем сообщение от сервера
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
           socket.emit('getItems', { owner: `user_${userId}` }); // Обновляем список предметов
         } else {

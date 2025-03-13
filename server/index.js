@@ -645,26 +645,42 @@ io.on('connection', (socket) => {
       }
 
       let totalWeight = 0;
+      let totalCredits = 0;
       for (const item of trashItems) {
         totalWeight += parseFloat(item.weight) || 0;
+        totalCredits += parseFloat(item.cost) || 0; // Суммируем стоимость каждого "Мусора"
         await Item.deleteOne({ _id: item._id });
       }
+
+      // Начисляем кредиты на основе общей стоимости
+      const creditsEarned = Math.floor(totalCredits); // Округляем вниз, если вдруг cost будет дробным
 
       await InventoryLimit.updateOne(
         { owner },
         { $inc: { currentWeight: -totalWeight } }
       );
 
+      // Обновляем кредиты пользователя
+      const userCredits = await UserCredits.findOneAndUpdate(
+        { userId: socket.userData.userId },
+        { $inc: { credits: creditsEarned } },
+        { new: true, upsert: true } // Создаём запись, если её нет
+      );
+
       const updatedItems = await Item.find({ owner });
       itemCache.set(owner, updatedItems);
       console.log('Trash items deleted for:', owner);
+      console.log('Credits earned:', creditsEarned);
       console.log('Sending updated items:', updatedItems);
       io.to(owner).emit('items', { owner, items: updatedItems });
 
       const updatedLimit = await InventoryLimit.findOne({ owner });
       io.to(owner).emit('inventoryLimit', updatedLimit);
 
-      if (callback) callback({ success: true, message: 'Мусор успешно утилизирован' });
+      // Отправляем обновление кредитов клиенту
+      io.to(owner).emit('creditsUpdate', userCredits.credits);
+
+      if (callback) callback({ success: true, message: `Мусор утилизирован. Получено ${creditsEarned} кредитов.` });
     } catch (err) {
       console.error('Error utilizing trash:', err.message, err.stack);
       if (callback) callback({ success: false, message: 'Ошибка при утилизации мусора' });

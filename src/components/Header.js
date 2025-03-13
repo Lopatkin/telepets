@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FaCoins } from 'react-icons/fa'; // Иконка монетки
+import { FaCoins } from 'react-icons/fa';
 
 const HeaderContainer = styled.div`
   position: sticky;
@@ -103,20 +103,19 @@ const ProgressBar = styled.progress`
     border-radius: 4px;
   }
   &::-webkit-progress-value {
-    ${props => props.type === 'health' && `background-color: #FF0000;`} /* Красный */
-    ${props => props.type === 'mood' && `background-color: #007AFF;`} /* Синий */
-    ${props => props.type === 'fullness' && `background-color: #32CD32;`} /* Зелёно-салатовый */
+    ${props => props.type === 'health' && `background-color: #FF0000;`}
+    ${props => props.type === 'mood' && `background-color: #007AFF;`}
+    ${props => props.type === 'fullness' && `background-color: #32CD32;`}
     border-radius: 4px;
   }
   &::-moz-progress-bar {
-    ${props => props.type === 'health' && `background-color: #FF0000;`} /* Красный */
-    ${props => props.type === 'mood' && `background-color: #007AFF;`} /* Синий */
-    ${props => props.type === 'fullness' && `background-color: #32CD32;`} /* Зелёно-салатовый */
+    ${props => props.type === 'health' && `background-color: #FF0000;`}
+    ${props => props.type === 'mood' && `background-color: #007AFF;`}
+    ${props => props.type === 'fullness' && `background-color: #32CD32;`}
     border-radius: 4px;
   }
 `;
 
-// Добавляем стили для отображения кредитов
 const CreditsContainer = styled.div`
   display: flex;
   align-items: center;
@@ -129,7 +128,7 @@ const CreditsText = styled.span`
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
 `;
 
-function Header({ user, room, theme, socket }) { // Добавляем пропс socket
+function Header({ user, room, theme, socket }) {
   const [showProgress, setShowProgress] = useState(false);
   const [credits, setCredits] = useState(0);
 
@@ -148,7 +147,6 @@ function Header({ user, room, theme, socket }) { // Добавляем проп�
     fullness: 50
   };
 
-  // Получаем кредиты при монтировании компонента
   useEffect(() => {
     if (!socket || !user?.userId) return;
 
@@ -159,19 +157,18 @@ function Header({ user, room, theme, socket }) { // Добавляем проп�
 
     socket.on('creditsUpdate', handleCreditsUpdate);
 
-    // Запрашиваем кредиты только если сокет готов
-    socket.on('connect', () => {
-      console.log('Socket connected, waiting for initial credits');
-    });
-
-    socket.on('authSuccess', () => {
-      console.log('Auth successful, expecting credits update');
+    // Запрашиваем текущее количество кредитов при монтировании
+    socket.emit('getCredits', ({ success, credits }) => {
+      if (success) {
+        console.log('Initial credits received:', credits);
+        setCredits(credits);
+      } else {
+        console.error('Failed to fetch initial credits');
+      }
     });
 
     return () => {
       socket.off('creditsUpdate', handleCreditsUpdate);
-      socket.off('connect');
-      socket.off('authSuccess');
       console.log('Unsubscribed from creditsUpdate');
     };
   }, [socket, user]);

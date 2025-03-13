@@ -238,6 +238,17 @@ const disposalActions = [
   },
 ];
 
+const workshopActions = [
+  {
+    id: 11,
+    title: 'Столярная мастерская',
+    description: 'Создавайте деревянные изделия',
+    modalTitle: 'Столярная мастерская',
+    modalDescription: 'Используйте инструменты, чтобы смастерить что-то полезное',
+    buttonText: 'Начать работу',
+  },
+];
+
 function Actions({ theme, currentRoom, userId, socket }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
@@ -312,7 +323,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
       return;
     }
-  
+
     if (selectedAction.title === 'Найти палку') {
       const newItem = {
         name: 'Палка',
@@ -359,8 +370,10 @@ function Actions({ theme, currentRoom, userId, socket }) {
     availableActions = busStopActions;
   } else if (currentRoom === 'Лес') {
     availableActions = forestActions;
-  } else if (currentRoom === 'Полигон утилизации') { // Добавляем новую комнату
+  } else if (currentRoom === 'Полигон утилизации') {
     availableActions = disposalActions;
+  } else if (currentRoom === 'Мастерская') { // Добавляем "Мастерскую"
+    availableActions = workshopActions;
   }
 
   return (

@@ -20,6 +20,7 @@ import priyutImage from '../images/priyut.jpg';
 import albionImage from '../images/albion.jpg';
 import karnavalImage from '../images/karnaval.jpg';
 import poligonImage from '../images/poligon.jpg';
+import workshopImage from '../images/workshop.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -61,8 +62,10 @@ const MessagesContainer = styled.div`
       return `url(${albionImage}) no-repeat center center fixed`;
     } else if (props.room === 'Торговый центр "Карнавал"') {
       return `url(${karnavalImage}) no-repeat center center fixed`;
-    } else if (props.room === 'Полигон утилизации') { // Новая комната
+    } else if (props.room === 'Полигон утилизации') {
       return `url(${poligonImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Мастерская') { // Добавляем "Мастерскую"
+      return `url(${workshopImage}) no-repeat center center fixed`;
     } else {
       return props.theme === 'dark' ? '#1A1A1A' : '#fff';
     }

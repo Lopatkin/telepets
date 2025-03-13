@@ -135,6 +135,14 @@ io.on('connection', (socket) => {
       });
     }
 
+    const workshopLimit = await InventoryLimit.findOne({ owner: 'Мастерская' });
+    if (!workshopLimit) {
+      await InventoryLimit.create({
+        owner: 'Мастерская',
+        maxWeight: 1000 // Большой лимит для мастерской
+      });
+    }
+
     const rooms = [
       'Автобусная остановка',
       'Бар "У бобра" (18+)',
@@ -144,6 +152,7 @@ io.on('connection', (socket) => {
       'Завод',
       'Кофейня "Ляля-Фа"',
       'Лес',
+      'Мастерская', // Добавляем новую комнату
       'Парк',
       'Полигон утилизации',
       'Приют для животных "Кошкин дом"',

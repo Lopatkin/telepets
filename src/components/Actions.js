@@ -2,6 +2,25 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 
+// Добавляем новый стиль для выпадающего списка
+const Select = styled.select`
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ddd'};
+  background: ${props => props.theme === 'dark' ? '#444' : '#fff'};
+  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
+  font-size: 14px;
+`;
+
+// Добавляем стиль для текста с материалами
+const MaterialsText = styled.p`
+  font-size: 14px;
+  margin: 0 0 20px 0;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+`;
+
 const ActionsContainer = styled.div`
   height: 100%;
   padding: 20px;
@@ -245,7 +264,14 @@ const workshopActions = [
     description: 'Создавайте деревянные изделия',
     modalTitle: 'Столярная мастерская',
     modalDescription: 'Используйте инструменты, чтобы смастерить что-то полезное',
-    buttonText: 'Начать работу',
+    buttonText: 'Создать', // Обновляем текст кнопки
+    craftableItems: [
+      { name: 'Доска', materials: { sticks: 2, boards: 0 } },
+      { name: 'Стул', materials: { sticks: 4, boards: 1 } },
+      { name: 'Стол', materials: { sticks: 4, boards: 2 } },
+      { name: 'Шкаф', materials: { sticks: 2, boards: 8 } },
+      { name: 'Кровать', materials: { sticks: 4, boards: 6 } },
+    ],
   },
 ];
 
@@ -255,6 +281,7 @@ function Actions({ theme, currentRoom, userId, socket }) {
   const [isCooldown, setIsCooldown] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [progress, setProgress] = useState(100);
+  const [selectedCraftItem, setSelectedCraftItem] = useState('Доска'); // По умолчанию "Доска"
 
   const COOLDOWN_DURATION = 20 * 1000; // 20 секунд в миллисекундах
   const COOLDOWN_KEY = `findStickCooldown_${userId}`; // Уникальный ключ для localStorage
@@ -310,10 +337,18 @@ function Actions({ theme, currentRoom, userId, socket }) {
       return;
     }
     setSelectedAction(action);
+    // Сбрасываем выбор предмета при открытии модального окна
+    if (action.title === 'Столярная мастерская') {
+      setSelectedCraftItem(action.craftableItems[0].name);
+    }
   };
 
   const handleCloseModal = () => {
     setSelectedAction(null);
+  };
+
+  const handleCraftItemChange = (e) => {
+    setSelectedCraftItem(e.target.value);
   };
 
   const handleButtonClick = () => {
@@ -357,6 +392,10 @@ function Actions({ theme, currentRoom, userId, socket }) {
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         }
       });
+    } else if (selectedAction.title === 'Столярная мастерская') {
+      console.log(`Выбрано создание: ${selectedCraftItem}`);
+      setNotification({ show: true, message: `Вы начали создавать: ${selectedCraftItem}` });
+      setTimeout(() => setNotification({ show: false, message: '' }), 2000);
     } else {
       console.log(`Выполнено действие: ${selectedAction.modalTitle}`);
     }
@@ -375,6 +414,16 @@ function Actions({ theme, currentRoom, userId, socket }) {
   } else if (currentRoom === 'Мастерская') { // Добавляем "Мастерскую"
     availableActions = workshopActions;
   }
+
+  // Функция для отображения необходимых материалов
+  const getMaterialsText = () => {
+    if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return '';
+    const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
+    const materials = [];
+    if (item.materials.sticks > 0) materials.push(`${item.materials.sticks} палки`);
+    if (item.materials.boards > 0) materials.push(`${item.materials.boards} доски`);
+    return materials.length > 0 ? `Необходимо: ${materials.join(', ')}` : 'Материалы не требуются';
+  };
 
   return (
     <ActionsContainer theme={theme}>
@@ -412,7 +461,24 @@ function Actions({ theme, currentRoom, userId, socket }) {
           <ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
             <CloseButton theme={theme} onClick={handleCloseModal}><FaTimes /></CloseButton>
             <ModalTitle theme={theme}>{selectedAction.modalTitle}</ModalTitle>
-            <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>
+            {selectedAction.title === 'Столярная мастерская' ? (
+              <>
+                <Select
+                  value={selectedCraftItem}
+                  onChange={handleCraftItemChange}
+                  theme={theme}
+                >
+                  {selectedAction.craftableItems.map(item => (
+                    <option key={item.name} value={item.name}>
+                      {item.name}
+                    </option>
+                  ))}
+                </Select>
+                <MaterialsText theme={theme}>{getMaterialsText()}</MaterialsText>
+              </>
+            ) : (
+              <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>
+            )}
             <ActionButton onClick={handleButtonClick}>
               {selectedAction.buttonText}
             </ActionButton>

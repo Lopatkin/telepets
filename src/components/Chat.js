@@ -237,7 +237,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const currentUserPhotoUrl = telegramUser.photo_url || '';
 
-  // Добавляем NPC в список пользователей в зависимости от комнаты
   useEffect(() => {
     if (room === 'Парк') {
       const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage };
@@ -305,13 +304,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setUsers(updatedUsers);
     });
 
+    // Отключаем правило exhaustive-deps, так как messageCache обновляется внутри коллбэков и не требует зависимости
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => {
       socket.off('messageHistory');
       socket.off('message');
       socket.off('roomUsers');
     };
   }, [socket, userId, room]);
-
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -336,7 +336,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
         text: message,
         room,
         timestamp: new Date().toISOString(),
-        photoUrl: currentUserPhotoUrl || '' // Используем photoUrl текущего пользователя для отправки
+        photoUrl: currentUserPhotoUrl || ''
       };
       socket.emit('sendMessage', newMessage);
       setMessage('');
@@ -356,7 +356,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
     console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
 
-    // Для собственных сообщений используем currentUserPhotoUrl, если msg.photoUrl отсутствует или пуст
     if (msg.userId === userId) {
       return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (
         <Avatar src={currentUserPhotoUrl} alt="Avatar" />
@@ -365,7 +364,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       );
     }
 
-    // Для сообщений других пользователей используем msg.photoUrl, если есть, иначе дефолтный аватар
     return msg.photoUrl && msg.photoUrl.trim() ? (
       <Avatar src={msg.photoUrl} alt="Avatar" />
     ) : (

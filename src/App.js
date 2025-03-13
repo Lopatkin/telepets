@@ -39,6 +39,11 @@ function App() {
   const joinedRoomsRef = useRef(new Set());
   const [socket, setSocket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [personalItems, setPersonalItems] = useState([]); // Добавляем состояние для personalItems
+
+  const handleItemsUpdate = (items) => {
+    setPersonalItems(items.filter(item => item.owner === `user_${user.userId}`));
+  };
 
   useEffect(() => {
     const initializeSocket = () => {
@@ -194,8 +199,8 @@ function App() {
       <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
       <Content>
         {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socket} joinedRoomsRef={joinedRoomsRef} />}
-        {activeTab === 'actions' && socket && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} socket={socket} />}
-        {activeTab === 'housing' && socket && <Inventory userId={user.userId} currentRoom={currentRoom} theme={appliedTheme} socket={socket} />}
+        {activeTab === 'actions' && socket && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} socket={socket} personalItems={personalItems} />}
+        {activeTab === 'housing' && socket && <Inventory userId={user.userId} currentRoom={currentRoom} theme={appliedTheme} socket={socket} onItemsUpdate={handleItemsUpdate} />}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
         {activeTab === 'profile' && (
           <Profile

@@ -2,6 +2,37 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 
+const ProgressBarContainer = styled.div`
+  width: 100%;
+  height: 10px;
+  background: ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  border-radius: 5px;
+  margin-bottom: 20px;
+`;
+
+const Progress = styled.div`
+  width: 0%; // Пока статичный, позже можно анимировать
+  height: 100%;
+  background: #007AFF;
+  border-radius: 5px;
+`;
+
+const StartButton = styled.button`
+  background: ${props => props.disabled ? '#ccc' : '#32CD32'};
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  font-size: 14px;
+  width: 100%;
+  margin-top: 10px;
+
+  &:hover {
+    background: ${props => props.disabled ? '#ccc' : '#28A428'};
+  }
+`;
+
 const CheckboxContainer = styled.div`
   margin-bottom: 20px;
   display: flex;
@@ -438,6 +469,19 @@ function Actions({ theme, currentRoom, userId, socket }) {
     setCheckboxes(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // Проверка наличия материалов в инвентаре
+  const hasEnoughMaterials = () => {
+    if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return false;
+    const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
+    const requiredSticks = item.materials.sticks;
+    const requiredBoards = item.materials.boards;
+
+    const stickCount = personalItems.filter(i => i.name === 'Палка').length;
+    const boardCount = personalItems.filter(i => i.name === 'Доска').length;
+
+    return stickCount >= requiredSticks && boardCount >= requiredBoards;
+  };
+
   const handleButtonClick = () => {
     if (!socket) {
       console.error('Socket is not initialized');
@@ -484,26 +528,37 @@ function Actions({ theme, currentRoom, userId, socket }) {
       const requiredSticks = item.materials.sticks;
       const requiredBoards = item.materials.boards;
 
-      // Проверяем, совпадают ли значения ползунков с требуемыми материалами
       if (sliderValues.sticks !== requiredSticks || sliderValues.boards !== requiredBoards) {
         setNotification({ show: true, message: 'Установите правильное количество материалов!' });
         setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         return;
       }
 
-      // Проверяем чекбоксы
       if (!checkboxes.prepareMachine || !checkboxes.measureAndMark || !checkboxes.secureMaterials) {
         setNotification({ show: true, message: 'Необходимо выполнить все шаги подготовки!' });
         setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         return;
       }
 
-      setNotification({ show: true, message: `Вы начали создавать: ${selectedCraftItem}` });
+      // Пока оставляем как заглушку, реальная логика будет в handleStartClick
+      setNotification({ show: true, message: `Нажмите "СТАРТ" для создания: ${selectedCraftItem}` });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
     } else {
       console.log(`Выполнено действие: ${selectedAction.modalTitle}`);
     }
-    setSelectedAction(null);
+    // Не закрываем модальное окно, чтобы игрок мог нажать "СТАРТ"
+  };
+
+  const handleStartClick = () => {
+    if (!hasEnoughMaterials()) {
+      setNotification({ show: true, message: 'Недостаточно материалов в инвентаре!' });
+      setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+      return;
+    }
+
+    setNotification({ show: true, message: `Вы успешно создали: ${selectedCraftItem}!` });
+    setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+    setSelectedAction(null); // Закрываем модальное окно после успешного создания
   };
 
   let availableActions = [];
@@ -655,13 +710,24 @@ function Actions({ theme, currentRoom, userId, socket }) {
                 <MaterialsText theme={theme}>{getMaterialsText()}</MaterialsText>
                 {renderSliders()}
                 {renderCheckboxes()}
+                <ProgressBarContainer theme={theme}>
+                  <Progress />
+                </ProgressBarContainer>
+                <ActionButton onClick={handleButtonClick} disabled={true}>
+                  {selectedAction.buttonText}
+                </ActionButton>
+                <StartButton onClick={handleStartClick} disabled={!hasEnoughMaterials()}>
+                  СТАРТ
+                </StartButton>
               </>
             ) : (
               <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>
             )}
-            <ActionButton onClick={handleButtonClick}>
-              {selectedAction.buttonText}
-            </ActionButton>
+            {selectedAction.title !== 'Столярная мастерская' && (
+              <ActionButton onClick={handleButtonClick}>
+                {selectedAction.buttonText}
+              </ActionButton>
+            )}
           </ModalContent>
         </ModalOverlay>
       )}

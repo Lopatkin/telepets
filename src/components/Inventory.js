@@ -285,7 +285,7 @@ const ConfirmButton = styled(ActionButton)`
   }
 `;
 
-function Inventory({ userId, currentRoom, theme, socket }) {
+function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
   const [activeSubTab, setActiveSubTab] = useState('personal');
   const [personalItems, setPersonalItems] = useState([]);
   const [locationItems, setLocationItems] = useState([]);
@@ -311,12 +311,13 @@ function Inventory({ userId, currentRoom, theme, socket }) {
         _id: item._id.toString(), // Убеждаемся, что ID в строковом формате
       }));
       setPersonalItems(updatedItems);
+      onItemsUpdate(updatedItems); // Передаем обновленные предметы в App.js
     } else if (owner === locationOwnerKey) {
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
         setLocationItems(items);
       }
     }
-  }, [userOwnerKey, locationOwnerKey, pendingItems]);
+  }, [userOwnerKey, locationOwnerKey, pendingItems, onItemsUpdate]);
 
   const handleLimitUpdate = useCallback((limit) => {
     if (limit.owner === userOwnerKey) setPersonalLimit(limit);

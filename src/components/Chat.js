@@ -232,116 +232,62 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const [showUserList, setShowUserList] = useState(false);
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
-
-  // Кэш сообщений для каждой комнаты
   const [messageCache, setMessageCache] = useState({});
 
-  // Получаем photoUrl текущего пользователя из Telegram
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const currentUserPhotoUrl = telegramUser.photo_url || '';
 
   // Добавляем NPC в список пользователей в зависимости от комнаты
   useEffect(() => {
     if (room === 'Парк') {
-      const belochka = {
-        userId: 'npc_belochka',
-        firstName: 'Белочка',
-        photoUrl: npcBelochkaImage,
-      };
-      setUsers(prevUsers => {
-        if (!prevUsers.some(user => user.userId === 'npc_belochka')) {
-          return [belochka, ...prevUsers];
-        }
-        return prevUsers;
-      });
+      const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage };
+      setUsers(prevUsers => !prevUsers.some(user => user.userId === 'npc_belochka') ? [belochka, ...prevUsers] : prevUsers);
     } else if (room === 'Лес') {
-      const fox = {
-        userId: 'npc_fox',
-        firstName: 'Лисичка',
-        photoUrl: npcFoxImage,
-      };
-      const ezhik = {
-        userId: 'npc_ezhik',
-        firstName: 'Ёжик',
-        photoUrl: npcEzhikImage,
-      };
+      const fox = { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage };
+      const ezhik = { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage };
       setUsers(prevUsers => {
         const updatedUsers = [...prevUsers];
-        if (!prevUsers.some(user => user.userId === 'npc_fox')) {
-          updatedUsers.unshift(fox); // Добавляем "Лисичку" первой
-        }
-        if (!prevUsers.some(user => user.userId === 'npc_ezhik')) {
-          updatedUsers.unshift(ezhik); // Добавляем "Ёжика" первой
-        }
+        if (!prevUsers.some(user => user.userId === 'npc_fox')) updatedUsers.unshift(fox);
+        if (!prevUsers.some(user => user.userId === 'npc_ezhik')) updatedUsers.unshift(ezhik);
         return updatedUsers;
       });
     } else if (room === 'Район Дачный') {
-      const security = {
-        userId: 'npc_security',
-        firstName: 'Охранник',
-        photoUrl: npcSecurityImage,
-      };
-      setUsers(prevUsers => {
-        if (!prevUsers.some(user => user.userId === 'npc_security')) {
-          return [security, ...prevUsers];
-        }
-        return prevUsers;
-      });
+      const security = { userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage };
+      setUsers(prevUsers => !prevUsers.some(user => user.userId === 'npc_security') ? [security, ...prevUsers] : prevUsers);
     } else if (room === 'Завод') {
-      const guard = {
-        userId: 'npc_guard',
-        firstName: 'Сторож',
-        photoUrl: npcGuardImage,
-      };
-      setUsers(prevUsers => {
-        if (!prevUsers.some(user => user.userId === 'npc_guard')) {
-          return [guard, ...prevUsers];
-        }
-        return prevUsers;
-      });
+      const guard = { userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage };
+      setUsers(prevUsers => !prevUsers.some(user => user.userId === 'npc_guard') ? [guard, ...prevUsers] : prevUsers);
     } else {
-      // Удаляем всех NPC, если комната не соответствует
       setUsers(prevUsers => prevUsers.filter(user => !['npc_belochka', 'npc_fox', 'npc_ezhik', 'npc_security', 'npc_guard'].includes(user.userId)));
     }
   }, [room]);
 
-  // В useEffect (замените весь useEffect на этот блок)
   useEffect(() => {
     if (!socket || !room) return;
 
-    console.log('Setting up socket listeners for room:', room, 'with currentUserPhotoUrl:', currentUserPhotoUrl);
+    console.log('Setting up socket listeners for room:', room);
 
-    // Проверяем, не подключены ли уже к комнате
     socket.on('messageHistory', (history) => {
-      console.log('Received messageHistory with photoUrls:', history.map(msg => ({ userId: msg.userId, photoUrl: msg.photoUrl })));
+      console.log('Received message history:', history);
       setMessages(prev => {
         const cached = messageCache[room] || [];
-        const newMessages = [...cached, ...history].sort((a, b) =>
-          new Date(a.timestamp) - new Date(b.timestamp)
-        );
-        setMessageCache(prevCache => ({
-          ...prevCache,
-          [room]: newMessages
-        }));
+        const newMessages = [...cached, ...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        setMessageCache(prevCache => ({ ...prevCache, [room]: newMessages }));
         return newMessages;
       });
     });
 
     socket.on('message', (msg) => {
-      console.log('Received message with photoUrl:', { userId: msg.userId, photoUrl: msg.photoUrl });
+      console.log('Received message:', msg);
       setMessages(prev => {
         const updated = [...prev, msg];
-        setMessageCache(prevCache => ({
-          ...prevCache,
-          [room]: updated
-        }));
+        setMessageCache(prevCache => ({ ...prevCache, [room]: updated }));
         return updated;
       });
     });
 
     socket.on('roomUsers', (roomUsers) => {
-      console.log('Received roomUsers with photoUrls:', roomUsers.map(user => ({ userId: user.userId, photoUrl: user.photoUrl })));
-      // Обновляем пользователей, сохраняя NPC для соответствующих комнат
+      console.log('Received room users:', roomUsers);
       let updatedUsers = roomUsers;
       if (room === 'Парк') {
         updatedUsers = [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage }, ...roomUsers];
@@ -359,25 +305,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setUsers(updatedUsers);
     });
 
-    // Проверяем, не отправляли ли мы уже joinRoom для этой комнаты в этом сеансе
-    const cachedMessages = messageCache[room] || [];
-    if (!joinedRoomsRef.current.has(room) || cachedMessages.length === 0) {
-      console.log('Emitting joinRoom for new room:', room);
-      socket.emit('joinRoom', { room, lastTimestamp: null });
-      joinedRoomsRef.current.add(room); // Отмечаем, что вошли в комнату
-    } else {
-      console.log('Rejoining room:', room, '— fetching updates');
-      const lastTimestamp = cachedMessages[cachedMessages.length - 1]?.timestamp;
-      socket.emit('joinRoom', { room, lastTimestamp });
-    }
-
-    // Убираем вызов leaveRoom при размонтировании, если пользователь просто переключается на другую вкладку
     return () => {
-      console.log('Cleaning up socket listeners for room:', room);
-      // Не отправляем leaveRoom здесь, чтобы пользователь оставался в комнате при переключении вкладок
+      socket.off('messageHistory');
+      socket.off('message');
+      socket.off('roomUsers');
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, userId, room, joinedRoomsRef]);
+  }, [socket, userId, room]);
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

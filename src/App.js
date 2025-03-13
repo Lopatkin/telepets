@@ -27,14 +27,10 @@ function App() {
   const [theme, setTheme] = useState('telegram');
   const [telegramTheme, setTelegramTheme] = useState('light');
   const socketRef = useRef(null);
-  const prevRoomRef = useRef(null);
   const joinedRoomsRef = useRef(new Set());
-  const isJoiningRef = useRef(false);
-  const isAuthenticatedRef = useRef(false);
   const [socket, setSocket] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Новое состояние
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Инициализация сокета
   useEffect(() => {
     const initializeSocket = () => {
       if (socketRef.current) return;
@@ -57,18 +53,18 @@ function App() {
       socketRef.current.on('disconnect', (reason) => {
         console.log('Socket disconnected:', reason);
         setSocket(null);
-        setIsAuthenticated(false); // Сбрасываем состояние аутентификации
+        setIsAuthenticated(false);
       });
 
       socketRef.current.on('connect_error', (error) => {
         console.error('Connection error:', error.message);
       });
 
-      // Подтверждение успешной аутентификации
-      socketRef.current.on('authSuccess', () => {
-        console.log('Authentication successful');
+      socketRef.current.on('authSuccess', ({ defaultRoom }) => {
+        console.log('Authentication successful, default room:', defaultRoom);
         setIsAuthenticated(true);
-        isAuthenticatedRef.current = true;
+        setCurrentRoom(defaultRoom); // Устанавливаем дефолтную комнату от сервера
+        joinedRoomsRef.current.add(defaultRoom); // Отмечаем, что мы в комнате
       });
 
       socketRef.current.on('error', ({ message }) => {
@@ -86,28 +82,17 @@ function App() {
     initializeSocket();
   }, []);
 
-  // Аутентификация пользователя
   useEffect(() => {
-    if (socket && user && !isAuthenticatedRef.current) {
-      socket.emit('auth', user, () => {
-        // Сервер должен отправить 'authSuccess' после успешной аутентификации
-      });
+    if (socket && user && !isAuthenticated) {
+      socket.emit('auth', user);
     }
-  }, [socket, user]);
+  }, [socket, user, isAuthenticated]);
 
-  // Инициализация Telegram и установка начального состояния
   useEffect(() => {
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
       const telegramData = window.Telegram.WebApp.initDataUnsafe;
       const savedTheme = localStorage.getItem('theme') || 'telegram';
-      const userId = telegramData?.user?.id?.toString();
-      let savedRoom = null;
-
-      if (userId) {
-        const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
-        savedRoom = storedRooms[userId] || null;
-      }
 
       if (telegramData?.user?.id) {
         const userData = {
@@ -120,14 +105,12 @@ function App() {
         setUser(userData);
         setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
         setTheme(savedTheme);
-        setCurrentRoom(savedRoom || `myhome_${userData.userId}`);
       } else {
         console.warn('Telegram Web App data not available');
         const testUser = { userId: 'test123', firstName: 'Test User' };
         setUser(testUser);
         setTelegramTheme('light');
         setTheme(savedTheme);
-        setCurrentRoom(savedRoom || 'myhome_test123');
       }
     } else {
       console.warn('Telegram Web App not detected, using test mode');
@@ -135,16 +118,14 @@ function App() {
       setUser(testUser);
       setTelegramTheme('light');
       setTheme('telegram');
-      setCurrentRoom('myhome_test123');
     }
   }, []);
 
   const handleRoomSelect = (room) => {
-    if (!room || !socket || room === currentRoom || isJoiningRef.current || !isAuthenticated) {
-      console.log('Cannot join room: authentication not completed or other conditions not met');
+    if (!room || !socket || room === currentRoom || !isAuthenticated) {
+      console.log('Cannot join room: conditions not met');
       return;
     }
-    isJoiningRef.current = true;
 
     if (currentRoom && socket) {
       socket.emit('leaveRoom', currentRoom);
@@ -165,15 +146,9 @@ function App() {
       socket.emit('joinRoom', { room, lastTimestamp: null });
       joinedRoomsRef.current.add(room);
     } else {
-      console.log(`Rejoining room: ${room} — using cached messages or fetching updates`);
+      console.log(`Rejoining room: ${room}`);
       socket.emit('joinRoom', { room, lastTimestamp: null });
     }
-
-    setTimeout(() => {
-      isJoiningRef.current = false;
-    }, 1000);
-
-    prevRoomRef.current = room;
   };
 
   useEffect(() => {
@@ -193,12 +168,6 @@ function App() {
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
 
-  const progressValues = {
-    health: 50,
-    mood: 50,
-    fullness: 50
-  };
-
   return (
     <AppContainer>
       <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
@@ -206,7 +175,7 @@ function App() {
         {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socket} joinedRoomsRef={joinedRoomsRef} />}
         {activeTab === 'actions' && socket && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} socket={socket} />}
         {activeTab === 'housing' && socket && <Inventory userId={user.userId} currentRoom={currentRoom} theme={appliedTheme} socket={socket} />}
-        {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
+        {activeTab === 'map' && <Map userId={userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
         {activeTab === 'profile' && (
           <Profile
             user={user}
@@ -214,7 +183,7 @@ function App() {
             selectedTheme={theme}
             telegramTheme={telegramTheme}
             onThemeChange={handleThemeChange}
-            progressValues={progressValues}
+            progressValues={{ health: 50, mood: 50, fullness: 50 }}
           />
         )}
       </Content>

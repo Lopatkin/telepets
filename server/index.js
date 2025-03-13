@@ -113,7 +113,7 @@ io.on('connection', (socket) => {
     if (!userCredits) {
       userCredits = await UserCredits.create({
         userId: socket.userData.userId,
-        credits: 0 // Изначально 0 кредитов
+        credits: 0
       });
     }
 
@@ -175,9 +175,40 @@ io.on('connection', (socket) => {
         });
       }
     }
+    
+    // Автоматически присоединяем пользователя к дефолтной комнате
+    const defaultRoom = 'Полигон утилизации'; // Дефолтная комната
+    socket.join(defaultRoom);
+    userCurrentRoom.set(socket.userData.userId, defaultRoom);
 
-    // Отправляем подтверждение успешной аутентификации
-    socket.emit('authSuccess');
+    if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
+    roomUsers[defaultRoom].forEach(user => {
+      if (user.userId === socket.userData.userId) {
+        roomUsers[defaultRoom].delete(user);
+      }
+    });
+
+    roomUsers[defaultRoom].add({
+      userId: socket.userData.userId,
+      firstName: socket.userData.firstName,
+      username: socket.userData.username,
+      lastName: socket.userData.lastName,
+      photoUrl: socket.userData.photoUrl
+    });
+
+    io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
+    console.log(`User ${socket.userData.userId} auto-joined room: ${defaultRoom}`);
+
+    // Отправляем историю сообщений для дефолтной комнаты
+    try {
+      const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
+      socket.emit('messageHistory', messages);
+    } catch (err) {
+      console.error('Error fetching messages for default room:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
+    }
+
+    socket.emit('authSuccess', { defaultRoom }); // Передаем дефолтную комнату клиенту
     if (callback) callback({ success: true });
   });
 

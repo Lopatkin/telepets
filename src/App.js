@@ -162,7 +162,7 @@ function App() {
     localStorage.setItem('theme', newTheme);
   };
 
-  if (!user) {
+  if (!user || !isAuthenticated || !currentRoom) {
     return <div>Loading...</div>;
   }
 

@@ -232,7 +232,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const [showUserList, setShowUserList] = useState(false);
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
-  const messageCacheRef = useRef({}); // Заменяем useState на useRef для кэша
+  const messageCacheRef = useRef({});
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const currentUserPhotoUrl = telegramUser.photo_url || '';
@@ -271,7 +271,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setMessages(prev => {
         const cached = messageCacheRef.current[room] || [];
         const newMessages = [...cached, ...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        messageCacheRef.current[room] = newMessages; // Обновляем кэш через ref
+        messageCacheRef.current[room] = newMessages;
         return newMessages;
       });
     });
@@ -280,7 +280,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       console.log('Received message:', msg);
       setMessages(prev => {
         const updated = [...prev, msg];
-        messageCacheRef.current[room] = updated; // Обновляем кэш через ref
+        messageCacheRef.current[room] = updated;
         return updated;
       });
     });
@@ -304,12 +304,19 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
       setUsers(updatedUsers);
     });
 
+    // Если кэш пуст и комната ещё не была запрошена, явно вызываем joinRoom
+    if (!messageCacheRef.current[room]?.length && !joinedRoomsRef.current.has(room)) {
+      console.log(`Initial joinRoom for room: ${room}`);
+      socket.emit('joinRoom', { room, lastTimestamp: null });
+      joinedRoomsRef.current.add(room);
+    }
+
     return () => {
       socket.off('messageHistory');
       socket.off('message');
       socket.off('roomUsers');
     };
-  }, [socket, userId, room]); // messageCacheRef не нужно в зависимостях, так как это ref
+  }, [socket, userId, room, joinedRoomsRef]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

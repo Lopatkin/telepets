@@ -131,7 +131,7 @@ const CreditsText = styled.span`
 
 function Header({ user, room, theme, socket }) { // Добавляем пропс socket
   const [showProgress, setShowProgress] = useState(false);
-  const [credits, setCredits] = useState(0); // Состояние для кредитов
+  const [credits, setCredits] = useState(0);
 
   const roomName = room
     ? (room.startsWith('myhome_') ? 'Мой дом' : room)
@@ -150,26 +150,30 @@ function Header({ user, room, theme, socket }) { // Добавляем проп�
 
   // Получаем кредиты при монтировании компонента
   useEffect(() => {
-    if (socket && user?.userId) {
-      socket.emit('getCredits', (response) => {
-        if (response.success) {
-          console.log('Initial credits received:', response.credits);
-          setCredits(response.credits);
-        } else {
-          console.error('Failed to fetch credits:', response.message);
-        }
-      });
+    if (!socket || !user?.userId) return;
 
-      socket.on('creditsUpdate', (newCredits) => {
-        console.log('Credits updated via socket:', newCredits);
-        setCredits(newCredits);
-      });
+    const handleCreditsUpdate = (newCredits) => {
+      console.log('Credits updated via socket:', newCredits);
+      setCredits(newCredits);
+    };
 
-      return () => {
-        socket.off('creditsUpdate');
-        console.log('Unsubscribed from creditsUpdate');
-      };
-    }
+    socket.on('creditsUpdate', handleCreditsUpdate);
+
+    // Запрашиваем кредиты только если сокет готов
+    socket.on('connect', () => {
+      console.log('Socket connected, waiting for initial credits');
+    });
+
+    socket.on('authSuccess', () => {
+      console.log('Auth successful, expecting credits update');
+    });
+
+    return () => {
+      socket.off('creditsUpdate', handleCreditsUpdate);
+      socket.off('connect');
+      socket.off('authSuccess');
+      console.log('Unsubscribed from creditsUpdate');
+    };
   }, [socket, user]);
 
   const averageValue = Math.round(
@@ -195,7 +199,7 @@ function Header({ user, room, theme, socket }) { // Добавляем проп�
     <HeaderContainer theme={theme}>
       <RoomTitle theme={theme}>{roomName}</RoomTitle>
       <CreditsContainer>
-        <FaCoins color="#FFD700" /> {/* Золотая монетка */}
+        <FaCoins color="#FFD700" />
         <CreditsText theme={theme}>{credits}</CreditsText>
       </CreditsContainer>
       <AvatarContainer className="avatar-container" onClick={toggleProgressModal}>

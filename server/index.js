@@ -109,19 +109,23 @@ io.on('connection', (socket) => {
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
 
     // Проверяем и создаём запись о кредитах для пользователя
-    const userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
+    let userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
     if (!userCredits) {
-      await UserCredits.create({
+      userCredits = await UserCredits.create({
         userId: socket.userData.userId,
         credits: 0 // Изначально 0 кредитов
       });
     }
 
+    // Отправляем текущее количество кредитов клиенту после авторизации
+    socket.emit('creditsUpdate', userCredits.credits);
+    console.log('Sent initial credits to client:', userCredits.credits);
+
     const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
     if (!userLimit) {
       await InventoryLimit.create({
         owner: userOwnerKey,
-        maxWeight: 40 // Лимит для личных вещей: 40 кг
+        maxWeight: 40
       });
       const stick = new Item({
         name: 'Палка',

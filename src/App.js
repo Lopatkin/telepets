@@ -33,15 +33,21 @@ const LoadingContainer = styled.div`
 const Spinner = styled.div`
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3; /* Светло-серый фон */
-  border-top: 4px solid #007AFF; /* Синий акцент */
+  background: #007AFF;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: pulse 1.5s ease-in-out infinite;
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  @keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.7; }
+    50% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.8); opacity: 0.7; }
   }
+`;
+
+const LoadingText = styled.div`
+  margin-top: 10px;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  font-size: 16px;
 `;
 
 function App() {
@@ -193,6 +199,7 @@ function App() {
     return (
       <LoadingContainer theme={theme === 'telegram' ? telegramTheme : theme}>
         <Spinner />
+        <LoadingText>Загрузка...</LoadingText>
       </LoadingContainer>
     );
   }

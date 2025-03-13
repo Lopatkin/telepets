@@ -63,8 +63,8 @@ function App() {
       socketRef.current.on('authSuccess', ({ defaultRoom }) => {
         console.log('Authentication successful, default room:', defaultRoom);
         setIsAuthenticated(true);
-        setCurrentRoom(defaultRoom); // Устанавливаем дефолтную комнату от сервера
-        joinedRoomsRef.current.add(defaultRoom); // Отмечаем, что мы в комнате
+        setCurrentRoom(defaultRoom);
+        joinedRoomsRef.current.add(defaultRoom);
       });
 
       socketRef.current.on('error', ({ message }) => {
@@ -175,7 +175,7 @@ function App() {
         {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socket} joinedRoomsRef={joinedRoomsRef} />}
         {activeTab === 'actions' && socket && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} socket={socket} />}
         {activeTab === 'housing' && socket && <Inventory userId={user.userId} currentRoom={currentRoom} theme={appliedTheme} socket={socket} />}
-        {activeTab === 'map' && <Map userId={userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
+        {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
         {activeTab === 'profile' && (
           <Profile
             user={user}

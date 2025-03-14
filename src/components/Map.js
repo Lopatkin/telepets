@@ -149,13 +149,13 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       // Вычисляем масштаб, чтобы изображение полностью помещалось в контейнер
       const scaleX = containerWidth / imgWidth;
       const scaleY = containerHeight / imgHeight;
-      const initialScale = Math.min(scaleX, scaleY);
+      const initialScale = Math.min(scaleX, scaleY) * 100; // Умножаем на 100, чтобы соответствовало width в процентах
 
       setScale(initialScale);
       // Центрируем изображение
       setPosition({
-        left: (containerWidth - imgWidth * initialScale) / 2,
-        top: (containerHeight - imgHeight * initialScale) / 2,
+        left: (containerWidth - imgWidth * (initialScale / 100)) / 2,
+        top: (containerHeight - imgHeight * (initialScale / 100)) / 2,
       });
     }
   }, [activeSubTab, isImageLoaded]);
@@ -226,7 +226,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       const newDistance = getDistance(e.touches[0], e.touches[1]);
       if (initialDistance) {
         const newScale = scale * (newDistance / initialDistance);
-        const clampedScale = Math.min(Math.max(newScale, 0.5), 5); // Ограничиваем масштаб от 0.5x до 5x
+        const clampedScale = Math.min(Math.max(newScale, 50), 500); // Ограничиваем масштаб от 50% до 500%
 
         // Центрируем масштаб относительно середины между пальцами
         const img = mapImageRef.current;
@@ -257,7 +257,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
     // Определяем направление прокрутки (вверх — увеличение, вниз — уменьшение)
     const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9; // Увеличиваем на 10% или уменьшаем на 10%
-    const newScale = Math.min(Math.max(scale * scaleFactor, 0.5), 5); // Ограничиваем масштаб от 0.5x до 5x
+    const newScale = Math.min(Math.max(scale * scaleFactor, 50), 500); // Ограничиваем масштаб от 50% до 500%
 
     // Центрируем масштаб относительно положения курсора
     const imgRect = img.getBoundingClientRect();
@@ -280,8 +280,8 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     const container = mapContainerRef.current;
     const maxLeft = 0; // Левая граница
     const maxTop = 0; // Верхняя граница
-    const minLeft = container.offsetWidth - img.offsetWidth * scale; // Правая граница с учетом масштаба
-    const minTop = container.offsetHeight - img.offsetHeight * scale; // Нижняя граница с учетом масштаба
+    const minLeft = container.offsetWidth - (img.offsetWidth * (scale / 100)); // Правая граница с учетом масштаба
+    const minTop = container.offsetHeight - (img.offsetHeight * (scale / 100)); // Нижняя граница с учетом масштаба
 
     setPosition({
       left: Math.min(maxLeft, Math.max(minLeft, newLeft)),

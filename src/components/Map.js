@@ -210,7 +210,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       const distance = getDistance(e.touches[0], e.touches[1]);
       setInitialDistance(distance);
     }
-  }, [position, restrictPosition]); // Добавлена зависимость restrictPosition
+  }, [position]); // Удалена зависимость restrictPosition
 
   // Перемещение изображения (мышь)
   const handleMouseMove = (e) => {
@@ -253,7 +253,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       restrictPosition(newLeft, newTop, img);
       setInitialDistance(newDistance); // Обновляем начальное расстояние
     }
-  }, [isDragging, startPos, scale, position, initialDistance, restrictPosition]); // Добавлена зависимость restrictPosition
+  }, [isDragging, startPos, scale, position, initialDistance, restrictPosition]); // Зависимость restrictPosition остаётся
 
   // Масштабирование колесом мыши
   const handleWheel = (e) => {

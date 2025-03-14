@@ -241,6 +241,32 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     }
   };
 
+  // Масштабирование колесом мыши
+  const handleWheel = (e) => {
+    e.preventDefault(); // Предотвращаем стандартную прокрутку страницы
+    const img = mapImageRef.current;
+    const container = mapContainerRef.current;
+
+    // Определяем направление прокрутки (вверх — увеличение, вниз — уменьшение)
+    const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9; // Увеличиваем на 10% или уменьшаем на 10%
+    const newScale = Math.min(Math.max(scale * scaleFactor, 0.5), 5); // Ограничиваем масштаб от 0.5x до 5x
+
+    // Центрируем масштаб относительно положения курсора
+    const imgRect = img.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const mouseX = e.clientX - containerRect.left; // Позиция курсора относительно контейнера
+    const mouseY = e.clientY - containerRect.top;
+
+    const dx = mouseX - (position.left + (imgRect.width / 2) * scale / newScale);
+    const dy = mouseY - (position.top + (imgRect.height / 2) * scale / newScale);
+
+    const newLeft = position.left - (dx * (newScale / scale - 1));
+    const newTop = position.top - (dy * (newScale / scale - 1));
+
+    setScale(newScale);
+    restrictPosition(newLeft, newTop, img);
+  };
+
   // Ограничение перемещения
   const restrictPosition = (newLeft, newTop, img) => {
     const container = mapContainerRef.current;
@@ -310,6 +336,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onWheel={handleWheel} // Добавляем обработчик колеса мыши
         >
           <MapImage
             ref={mapImageRef}

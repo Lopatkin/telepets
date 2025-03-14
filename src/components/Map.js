@@ -44,20 +44,20 @@ const RoomList = styled.ul`
 const RoomItem = styled.li`
   padding: 10px;
   margin: 5px 0;
-  background: ${props => props.isCurrent
-    ? '#007AFF'
+  background: ${props => props.isCurrent 
+    ? '#007AFF' 
     : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
-  color: ${props => props.isCurrent
-    ? 'white'
+  color: ${props => props.isCurrent 
+    ? 'white' 
     : (props.theme === 'dark' ? '#ccc' : '#333')};
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.2s;
 
   &:hover {
-    background: ${props => props.isCurrent
-    ? '#005BBB'
-    : (props.theme === 'dark' ? '#444' : '#e0e0e0')};
+    background: ${props => props.isCurrent 
+      ? '#005BBB' 
+      : (props.theme === 'dark' ? '#444' : '#e0e0e0')};
   }
 `;
 
@@ -147,14 +147,16 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       // Устанавливаем масштаб так, чтобы высота карты равнялась 100% высоты контейнера
       const initialScale = (containerHeight / imgHeight) * 100;
 
+      // Добавляем отладочные логи
+      console.log('containerHeight:', containerHeight, 'imgHeight:', imgHeight);
+      console.log('initialScale:', initialScale);
+
       setScale(initialScale);
       setPosition({
         left: 0, // Слева, так как ширина может превышать контейнер
         top: 0,  // Сверху, так как высота фиксирована на 100%
       });
     }
-    console.log('containerHeight:', containerHeight, 'imgHeight:', imgHeight);
-    console.log('initialScale:', initialScale);
   }, [activeSubTab, isImageLoaded]); // Зависимость только от загрузки и вкладки
 
   // Обработчик загрузки изображения
@@ -328,10 +330,10 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       {activeSubTab === 'locations' && (
         <RoomList>
           {rooms.map(room => (
-            <RoomItem
-              key={room}
-              onClick={() => onRoomSelect(room)}
-              theme={theme}
+            <RoomItem 
+              key={room} 
+              onClick={() => onRoomSelect(room)} 
+              theme={theme} 
               isCurrent={room === currentRoom}
             >
               <RoomName>{room}</RoomName>
@@ -362,8 +364,8 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
         </MapImageContainer>
       )}
 
-      <HomeButton
-        onClick={() => onRoomSelect(myHomeRoom)}
+      <HomeButton 
+        onClick={() => onRoomSelect(myHomeRoom)} 
         theme={theme}
       >
         Домой

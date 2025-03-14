@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import foggyCityMap from '../images/foggy_city_map.jpg'; // Импортируем изображение
 
@@ -146,7 +146,6 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       const imgWidth = img.naturalWidth;
       const imgHeight = img.naturalHeight;
 
-      // Вычисляем масштаб так, чтобы изображение занимало 100% контейнера по ширине или высоте
       const scaleX = (containerWidth / imgWidth) * 100; // Процент от исходного размера
       const scaleY = (containerHeight / imgHeight) * 100; // Процент от исходного размера
       const initialScale = Math.min(scaleX, scaleY); // Берем меньший, чтобы уместилось полностью
@@ -182,7 +181,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   };
 
   // Начало перетаскивания или масштабирования (сенсорный экран)
-  const handleTouchStart = (e) => {
+  const handleTouchStart = useCallback((e) => {
     e.preventDefault(); // Предотвращаем стандартное поведение
     if (e.touches.length === 1) {
       const touch = e.touches[0];
@@ -196,7 +195,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       const distance = getDistance(e.touches[0], e.touches[1]);
       setInitialDistance(distance);
     }
-  };
+  }, [position]); // Зависимости для handleTouchStart
 
   // Перемещение изображения (мышь)
   const handleMouseMove = (e) => {
@@ -209,7 +208,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   };
 
   // Перемещение или масштабирование (сенсорный экран)
-  const handleTouchMove = (e) => {
+  const handleTouchMove = useCallback((e) => {
     e.preventDefault(); // Предотвращаем прокрутку страницы
     if (e.touches.length === 1 && isDragging) {
       const touch = e.touches[0];
@@ -239,7 +238,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       restrictPosition(newLeft, newTop, img);
       setInitialDistance(newDistance); // Обновляем начальное расстояние
     }
-  };
+  }, [isDragging, startPos, scale, position, initialDistance]); // Зависимости для handleTouchMove
 
   // Масштабирование колесом мыши
   const handleWheel = (e) => {
@@ -287,10 +286,10 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   };
 
   // Завершение перетаскивания или масштабирования (сенсорный экран)
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
     setInitialDistance(null); // Сбрасываем расстояние для масштабирования
-  };
+  }, []); // Нет зависимостей для handleTouchEnd
 
   // Регистрация обработчиков с { passive: false }
   useEffect(() => {
@@ -306,7 +305,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
         container.removeEventListener('touchend', handleTouchEnd);
       };
     }
-  }, [scale, position, isDragging, initialDistance]); // Зависимости для обновления обработчиков
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]); // Добавлены зависимости
 
   return (
     <MapContainer theme={theme}>

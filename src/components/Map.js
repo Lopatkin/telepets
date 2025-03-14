@@ -180,6 +180,21 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     });
   };
 
+  // Ограничение перемещения
+  const restrictPosition = useCallback((newLeft, newTop, img) => {
+    if (!img) return; // Проверка на null
+    const container = mapContainerRef.current;
+    const maxLeft = 0; // Левая граница
+    const maxTop = 0; // Верхняя граница
+    const minLeft = container.offsetWidth - (img.offsetWidth * (scale / 100)); // Правая граница с учетом масштаба
+    const minTop = container.offsetHeight - (img.offsetHeight * (scale / 100)); // Нижняя граница с учетом масштаба
+
+    setPosition({
+      left: Math.min(maxLeft, Math.max(minLeft, newLeft)),
+      top: Math.min(maxTop, Math.max(minTop, newTop)),
+    });
+  }, [scale]); // Зависимость от scale
+
   // Начало перетаскивания или масштабирования (сенсорный экран)
   const handleTouchStart = useCallback((e) => {
     e.preventDefault(); // Предотвращаем стандартное поведение
@@ -195,7 +210,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       const distance = getDistance(e.touches[0], e.touches[1]);
       setInitialDistance(distance);
     }
-  }, [position]); // Зависимости для handleTouchStart
+  }, [position, restrictPosition]); // Добавлена зависимость restrictPosition
 
   // Перемещение изображения (мышь)
   const handleMouseMove = (e) => {
@@ -238,7 +253,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       restrictPosition(newLeft, newTop, img);
       setInitialDistance(newDistance); // Обновляем начальное расстояние
     }
-  }, [isDragging, startPos, scale, position, initialDistance]); // Зависимости для handleTouchMove
+  }, [isDragging, startPos, scale, position, initialDistance, restrictPosition]); // Добавлена зависимость restrictPosition
 
   // Масштабирование колесом мыши
   const handleWheel = (e) => {
@@ -263,21 +278,6 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
     setScale(newScale);
     restrictPosition(newLeft, newTop, img);
-  };
-
-  // Ограничение перемещения
-  const restrictPosition = (newLeft, newTop, img) => {
-    if (!img) return; // Проверка на null
-    const container = mapContainerRef.current;
-    const maxLeft = 0; // Левая граница
-    const maxTop = 0; // Верхняя граница
-    const minLeft = container.offsetWidth - (img.offsetWidth * (scale / 100)); // Правая граница с учетом масштаба
-    const minTop = container.offsetHeight - (img.offsetHeight * (scale / 100)); // Нижняя граница с учетом масштаба
-
-    setPosition({
-      left: Math.min(maxLeft, Math.max(minLeft, newLeft)),
-      top: Math.min(maxTop, Math.max(minTop, newTop)),
-    });
   };
 
   // Завершение перетаскивания (мышь)
@@ -305,7 +305,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
         container.removeEventListener('touchend', handleTouchEnd);
       };
     }
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]); // Добавлены зависимости
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]); // Зависимости для обработчиков
 
   return (
     <MapContainer theme={theme}>

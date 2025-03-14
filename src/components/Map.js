@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import foggyCityMap from '../images/foggy_city_map.jpg'; // Импортируем изображение
 

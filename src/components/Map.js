@@ -145,16 +145,18 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       const imgHeight = img.naturalHeight;
 
       // Устанавливаем масштаб так, чтобы высота карты равнялась 100% высоты контейнера
-      const initialScale = (containerHeight / imgHeight) * 100;
+      let initialScale = (containerHeight / imgHeight) * 100;
 
-      // Добавляем отладочные логи
+      // Устанавливаем минимальный масштаб, чтобы карта не была слишком маленькой
+      initialScale = Math.max(initialScale, 50); // Минимум 50%
+
       console.log('containerHeight:', containerHeight, 'imgHeight:', imgHeight);
       console.log('initialScale:', initialScale);
 
       setScale(initialScale);
       setPosition({
         left: 0, // Слева, так как ширина может превышать контейнер
-        top: 0,  // Сверху, так как высота фиксирована на 100%
+        top: 0,  // Сверху, высота может превышать контейнер
       });
     }
   }, [activeSubTab, isImageLoaded]); // Зависимость только от загрузки и вкладки

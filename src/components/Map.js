@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import foggyCityMap from '../images/foggy_city_map.jpg'; // Импортируем изображение
 
@@ -76,9 +76,9 @@ const MapImage = styled.img`
   position: absolute;
   top: ${props => props.top}px;
   left: ${props => props.left}px;
-  width: auto; /* Оставляем исходную ширину изображения */
-  height: auto; /* Оставляем исходную высоту изображения */
-  object-fit: contain; /* Изображение сохраняет пропорции, но не растягивается */
+  width: ${props => props.scale * 100}%; /* Масштабируем относительно исходного размера */
+  height: auto; /* Сохраняем пропорции */
+  transform-origin: top left; /* Точка масштабирования */
 `;
 
 const HomeButton = styled.button`
@@ -110,7 +110,10 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   const [isDragging, setIsDragging] = useState(false); // Флаг перетаскивания
   const [position, setPosition] = useState({ top: 0, left: 0 }); // Позиция изображения
   const [startPos, setStartPos] = useState({ x: 0, y: 0 }); // Начальная позиция курсора
+  const [scale, setScale] = useState(1); // Масштаб изображения
+  const [initialDistance, setInitialDistance] = useState(null); // Начальное расстояние между пальцами при масштабировании
   const mapContainerRef = useRef(null); // Ссылка на контейнер карты
+  const mapImageRef = useRef(null); // Ссылка на изображение
 
   const rooms = [
     'Автобусная остановка',
@@ -131,6 +134,38 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
   const myHomeRoom = `myhome_${userId}`;
 
+  // Устанавливаем начальный масштаб так, чтобы карта занимала 100% контейнера
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    const img = mapImageRef.current;
+
+    if (container && img && activeSubTab === 'map') {
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+      const imgWidth = img.naturalWidth;
+      const imgHeight = img.naturalHeight;
+
+      // Вычисляем масштаб, чтобы изображение полностью помещалось в контейнер
+      const scaleX = containerWidth / imgWidth;
+      const scaleY = containerHeight / imgHeight;
+      const initialScale = Math.min(scaleX, scaleY);
+
+      setScale(initialScale);
+      // Центрируем изображение
+      setPosition({
+        left: (containerWidth - imgWidth * initialScale) / 2,
+        top: (containerHeight - imgHeight * initialScale) / 2,
+      });
+    }
+  }, [activeSubTab]);
+
+  // Вычисление расстояния между двумя точками касания
+  const getDistance = (touch1, touch2) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
   // Начало перетаскивания (мышь)
   const handleMouseDown = (e) => {
     setIsDragging(true);
@@ -140,14 +175,22 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     });
   };
 
-  // Начало перетаскивания (сенсорный экран)
+  // Начало перетаскивания или масштабирования (сенсорный экран)
   const handleTouchStart = (e) => {
-    const touch = e.touches[0];
-    setIsDragging(true);
-    setStartPos({
-      x: touch.clientX - position.left,
-      y: touch.clientY - position.top,
-    });
+    if (e.touches.length === 1) {
+      // Перетаскивание одним пальцем
+      const touch = e.touches[0];
+      setIsDragging(true);
+      setStartPos({
+        x: touch.clientX - position.left,
+        y: touch.clientY - position.top,
+      });
+    } else if (e.touches.length === 2) {
+      // Масштабирование двумя пальцами
+      setIsDragging(false);
+      const distance = getDistance(e.touches[0], e.touches[1]);
+      setInitialDistance(distance);
+    }
   };
 
   // Перемещение изображения (мышь)
@@ -157,18 +200,46 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     const newLeft = e.clientX - startPos.x;
     const newTop = e.clientY - startPos.y;
 
-    restrictPosition(newLeft, newTop, e.target);
+    restrictPosition(newLeft, newTop, mapImageRef.current);
   };
 
-  // Перемещение изображения (сенсорный экран)
+  // Перемещение или масштабирование (сенсорный экран)
   const handleTouchMove = (e) => {
-    if (!isDragging) return;
+    e.preventDefault(); // Предотвращаем прокрутку страницы
+    if (e.touches.length === 1 && isDragging) {
+      // Перетаскивание одним пальцем
+      const touch = e.touches[0];
+      const newLeft = touch.clientX - startPos.x;
+      const newTop = touch.clientY - startPos.y;
 
-    const touch = e.touches[0];
-    const newLeft = touch.clientX - startPos.x;
-    const newTop = touch.clientY - startPos.y;
+      restrictPosition(newLeft, newTop, mapImageRef.current);
+    } else if (e.touches.length === 2) {
+      // Масштабирование двумя пальцами
+      const newDistance = getDistance(e.touches[0], e.touches[1]);
+      if (initialDistance) {
+        const newScale = scale * (newDistance / initialDistance);
+        const clampedScale = Math.min(Math.max(newScale, 0.5), 5); // Ограничиваем масштаб от 0.5x до 5x
 
-    restrictPosition(newLeft, newTop, e.target);
+        // Центрируем масштаб относительно середины между пальцами
+        const container = mapContainerRef.current;
+        const img = mapImageRef.current;
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const centerX = (touch1.clientX + touch2.clientX) / 2;
+        const centerY = (touch1.clientY + touch2.clientY) / 2;
+
+        const imgRect = img.getBoundingClientRect();
+        const dx = centerX - (imgRect.left + imgRect.width / 2);
+        const dy = centerY - (imgRect.top + imgRect.height / 2);
+
+        const newLeft = position.left - (dx * (clampedScale / scale - 1));
+        const newTop = position.top - (dy * (clampedScale / scale - 1));
+
+        setScale(clampedScale);
+        restrictPosition(newLeft, newTop, img);
+        setInitialDistance(newDistance);
+      }
+    }
   };
 
   // Ограничение перемещения
@@ -176,8 +247,8 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     const container = mapContainerRef.current;
     const maxLeft = 0; // Левая граница
     const maxTop = 0; // Верхняя граница
-    const minLeft = container.offsetWidth - img.offsetWidth; // Правая граница
-    const minTop = container.offsetHeight - img.offsetHeight; // Нижняя граница
+    const minLeft = container.offsetWidth - img.offsetWidth * scale; // Правая граница с учетом масштаба
+    const minTop = container.offsetHeight - img.offsetHeight * scale; // Нижняя граница с учетом масштаба
 
     setPosition({
       left: Math.min(maxLeft, Math.max(minLeft, newLeft)),
@@ -190,9 +261,10 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     setIsDragging(false);
   };
 
-  // Завершение перетаскивания (сенсорный экран)
+  // Завершение перетаскивания или масштабирования (сенсорный экран)
   const handleTouchEnd = () => {
     setIsDragging(false);
+    setInitialDistance(null); // Сбрасываем расстояние для масштабирования
   };
 
   return (
@@ -241,10 +313,12 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
           onTouchEnd={handleTouchEnd}
         >
           <MapImage
+            ref={mapImageRef}
             src={foggyCityMap}
             alt="Foggy City Map"
             top={position.top}
             left={position.left}
+            scale={scale}
             draggable={false} // Отключаем стандартное перетаскивание изображения
           />
         </MapImageContainer>

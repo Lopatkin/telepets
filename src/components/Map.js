@@ -148,7 +148,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       let initialScale = (containerHeight / imgHeight) * 100;
 
       // Устанавливаем минимальный масштаб, чтобы карта не была слишком маленькой
-      initialScale = Math.max(initialScale, 50); // Минимум 50%
+      initialScale = Math.max(initialScale, 100); // Минимум 50%
 
       console.log('containerHeight:', containerHeight, 'imgHeight:', imgHeight);
       console.log('initialScale:', initialScale);

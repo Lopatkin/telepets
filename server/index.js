@@ -217,36 +217,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Обработчик удаления предметов
-  socket.on('removeItems', async (data) => {
-    const { owner, name, count } = data;
-    const items = await Item.find({ owner, name }).limit(count);
-    if (items.length < count) return;
-
-    const itemIds = items.map(item => item._id);
-    await Item.deleteMany({ _id: { $in: itemIds } });
-
-    const updatedItems = await Item.find({ owner });
-    io.to(owner).emit('itemsUpdate', { owner, items: updatedItems });
-  });
-
-  // Обработчик добавления предмета
-  socket.on('addItem', async (item) => {
-    const { owner } = item;
-    const limit = await InventoryLimit.findOne({ owner });
-    const currentItems = await Item.find({ owner });
-    const currentWeight = currentItems.reduce((sum, i) => sum + i.weight, 0);
-    const newWeight = currentWeight + item.weight;
-
-    if (newWeight <= limit.maxWeight) {
-      const newItem = await Item.create(item);
-      const updatedItems = await Item.find({ owner });
-      io.to(owner).emit('itemsUpdate', { owner, items: updatedItems });
-    } else {
-      socket.emit('inventoryFull', { message: 'Превышен лимит веса инвентаря!' });
-    }
-  });
-
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {
     if (typeof room !== 'string') {
       console.error('Invalid room type:', room);
@@ -398,8 +368,9 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('addItem', async ({ owner, item }, callback) => {
+  socket.on('addItem', async (item, callback) => { // Убрали лишний объект { owner, item }
     try {
+      const owner = item.owner; // Теперь owner берётся прямо из item
       if (item._id && itemLocks.has(item._id)) {
         if (callback) callback({ success: false, message: 'Этот предмет уже обрабатывается' });
         return;
@@ -451,6 +422,8 @@ io.on('connection', (socket) => {
         io.to(currentRoom).emit('items', { owner, items: itemCache.get(owner) });
         io.to(currentRoom).emit('inventoryLimit', updatedLimit);
       }
+
+      io.to(owner).emit('items', { owner, items: itemCache.get(owner) }); // Уведомляем владельца
 
       if (callback) callback({ success: true });
       if (item._id) itemLocks.delete(item._id);
@@ -708,6 +681,46 @@ io.on('connection', (socket) => {
     } catch (err) {
       console.error('Error utilizing trash:', err.message, err.stack);
       if (callback) callback({ success: false, message: 'Ошибка при утилизации мусора' });
+    }
+  });
+
+  // Новый обработчик для удаления предметов
+  socket.on('removeItems', async (data) => {
+    try {
+      const { owner, name, count } = data;
+      const items = await Item.find({ owner, name }).limit(count);
+
+      if (items.length < count) {
+        socket.emit('error', { message: `Недостаточно предметов "${name}" для удаления` });
+        return;
+      }
+
+      const itemIds = items.map(item => item._id);
+      const totalWeight = items.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
+
+      await Item.deleteMany({ _id: { $in: itemIds } });
+
+      await InventoryLimit.updateOne(
+        { owner },
+        { $inc: { currentWeight: -totalWeight } }
+      );
+
+      const updatedItems = await Item.find({ owner });
+      itemCache.set(owner, updatedItems);
+
+      const updatedLimit = await InventoryLimit.findOne({ owner });
+      io.to(owner).emit('items', { owner, items: updatedItems });
+      io.to(owner).emit('inventoryLimit', updatedLimit);
+
+      const currentRoom = userCurrentRoom.get(socket.userData.userId);
+      if (currentRoom) {
+        io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemIds });
+        io.to(currentRoom).emit('items', { owner, items: updatedItems });
+        io.to(currentRoom).emit('inventoryLimit', updatedLimit);
+      }
+    } catch (err) {
+      console.error('Error removing items:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при удалении предметов' });
     }
   });
 

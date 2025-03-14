@@ -237,7 +237,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     } else if (e.touches.length === 2 && initialDistance !== null) {
       const newDistance = getDistance(e.touches[0], e.touches[1]);
       const scaleFactor = newDistance / initialDistance;
-      const newScale = Math.min(Math.max(scale * scaleFactor, 50), 500); // Ограничиваем масштаб от 50% до 500%
+      const newScale = Math.min(Math.max(scale * scaleFactor, 50), 1000); // Ограничиваем масштаб от 50% до 500%
 
       const img = mapImageRef.current;
       const touch1 = e.touches[0];
@@ -266,7 +266,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
     const container = mapContainerRef.current;
     const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9; // Увеличиваем на 10% или уменьшаем на 10%
-    const newScale = Math.min(Math.max(scale * scaleFactor, 50), 500); // Ограничиваем масштаб от 50% до 500%
+    const newScale = Math.min(Math.max(scale * scaleFactor, 50), 1000); // Ограничиваем масштаб от 50% до 500%
 
     const imgRect = img.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();

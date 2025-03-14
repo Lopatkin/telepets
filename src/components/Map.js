@@ -306,7 +306,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
         container.removeEventListener('touchend', handleTouchEnd);
       };
     }
-  }, [scale, position, isDragging, initialDistance, handleTouchMove, handleTouchStart]); // Зависимости для обновления обработчиков
+  }, [scale, position, isDragging, initialDistance, handleTouchMove, handleTouchStart, handleTouchEnd]); // Зависимости для обновления обработчиков
 
   return (
     <MapContainer theme={theme}>

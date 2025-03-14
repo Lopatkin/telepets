@@ -63,16 +63,19 @@ const RoomItem = styled.li`
 
 const MapImageContainer = styled.div`
   flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
+  overflow: hidden; /* Скрываем части изображения, выходящие за пределы контейнера */
+  position: relative;
+  cursor: grab; /* Курсор для указания возможности перетаскивания */
+  user-select: none; /* Запрещаем выделение текста или изображения */
 `;
 
 const MapImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover; /* Изображение заполняет контейнер, сохраняя пропорции */
+  position: absolute;
+  top: ${props => props.top}px;
+  left: ${props => props.left}px;
+  width: auto; /* Оставляем исходную ширину изображения */
+  height: auto; /* Оставляем исходную высоту изображения */
+  object-fit: contain; /* Изображение сохраняет пропорции, но не растягивается */
 `;
 
 const HomeButton = styled.button`
@@ -101,6 +104,10 @@ const RoomName = styled.span`
 
 function Map({ userId, onRoomSelect, theme, currentRoom }) {
   const [activeSubTab, setActiveSubTab] = useState('locations'); // Состояние для переключения подвкладок
+  const [isDragging, setIsDragging] = useState(false); // Флаг перетаскивания
+  const [position, setPosition] = useState({ top: 0, left: 0 }); // Позиция изображения
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 }); // Начальная позиция курсора
+  const mapContainerRef = useRef(null); // Ссылка на контейнер карты
 
   const rooms = [
     'Автобусная остановка',
@@ -120,6 +127,41 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   ].sort(); // Сортировка по алфавиту
 
   const myHomeRoom = `myhome_${userId}`;
+
+  // Начало перетаскивания
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartPos({
+      x: e.clientX - position.left,
+      y: e.clientY - position.top,
+    });
+  };
+
+  // Перемещение изображения
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+
+    const newLeft = e.clientX - startPos.x;
+    const newTop = e.clientY - startPos.y;
+
+    // Ограничиваем перемещение, чтобы изображение не уходило за пределы контейнера
+    const container = mapContainerRef.current;
+    const img = e.target;
+    const maxLeft = 0; // Левая граница (не уходим за правый край контейнера)
+    const maxTop = 0; // Верхняя граница (не уходим за нижний край контейнера)
+    const minLeft = container.offsetWidth - img.offsetWidth; // Правая граница
+    const minTop = container.offsetHeight - img.offsetHeight; // Нижняя граница
+
+    setPosition({
+      left: Math.min(maxLeft, Math.max(minLeft, newLeft)),
+      top: Math.min(maxTop, Math.max(minTop, newTop)),
+    });
+  };
+
+  // Завершение перетаскивания
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   return (
     <MapContainer theme={theme}>
@@ -156,8 +198,20 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       )}
 
       {activeSubTab === 'map' && (
-        <MapImageContainer>
-          <MapImage src={foggyCityMap} alt="Foggy City Map" />
+        <MapImageContainer
+          ref={mapContainerRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp} // Останавливаем перетаскивание, если курсор покидает контейнер
+        >
+          <MapImage
+            src={foggyCityMap}
+            alt="Foggy City Map"
+            top={position.top}
+            left={position.left}
+            draggable={false} // Отключаем стандартное перетаскивание изображения
+          />
         </MapImageContainer>
       )}
 

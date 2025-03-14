@@ -44,20 +44,20 @@ const RoomList = styled.ul`
 const RoomItem = styled.li`
   padding: 10px;
   margin: 5px 0;
-  background: ${props => props.isCurrent
-    ? '#007AFF'
+  background: ${props => props.isCurrent 
+    ? '#007AFF' 
     : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
-  color: ${props => props.isCurrent
-    ? 'white'
+  color: ${props => props.isCurrent 
+    ? 'white' 
     : (props.theme === 'dark' ? '#ccc' : '#333')};
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.2s;
 
   &:hover {
-    background: ${props => props.isCurrent
-    ? '#005BBB'
-    : (props.theme === 'dark' ? '#444' : '#e0e0e0')};
+    background: ${props => props.isCurrent 
+      ? '#005BBB' 
+      : (props.theme === 'dark' ? '#444' : '#e0e0e0')};
   }
 `;
 
@@ -118,9 +118,9 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     'Завод',
     'Кофейня "Ляля-Фа"',
     'Лес',
-    'Мастерская', // Добавляем "Мастерскую"
+    'Мастерская',
     'Парк',
-    'Полигон утилизации', // Новая комната
+    'Полигон утилизации',
     'Приют для животных "Кошкин дом"',
     'Район Дачный',
     'Торговый центр "Карнавал"',
@@ -185,10 +185,10 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       {activeSubTab === 'locations' && (
         <RoomList>
           {rooms.map(room => (
-            <RoomItem
-              key={room}
-              onClick={() => onRoomSelect(room)}
-              theme={theme}
+            <RoomItem 
+              key={room} 
+              onClick={() => onRoomSelect(room)} 
+              theme={theme} 
               isCurrent={room === currentRoom}
             >
               <RoomName>{room}</RoomName>
@@ -215,8 +215,8 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
         </MapImageContainer>
       )}
 
-      <HomeButton
-        onClick={() => onRoomSelect(myHomeRoom)}
+      <HomeButton 
+        onClick={() => onRoomSelect(myHomeRoom)} 
         theme={theme}
       >
         Домой

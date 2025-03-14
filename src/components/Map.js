@@ -76,7 +76,7 @@ const MapImage = styled.img`
   position: absolute;
   top: ${props => props.top}px;
   left: ${props => props.left}px;
-  width: ${props => props.scale}%; /* Масштабируем относительно исходного размера */
+  width: ${props => props.scale * 100}%; /* Масштабируем относительно контейнера */
   height: auto; /* Сохраняем пропорции */
   transform-origin: top left; /* Точка масштабирования */
 `;
@@ -110,7 +110,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   const [isDragging, setIsDragging] = useState(false); // Флаг перетаскивания
   const [position, setPosition] = useState({ top: 0, left: 0 }); // Позиция изображения
   const [startPos, setStartPos] = useState({ x: 0, y: 0 }); // Начальная позиция курсора
-  const [scale, setScale] = useState(100); // Масштаб изображения в процентах (начальное значение 100%)
+  const [scale, setScale] = useState(1); // Масштаб изображения (1 = 100% контейнера)
   const [initialDistance, setInitialDistance] = useState(null); // Начальное расстояние между пальцами при масштабировании
   const [isImageLoaded, setIsImageLoaded] = useState(false); // Флаг загрузки изображения
   const mapContainerRef = useRef(null); // Ссылка на контейнер карты
@@ -147,15 +147,15 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       const imgHeight = img.naturalHeight;
 
       // Вычисляем масштаб, чтобы изображение полностью помещалось в контейнер
-      const scaleX = (containerWidth / imgWidth) * 100; // Процент от исходного размера
-      const scaleY = (containerHeight / imgHeight) * 100; // Процент от исходного размера
-      const initialScale = Math.min(scaleX, scaleY);
+      const scaleX = containerWidth / imgWidth; // Коэффициент масштаба по ширине
+      const scaleY = containerHeight / imgHeight; // Коэффициент масштаба по высоте
+      const initialScale = Math.min(scaleX, scaleY); // Берем меньший, чтобы уместить полностью
 
       setScale(initialScale);
       // Центрируем изображение
       setPosition({
-        left: (containerWidth - (imgWidth * (initialScale / 100))) / 2,
-        top: (containerHeight - (imgHeight * (initialScale / 100))) / 2,
+        left: (containerWidth - imgWidth * initialScale) / 2,
+        top: (containerHeight - imgHeight * initialScale) / 2,
       });
     }
   }, [activeSubTab, isImageLoaded]);
@@ -225,7 +225,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       // Масштабирование двумя пальцами
       const newDistance = getDistance(e.touches[0], e.touches[1]);
       const scaleFactor = newDistance / initialDistance;
-      const newScale = Math.min(Math.max(scale * scaleFactor, 50), 500); // Ограничиваем масштаб от 50% до 500%
+      const newScale = Math.min(Math.max(scale * scaleFactor, 0.5), 5); // Ограничиваем масштаб от 0.5x до 5x
 
       // Центрируем масштаб относительно середины между пальцами
       const img = mapImageRef.current;
@@ -243,7 +243,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
       setScale(newScale);
       restrictPosition(newLeft, newTop, img);
-      setInitialDistance(newDistance); // Обновляем начальное расстояние для следующего шага
+      setInitialDistance(newDistance); // Обновляем начальное расстояние
     }
   };
 
@@ -255,7 +255,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
     // Определяем направление прокрутки (вверх — увеличение, вниз — уменьшение)
     const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9; // Увеличиваем на 10% или уменьшаем на 10%
-    const newScale = Math.min(Math.max(scale * scaleFactor, 50), 500); // Ограничиваем масштаб от 50% до 500%
+    const newScale = Math.min(Math.max(scale * scaleFactor, 0.5), 5); // Ограничиваем масштаб от 0.5x до 5x
 
     // Центрируем масштаб относительно положения курсора
     const imgRect = img.getBoundingClientRect();
@@ -277,9 +277,9 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   const restrictPosition = (newLeft, newTop, img) => {
     const container = mapContainerRef.current;
     const maxLeft = 0; // Левая граница
-    const maxTop = 0; // Вер матрицы хняя граница
-    const minLeft = container.offsetWidth - (img.offsetWidth * (scale / 100)); // Правая граница с учетом масштаба
-    const minTop = container.offsetHeight - (img.offsetHeight * (scale / 100)); // Нижняя граница с учетом масштаба
+    const maxTop = 0; // Верхняя граница
+    const minLeft = container.offsetWidth - (img.offsetWidth * scale); // Правая граница с учетом масштаба
+    const minTop = container.offsetHeight - (img.offsetHeight * scale); // Нижняя граница с учетом масштаба
 
     setPosition({
       left: Math.min(maxLeft, Math.max(minLeft, newLeft)),

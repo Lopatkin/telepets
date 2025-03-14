@@ -110,7 +110,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   const [isDragging, setIsDragging] = useState(false); // Флаг перетаскивания
   const [position, setPosition] = useState({ top: 0, left: 0 }); // Позиция изображения
   const [startPos, setStartPos] = useState({ x: 0, y: 0 }); // Начальная позиция курсора
-  const [scale, setScale] = useState(null); // Масштаб изначально null, чтобы не рендерить до загрузки
+  const [scale, setScale] = useState(100); // Масштаб в процентах (100% = исходный размер)
   const [initialDistance, setInitialDistance] = useState(null); // Начальное расстояние между пальцами
   const [isImageLoaded, setIsImageLoaded] = useState(false); // Флаг загрузки изображения
   const mapContainerRef = useRef(null); // Ссылка на контейнер карты
@@ -140,7 +140,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     const container = mapContainerRef.current;
     const img = mapImageRef.current;
 
-    if (container && img && activeSubTab === 'map' && isImageLoaded && scale === null) {
+    if (container && img && activeSubTab === 'map' && isImageLoaded) {
       const containerWidth = container.offsetWidth;
       const containerHeight = container.offsetHeight;
       const imgWidth = img.naturalWidth;
@@ -157,7 +157,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
         top: (containerHeight - (imgHeight * (initialScale / 100))) / 2,
       });
     }
-  }, [activeSubTab, isImageLoaded, scale]);
+  }, [activeSubTab, isImageLoaded]); // Зависимость только от загрузки и вкладки
 
   // Обработчик загрузки изображения
   const handleImageLoad = () => {
@@ -245,8 +245,9 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   const handleWheel = (e) => {
     e.preventDefault(); // Предотвращаем стандартную прокрутку страницы
     const img = mapImageRef.current;
-    const container = mapContainerRef.current;
+    if (!img) return; // Проверка на null
 
+    const container = mapContainerRef.current;
     const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9; // Увеличиваем на 10% или уменьшаем на 10%
     const newScale = Math.min(Math.max(scale * scaleFactor, 50), 500); // Ограничиваем масштаб от 50% до 500%
 
@@ -267,6 +268,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
   // Ограничение перемещения
   const restrictPosition = (newLeft, newTop, img) => {
+    if (!img) return; // Проверка на null
     const container = mapContainerRef.current;
     const maxLeft = 0; // Левая граница
     const maxTop = 0; // Верхняя граница
@@ -289,6 +291,22 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     setIsDragging(false);
     setInitialDistance(null); // Сбрасываем расстояние для масштабирования
   };
+
+  // Регистрация обработчиков с { passive: false }
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (container) {
+      container.addEventListener('touchstart', handleTouchStart, { passive: false });
+      container.addEventListener('touchmove', handleTouchMove, { passive: false });
+      container.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+      return () => {
+        container.removeEventListener('touchstart', handleTouchStart);
+        container.removeEventListener('touchmove', handleTouchMove);
+        container.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+  }, [scale, position, isDragging, initialDistance]); // Зависимости для обновления обработчиков
 
   return (
     <MapContainer theme={theme}>
@@ -331,23 +349,18 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
           onWheel={handleWheel}
         >
-          {isImageLoaded && scale !== null && (
-            <MapImage
-              ref={mapImageRef}
-              src={foggyCityMap}
-              alt="Foggy City Map"
-              top={position.top}
-              left={position.left}
-              scale={scale}
-              draggable={false}
-              onLoad={handleImageLoad} // Добавляем обработчик загрузки
-            />
-          )}
+          <MapImage
+            ref={mapImageRef}
+            src={foggyCityMap}
+            alt="Foggy City Map"
+            top={position.top}
+            left={position.left}
+            scale={scale}
+            draggable={false}
+            onLoad={handleImageLoad} // Добавляем обработчик загрузки
+          />
         </MapImageContainer>
       )}
 

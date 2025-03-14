@@ -11,10 +11,11 @@ const ProgressBarContainer = styled.div`
 `;
 
 const Progress = styled.div`
-  width: 0%; // Пока статичный, позже можно анимировать
+  width: ${props => props.progress}%; // Теперь ширина зависит от пропса progress
   height: 100%;
   background: #007AFF;
   border-radius: 5px;
+  transition: width 0.3s ease; // Плавная анимация
 `;
 
 const StartButton = styled.button`
@@ -364,16 +365,15 @@ const workshopActions = [
     description: 'Создавайте деревянные изделия',
     modalTitle: 'Столярная мастерская',
     modalDescription: 'Используйте инструменты, чтобы смастерить что-то полезное',
-    buttonText: 'Создать', // Обновляем текст кнопк
+    buttonText: 'Создать',
     craftableItems: [
-      { name: 'Доска', materials: { sticks: 2, boards: 0 } },
-      { name: 'Стул', materials: { sticks: 4, boards: 1 } },
-      { name: 'Стол', materials: { sticks: 4, boards: 2 } },
-      { name: 'Шкаф', materials: { sticks: 2, boards: 8 } },
-      { name: 'Кровать', materials: { sticks: 4, boards: 6 } },
+      { name: 'Доска', materials: { sticks: 2, boards: 0 }, clicksRequired: 4 },
+      { name: 'Стул', materials: { sticks: 4, boards: 1 }, clicksRequired: 10 },
+      { name: 'Стол', materials: { sticks: 4, boards: 2 }, clicksRequired: 12 },
+      { name: 'Шкаф', materials: { sticks: 2, boards: 8 }, clicksRequired: 20 },
+      { name: 'Кровать', materials: { sticks: 4, boards: 6 }, clicksRequired: 20 },
     ],
   },
-
 ];
 
 function Actions({ theme, currentRoom, userId, socket, personalItems }) {
@@ -389,6 +389,9 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
     measureAndMark: false,
     secureMaterials: false,
   }); // Состояние чекбоксов
+
+  const [clickCount, setClickCount] = useState(0); // Счётчик нажатий
+  const [craftingProgress, setCraftingProgress] = useState(0); // Прогресс в процентах
 
   const COOLDOWN_DURATION = 20 * 1000; // 20 секунд в миллисекундах
   const COOLDOWN_KEY = `findStickCooldown_${userId}`; // Уникальный ключ для localStorage
@@ -449,17 +452,23 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
       setSelectedCraftItem(action.craftableItems[0].name);
       setSliderValues({ sticks: 0, boards: 0 });
       setCheckboxes({ prepareMachine: false, measureAndMark: false, secureMaterials: false }); // Сбрасываем чекбоксы
+      setClickCount(0); // Сбрасываем счётчик нажатий
+      setCraftingProgress(0); // Сбрасываем прогресс
     }
   };
 
   const handleCloseModal = () => {
     setSelectedAction(null);
+    setClickCount(0); // Сбрасываем при закрытии
+    setCraftingProgress(0);
   };
 
   const handleCraftItemChange = (e) => {
     setSelectedCraftItem(e.target.value);
     setSliderValues({ sticks: 0, boards: 0 });
-    setCheckboxes({ prepareMachine: false, measureAndMark: false, secureMaterials: false }); // Сбрасываем чекбоксы при смене предмета
+    setCheckboxes({ prepareMachine: false, measureAndMark: false, secureMaterials: false });
+    setClickCount(0); // Сбрасываем при смене предмета
+    setCraftingProgress(0);
   };
 
   const handleSliderChange = (type, value) => {
@@ -563,10 +572,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
 
       setNotification({ show: true, message: `Нажмите "СТАРТ" для создания: ${selectedCraftItem}` });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-    } else {
-      console.log(`Выполнено действие: ${selectedAction.modalTitle}`);
     }
-    // Не закрываем модальное окно
   };
 
   const handleStartClick = () => {
@@ -576,9 +582,26 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
       return;
     }
 
-    setNotification({ show: true, message: `Вы успешно создали: ${selectedCraftItem}!` });
-    setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-    setSelectedAction(null); // Закрываем модальное окно после успешного создания
+    const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
+    const clicksRequired = item.clicksRequired;
+
+    setClickCount(prev => prev + 1);
+    const newClickCount = clickCount + 1;
+    const newProgress = (newClickCount / clicksRequired) * 100;
+    setCraftingProgress(newProgress);
+
+    if (newClickCount >= clicksRequired) {
+      setNotification({ show: true, message: `Вы успешно создали: ${selectedCraftItem}!` });
+      setTimeout(() => {
+        setNotification({ show: false, message: '' });
+        setSelectedAction(null); // Закрываем модальное окно
+        setClickCount(0); // Сбрасываем счётчик
+        setCraftingProgress(0); // Сбрасываем прогресс
+      }, 2000);
+    } else {
+      setNotification({ show: true, message: `Осталось нажатий: ${clicksRequired - newClickCount}` });
+      setTimeout(() => setNotification({ show: false, message: '' }), 1000);
+    }
   };
 
   let availableActions = [];
@@ -731,7 +754,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
                 {renderSliders()}
                 {renderCheckboxes()}
                 <ProgressBarContainer theme={theme}>
-                  <Progress />
+                  <Progress progress={craftingProgress} />
                 </ProgressBarContainer>
                 <ActionButton onClick={handleButtonClick} disabled={true}>
                   {selectedAction.buttonText}

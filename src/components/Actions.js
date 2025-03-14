@@ -590,19 +590,100 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
     const newProgress = (newClickCount / clicksRequired) * 100;
     setCraftingProgress(newProgress);
 
-    if (newClickCount >= clicksRequired) {
-      setNotification({ show: true, message: `Вы успешно создали: ${selectedCraftItem}!` });
-      setTimeout(() => {
-        setNotification({ show: false, message: '' });
-        setSelectedAction(null); // Закрываем модальное окно
-        setClickCount(0); // Сбрасываем счётчик
-        setCraftingProgress(0); // Сбрасываем прогресс
-      }, 2000);
-    } else {
+    if (newClickCount < clicksRequired) {
       setNotification({ show: true, message: `Осталось нажатий: ${clicksRequired - newClickCount}` });
       setTimeout(() => setNotification({ show: false, message: '' }), 1000);
+      return;
+    }
+
+    // Когда достигнуто нужное количество нажатий
+    const craftedItem = {
+      name: selectedCraftItem,
+      description: getItemDescription(selectedCraftItem),
+      rarity: 'Обычный',
+      weight: getItemWeight(selectedCraftItem),
+      cost: getItemCost(selectedCraftItem),
+      effect: getItemEffect(selectedCraftItem),
+      owner: 'Мастерская', // Помещаем в инвентарь комнаты
+    };
+
+    // Удаляем использованные материалы
+    const requiredSticks = item.materials.sticks;
+    const requiredBoards = item.materials.boards;
+
+    if (requiredSticks > 0) {
+      socket.emit('removeItems', {
+        owner: `user_${userId}`,
+        name: 'Палка',
+        count: requiredSticks,
+      });
+    }
+    if (requiredBoards > 0) {
+      socket.emit('removeItems', {
+        owner: `user_${userId}`,
+        name: 'Доска',
+        count: requiredBoards,
+      });
+    }
+
+    // Добавляем созданный предмет
+    socket.emit('addItem', craftedItem);
+
+    setNotification({ show: true, message: `Вы успешно создали: ${selectedCraftItem}!` });
+    setTimeout(() => {
+      setNotification({ show: false, message: '' });
+      setSelectedAction(null);
+      setClickCount(0);
+      setCraftingProgress(0);
+    }, 2000);
+
+  };
+
+  // Функции для получения данных о предметах
+  const getItemDescription = (name) => {
+    switch (name) {
+      case 'Доска': return 'Материал для изготовления';
+      case 'Стул': return 'Предмет мебели';
+      case 'Стол': return 'Предмет мебели';
+      case 'Шкаф': return 'Предмет мебели';
+      case 'Кровать': return 'Предмет мебели';
+      default: return '';
     }
   };
+
+  const getItemWeight = (name) => {
+    switch (name) {
+      case 'Доска': return 2;
+      case 'Стул': return 6;
+      case 'Стол': return 8;
+      case 'Шкаф': return 18;
+      case 'Кровать': return 16;
+      default: return 0;
+    }
+  };
+
+  const getItemCost = (name) => {
+    switch (name) {
+      case 'Доска': return 15;
+      case 'Стул': return 53;
+      case 'Стол': return 75;
+      case 'Шкаф': return 195;
+      case 'Кровать': return 165;
+      default: return 0;
+    }
+  };
+
+  const getItemEffect = (name) => {
+    switch (name) {
+      case 'Доска': return 'Начало чего-то грандиозного. Или не очень. Но точно полезного!';
+      case 'Стул': return 'На нём можно сидеть.';
+      case 'Стол': return 'На нём можно есть.';
+      case 'Шкаф': return 'В него можно повесить одежду';
+      case 'Кровать': return 'На ней можно спать.';
+      default: return '';
+    }
+  };
+
 
   let availableActions = [];
   if (currentRoom && currentRoom.startsWith(`myhome_${userId}`)) {

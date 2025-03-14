@@ -217,6 +217,36 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Обработчик удаления предметов
+  socket.on('removeItems', async (data) => {
+    const { owner, name, count } = data;
+    const items = await Item.find({ owner, name }).limit(count);
+    if (items.length < count) return;
+
+    const itemIds = items.map(item => item._id);
+    await Item.deleteMany({ _id: { $in: itemIds } });
+
+    const updatedItems = await Item.find({ owner });
+    io.to(owner).emit('itemsUpdate', { owner, items: updatedItems });
+  });
+
+  // Обработчик добавления предмета
+  socket.on('addItem', async (item) => {
+    const { owner } = item;
+    const limit = await InventoryLimit.findOne({ owner });
+    const currentItems = await Item.find({ owner });
+    const currentWeight = currentItems.reduce((sum, i) => sum + i.weight, 0);
+    const newWeight = currentWeight + item.weight;
+
+    if (newWeight <= limit.maxWeight) {
+      const newItem = await Item.create(item);
+      const updatedItems = await Item.find({ owner });
+      io.to(owner).emit('itemsUpdate', { owner, items: updatedItems });
+    } else {
+      socket.emit('inventoryFull', { message: 'Превышен лимит веса инвентаря!' });
+    }
+  });
+
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {
     if (typeof room !== 'string') {
       console.error('Invalid room type:', room);

@@ -112,6 +112,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   const [startPos, setStartPos] = useState({ x: 0, y: 0 }); // Начальная позиция курсора
   const [scale, setScale] = useState(1); // Масштаб изображения
   const [initialDistance, setInitialDistance] = useState(null); // Начальное расстояние между пальцами при масштабировании
+  const [isImageLoaded, setIsImageLoaded] = useState(false); // Флаг загрузки изображения
   const mapContainerRef = useRef(null); // Ссылка на контейнер карты
   const mapImageRef = useRef(null); // Ссылка на изображение
 
@@ -134,12 +135,12 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
   const myHomeRoom = `myhome_${userId}`;
 
-  // Устанавливаем начальный масштаб так, чтобы карта занимала 100% контейнера
+  // Устанавливаем начальный масштаб после загрузки изображения
   useEffect(() => {
     const container = mapContainerRef.current;
     const img = mapImageRef.current;
 
-    if (container && img && activeSubTab === 'map') {
+    if (container && img && activeSubTab === 'map' && isImageLoaded) {
       const containerWidth = container.offsetWidth;
       const containerHeight = container.offsetHeight;
       const imgWidth = img.naturalWidth;
@@ -157,7 +158,12 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
         top: (containerHeight - imgHeight * initialScale) / 2,
       });
     }
-  }, [activeSubTab]);
+  }, [activeSubTab, isImageLoaded]);
+
+  // Обработчик загрузки изображения
+  const handleImageLoad = () => {
+    setIsImageLoaded(true);
+  };
 
   // Вычисление расстояния между двумя точками касания
   const getDistance = (touch1, touch2) => {
@@ -168,6 +174,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
   // Начало перетаскивания (мышь)
   const handleMouseDown = (e) => {
+    e.preventDefault(); // Предотвращаем стандартное поведение
     setIsDragging(true);
     setStartPos({
       x: e.clientX - position.left,
@@ -177,6 +184,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
   // Начало перетаскивания или масштабирования (сенсорный экран)
   const handleTouchStart = (e) => {
+    e.preventDefault(); // Предотвращаем стандартное поведение
     if (e.touches.length === 1) {
       // Перетаскивание одним пальцем
       const touch = e.touches[0];
@@ -336,7 +344,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          onWheel={handleWheel} // Добавляем обработчик колеса мыши
+          onWheel={handleWheel}
         >
           <MapImage
             ref={mapImageRef}
@@ -345,7 +353,8 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
             top={position.top}
             left={position.left}
             scale={scale}
-            draggable={false} // Отключаем стандартное перетаскивание изображения
+            draggable={false}
+            onLoad={handleImageLoad} // Добавляем обработчик загрузки
           />
         </MapImageContainer>
       )}

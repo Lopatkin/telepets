@@ -76,7 +76,7 @@ const MapImage = styled.img`
   position: absolute;
   top: ${props => props.top}px;
   left: ${props => props.left}px;
-  width: ${props => props.scale * 100}%; /* Масштабируем относительно исходного размера */
+  width: ${props => props.scale}%; /* Масштабируем относительно исходного размера */
   height: auto; /* Сохраняем пропорции */
   transform-origin: top left; /* Точка масштабирования */
 `;
@@ -110,7 +110,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   const [isDragging, setIsDragging] = useState(false); // Флаг перетаскивания
   const [position, setPosition] = useState({ top: 0, left: 0 }); // Позиция изображения
   const [startPos, setStartPos] = useState({ x: 0, y: 0 }); // Начальная позиция курсора
-  const [scale, setScale] = useState(1); // Масштаб изображения
+  const [scale, setScale] = useState(100); // Масштаб изображения в процентах (начальное значение 100%)
   const [initialDistance, setInitialDistance] = useState(null); // Начальное расстояние между пальцами при масштабировании
   const [isImageLoaded, setIsImageLoaded] = useState(false); // Флаг загрузки изображения
   const mapContainerRef = useRef(null); // Ссылка на контейнер карты
@@ -147,15 +147,15 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       const imgHeight = img.naturalHeight;
 
       // Вычисляем масштаб, чтобы изображение полностью помещалось в контейнер
-      const scaleX = containerWidth / imgWidth;
-      const scaleY = containerHeight / imgHeight;
-      const initialScale = Math.min(scaleX, scaleY) * 100; // Умножаем на 100, чтобы соответствовало width в процентах
+      const scaleX = (containerWidth / imgWidth) * 100; // Процент от исходного размера
+      const scaleY = (containerHeight / imgHeight) * 100; // Процент от исходного размера
+      const initialScale = Math.min(scaleX, scaleY);
 
       setScale(initialScale);
       // Центрируем изображение
       setPosition({
-        left: (containerWidth - imgWidth * (initialScale / 100)) / 2,
-        top: (containerHeight - imgHeight * (initialScale / 100)) / 2,
+        left: (containerWidth - (imgWidth * (initialScale / 100))) / 2,
+        top: (containerHeight - (imgHeight * (initialScale / 100))) / 2,
       });
     }
   }, [activeSubTab, isImageLoaded]);
@@ -221,31 +221,29 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       const newTop = touch.clientY - startPos.y;
 
       restrictPosition(newLeft, newTop, mapImageRef.current);
-    } else if (e.touches.length === 2) {
+    } else if (e.touches.length === 2 && initialDistance) {
       // Масштабирование двумя пальцами
       const newDistance = getDistance(e.touches[0], e.touches[1]);
-      if (initialDistance) {
-        const newScale = scale * (newDistance / initialDistance);
-        const clampedScale = Math.min(Math.max(newScale, 50), 500); // Ограничиваем масштаб от 50% до 500%
+      const scaleFactor = newDistance / initialDistance;
+      const newScale = Math.min(Math.max(scale * scaleFactor, 50), 500); // Ограничиваем масштаб от 50% до 500%
 
-        // Центрируем масштаб относительно середины между пальцами
-        const img = mapImageRef.current;
-        const touch1 = e.touches[0];
-        const touch2 = e.touches[1];
-        const centerX = (touch1.clientX + touch2.clientX) / 2;
-        const centerY = (touch1.clientY + touch2.clientY) / 2;
+      // Центрируем масштаб относительно середины между пальцами
+      const img = mapImageRef.current;
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const centerX = (touch1.clientX + touch2.clientX) / 2;
+      const centerY = (touch1.clientY + touch2.clientY) / 2;
 
-        const imgRect = img.getBoundingClientRect();
-        const dx = centerX - (imgRect.left + imgRect.width / 2);
-        const dy = centerY - (imgRect.top + imgRect.height / 2);
+      const imgRect = img.getBoundingClientRect();
+      const dx = centerX - (imgRect.left + imgRect.width / 2);
+      const dy = centerY - (imgRect.top + imgRect.height / 2);
 
-        const newLeft = position.left - (dx * (clampedScale / scale - 1));
-        const newTop = position.top - (dy * (clampedScale / scale - 1));
+      const newLeft = position.left - (dx * (newScale / scale - 1));
+      const newTop = position.top - (dy * (newScale / scale - 1));
 
-        setScale(clampedScale);
-        restrictPosition(newLeft, newTop, img);
-        setInitialDistance(newDistance);
-      }
+      setScale(newScale);
+      restrictPosition(newLeft, newTop, img);
+      setInitialDistance(newDistance); // Обновляем начальное расстояние для следующего шага
     }
   };
 
@@ -279,7 +277,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
   const restrictPosition = (newLeft, newTop, img) => {
     const container = mapContainerRef.current;
     const maxLeft = 0; // Левая граница
-    const maxTop = 0; // Верхняя граница
+    const maxTop = 0; // Вер матрицы хняя граница
     const minLeft = container.offsetWidth - (img.offsetWidth * (scale / 100)); // Правая граница с учетом масштаба
     const minTop = container.offsetHeight - (img.offsetHeight * (scale / 100)); // Нижняя граница с учетом масштаба
 

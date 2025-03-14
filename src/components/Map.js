@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import foggyCityMap from '../images/foggy_city_map.jpg'; // Импортируем изображение
 
 const MapContainer = styled.div`
   height: 100%;
@@ -9,6 +10,27 @@ const MapContainer = styled.div`
   padding: 10px;
   box-sizing: border-box;
   position: relative;
+`;
+
+const Tabs = styled.div`
+  display: flex;
+  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  margin-bottom: 10px;
+`;
+
+const Tab = styled.button`
+  flex: 1;
+  padding: 10px;
+  background: ${props => props.active ? '#007AFF' : 'transparent'};
+  color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#333')};
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: ${props => props.active ? '#005BBB' : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
+  }
 `;
 
 const RoomList = styled.ul`
@@ -22,21 +44,35 @@ const RoomList = styled.ul`
 const RoomItem = styled.li`
   padding: 10px;
   margin: 5px 0;
-  background: ${props => props.isCurrent 
-    ? '#007AFF' 
+  background: ${props => props.isCurrent
+    ? '#007AFF'
     : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
-  color: ${props => props.isCurrent 
-    ? 'white' 
+  color: ${props => props.isCurrent
+    ? 'white'
     : (props.theme === 'dark' ? '#ccc' : '#333')};
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.2s;
 
   &:hover {
-    background: ${props => props.isCurrent 
-      ? '#005BBB' 
-      : (props.theme === 'dark' ? '#444' : '#e0e0e0')};
+    background: ${props => props.isCurrent
+    ? '#005BBB'
+    : (props.theme === 'dark' ? '#444' : '#e0e0e0')};
   }
+`;
+
+const MapImageContainer = styled.div`
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+`;
+
+const MapImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Изображение заполняет контейнер, сохраняя пропорции */
 `;
 
 const HomeButton = styled.button`
@@ -64,6 +100,8 @@ const RoomName = styled.span`
 `;
 
 function Map({ userId, onRoomSelect, theme, currentRoom }) {
+  const [activeSubTab, setActiveSubTab] = useState('locations'); // Состояние для переключения подвкладок
+
   const rooms = [
     'Автобусная остановка',
     'Бар "У бобра" (18+)',
@@ -85,20 +123,46 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
   return (
     <MapContainer theme={theme}>
-      <RoomList>
-        {rooms.map(room => (
-          <RoomItem 
-            key={room} 
-            onClick={() => onRoomSelect(room)} 
-            theme={theme} 
-            isCurrent={room === currentRoom}
-          >
-            <RoomName>{room}</RoomName>
-          </RoomItem>
-        ))}
-      </RoomList>
-      <HomeButton 
-        onClick={() => onRoomSelect(myHomeRoom)} 
+      <Tabs>
+        <Tab
+          active={activeSubTab === 'locations'}
+          onClick={() => setActiveSubTab('locations')}
+          theme={theme}
+        >
+          Локации
+        </Tab>
+        <Tab
+          active={activeSubTab === 'map'}
+          onClick={() => setActiveSubTab('map')}
+          theme={theme}
+        >
+          Карта
+        </Tab>
+      </Tabs>
+
+      {activeSubTab === 'locations' && (
+        <RoomList>
+          {rooms.map(room => (
+            <RoomItem
+              key={room}
+              onClick={() => onRoomSelect(room)}
+              theme={theme}
+              isCurrent={room === currentRoom}
+            >
+              <RoomName>{room}</RoomName>
+            </RoomItem>
+          ))}
+        </RoomList>
+      )}
+
+      {activeSubTab === 'map' && (
+        <MapImageContainer>
+          <MapImage src={foggyCityMap} alt="Foggy City Map" />
+        </MapImageContainer>
+      )}
+
+      <HomeButton
+        onClick={() => onRoomSelect(myHomeRoom)}
         theme={theme}
       >
         Домой

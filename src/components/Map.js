@@ -67,6 +67,9 @@ const MapImageContainer = styled.div`
   position: relative;
   cursor: grab; /* Курсор для указания возможности перетаскивания */
   user-select: none; /* Запрещаем выделение текста или изображения */
+  -webkit-user-select: none; /* Для Safari */
+  -ms-user-select: none; /* Для IE/Edge */
+  touch-action: none; /* Отключаем стандартное поведение прокрутки на сенсорных устройствах */
 `;
 
 const MapImage = styled.img`
@@ -128,7 +131,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
 
   const myHomeRoom = `myhome_${userId}`;
 
-  // Начало перетаскивания
+  // Начало перетаскивания (мышь)
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setStartPos({
@@ -137,18 +140,42 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     });
   };
 
-  // Перемещение изображения
+  // Начало перетаскивания (сенсорный экран)
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    setIsDragging(true);
+    setStartPos({
+      x: touch.clientX - position.left,
+      y: touch.clientY - position.top,
+    });
+  };
+
+  // Перемещение изображения (мышь)
   const handleMouseMove = (e) => {
     if (!isDragging) return;
 
     const newLeft = e.clientX - startPos.x;
     const newTop = e.clientY - startPos.y;
 
-    // Ограничиваем перемещение, чтобы изображение не уходило за пределы контейнера
+    restrictPosition(newLeft, newTop, e.target);
+  };
+
+  // Перемещение изображения (сенсорный экран)
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+
+    const touch = e.touches[0];
+    const newLeft = touch.clientX - startPos.x;
+    const newTop = touch.clientY - startPos.y;
+
+    restrictPosition(newLeft, newTop, e.target);
+  };
+
+  // Ограничение перемещения
+  const restrictPosition = (newLeft, newTop, img) => {
     const container = mapContainerRef.current;
-    const img = e.target;
-    const maxLeft = 0; // Левая граница (не уходим за правый край контейнера)
-    const maxTop = 0; // Верхняя граница (не уходим за нижний край контейнера)
+    const maxLeft = 0; // Левая граница
+    const maxTop = 0; // Верхняя граница
     const minLeft = container.offsetWidth - img.offsetWidth; // Правая граница
     const minTop = container.offsetHeight - img.offsetHeight; // Нижняя граница
 
@@ -158,8 +185,13 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     });
   };
 
-  // Завершение перетаскивания
+  // Завершение перетаскивания (мышь)
   const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Завершение перетаскивания (сенсорный экран)
+  const handleTouchEnd = () => {
     setIsDragging(false);
   };
 
@@ -203,7 +235,10 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp} // Останавливаем перетаскивание, если курсор покидает контейнер
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         >
           <MapImage
             src={foggyCityMap}

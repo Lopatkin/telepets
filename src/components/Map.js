@@ -141,19 +141,16 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     const img = mapImageRef.current;
 
     if (container && img && activeSubTab === 'map' && isImageLoaded) {
-      const containerWidth = container.offsetWidth;
       const containerHeight = container.offsetHeight;
-      const imgWidth = img.naturalWidth;
       const imgHeight = img.naturalHeight;
 
-      const scaleX = (containerWidth / imgWidth) * 100; // Процент от исходного размера
-      const scaleY = (containerHeight / imgHeight) * 100; // Процент от исходного размера
-      const initialScale = Math.min(scaleX, scaleY); // Берем меньший, чтобы уместилось полностью
+      // Устанавливаем масштаб так, чтобы высота карты равнялась 100% высоты контейнера
+      const initialScale = (containerHeight / imgHeight) * 100;
 
       setScale(initialScale);
       setPosition({
-        left: (containerWidth - (imgWidth * (initialScale / 100))) / 2,
-        top: (containerHeight - (imgHeight * (initialScale / 100))) / 2,
+        left: 0, // Слева, так как ширина может превышать контейнер
+        top: 0,  // Сверху, так как высота фиксирована на 100%
       });
     }
   }, [activeSubTab, isImageLoaded]); // Зависимость только от загрузки и вкладки
@@ -210,7 +207,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       const distance = getDistance(e.touches[0], e.touches[1]);
       setInitialDistance(distance);
     }
-  }, [position]); // Удалена зависимость restrictPosition
+  }, [position]); // Зависимость только от position
 
   // Перемещение изображения (мышь)
   const handleMouseMove = (e) => {
@@ -253,7 +250,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       restrictPosition(newLeft, newTop, img);
       setInitialDistance(newDistance); // Обновляем начальное расстояние
     }
-  }, [isDragging, startPos, scale, position, initialDistance, restrictPosition]); // Зависимость restrictPosition остаётся
+  }, [isDragging, startPos, scale, position, initialDistance, restrictPosition]); // Зависимости
 
   // Масштабирование колесом мыши
   const handleWheel = (e) => {

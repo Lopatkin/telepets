@@ -221,7 +221,6 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
         const clampedScale = Math.min(Math.max(newScale, 0.5), 5); // Ограничиваем масштаб от 0.5x до 5x
 
         // Центрируем масштаб относительно середины между пальцами
-        const container = mapContainerRef.current;
         const img = mapImageRef.current;
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];

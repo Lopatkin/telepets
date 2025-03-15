@@ -50,15 +50,19 @@ const TextBox = styled.div`
   align-self: flex-start;
 `;
 
+const TextContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Уменьшенное расстояние между строками */
+`;
+
 const Text = styled.p`
   font-size: 16px;
   margin: 0;
 `;
 
-const TextContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+const BoldText = styled.span`
+  font-weight: bold;
 `;
 
 const ButtonContainer = styled.div`
@@ -96,21 +100,21 @@ const RadioContainer = styled.div`
   align-self: flex-start;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Центрируем радиобаттоны */
-  gap: 15px; /* Расстояние между радиобаттонами */
+  align-items: center;
+  gap: 15px;
 `;
 
 const RadioLabel = styled.label`
   display: flex;
   align-items: center;
-  font-size: 20px; /* Увеличиваем размер текста */
-  font-weight: bold; /* Делаем жирным */
+  font-size: 20px;
+  font-weight: bold;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
 `;
 
 const RadioInput = styled.input.attrs({ type: 'radio' })`
   margin-right: 10px;
-  width: 20px; /* Увеличиваем размер радиобаттона */
+  width: 20px;
   height: 20px;
 `;
 
@@ -120,7 +124,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const [animalType, setAnimalType] = useState(null);
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-  const firstName = telegramUser.first_name || user.firstName || 'User';
+  const firstName = telegramUser.first_name || user.firstName || '';
   const username = telegramUser.username || '';
   const lastName = telegramUser.last_name || '';
 
@@ -162,6 +166,13 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
       }
     });
   };
+
+  // Формируем полное имя с проверкой заполненности
+  const fullNameParts = [];
+  if (firstName) fullNameParts.push(firstName);
+  if (username) fullNameParts.push(`@${username}`);
+  if (lastName) fullNameParts.push(lastName);
+  const fullName = fullNameParts.length > 0 ? fullNameParts.join(' ') : 'Безымянный';
 
   return (
     <RegistrationContainer theme={theme}>
@@ -243,47 +254,63 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
         )}
         {step === 4 && (
           <>
-            {isHuman ? (
-              <>
-                <Text>Полное имя: {firstName} {lastName}</Text>
-                <Text>Ник: @{username}</Text>
-                <Text>ID: {user.userId}</Text>
-                <Text>Бывшая профессия: {getRandomProfession()}</Text>
-                <Text>Место жительства: Город Туманный, {getRandomStreet()}, дом {getRandomNumber(1, 42)}, квартира {getRandomNumber(1, 20)}</Text>
-              </>
-            ) : (
-              <>
-                <RadioContainer>
-                  <RadioLabel theme={theme}>
-                    <RadioInput
-                      checked={animalType === 'Кошка'}
-                      onChange={() => setAnimalType('Кошка')}
-                    />
-                    Кошка
-                  </RadioLabel>
-                  <RadioLabel theme={theme}>
-                    <RadioInput
-                      checked={animalType === 'Собака'}
-                      onChange={() => setAnimalType('Собака')}
-                    />
-                    Собака
-                  </RadioLabel>
-                </RadioContainer>
-                {animalType && (
-                  <>
-                    <Text>Животное: {animalType}</Text>
-                    <Text>Имя: {animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака'}</Text>
-                    <Text>Место жительства: Неопределённо</Text>
-                  </>
-                )}
-              </>
-            )}
-            <ButtonContainer>
-              <Button onClick={handleBack}>Назад</Button>
-              <Button onClick={handleComplete} disabled={isHuman === false && !animalType}>
-                Завершить регистрацию
-              </Button>
-            </ButtonContainer>
+            <div>
+              {isHuman ? (
+                <TextBox theme={theme}>
+                  <TextContainer>
+                    <Text>
+                      <BoldText>Полное имя:</BoldText> {fullName}
+                    </Text>
+                    <Text>
+                      <BoldText>Бывшая профессия:</BoldText> {getRandomProfession()}
+                    </Text>
+                    <Text>
+                      <BoldText>Место жительства:</BoldText> Город Туманный, {getRandomStreet()}, дом {getRandomNumber(1, 42)}, квартира {getRandomNumber(1, 20)}
+                    </Text>
+                  </TextContainer>
+                </TextBox>
+              ) : (
+                <>
+                  <RadioContainer>
+                    <RadioLabel theme={theme}>
+                      <RadioInput
+                        checked={animalType === 'Кошка'}
+                        onChange={() => setAnimalType('Кошка')}
+                      />
+                      Кошка
+                    </RadioLabel>
+                    <RadioLabel theme={theme}>
+                      <RadioInput
+                        checked={animalType === 'Собака'}
+                        onChange={() => setAnimalType('Собака')}
+                      />
+                      Собака
+                    </RadioLabel>
+                  </RadioContainer>
+                  {animalType && (
+                    <TextBox theme={theme}>
+                      <TextContainer>
+                        <Text>
+                          <BoldText>Животное:</BoldText> {animalType}
+                        </Text>
+                        <Text>
+                          <BoldText>Имя:</BoldText> {animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака'}
+                        </Text>
+                        <Text>
+                          <BoldText>Место жительства:</BoldText> Неопределённо
+                        </Text>
+                      </TextContainer>
+                    </TextBox>
+                  )}
+                </>
+              )}
+              <ButtonContainer>
+                <Button onClick={handleBack}>Назад</Button>
+                <Button onClick={handleComplete} disabled={isHuman === false && !animalType}>
+                  Завершить регистрацию
+                </Button>
+              </ButtonContainer>
+            </div>
           </>
         )}
       </ContentWrapper>

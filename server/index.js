@@ -247,7 +247,8 @@ io.on('connection', (socket) => {
           formerProfession: data.formerProfession,
           residence: data.residence,
           animalType: data.animalType,
-          name: data.name
+          name: data.name,
+          photoUrl: data.photoUrl || '', // Сохраняем photoUrl, если есть
         },
         { new: true }
       );
@@ -256,9 +257,8 @@ io.on('connection', (socket) => {
         if (callback) callback({ success: false });
         return;
       }
-      console.log('Registration completed for user:', user.userId);
+      console.log('Registration completed for user:', user.userId, 'with photoUrl:', user.photoUrl);
 
-      // После успешной регистрации переводим игрока в "Автобусная остановка"
       const defaultRoom = 'Автобусная остановка';
       socket.join(defaultRoom);
       userCurrentRoom.set(user.userId, defaultRoom);
@@ -275,7 +275,7 @@ io.on('connection', (socket) => {
         firstName: user.firstName,
         username: user.username,
         lastName: user.lastName,
-        photoUrl: user.photoUrl
+        photoUrl: user.photoUrl, // Используем обновлённое значение
       });
 
       io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -843,6 +843,8 @@ io.on('connection', (socket) => {
     }
   });
 });
+
+app.use('/avatars', express.static('src/images/avatars'));
 
 server.listen(4000, () => {
   console.log('Server running on port 4000');

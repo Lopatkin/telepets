@@ -149,7 +149,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
   const firstName = telegramUser.first_name || user.firstName || 'User';
   const username = telegramUser.username || '';
   const lastName = telegramUser.last_name || '';
-  const photoUrl = telegramUser.photo_url || '';
+  const photoUrl = user.isRegistered && !user.isHuman ? user.photoUrl : telegramUser.photo_url || ''; // Используем photoUrl из базы для животных
 
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
 

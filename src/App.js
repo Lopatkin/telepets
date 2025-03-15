@@ -9,6 +9,7 @@ import Map from './components/Map';
 import Actions from './components/Actions';
 import Inventory from './components/Inventory';
 import { ClipLoader } from 'react-spinners';
+import Registration from './components/Registration'; // Добавляем импорт
 
 const AppContainer = styled.div`
   height: 100vh;
@@ -40,6 +41,7 @@ function App() {
   const [socket, setSocket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [personalItems, setPersonalItems] = useState([]); // Добавляем состояние для personalItems
+  const [isRegistered, setIsRegistered] = useState(null); // null - ещё не проверено
 
   const handleItemsUpdate = (items) => {
     setPersonalItems(items.filter(item => item.owner === `user_${user.userId}`));
@@ -74,12 +76,15 @@ function App() {
         console.error('Connection error:', error.message);
       });
 
-      socketRef.current.on('authSuccess', ({ defaultRoom }) => {
-        console.log('Authentication successful, received defaultRoom:', defaultRoom);
+      socketRef.current.on('authSuccess', ({ defaultRoom, isRegistered }) => { // Добавляем isRegistered
+        console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
         setIsAuthenticated(true);
-        setCurrentRoom(defaultRoom);
-        joinedRoomsRef.current.add(defaultRoom);
-        socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
+        setIsRegistered(isRegistered);
+        if (isRegistered) {
+          setCurrentRoom(defaultRoom);
+          joinedRoomsRef.current.add(defaultRoom);
+          socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
+        }
       });
 
       socketRef.current.on('error', ({ message }) => {
@@ -107,6 +112,14 @@ function App() {
       socket.emit('auth', { ...user, lastRoom });
     }
   }, [socket, user, isAuthenticated]);
+
+  // Добавляем обработчик завершения регистрации
+  const handleRegistrationComplete = (defaultRoom) => {
+    setIsRegistered(true);
+    setCurrentRoom(defaultRoom);
+    joinedRoomsRef.current.add(defaultRoom);
+    socket.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
+  };
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -184,11 +197,22 @@ function App() {
     localStorage.setItem('theme', newTheme);
   };
 
-  if (!user || !isAuthenticated || !currentRoom) {
+  if (!user || !isAuthenticated || isRegistered === null) {
     return (
       <LoadingContainer theme={theme === 'telegram' ? telegramTheme : theme}>
         <ClipLoader color="#007AFF" size={40} />
       </LoadingContainer>
+    );
+  }
+
+  if (!isRegistered) {
+    return (
+      <Registration
+        user={user}
+        theme={theme === 'telegram' ? telegramTheme : theme}
+        socket={socket}
+        onRegistrationComplete={handleRegistrationComplete}
+      />
     );
   }
 

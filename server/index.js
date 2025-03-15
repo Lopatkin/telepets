@@ -18,7 +18,24 @@ mongoose.connect(process.env.MONGODB_URI, {})
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message));
 
-// Схемы остаются без изменений
+// Схема пользователя для регистрации
+const userSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true },
+  firstName: String,
+  lastName: String,
+  username: String,
+  photoUrl: String,
+  isRegistered: { type: Boolean, default: false },
+  isHuman: Boolean,
+  formerProfession: String,
+  residence: String,
+  animalType: String,
+  name: String,
+  credits: { type: Number, default: 0 }
+});
+const User = mongoose.model('User', userSchema);
+
+// Остальные схемы остаются без изменений
 const messageSchema = new mongoose.Schema({
   userId: String,
   text: String,
@@ -73,12 +90,29 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Проверяем или создаём пользователя в базе данных
+    let user = await User.findOne({ userId: userData.userId });
+    if (!user) {
+      user = new User({
+        userId: userData.userId.toString(),
+        firstName: userData.firstName || '',
+        lastName: userData.lastName || '',
+        username: userData.username || '',
+        photoUrl: userData.photoUrl || '',
+        isRegistered: false
+      });
+      await user.save();
+      console.log('New user created:', user.userId);
+    } else {
+      console.log('User authenticated:', user.userId);
+    }
+
     socket.userData = {
-      userId: userData.userId.toString(),
-      firstName: userData.firstName || '',
-      username: userData.username || '',
-      lastName: userData.lastName || '',
-      photoUrl: userData.photoUrl || ''
+      userId: user.userId,
+      firstName: user.firstName,
+      username: user.username,
+      lastName: user.lastName,
+      photoUrl: user.photoUrl
     };
     console.log('Received auth data:', userData);
     console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
@@ -152,7 +186,7 @@ io.on('connection', (socket) => {
       'Завод',
       'Кофейня "Ляля-Фа"',
       'Лес',
-      'Мастерская', // Добавляем новую комнату
+      'Мастерская',
       'Парк',
       'Полигон утилизации',
       'Приют для животных "Кошкин дом"',
@@ -165,7 +199,7 @@ io.on('connection', (socket) => {
     // Проверяем, является ли lastRoom личным домом пользователя или статической комнатой
     const isMyHome = userData.lastRoom && userData.lastRoom === `myhome_${socket.userData.userId}`;
     const isStaticRoom = userData.lastRoom && rooms.includes(userData.lastRoom);
-    const defaultRoom = (isMyHome || isStaticRoom) ? userData.lastRoom : 'Полигон утилизации';
+    const defaultRoom = user.isRegistered ? (isMyHome || isStaticRoom ? userData.lastRoom : 'Полигон утилизации') : 'Автобусная остановка';
     console.log('Is lastRoom a personal home?', isMyHome);
     console.log('Is lastRoom a static room?', isStaticRoom);
     console.log('Selected defaultRoom:', defaultRoom);
@@ -199,8 +233,68 @@ io.on('connection', (socket) => {
       socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
     }
 
-    socket.emit('authSuccess', { defaultRoom });
+    socket.emit('authSuccess', { defaultRoom, isRegistered: user.isRegistered });
     if (callback) callback({ success: true });
+  });
+
+  socket.on('completeRegistration', async (data, callback) => {
+    try {
+      const user = await User.findOneAndUpdate(
+        { userId: data.userId },
+        {
+          isRegistered: true,
+          isHuman: data.isHuman,
+          formerProfession: data.formerProfession,
+          residence: data.residence,
+          animalType: data.animalType,
+          name: data.name
+        },
+        { new: true }
+      );
+      if (!user) {
+        socket.emit('error', { message: 'User not found' });
+        if (callback) callback({ success: false });
+        return;
+      }
+      console.log('Registration completed for user:', user.userId);
+
+      // После успешной регистрации переводим игрока в "Автобусная остановка"
+      const defaultRoom = 'Автобусная остановка';
+      socket.join(defaultRoom);
+      userCurrentRoom.set(user.userId, defaultRoom);
+
+      if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
+      roomUsers[defaultRoom].forEach(u => {
+        if (u.userId === user.userId) {
+          roomUsers[defaultRoom].delete(u);
+        }
+      });
+
+      roomUsers[defaultRoom].add({
+        userId: user.userId,
+        firstName: user.firstName,
+        username: user.username,
+        lastName: user.lastName,
+        photoUrl: user.photoUrl
+      });
+
+      io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
+      console.log(`User ${user.userId} joined room after registration: ${defaultRoom}`);
+
+      try {
+        const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
+        socket.emit('messageHistory', messages);
+      } catch (err) {
+        console.error('Error fetching messages after registration:', err.message, err.stack);
+        socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
+      }
+
+      if (callback) callback({ success: true });
+    } catch (err) {
+      console.error('Registration error:', err.message, err.stack);
+      socket.emit('error', { message: 'Registration failed' });
+      if (callback) callback({ success: false });
+    }
   });
 
   socket.on('getCredits', async (callback) => {
@@ -368,9 +462,9 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('addItem', async (item, callback) => { // Убрали лишний объект { owner, item }
+  socket.on('addItem', async (item, callback) => {
     try {
-      const owner = item.owner; // Теперь owner берётся прямо из item
+      const owner = item.owner;
       if (item._id && itemLocks.has(item._id)) {
         if (callback) callback({ success: false, message: 'Этот предмет уже обрабатывается' });
         return;
@@ -423,7 +517,7 @@ io.on('connection', (socket) => {
         io.to(currentRoom).emit('inventoryLimit', updatedLimit);
       }
 
-      io.to(owner).emit('items', { owner, items: itemCache.get(owner) }); // Уведомляем владельца
+      io.to(owner).emit('items', { owner, items: itemCache.get(owner) });
 
       if (callback) callback({ success: true });
       if (item._id) itemLocks.delete(item._id);
@@ -684,7 +778,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Новый обработчик для удаления предметов
   socket.on('removeItems', async (data) => {
     try {
       const { owner, name, count } = data;

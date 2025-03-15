@@ -14,10 +14,10 @@ const RegistrationContainer = styled.div`
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#fff'};
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   position: relative;
-  overflow: hidden; /* Убираем прокрутку */
-  background-image: url(${regpic}); /* Добавляем фоновое изображение */
-  background-size: cover; /* Изображение растягивается на весь контейнер */
-  background-position: center; /* Центрируем изображение */
+  overflow: hidden;
+  background-image: url(${regpic});
+  background-size: cover;
+  background-position: center;
 `;
 
 const Overlay = styled.div`
@@ -26,28 +26,28 @@ const Overlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.3); /* Полупрозрачный слой для читаемости текста */
+  background: rgba(0, 0, 0, 0.3);
   z-index: 1;
 `;
 
 const ContentWrapper = styled.div`
   position: relative;
-  z-index: 2; /* Контент поверх оверлея */
+  z-index: 2;
   display: flex;
   flex-direction: column;
   height: 100%;
-  justify-content: space-between; /* Разделяем текст и кнопку */
+  justify-content: space-between;
 `;
 
 const TextBox = styled.div`
   background: ${props => props.theme === 'dark' ? 'rgba(42, 42, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)'};
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Добавляем тень */
-  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'}; /* Рамка */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
   max-width: 90%;
-  margin: 0 auto; /* Центрируем текст */
-  align-self: flex-start; /* Рамка начинается сверху */
+  margin: 0 auto;
+  align-self: flex-start;
 `;
 
 const Text = styled.p`
@@ -55,13 +55,19 @@ const Text = styled.p`
   margin: 0;
 `;
 
+const TextContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Уменьшаем расстояние между блоками текста */
+`;
+
 const ButtonContainer = styled.div`
   position: sticky;
   bottom: 20px;
   display: flex;
-  justify-content: center; /* Центрируем кнопку */
+  justify-content: center;
   gap: 10px;
-  z-index: 2; /* Кнопка поверх фона */
+  z-index: 2;
 `;
 
 const Button = styled.button`
@@ -73,7 +79,7 @@ const Button = styled.button`
   cursor: pointer;
   font-size: 16px;
   width: 100%;
-  max-width: 200px; /* Ограничиваем ширину кнопки */
+  max-width: 200px;
   transition: background 0.2s;
 
   &:hover {
@@ -165,12 +171,16 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
         )}
         {step === 2 && (
           <>
-            <Text>
-              Здесь собираются люди самых разных профессий: айтишники, променявшие мышку и клавиатуру на зубило и стаместку, менеджеры, сбежавшие от бесконечных дедлайнов и скрам-митингов, чтобы хоть раз в жизни не планировать хаос, а просто его пережить, продажники, спрятавшиеся здесь от бесконечных звонков и KPI, чтобы наконец-то подышать воздухом...
-            </Text>
-            <Text>
-              Животные здесь — не просто спутники, а полноправные жители: любопытные коты крадутся вдоль заборов и перепрыгивают с крыши на крышу, а бдительные собаки следят за ночными жителями, не позволяя нарушить покой спящих...
-            </Text>
+            <TextBox theme={theme}>
+              <TextContainer>
+                <Text>
+                  Здесь собираются люди самых разных профессий: айтишники, променявшие мышку и клавиатуру на зубило и стаместку, менеджеры, сбежавшие от бесконечных дедлайнов и скрам-митингов, чтобы хоть раз в жизни не планировать хаос, а просто его пережить, продажники, спрятавшиеся здесь от бесконечных звонков и KPI, чтобы наконец-то подышать воздухом...
+                </Text>
+                <Text>
+                  Животные здесь — не просто спутники, а полноправные жители: любопытные коты крадутся вдоль заборов и перепрыгивают с крыши на крышу, а бдительные собаки следят за ночными жителями, не позволяя нарушить покой спящих...
+                </Text>
+              </TextContainer>
+            </TextBox>
             <ButtonContainer>
               <Button onClick={handleBack}>Назад</Button>
               <Button onClick={handleNext}>Далее</Button>

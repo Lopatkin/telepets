@@ -1,4 +1,4 @@
-const professions = [
+const Professions = [
     "3D-аниматор",
     "3D-дженералист",
     "3D-моделлер",
@@ -2386,3 +2386,5 @@ const professions = [
     "Web-дизайнер",
     "Web-программист",
 ];
+
+export default Professions;

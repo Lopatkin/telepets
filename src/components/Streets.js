@@ -1,4 +1,4 @@
-const streets = [
+const Streets = [
     "улица Прямая",
     "улица Угловая",
     "улица Косвенная",
@@ -15,3 +15,5 @@ const streets = [
     "улица Боковая",
     "улица Мебиуса",
 ];
+
+export default Streets;

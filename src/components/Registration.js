@@ -53,7 +53,7 @@ const TextBox = styled.div`
 const TextContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px; /* Уменьшенное расстояние между строками */
+  gap: 8px;
 `;
 
 const Text = styled.p`
@@ -69,7 +69,7 @@ const ButtonContainer = styled.div`
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin-top: 15px; /* Расстояние между рамкой и кнопками */
+  margin-top: 15px;
 `;
 
 const Button = styled.button`
@@ -90,7 +90,6 @@ const Button = styled.button`
 `;
 
 const RadioContainer = styled.div`
-  background: ${props => props.theme === 'dark' ? 'rgba(42, 42, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)'};
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -102,6 +101,7 @@ const RadioContainer = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 15px;
+  background: transparent; /* Убираем белый фон */
 `;
 
 const RadioLabel = styled.label`
@@ -156,7 +156,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
           isHuman: false,
           animalType,
           name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
-          residence: 'Неопределено',
+          residence: 'Город Туманный',
           isRegistered: true,
         };
 
@@ -167,7 +167,6 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
     });
   };
 
-  // Формируем полное имя с проверкой заполненности
   const fullNameParts = [];
   if (firstName) fullNameParts.push(firstName);
   if (username) fullNameParts.push(`@${username}`);
@@ -271,7 +270,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
                 </TextBox>
               ) : (
                 <>
-                  <RadioContainer>
+                  <RadioContainer theme={theme}>
                     <RadioLabel theme={theme}>
                       <RadioInput
                         checked={animalType === 'Кошка'}
@@ -297,7 +296,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
                           <BoldText>Имя:</BoldText> {animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака'}
                         </Text>
                         <Text>
-                          <BoldText>Место жительства:</BoldText> Неопределённо
+                          <BoldText>Место жительства:</BoldText> Город Туманный
                         </Text>
                       </TextContainer>
                     </TextBox>

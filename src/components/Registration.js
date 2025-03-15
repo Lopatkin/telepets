@@ -5,6 +5,18 @@ import Professions from './Professions';
 import Streets from './Streets';
 import regpic from '../images/regpic.jpg';
 
+// Импорт аватарок для кошек и собак
+import cat1 from '../avatars/cats/cat_1.jpg';
+import cat2 from '../avatars/cats/cat_2.jpg';
+import cat3 from '../avatars/cats/cat_3.jpg';
+import cat4 from '../avatars/cats/cat_4.jpg';
+import cat5 from '../avatars/cats/cat_5.jpg';
+import dog1 from '../avatars/dogs/dog_1.jpg';
+import dog2 from '../avatars/dogs/dog_2.jpg';
+import dog3 from '../avatars/dogs/dog_3.jpg';
+import dog4 from '../avatars/dogs/dog_4.jpg';
+import dog5 from '../avatars/dogs/dog_5.jpg';
+
 const RegistrationContainer = styled.div`
   height: 100vh;
   display: flex;
@@ -90,7 +102,7 @@ const Button = styled.button`
 `;
 
 const RadioContainer = styled.div`
-  background: ${props => props.theme === 'dark' ? 'rgba(42, 42, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)'}; /* Такой же фон, как у TextBox */
+  background: ${props => props.theme === 'dark' ? 'rgba(42, 42, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)'};
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -118,6 +130,15 @@ const RadioInput = styled.input.attrs({ type: 'radio' })`
   height: 20px;
 `;
 
+const Avatar = styled.img`
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  display: block;
+  border: 2px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+`;
+
 const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const [step, setStep] = useState(1);
   const [isHuman, setIsHuman] = useState(null);
@@ -127,10 +148,21 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const firstName = telegramUser.first_name || user.firstName || '';
   const username = telegramUser.username || '';
   const lastName = telegramUser.last_name || '';
+  const avatarUrl = telegramUser.photo_url || ''; // URL аватарки из Telegram
 
   const getRandomProfession = () => Professions[Math.floor(Math.random() * Professions.length)];
   const getRandomStreet = () => Streets[Math.floor(Math.random() * Streets.length)];
   const getRandomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+  // Массивы аватарок для кошек и собак
+  const catAvatars = [cat1, cat2, cat3, cat4, cat5];
+  const dogAvatars = [dog1, dog2, dog3, dog4, dog5];
+
+  // Функция для получения случайной аватарки
+  const getRandomAvatar = (type) => {
+    const avatars = type === 'Кошка' ? catAvatars : dogAvatars;
+    return avatars[Math.floor(Math.random() * avatars.length)];
+  };
 
   const handleNext = () => {
     if (step === 3 && isHuman === null) return;
@@ -256,6 +288,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
             <div>
               {isHuman ? (
                 <TextBox theme={theme}>
+                  {avatarUrl && <Avatar src={avatarUrl} alt="User Avatar" theme={theme} />}
                   <TextContainer>
                     <Text>
                       <BoldText>Полное имя:</BoldText> {fullName}
@@ -288,6 +321,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
                   </RadioContainer>
                   {animalType && (
                     <TextBox theme={theme}>
+                      <Avatar src={getRandomAvatar(animalType)} alt={`${animalType} Avatar`} theme={theme} />
                       <TextContainer>
                         <Text>
                           <BoldText>Животное:</BoldText> {animalType}

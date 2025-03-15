@@ -158,7 +158,6 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const dogAvatars = [dog1, dog2, dog3, dog4, dog5];
 
   const selectRandomAvatar = (type) => {
-    console.log('Selected avatar 1:', avatar, 'Path:', avatarPath);
     const avatars = type === 'Кошка' ? catAvatars : dogAvatars;
     const randomIndex = Math.floor(Math.random() * avatars.length);
     const avatar = avatars[randomIndex];

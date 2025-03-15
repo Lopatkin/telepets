@@ -6,16 +6,16 @@ import Streets from './Streets';
 import regpic from '../images/regpic.jpg';
 
 // Импорт аватарок для кошек и собак
-import cat1 from '../avatars/cats/cat_1.jpg';
-import cat2 from '../avatars/cats/cat_2.jpg';
-import cat3 from '../avatars/cats/cat_3.jpg';
-import cat4 from '../avatars/cats/cat_4.jpg';
-import cat5 from '../avatars/cats/cat_5.jpg';
-import dog1 from '../avatars/dogs/dog_1.jpg';
-import dog2 from '../avatars/dogs/dog_2.jpg';
-import dog3 from '../avatars/dogs/dog_3.jpg';
-import dog4 from '../avatars/dogs/dog_4.jpg';
-import dog5 from '../avatars/dogs/dog_5.jpg';
+import cat1 from '../images/avatars/cats/cat_1.jpg';
+import cat2 from '../images/avatars/cats/cat_2.jpg';
+import cat3 from '../images/avatars/cats/cat_3.jpg';
+import cat4 from '../images/avatars/cats/cat_4.jpg';
+import cat5 from '../images/avatars/cats/cat_5.jpg';
+import dog1 from '../images/avatars/dogs/dog_1.jpg';
+import dog2 from '../images/avatars/dogs/dog_2.jpg';
+import dog3 from '../images/avatars/dogs/dog_3.jpg';
+import dog4 from '../images/avatars/dogs/dog_4.jpg';
+import dog5 from '../images/avatars/dogs/dog_5.jpg';
 
 const RegistrationContainer = styled.div`
   height: 100vh;

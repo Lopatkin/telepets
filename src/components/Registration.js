@@ -141,7 +141,8 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const [step, setStep] = useState(1);
   const [isHuman, setIsHuman] = useState(null);
   const [animalType, setAnimalType] = useState(null);
-  const [selectedAvatar, setSelectedAvatar] = useState(null); // Состояние для выбранной аватарки
+  const [selectedAvatar, setSelectedAvatar] = useState(null); // Хранит объект аватарки
+  const [selectedAvatarPath, setSelectedAvatarPath] = useState(''); // Хранит путь для сервера
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const firstName = telegramUser.first_name || user.firstName || '';
@@ -156,15 +157,17 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const catAvatars = [cat1, cat2, cat3, cat4, cat5];
   const dogAvatars = [dog1, dog2, dog3, dog4, dog5];
 
-  const getRandomAvatar = (type) => {
+  const selectRandomAvatar = (type) => {
+    console.log('Selected avatar 1:', avatar, 'Path:', avatarPath);
     const avatars = type === 'Кошка' ? catAvatars : dogAvatars;
     const randomIndex = Math.floor(Math.random() * avatars.length);
     const avatar = avatars[randomIndex];
-    // Формируем путь для сервера (предполагаем, что сервер обслуживает файлы из /avatars)
-    const avatarPath = type === 'Кошка' 
-      ? `/images/avatars/cats/cat_${randomIndex + 1}.jpg` 
+    const avatarPath = type === 'Кошка'
+      ? `/images/avatars/cats/cat_${randomIndex + 1}.jpg`
       : `/images/avatars/dogs/dog_${randomIndex + 1}.jpg`;
-    setSelectedAvatar(avatarPath); // Сохраняем путь для передачи на сервер
+    setSelectedAvatar(avatar); // Для отображения
+    setSelectedAvatarPath(avatarPath); // Для отправки на сервер
+    console.log('Selected avatar 2:', avatar, 'Path:', avatarPath);
     return avatar;
   };
 
@@ -181,21 +184,21 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const handleComplete = () => {
     const registrationData = isHuman
       ? {
-          userId: user.userId,
-          isHuman: true,
-          formerProfession: getRandomProfession(),
-          residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
-          isRegistered: true,
-        }
+        userId: user.userId,
+        isHuman: true,
+        formerProfession: getRandomProfession(),
+        residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
+        isRegistered: true,
+      }
       : {
-          userId: user.userId,
-          isHuman: false,
-          animalType,
-          name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
-          residence: 'Город Туманный',
-          isRegistered: true,
-          photoUrl: selectedAvatar, // Добавляем путь к аватарке
-        };
+        userId: user.userId,
+        isHuman: false,
+        animalType,
+        name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
+        residence: 'Город Туманный',
+        isRegistered: true,
+        photoUrl: selectedAvatarPath, // Используем сохранённый путь
+      };
 
     socket.emit('completeRegistration', registrationData, (response) => {
       if (response.success) {
@@ -314,7 +317,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
                         checked={animalType === 'Кошка'}
                         onChange={() => {
                           setAnimalType('Кошка');
-                          getRandomAvatar('Кошка'); // Выбираем аватарку при выборе кошки
+                          selectRandomAvatar('Кошка');
                         }}
                       />
                       Кошка
@@ -324,7 +327,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
                         checked={animalType === 'Собака'}
                         onChange={() => {
                           setAnimalType('Собака');
-                          getRandomAvatar('Собака'); // Выбираем аватарку при выборе собаки
+                          selectRandomAvatar('Собака');
                         }}
                       />
                       Собака
@@ -332,7 +335,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
                   </RadioContainer>
                   {animalType && (
                     <TextBox theme={theme}>
-                      <Avatar src={getRandomAvatar(animalType)} alt={`${animalType} Avatar`} theme={theme} />
+                      {selectedAvatar && <Avatar src={selectedAvatar} alt={`${animalType} Avatar`} theme={theme} />}
                       <TextContainer>
                         <Text>
                           <BoldText>Животное:</BoldText> {animalType}

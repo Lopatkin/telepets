@@ -1,3 +1,4 @@
+// src/components/Registration.js
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import Professions from './Professions';
@@ -35,6 +36,7 @@ const ContentWrapper = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  justify-content: space-between; /* Разделяем текст и кнопку */
 `;
 
 const TextBox = styled.div`
@@ -45,7 +47,7 @@ const TextBox = styled.div`
   border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'}; /* Рамка */
   max-width: 90%;
   margin: 0 auto; /* Центрируем текст */
-  flex-grow: 1; /* Позволяет тексту занимать доступное пространство */
+  align-self: flex-start; /* Рамка начинается сверху */
 `;
 
 const Text = styled.p`
@@ -241,7 +243,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
                   <>
                     <Text>Животное: {animalType}</Text>
                     <Text>Имя: {animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака'}</Text>
-                    <Text>Место жительства: Неопределено</Text>
+                    <Text>Место жительства: Неопределённо</Text>
                   </>
                 )}
               </>

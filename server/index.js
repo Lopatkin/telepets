@@ -44,6 +44,8 @@ const messageSchema = new mongoose.Schema({
   username: String,
   lastName: String,
   photoUrl: String,
+  name: String, // Добавляем поле name
+  isHuman: Boolean, // Добавляем поле isHuman
   room: String,
   timestamp: { type: Date, default: Date.now }
 });
@@ -458,23 +460,31 @@ io.on('connection', (socket) => {
     }
 
     try {
-      const user = await User.findOne({ userId: socket.userData.userId }); // Получаем данные пользователя из базы
+      const user = await User.findOne({ userId: socket.userData.userId }); // Загружаем пользователя из базы
+      if (!user) {
+        console.error('User not found for userId:', socket.userData.userId);
+        socket.emit('error', { message: 'Пользователь не найден' });
+        return;
+      }
+
       const newMessage = new Message({
         userId: socket.userData.userId,
         text: message.text,
-        firstName: socket.userData.firstName || '',
-        username: socket.userData.username || '',
-        lastName: socket.userData.lastName || '',
-        photoUrl: socket.userData.photoUrl || '',
-        name: user.name || '', // Добавляем поле name из базы
-        isHuman: user.isHuman, // Добавляем isHuman
+        firstName: user.firstName || '', // Берем из базы
+        username: user.username || '',
+        lastName: user.lastName || '',
+        photoUrl: user.photoUrl || '',
+        name: user.name || '', // Используем name из базы
+        isHuman: user.isHuman, // Используем isHuman из базы
         room: message.room,
-        timestamp: message.timestamp || new Date().toISOString()
+        timestamp: message.timestamp || new Date().toISOString(),
       });
       await newMessage.save();
+      console.log('Message saved:', newMessage);
       io.to(message.room).emit('message', newMessage);
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при сохранении сообщения' });
     }
   });
 

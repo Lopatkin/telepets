@@ -113,7 +113,9 @@ io.on('connection', (socket) => {
       firstName: user.firstName,
       username: user.username,
       lastName: user.lastName,
-      photoUrl: user.photoUrl
+      photoUrl: user.photoUrl,
+      name: user.name, // Добавляем name в socket.userData
+      isHuman: user.isHuman, // Добавляем isHuman в socket.userData
     };
     console.log('Received auth data:', userData);
     console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
@@ -348,6 +350,12 @@ io.on('connection', (socket) => {
     if (!socket.userData || !socket.userData.userId) {
       console.error('User not authenticated for room join:', socket.id);
       socket.emit('error', { message: 'Пользователь не аутентифицирован' });
+      return;
+    }
+
+    const user = await User.findOne({ userId: socket.userData.userId }); // Загружаем пользователя из базы
+    if (!user) {
+      socket.emit('error', { message: 'Пользователь не найден в базе' });
       return;
     }
 

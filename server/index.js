@@ -220,7 +220,9 @@ io.on('connection', (socket) => {
       firstName: socket.userData.firstName,
       username: socket.userData.username,
       lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl
+      photoUrl: socket.userData.photoUrl,
+      name: user.name, // Добавляем name
+      isHuman: user.isHuman, // Добавляем isHuman
     });
 
     io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -264,6 +266,9 @@ io.on('connection', (socket) => {
       if (!data.isHuman && data.photoUrl) {
         socket.userData.photoUrl = data.photoUrl;
       }
+      if (!data.isHuman && data.name) {
+        socket.userData.name = data.name; // Добавляем name в socket.userData
+      }
 
       // После успешной регистрации переводим игрока в "Автобусная остановка"
       const defaultRoom = 'Автобусная остановка';
@@ -282,7 +287,9 @@ io.on('connection', (socket) => {
         firstName: user.firstName,
         username: user.username,
         lastName: user.lastName,
-        photoUrl: user.photoUrl
+        photoUrl: user.photoUrl,
+        name: user.name, // Добавляем name в roomUsers
+        isHuman: user.isHuman, // Добавляем isHuman
       });
 
       io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -394,7 +401,9 @@ io.on('connection', (socket) => {
       firstName: socket.userData.firstName,
       username: socket.userData.username,
       lastName: socket.userData.lastName,
-      photoUrl: socket.userData.photoUrl
+      photoUrl: socket.userData.photoUrl,
+      name: user.name, // Добавляем name
+      isHuman: user.isHuman, // Добавляем isHuman
     });
 
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
@@ -441,6 +450,7 @@ io.on('connection', (socket) => {
     }
 
     try {
+      const user = await User.findOne({ userId: socket.userData.userId }); // Получаем данные пользователя из базы
       const newMessage = new Message({
         userId: socket.userData.userId,
         text: message.text,
@@ -448,6 +458,8 @@ io.on('connection', (socket) => {
         username: socket.userData.username || '',
         lastName: socket.userData.lastName || '',
         photoUrl: socket.userData.photoUrl || '',
+        name: user.name || '', // Добавляем поле name из базы
+        isHuman: user.isHuman, // Добавляем isHuman
         room: message.room,
         timestamp: message.timestamp || new Date().toISOString()
       });

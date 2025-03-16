@@ -347,6 +347,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   const getAuthorName = (msg) => {
     if (msg.userId === userId) return '';
+
+    // Если пользователь — животное, используем name
+    if (msg.isHuman === false && msg.name) {
+      return msg.name;
+    }
+
     const parts = [];
     if (msg.firstName) parts.push(msg.firstName);
     if (msg.username) parts.push(`@${msg.username}`);

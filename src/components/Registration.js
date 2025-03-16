@@ -1,4 +1,3 @@
-// src/components/Registration.js
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import Professions from './Professions';
@@ -90,6 +89,7 @@ const Button = styled.button`
 `;
 
 const RadioContainer = styled.div`
+  background: ${props => props.theme === 'dark' ? 'rgba(42, 42, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)'}; /* Такой же фон, как у TextBox */
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -101,7 +101,6 @@ const RadioContainer = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 15px;
-  background: transparent; /* Убираем белый фон */
 `;
 
 const RadioLabel = styled.label`

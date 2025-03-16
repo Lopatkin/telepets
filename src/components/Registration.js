@@ -353,6 +353,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
             </div>
           </>
         )}
+        
       </ContentWrapper>
     </RegistrationContainer>
   );

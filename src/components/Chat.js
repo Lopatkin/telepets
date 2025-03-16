@@ -353,6 +353,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       return msg.name;
     }
 
+    
     const parts = [];
     if (msg.firstName) parts.push(msg.firstName);
     if (msg.username) parts.push(`@${msg.username}`);

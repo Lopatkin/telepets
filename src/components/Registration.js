@@ -89,7 +89,7 @@ const Button = styled.button`
 `;
 
 const RadioContainer = styled.div`
-  background: ${props => props.theme === 'dark' ? 'rgba(42, 42, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)'}; /* Такой же фон, как у TextBox */
+  background: ${props => props.theme === 'dark' ? 'rgba(42, 42, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)'};
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -117,19 +117,58 @@ const RadioInput = styled.input.attrs({ type: 'radio' })`
   height: 20px;
 `;
 
+const Avatar = styled.img`
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  display: block;
+  border: 2px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+`;
+
 const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const [step, setStep] = useState(1);
   const [isHuman, setIsHuman] = useState(null);
   const [animalType, setAnimalType] = useState(null);
+  const [selectedAvatar, setSelectedAvatar] = useState(null);
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const firstName = telegramUser.first_name || user.firstName || '';
   const username = telegramUser.username || '';
   const lastName = telegramUser.last_name || '';
+  const avatarUrl = telegramUser.photo_url || '';
+
+  const catAvatars = [
+    'https://tuchki-zauchki.ru/images/telepets/avatars/cats/cat_1.jpg',
+    'https://tuchki-zauchki.ru/images/telepets/avatars/cats/cat_2.jpg',
+    'https://tuchki-zauchki.ru/images/telepets/avatars/cats/cat_3.jpg',
+    'https://tuchki-zauchki.ru/images/telepets/avatars/cats/cat_4.jpg',
+    'https://tuchki-zauchki.ru/images/telepets/avatars/cats/cat_5.jpg',
+  ];
+
+  const dogAvatars = [
+    'https://tuchki-zauchki.ru/images/telepets/avatars/dogs/dog_1.jpg',
+    'https://tuchki-zauchki.ru/images/telepets/avatars/dogs/dog_2.jpg',
+    'https://tuchki-zauchki.ru/images/telepets/avatars/dogs/dog_3.jpg',
+    'https://tuchki-zauchki.ru/images/telepets/avatars/dogs/dog_4.jpg',
+    'https://tuchki-zauchki.ru/images/telepets/avatars/dogs/dog_5.jpg',
+  ];
 
   const getRandomProfession = () => Professions[Math.floor(Math.random() * Professions.length)];
   const getRandomStreet = () => Streets[Math.floor(Math.random() * Streets.length)];
   const getRandomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+  const selectRandomAvatar = (type) => {
+    const avatars = type === 'Кошка' ? catAvatars : dogAvatars;
+    const randomIndex = Math.floor(Math.random() * avatars.length);
+    return avatars[randomIndex];
+  };
+
+  const handleAnimalTypeChange = (type) => {
+    setAnimalType(type);
+    const avatar = selectRandomAvatar(type);
+    setSelectedAvatar(avatar);
+  };
 
   const handleNext = () => {
     if (step === 3 && isHuman === null) return;
@@ -157,6 +196,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
           name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
           residence: 'Город Туманный',
           isRegistered: true,
+          photoUrl: selectedAvatar, // Добавляем выбранную аватарку для животного
         };
 
     socket.emit('completeRegistration', registrationData, (response) => {
@@ -194,7 +234,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
           <>
             <div>
               <TextBox theme={theme}>
-                <TextContainer>
+                <TextContainer MAGICK>
                   <Text>
                     Здесь собираются люди самых разных профессий: айтишники, променявшие мышку и клавиатуру на зубило и стаместку, менеджеры, сбежавшие от бесконечных дедлайнов и скрам-митингов, чтобы хоть раз в жизни не планировать хаос, а просто его пережить, продажники, спрятавшиеся здесь от бесконечных звонков и KPI, чтобы наконец-то подышать воздухом...
                   </Text>
@@ -255,6 +295,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
             <div>
               {isHuman ? (
                 <TextBox theme={theme}>
+                  {avatarUrl && <Avatar src={avatarUrl} alt="User Avatar" theme={theme} />}
                   <TextContainer>
                     <Text>
                       <BoldText>Полное имя:</BoldText> {fullName}
@@ -273,20 +314,21 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
                     <RadioLabel theme={theme}>
                       <RadioInput
                         checked={animalType === 'Кошка'}
-                        onChange={() => setAnimalType('Кошка')}
+                        onChange={() => handleAnimalTypeChange('Кошка')}
                       />
                       Кошка
                     </RadioLabel>
                     <RadioLabel theme={theme}>
                       <RadioInput
                         checked={animalType === 'Собака'}
-                        onChange={() => setAnimalType('Собака')}
+                        onChange={() => handleAnimalTypeChange('Собака')}
                       />
                       Собака
                     </RadioLabel>
                   </RadioContainer>
                   {animalType && (
                     <TextBox theme={theme}>
+                      {selectedAvatar && <Avatar src={selectedAvatar} alt={`${animalType} Avatar`} theme={theme} />}
                       <TextContainer>
                         <Text>
                           <BoldText>Животное:</BoldText> {animalType}

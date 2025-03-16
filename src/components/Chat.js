@@ -228,7 +228,7 @@ const UserName = styled.span`
   color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
 `;
 
-function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
+function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);
@@ -238,7 +238,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef }) {
   const messageCacheRef = useRef({});
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-  const currentUserPhotoUrl = telegramUser.photo_url || '';
+  // Используем photoUrl из user для животных, из Telegram для людей
+  const currentUserPhotoUrl = user?.isHuman ? (telegramUser.photo_url || '') : (user?.photoUrl || '');
 
   useEffect(() => {
     if (room === 'Парк') {

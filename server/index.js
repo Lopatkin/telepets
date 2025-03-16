@@ -247,7 +247,8 @@ io.on('connection', (socket) => {
           formerProfession: data.formerProfession,
           residence: data.residence,
           animalType: data.animalType,
-          name: data.name
+          name: data.name,
+          photoUrl: data.photoUrl || socket.userData.photoUrl || '', // Сохраняем photoUrl из data, если есть
         },
         { new: true }
       );
@@ -257,6 +258,11 @@ io.on('connection', (socket) => {
         return;
       }
       console.log('Registration completed for user:', user.userId);
+
+      // Обновляем socket.userData.photoUrl для животного
+      if (!data.isHuman && data.photoUrl) {
+        socket.userData.photoUrl = data.photoUrl;
+      }
 
       // После успешной регистрации переводим игрока в "Автобусная остановка"
       const defaultRoom = 'Автобусная остановка';
@@ -288,6 +294,19 @@ io.on('connection', (socket) => {
         console.error('Error fetching messages after registration:', err.message, err.stack);
         socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
       }
+
+      // Отправляем клиенту обновлённые данные пользователя
+      socket.emit('userUpdate', {
+        userId: user.userId,
+        firstName: user.firstName,
+        username: user.username,
+        lastName: user.lastName,
+        photoUrl: user.photoUrl,
+        isRegistered: user.isRegistered,
+        isHuman: user.isHuman,
+        animalType: user.animalType,
+        name: user.name,
+      });
 
       if (callback) callback({ success: true });
     } catch (err) {

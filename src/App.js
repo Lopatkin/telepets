@@ -87,6 +87,12 @@ function App() {
         }
       });
 
+      socketRef.current.on('userUpdate', (updatedUser) => {
+        console.log('Received userUpdate:', updatedUser);
+        setUser(prevUser => ({ ...prevUser, ...updatedUser })); // Обновляем user с новыми данными
+        setIsRegistered(updatedUser.isRegistered);
+      });
+
       socketRef.current.on('error', ({ message }) => {
         console.error('Server error:', message);
       });

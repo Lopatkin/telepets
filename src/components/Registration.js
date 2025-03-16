@@ -4,16 +4,6 @@ import styled from 'styled-components';
 import Professions from './Professions';
 import Streets from './Streets';
 import regpic from '../images/regpic.jpg';
-import cat1 from '../images/avatars/cats/cat_1.jpg';
-import cat2 from '../images/avatars/cats/cat_2.jpg';
-import cat3 from '../images/avatars/cats/cat_3.jpg';
-import cat4 from '../images/avatars/cats/cat_4.jpg';
-import cat5 from '../images/avatars/cats/cat_5.jpg';
-import dog1 from '../images/avatars/dogs/dog_1.jpg';
-import dog2 from '../images/avatars/dogs/dog_2.jpg';
-import dog3 from '../images/avatars/dogs/dog_3.jpg';
-import dog4 from '../images/avatars/dogs/dog_4.jpg';
-import dog5 from '../images/avatars/dogs/dog_5.jpg';
 
 const RegistrationContainer = styled.div`
   height: 100vh;
@@ -100,7 +90,6 @@ const Button = styled.button`
 `;
 
 const RadioContainer = styled.div`
-  background: ${props => props.theme === 'dark' ? 'rgba(42, 42, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)'};
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -112,6 +101,7 @@ const RadioContainer = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 15px;
+  background: transparent; /* Убираем белый фон */
 `;
 
 const RadioLabel = styled.label`
@@ -128,47 +118,19 @@ const RadioInput = styled.input.attrs({ type: 'radio' })`
   height: 20px;
 `;
 
-const Avatar = styled.img`
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin: 0 auto 15px;
-  display: block;
-  border: 2px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-`;
-
 const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const [step, setStep] = useState(1);
   const [isHuman, setIsHuman] = useState(null);
   const [animalType, setAnimalType] = useState(null);
-  const [selectedAvatar, setSelectedAvatar] = useState(null); // Хранит объект аватарки
-  const [selectedAvatarPath, setSelectedAvatarPath] = useState(''); // Хранит путь для сервера
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const firstName = telegramUser.first_name || user.firstName || '';
   const username = telegramUser.username || '';
   const lastName = telegramUser.last_name || '';
-  const avatarUrl = telegramUser.photo_url || '';
 
   const getRandomProfession = () => Professions[Math.floor(Math.random() * Professions.length)];
   const getRandomStreet = () => Streets[Math.floor(Math.random() * Streets.length)];
   const getRandomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-  const catAvatars = [cat1, cat2, cat3, cat4, cat5];
-  const dogAvatars = [dog1, dog2, dog3, dog4, dog5];
-
-  const selectRandomAvatar = (type) => {
-    const avatars = type === 'Кошка' ? catAvatars : dogAvatars;
-    const randomIndex = Math.floor(Math.random() * avatars.length);
-    const avatar = avatars[randomIndex];
-    const avatarPath = type === 'Кошка'
-      ? `/images/avatars/cats/cat_${randomIndex + 1}.jpg`
-      : `/images/avatars/dogs/dog_${randomIndex + 1}.jpg`;
-    setSelectedAvatar(avatar); // Для отображения
-    setSelectedAvatarPath(avatarPath); // Для отправки на сервер
-    console.log('Selected avatar 2:', avatar, 'Path:', avatarPath);
-    return avatar;
-  };
 
   const handleNext = () => {
     if (step === 3 && isHuman === null) return;
@@ -183,21 +145,20 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const handleComplete = () => {
     const registrationData = isHuman
       ? {
-        userId: user.userId,
-        isHuman: true,
-        formerProfession: getRandomProfession(),
-        residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
-        isRegistered: true,
-      }
+          userId: user.userId,
+          isHuman: true,
+          formerProfession: getRandomProfession(),
+          residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
+          isRegistered: true,
+        }
       : {
-        userId: user.userId,
-        isHuman: false,
-        animalType,
-        name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
-        residence: 'Город Туманный',
-        isRegistered: true,
-        photoUrl: selectedAvatarPath, // Используем сохранённый путь
-      };
+          userId: user.userId,
+          isHuman: false,
+          animalType,
+          name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
+          residence: 'Город Туманный',
+          isRegistered: true,
+        };
 
     socket.emit('completeRegistration', registrationData, (response) => {
       if (response.success) {
@@ -295,7 +256,6 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
             <div>
               {isHuman ? (
                 <TextBox theme={theme}>
-                  {avatarUrl && <Avatar src={avatarUrl} alt="User Avatar" theme={theme} />}
                   <TextContainer>
                     <Text>
                       <BoldText>Полное имя:</BoldText> {fullName}
@@ -314,27 +274,20 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
                     <RadioLabel theme={theme}>
                       <RadioInput
                         checked={animalType === 'Кошка'}
-                        onChange={() => {
-                          setAnimalType('Кошка');
-                          selectRandomAvatar('Кошка');
-                        }}
+                        onChange={() => setAnimalType('Кошка')}
                       />
                       Кошка
                     </RadioLabel>
                     <RadioLabel theme={theme}>
                       <RadioInput
                         checked={animalType === 'Собака'}
-                        onChange={() => {
-                          setAnimalType('Собака');
-                          selectRandomAvatar('Собака');
-                        }}
+                        onChange={() => setAnimalType('Собака')}
                       />
                       Собака
                     </RadioLabel>
                   </RadioContainer>
                   {animalType && (
                     <TextBox theme={theme}>
-                      {selectedAvatar && <Avatar src={selectedAvatar} alt={`${animalType} Avatar`} theme={theme} />}
                       <TextContainer>
                         <Text>
                           <BoldText>Животное:</BoldText> {animalType}

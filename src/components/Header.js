@@ -136,9 +136,8 @@ function Header({ user, room, theme, socket }) {
     ? (room.startsWith('myhome_') ? 'Мой дом' : room)
     : 'Выберите комнату';
 
-  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-  const photoUrl = telegramUser.photo_url || '';
-  const firstName = telegramUser.first_name || user.firstName || 'User';
+  const photoUrl = user?.photoUrl || '';
+  const firstName = user?.firstName || 'User';
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
 
   const progressValues = {
@@ -157,7 +156,6 @@ function Header({ user, room, theme, socket }) {
 
     socket.on('creditsUpdate', handleCreditsUpdate);
 
-    // Запрашиваем текущее количество кредитов при монтировании
     socket.emit('getCredits', ({ success, credits }) => {
       if (success) {
         console.log('Initial credits received:', credits);

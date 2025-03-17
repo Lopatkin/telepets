@@ -15,7 +15,7 @@ const ProgressWidget = styled.div`
 const ProgressBarContainer = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Разделяем пространство между надписью и прогресс-баром */
+  justify-content: space-between;
   margin: 8px 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   padding: 5px;
@@ -23,20 +23,20 @@ const ProgressBarContainer = styled.div`
 `;
 
 const ProgressLabel = styled.span`
-  font-size: 16px; /* Увеличен размер текста надписей */
+  font-size: 16px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#666'};
-  width: 80px; /* Фиксированная ширина для прижатия к левому краю */
-  text-align: left; /* Прижатие текста к левой стороне */
+  width: 80px;
+  text-align: left;
 `;
 
 const ProgressValue = styled.span`
-  font-size: 14px; /* Размер текста для значений */
+  font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  margin-left: 10px; /* Отступ от прогресс-бара */
+  margin-left: 10px;
 `;
 
 const ProgressBar = styled.progress`
-  width: 140px; /* Уменьшена ширина прогресс-бара с 160px до 140px */
+  width: 140px;
   height: 8px;
   border-radius: 4px;
   &::-webkit-progress-bar {
@@ -44,17 +44,17 @@ const ProgressBar = styled.progress`
     border-radius: 4px;
   }
   &::-webkit-progress-value {
-    ${props => props.type === 'energy' && `background-color: #FFA500;`} /* Жёлто-оранжевый */
-    ${props => props.type === 'health' && `background-color: #FF0000;`} /* Красный */
-    ${props => props.type === 'mood' && `background-color: #007AFF;`} /* Синий */
-    ${props => props.type === 'fullness' && `background-color: #32CD32;`} /* Зелёно-салатовый */
+    ${props => props.type === 'energy' && `background-color: #FFA500;`}
+    ${props => props.type === 'health' && `background-color: #FF0000;`}
+    ${props => props.type === 'mood' && `background-color: #007AFF;`}
+    ${props => props.type === 'fullness' && `background-color: #32CD32;`}
     border-radius: 4px;
   }
   &::-moz-progress-bar {
-    ${props => props.type === 'energy' && `background-color: #FFA500;`} /* Жёлто-оранжевый */
-    ${props => props.type === 'health' && `background-color: #FF0000;`} /* Красный */
-    ${props => props.type === 'mood' && `background-color: #007AFF;`} /* Синий */
-    ${props => props.type === 'fullness' && `background-color: #32CD32;`} /* Зелёно-салатовый */
+    ${props => props.type === 'energy' && `background-color: #FFA500;`}
+    ${props => props.type === 'health' && `background-color: #FF0000;`}
+    ${props => props.type === 'mood' && `background-color: #007AFF;`}
+    ${props => props.type === 'fullness' && `background-color: #32CD32;`}
     border-radius: 4px;
   }
 `;
@@ -144,13 +144,10 @@ const ThemeLabel = styled.span`
 `;
 
 function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, progressValues }) {
-  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-
-  const firstName = telegramUser.first_name || user.firstName || 'User';
-  const username = telegramUser.username || '';
-  const lastName = telegramUser.last_name || '';
-  const photoUrl = telegramUser.photo_url || '';
-
+  const photoUrl = user?.photoUrl || '';
+  const firstName = user?.firstName || 'User';
+  const username = user?.username || '';
+  const lastName = user?.lastName || '';
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
 
   return (
@@ -162,7 +159,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
       )}
       <Name theme={theme}>{firstName} {lastName}</Name>
       {username && <Username theme={theme}>@{username}</Username>}
-      <Info theme={theme}>ID: {user.id}</Info>
+      <Info theme={theme}>ID: {user.userId}</Info>
       {progressValues && (
         <ProgressWidget theme={theme}>
           <ProgressBarContainer>

@@ -50,7 +50,7 @@ function App() {
   useEffect(() => {
     const initializeSocket = () => {
       if (socketRef.current) return;
-
+  
       socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com', {
         cors: {
           origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
@@ -60,23 +60,23 @@ function App() {
         reconnectionAttempts: 5,
         reconnectionDelay: 1000
       });
-
+  
       socketRef.current.on('connect', () => {
         console.log('Socket connected:', socketRef.current.id);
         setSocket(socketRef.current);
       });
-
+  
       socketRef.current.on('disconnect', (reason) => {
         console.log('Socket disconnected:', reason);
         setSocket(null);
         setIsAuthenticated(false);
       });
-
+  
       socketRef.current.on('connect_error', (error) => {
         console.error('Connection error:', error.message);
       });
-
-      socketRef.current.on('authSuccess', ({ defaultRoom, isRegistered }) => { // Добавляем isRegistered
+  
+      socketRef.current.on('authSuccess', ({ defaultRoom, isRegistered }) => {
         console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
         setIsAuthenticated(true);
         setIsRegistered(isRegistered);
@@ -86,17 +86,21 @@ function App() {
           socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
         }
       });
-
+  
       socketRef.current.on('userUpdate', (updatedUser) => {
         console.log('Received userUpdate:', updatedUser);
-        setUser(prevUser => ({ ...prevUser, ...updatedUser })); // Обновляем user с новыми данными
+        setUser(prevUser => {
+          const newUser = { ...prevUser, ...updatedUser };
+          console.log('Updated user state:', newUser); // Добавляем лог
+          return newUser;
+        });
         setIsRegistered(updatedUser.isRegistered);
       });
-
+  
       socketRef.current.on('error', ({ message }) => {
         console.error('Server error:', message);
       });
-
+  
       return () => {
         if (socketRef.current) {
           socketRef.current.disconnect();
@@ -104,7 +108,7 @@ function App() {
         }
       };
     };
-
+  
     initializeSocket();
   }, []);
 

@@ -239,6 +239,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const currentUserPhotoUrl = user?.isHuman ? (telegramUser.photo_url || '') : (user?.photoUrl || '');
+  console.log('Current user data:', user); // Добавляем лог
+  console.log('Current user photo URL:', currentUserPhotoUrl); // Лог уже есть
 
   useEffect(() => {
     if (room === 'Парк') {
@@ -445,7 +447,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         />
         <SendIcon onClick={sendMessage} disabled={!room} />
       </InputContainer>
-      {showUserList && room && (
+      {showUserList && room && currentUserPhotoUrl && ( // Добавляем проверку
         <UserListModal ref={modalRef} onClick={handleModalClick} theme={theme}>
           <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (

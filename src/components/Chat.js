@@ -305,18 +305,19 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         }
         return roomUser;
       });
+      // Добавляем NPC только после обновления photoUrl текущего пользователя
       if (room === 'Парк') {
-        updatedUsers = [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage }, ...roomUsers];
+        updatedUsers = [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false }, ...updatedUsers];
       } else if (room === 'Лес') {
         updatedUsers = [
-          { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage },
-          { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage },
-          ...roomUsers
+          { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage, isHuman: false },
+          { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage, isHuman: false },
+          ...updatedUsers
         ];
       } else if (room === 'Район Дачный') {
-        updatedUsers = [{ userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage }, ...roomUsers];
+        updatedUsers = [{ userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage, isHuman: true }, ...updatedUsers];
       } else if (room === 'Завод') {
-        updatedUsers = [{ userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage }, ...roomUsers];
+        updatedUsers = [{ userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage, isHuman: true }, ...updatedUsers];
       }
       setUsers(updatedUsers);
     });
@@ -456,7 +457,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           {users.map((user, index) => (
             <UserItem key={index}>
               {getAvatar(user)}
-              <UserName theme={theme}>{getUserDisplayName(user)}</UserName> {/* Используем новую функцию */}
+              <UserName theme={theme}>{getUserDisplayName(user)}</UserName>
             </UserItem>
           ))}
         </UserListModal>

@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-// Обновлённая схема сообщений с полем animalText
+// Схема сообщений (без изменений)
 const messageSchema = new mongoose.Schema({
   userId: String,
   text: String,
@@ -45,10 +45,10 @@ const messageSchema = new mongoose.Schema({
   photoUrl: String,
   name: String,
   isHuman: Boolean,
-  animalType: String, // Добавляем animalType для определения "мяу" или "гав"
+  animalType: String,
   room: String,
   timestamp: { type: Date, default: Date.now },
-  animalText: String // Новое поле для преобразованного текста
+  animalText: String // Оставляем поле, но заполняется клиентом
 });
 const Message = mongoose.model('Message', messageSchema);
 
@@ -118,7 +118,7 @@ io.on('connection', (socket) => {
       photoUrl: user.photoUrl,
       name: user.name,
       isHuman: user.isHuman,
-      animalType: user.animalType // Добавляем animalType в socket.userData
+      animalType: user.animalType
     };
     console.log('Received auth data:', userData);
     console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
@@ -480,13 +480,6 @@ io.on('connection', (socket) => {
         return;
       }
 
-      let animalText = '';
-      if (!user.isHuman) {
-        const words = message.text.split(/\s+/);
-        const replacement = user.animalType === 'Кошка' ? 'мяу' : 'гав';
-        animalText = words.map(() => replacement).join(' ');
-      }
-
       const newMessage = new Message({
         userId: socket.userData.userId,
         text: message.text,
@@ -496,10 +489,10 @@ io.on('connection', (socket) => {
         photoUrl: user.photoUrl || '',
         name: user.name || '',
         isHuman: user.isHuman,
-        animalType: user.animalType, // Сохраняем тип животного
+        animalType: user.animalType,
         room: message.room,
         timestamp: message.timestamp || new Date().toISOString(),
-        animalText: animalText || undefined // Добавляем animalText
+        animalText: message.animalText || undefined // Принимаем animalText от клиента
       });
       await newMessage.save();
       console.log('Message saved:', { text: newMessage.text, animalText: newMessage.animalText });

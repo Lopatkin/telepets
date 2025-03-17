@@ -338,11 +338,19 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   const sendMessage = () => {
     if (message.trim() && room && socket) {
+      let animalText = '';
+      if (!user.isHuman) {
+        const words = message.split(/\s+/);
+        const replacement = user.animalType === 'Кошка' ? 'мяу' : 'гав';
+        animalText = words.map(() => replacement).join(' ');
+      }
+
       const newMessage = {
         text: message,
         room,
         timestamp: new Date().toISOString(),
         photoUrl: currentUserPhotoUrl || '',
+        animalText: animalText || undefined // Добавляем animalText, если пользователь — животное
       };
       socket.emit('sendMessage', newMessage);
       setMessage('');
@@ -412,11 +420,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   };
 
   const getDisplayText = (msg) => {
-    // Если сообщение от животного и текущий пользователь — человек, показываем animalText
     if (!msg.isHuman && user.isHuman) {
-      return msg.animalText || msg.text; // Используем animalText, если есть, иначе text
+      return msg.animalText || msg.text;
     }
-    // В остальных случаях (животное видит животное или сообщение от человека) показываем text
     return msg.text;
   };
 

@@ -293,7 +293,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         return updated;
       });
     });
-
+    console.log('Current user photo URL:', currentUserPhotoUrl);
     socket.on('roomUsers', (roomUsers) => {
       console.log('Received room users:', roomUsers);
       let updatedUsers = roomUsers.map(roomUser => {

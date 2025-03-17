@@ -136,14 +136,16 @@ function App() {
       window.Telegram.WebApp.ready();
       const telegramData = window.Telegram.WebApp.initDataUnsafe;
       const savedTheme = localStorage.getItem('theme') || 'telegram';
-
+  
       if (telegramData?.user?.id) {
         const userData = {
           userId: telegramData.user.id.toString(),
           firstName: telegramData.user.first_name || 'User',
           username: telegramData.user.username || '',
           lastName: telegramData.user.last_name || '',
-          photoUrl: telegramData.user.photo_url || ''
+          photoUrl: telegramData.user.photo_url || '',
+          isHuman: true, // Добавляем по умолчанию
+          isRegistered: false // Добавляем по умолчанию
         };
         console.log('Telegram user data:', userData);
         setUser(userData);
@@ -151,14 +153,14 @@ function App() {
         setTheme(savedTheme);
       } else {
         console.warn('Telegram Web App data not available');
-        const testUser = { userId: 'test123', firstName: 'Test User' };
+        const testUser = { userId: 'test123', firstName: 'Test User', isHuman: true, isRegistered: false };
         setUser(testUser);
         setTelegramTheme('light');
         setTheme(savedTheme);
       }
     } else {
       console.warn('Telegram Web App not detected, using test mode');
-      const testUser = { userId: 'test123', firstName: 'Test User' };
+      const testUser = { userId: 'test123', firstName: 'Test User', isHuman: true, isRegistered: false };
       setUser(testUser);
       setTelegramTheme('light');
       setTheme('telegram');

@@ -244,6 +244,7 @@ function App() {
       <Footer activeTab={activeTab} setActiveTab={setActiveTab} theme={appliedTheme} />
     </AppContainer>
   );
+  
 }
 
 export default App;

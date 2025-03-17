@@ -239,8 +239,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
   const currentUserPhotoUrl = user?.isHuman ? (telegramUser.photo_url || '') : (user?.photoUrl || '');
-  console.log('Current user data:', user); // Добавляем лог
-  console.log('Current user photo URL:', currentUserPhotoUrl); // Лог уже есть
+  console.log('Current user data:', user);
+  console.log('Current user photo URL:', currentUserPhotoUrl);
 
   useEffect(() => {
     if (room === 'Парк') {
@@ -295,17 +295,15 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         return updated;
       });
     });
-    console.log('Current user photo URL:', currentUserPhotoUrl);
+
     socket.on('roomUsers', (roomUsers) => {
       console.log('Received room users:', roomUsers);
       let updatedUsers = roomUsers.map(roomUser => {
-        // Для текущего пользователя обновляем photoUrl
         if (roomUser.userId === userId) {
           return { ...roomUser, photoUrl: currentUserPhotoUrl };
         }
         return roomUser;
       });
-      // Добавляем NPC только после обновления photoUrl текущего пользователя
       if (room === 'Парк') {
         updatedUsers = [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false }, ...updatedUsers];
       } else if (room === 'Лес') {
@@ -447,7 +445,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         />
         <SendIcon onClick={sendMessage} disabled={!room} />
       </InputContainer>
-      {showUserList && room && currentUserPhotoUrl && ( // Добавляем проверку
+      {showUserList && room && (
         <UserListModal ref={modalRef} onClick={handleModalClick} theme={theme}>
           <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (

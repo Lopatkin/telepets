@@ -234,7 +234,16 @@ function App() {
     <AppContainer>
       <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
       <Content>
-        {activeTab === 'chat' && <Chat userId={user.userId} room={currentRoom} theme={appliedTheme} socket={socket} joinedRoomsRef={joinedRoomsRef} />}
+        {activeTab === 'chat' && (
+          <Chat
+            userId={user.userId}
+            room={currentRoom}
+            theme={appliedTheme}
+            socket={socket}
+            joinedRoomsRef={joinedRoomsRef}
+            user={user} // Добавляем пропс user
+          />
+        )}
         {activeTab === 'actions' && socket && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} socket={socket} personalItems={personalItems} />}
         {activeTab === 'housing' && socket && <Inventory userId={user.userId} currentRoom={currentRoom} theme={appliedTheme} socket={socket} onItemsUpdate={handleItemsUpdate} />}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}

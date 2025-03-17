@@ -9,7 +9,7 @@ import Map from './components/Map';
 import Actions from './components/Actions';
 import Inventory from './components/Inventory';
 import { ClipLoader } from 'react-spinners';
-import Registration from './components/Registration'; // Добавляем импорт
+import Registration from './components/Registration';
 
 const AppContainer = styled.div`
   height: 100vh;
@@ -40,17 +40,17 @@ function App() {
   const joinedRoomsRef = useRef(new Set());
   const [socket, setSocket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [personalItems, setPersonalItems] = useState([]); // Добавляем состояние для personalItems
-  const [isRegistered, setIsRegistered] = useState(null); // null - ещё не проверено
+  const [personalItems, setPersonalItems] = useState([]);
+  const [isRegistered, setIsRegistered] = useState(null);
 
   const handleItemsUpdate = (items) => {
-    setPersonalItems(items.filter(item => item.owner === `user_${user.userId}`));
+    setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
   };
 
   useEffect(() => {
     const initializeSocket = () => {
       if (socketRef.current) return;
-  
+
       socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com', {
         cors: {
           origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
@@ -60,22 +60,48 @@ function App() {
         reconnectionAttempts: 5,
         reconnectionDelay: 1000
       });
-  
+
       socketRef.current.on('connect', () => {
         console.log('Socket connected:', socketRef.current.id);
         setSocket(socketRef.current);
+
+        // Отправляем начальную авторизацию с Telegram-данными
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.ready();
+          const telegramData = window.Telegram.WebApp.initDataUnsafe;
+          if (telegramData?.user?.id) {
+            const initialUserData = {
+              userId: telegramData.user.id.toString(),
+              firstName: telegramData.user.first_name || 'User',
+              username: telegramData.user.username || '',
+              lastName: telegramData.user.last_name || '',
+              photoUrl: telegramData.user.photo_url || '',
+            };
+            console.log('Sending initial auth with Telegram data:', initialUserData);
+            socketRef.current.emit('auth', { ...initialUserData, lastRoom: JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации' });
+            setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
+          } else {
+            const testUser = { userId: 'test123', firstName: 'Test User' };
+            socketRef.current.emit('auth', { ...testUser, lastRoom: 'Полигон утилизации' });
+            setTelegramTheme('light');
+          }
+        } else {
+          const testUser = { userId: 'test123', firstName: 'Test User' };
+          socketRef.current.emit('auth', { ...testUser, lastRoom: 'Полигон утилизации' });
+          setTelegramTheme('light');
+        }
       });
-  
+
       socketRef.current.on('disconnect', (reason) => {
         console.log('Socket disconnected:', reason);
         setSocket(null);
         setIsAuthenticated(false);
       });
-  
+
       socketRef.current.on('connect_error', (error) => {
         console.error('Connection error:', error.message);
       });
-  
+
       socketRef.current.on('authSuccess', ({ defaultRoom, isRegistered }) => {
         console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
         setIsAuthenticated(true);
@@ -86,7 +112,7 @@ function App() {
           socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
         }
       });
-  
+
       socketRef.current.on('userUpdate', (updatedUser) => {
         console.log('Received userUpdate from server:', updatedUser);
         setUser(prevUser => {
@@ -96,11 +122,11 @@ function App() {
         });
         setIsRegistered(updatedUser.isRegistered);
       });
-  
+
       socketRef.current.on('error', ({ message }) => {
         console.error('Server error:', message);
       });
-  
+
       return () => {
         if (socketRef.current) {
           socketRef.current.disconnect();
@@ -108,22 +134,10 @@ function App() {
         }
       };
     };
-  
+
     initializeSocket();
   }, []);
 
-  useEffect(() => {
-    if (socket && user && !isAuthenticated) {
-      const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
-      const lastRoom = storedRooms[user.userId] || 'Полигон утилизации';
-      console.log('Stored rooms in localStorage:', storedRooms);
-      console.log('Last room for user', user.userId, ':', lastRoom);
-      console.log('Sending auth with user data:', { ...user, lastRoom });
-      socket.emit('auth', { ...user, lastRoom });
-    }
-  }, [socket, user, isAuthenticated]);
-
-  // Добавляем обработчик завершения регистрации
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);
     setCurrentRoom(defaultRoom);
@@ -132,39 +146,8 @@ function App() {
   };
 
   useEffect(() => {
-    if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.ready();
-      const telegramData = window.Telegram.WebApp.initDataUnsafe;
-      const savedTheme = localStorage.getItem('theme') || 'telegram';
-  
-      if (telegramData?.user?.id) {
-        const userData = {
-          userId: telegramData.user.id.toString(),
-          firstName: telegramData.user.first_name || 'User',
-          username: telegramData.user.username || '',
-          lastName: telegramData.user.last_name || '',
-          photoUrl: telegramData.user.photo_url || '',
-          isHuman: true, // Добавляем по умолчанию
-          isRegistered: false // Добавляем по умолчанию
-        };
-        console.log('Telegram user data:', userData);
-        setUser(userData);
-        setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
-        setTheme(savedTheme);
-      } else {
-        console.warn('Telegram Web App data not available');
-        const testUser = { userId: 'test123', firstName: 'Test User', isHuman: true, isRegistered: false };
-        setUser(testUser);
-        setTelegramTheme('light');
-        setTheme(savedTheme);
-      }
-    } else {
-      console.warn('Telegram Web App not detected, using test mode');
-      const testUser = { userId: 'test123', firstName: 'Test User', isHuman: true, isRegistered: false };
-      setUser(testUser);
-      setTelegramTheme('light');
-      setTheme('telegram');
-    }
+    const savedTheme = localStorage.getItem('theme') || 'telegram';
+    setTheme(savedTheme);
   }, []);
 
   const handleRoomSelect = (room) => {
@@ -241,7 +224,7 @@ function App() {
             theme={appliedTheme}
             socket={socket}
             joinedRoomsRef={joinedRoomsRef}
-            user={user} // Добавляем пропс user
+            user={user}
           />
         )}
         {activeTab === 'actions' && socket && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} socket={socket} personalItems={personalItems} />}

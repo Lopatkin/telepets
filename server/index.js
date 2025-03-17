@@ -92,7 +92,7 @@ io.on('connection', (socket) => {
       if (callback) callback({ success: false, message: 'Некорректные данные пользователя' });
       return;
     }
-
+  
     // Проверяем или создаём пользователя в базе данных
     let user = await User.findOne({ userId: userData.userId });
     if (!user) {
@@ -109,30 +109,45 @@ io.on('connection', (socket) => {
     } else {
       console.log('User authenticated:', user.userId);
     }
-
+  
     socket.userData = {
       userId: user.userId,
       firstName: user.firstName,
       username: user.username,
       lastName: user.lastName,
       photoUrl: user.photoUrl,
-      name: user.name, // Добавляем name в socket.userData
-      isHuman: user.isHuman, // Добавляем isHuman в socket.userData
+      name: user.name,
+      isHuman: user.isHuman,
     };
     console.log('Received auth data:', userData);
     console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
-
+  
     if (activeSockets.has(socket.userData.userId)) {
       console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
       const oldSocket = activeSockets.get(socket.userData.userId);
       oldSocket.disconnect();
     }
-
+  
     activeSockets.set(socket.userData.userId, socket);
-
+  
+    // Отправляем актуальные данные пользователя клиенту
+    socket.emit('userUpdate', {
+      userId: user.userId,
+      firstName: user.firstName,
+      username: user.username,
+      lastName: user.lastName,
+      photoUrl: user.photoUrl,
+      isRegistered: user.isRegistered,
+      isHuman: user.isHuman,
+      animalType: user.animalType,
+      name: user.name,
+    });
+    console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
+  
+    // Остальной код остаётся без изменений
     const userOwnerKey = `user_${socket.userData.userId}`;
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
-
+  
     let userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
     if (!userCredits) {
       userCredits = await UserCredits.create({
@@ -140,10 +155,10 @@ io.on('connection', (socket) => {
         credits: 0
       });
     }
-
+  
     socket.emit('creditsUpdate', userCredits.credits);
     console.log('Sent initial credits to client:', userCredits.credits);
-
+  
     const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
     if (!userLimit) {
       await InventoryLimit.create({
@@ -165,7 +180,7 @@ io.on('connection', (socket) => {
         { $inc: { currentWeight: 1 } }
       );
     }
-
+  
     const myHomeLimit = await InventoryLimit.findOne({ owner: myHomeOwnerKey });
     if (!myHomeLimit) {
       await InventoryLimit.create({
@@ -173,15 +188,15 @@ io.on('connection', (socket) => {
         maxWeight: 500
       });
     }
-
+  
     const workshopLimit = await InventoryLimit.findOne({ owner: 'Мастерская' });
     if (!workshopLimit) {
       await InventoryLimit.create({
         owner: 'Мастерская',
-        maxWeight: 1000 // Большой лимит для мастерской
+        maxWeight: 1000
       });
     }
-
+  
     const rooms = [
       'Автобусная остановка',
       'Бар "У бобра" (18+)',
@@ -200,38 +215,37 @@ io.on('connection', (socket) => {
     ];
     console.log('Available static rooms:', rooms);
     console.log('Received lastRoom:', userData.lastRoom);
-
-    // Проверяем, является ли lastRoom личным домом пользователя или статической комнатой
+  
     const isMyHome = userData.lastRoom && userData.lastRoom === `myhome_${socket.userData.userId}`;
     const isStaticRoom = userData.lastRoom && rooms.includes(userData.lastRoom);
     const defaultRoom = user.isRegistered ? (isMyHome || isStaticRoom ? userData.lastRoom : 'Полигон утилизации') : 'Автобусная остановка';
     console.log('Is lastRoom a personal home?', isMyHome);
     console.log('Is lastRoom a static room?', isStaticRoom);
     console.log('Selected defaultRoom:', defaultRoom);
-
+  
     socket.join(defaultRoom);
     userCurrentRoom.set(socket.userData.userId, defaultRoom);
-
+  
     if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
     roomUsers[defaultRoom].forEach(user => {
       if (user.userId === socket.userData.userId) {
         roomUsers[defaultRoom].delete(user);
       }
     });
-
+  
     roomUsers[defaultRoom].add({
       userId: socket.userData.userId,
       firstName: socket.userData.firstName,
       username: socket.userData.username,
       lastName: socket.userData.lastName,
       photoUrl: socket.userData.photoUrl,
-      name: user.name, // Добавляем name
-      isHuman: user.isHuman, // Добавляем isHuman
+      name: user.name,
+      isHuman: user.isHuman,
     });
-
+  
     io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
     console.log(`User ${socket.userData.userId} auto-joined room: ${defaultRoom}`);
-
+  
     try {
       const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
       socket.emit('messageHistory', messages);
@@ -239,7 +253,7 @@ io.on('connection', (socket) => {
       console.error('Error fetching messages for default room:', err.message, err.stack);
       socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
     }
-
+  
     socket.emit('authSuccess', { defaultRoom, isRegistered: user.isRegistered });
     if (callback) callback({ success: true });
   });

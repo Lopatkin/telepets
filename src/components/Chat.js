@@ -350,14 +350,22 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     if (message.trim() && room && socket) {
       let animalText = '';
       if (!user.isHuman) {
-        const words = message.split(/\s+/);
-        const sounds = user.animalType === 'cat' ? catSounds : dogSounds;
-        animalText = words
-          .map(() => {
-            const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
-            return randomSound.charAt(0).toUpperCase() + randomSound.slice(1);
+        const sounds = user.animalType === 'Кошка' ? catSounds : dogSounds;
+        // Разбиваем текст на слова, сохраняя пробелы и знаки препинания
+        const parts = message.match(/(\S+|\s+|[.,!?;:])/g) || [];
+        animalText = parts
+          .map(part => {
+            // Если это слово (не пробел и не знак препинания)
+            if (/\S/.test(part)) {
+              const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+              // Применяем регистр первой буквы оригинального слова
+              const isUpperCase = part.charAt(0) === part.charAt(0).toUpperCase();
+              return isUpperCase ? randomSound.charAt(0).toUpperCase() + randomSound.slice(1) : randomSound;
+            }
+            // Сохраняем пробелы и знаки препинания как есть
+            return part;
           })
-          .join(' ');
+          .join('');
       }
 
       const newMessage = {

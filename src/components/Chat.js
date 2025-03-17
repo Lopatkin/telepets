@@ -241,6 +241,16 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   console.log('Current user data:', user);
   console.log('Current user photo URL:', currentUserPhotoUrl);
 
+  // Списки слов для замены
+  const catSounds = [
+    'мяу', 'мрр', 'мяяу', 'мяяяу', 'мяяяяу', 'мур', 'мурр', 'муррр', 
+    'мууррр', 'мряу', 'мряяу', 'мряяяуу', 'мяф', 'мяяфф', 'мяяяффф'
+  ];
+  const dogSounds = [
+    'гав', 'гаав', 'гааав', 'ваф', 'вааф', 'ваааф', 'гаф', 'гафф', 
+    'гаффф', 'гааф', 'гаааф', 'гррр', 'грррр'
+  ];
+
   useEffect(() => {
     if (room === 'Парк') {
       const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false };
@@ -341,8 +351,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       let animalText = '';
       if (!user.isHuman) {
         const words = message.split(/\s+/);
-        const replacement = user.animalType === 'Кошка' ? 'мяу' : 'гав';
-        animalText = words.map(() => replacement).join(' ');
+        const sounds = user.animalType === 'cat' ? catSounds : dogSounds;
+        animalText = words
+          .map(() => {
+            const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+            return randomSound.charAt(0).toUpperCase() + randomSound.slice(1);
+          })
+          .join(' ');
       }
 
       const newMessage = {
@@ -350,8 +365,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         room,
         timestamp: new Date().toISOString(),
         photoUrl: currentUserPhotoUrl || '',
-        animalText: animalText || undefined // Добавляем animalText, если пользователь — животное
+        animalText: animalText || undefined
       };
+      console.log('Sending message:', newMessage); // Для отладки
       socket.emit('sendMessage', newMessage);
       setMessage('');
     }

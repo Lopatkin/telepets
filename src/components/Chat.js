@@ -353,7 +353,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       return msg.name;
     }
 
-    
+
     const parts = [];
     if (msg.firstName) parts.push(msg.firstName);
     if (msg.username) parts.push(`@${msg.username}`);
@@ -378,6 +378,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     ) : (
       <DefaultAvatar>{initial}</DefaultAvatar>
     );
+  };
+
+  // Новая функция для получения имени пользователя в списке
+  const getUserDisplayName = (user) => {
+    if (user.isHuman === false && user.name) {
+      return user.name; // Для животных используем name
+    }
+    return user.firstName || `User ${user.userId}`; // Для людей используем firstName
   };
 
   const formatTimestamp = (timestamp) => {
@@ -442,7 +450,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           {users.map((user, index) => (
             <UserItem key={index}>
               {getAvatar(user)}
-              <UserName theme={theme}>{user.firstName || `User ${user.userId}`}</UserName>
+              <UserName theme={theme}>{getUserDisplayName(user)}</UserName> {/* Используем новую функцию */}
             </UserItem>
           ))}
         </UserListModal>

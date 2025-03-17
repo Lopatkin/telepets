@@ -483,7 +483,7 @@ io.on('connection', (socket) => {
       let animalText = '';
       if (!user.isHuman) {
         const words = message.text.split(/\s+/);
-        const replacement = user.animalType === 'cat' ? 'мяу' : 'гав';
+        const replacement = user.animalType === 'Кошка' ? 'мяу' : 'гав';
         animalText = words.map(() => replacement).join(' ');
       }
 

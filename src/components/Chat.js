@@ -238,7 +238,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const messageCacheRef = useRef({});
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-  const currentUserPhotoUrl = user?.isHuman ? (telegramUser.photo_url || '') : (user?.photoUrl || '');
+  // Используем только user.photoUrl, так как сервер должен отправлять актуальный URL
+  const currentUserPhotoUrl = user?.photoUrl || '';
   console.log('Current user data:', user);
   console.log('Current user photo URL:', currentUserPhotoUrl);
 

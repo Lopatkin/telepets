@@ -238,16 +238,15 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const messageCacheRef = useRef({});
 
   const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
-  // Используем photoUrl из user для животных, из Telegram для людей
   const currentUserPhotoUrl = user?.isHuman ? (telegramUser.photo_url || '') : (user?.photoUrl || '');
 
   useEffect(() => {
     if (room === 'Парк') {
-      const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage };
+      const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false };
       setUsers(prevUsers => !prevUsers.some(user => user.userId === 'npc_belochka') ? [belochka, ...prevUsers] : prevUsers);
     } else if (room === 'Лес') {
-      const fox = { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage };
-      const ezhik = { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage };
+      const fox = { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage, isHuman: false };
+      const ezhik = { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage, isHuman: false };
       setUsers(prevUsers => {
         const updatedUsers = [...prevUsers];
         if (!prevUsers.some(user => user.userId === 'npc_fox')) updatedUsers.unshift(fox);
@@ -255,10 +254,10 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         return updatedUsers;
       });
     } else if (room === 'Район Дачный') {
-      const security = { userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage };
+      const security = { userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage, isHuman: true };
       setUsers(prevUsers => !prevUsers.some(user => user.userId === 'npc_security') ? [security, ...prevUsers] : prevUsers);
     } else if (room === 'Завод') {
-      const guard = { userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage };
+      const guard = { userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage, isHuman: true };
       setUsers(prevUsers => !prevUsers.some(user => user.userId === 'npc_guard') ? [guard, ...prevUsers] : prevUsers);
     } else {
       setUsers(prevUsers => prevUsers.filter(user => !['npc_belochka', 'npc_fox', 'npc_ezhik', 'npc_security', 'npc_guard'].includes(user.userId)));
@@ -270,7 +269,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
     console.log('Setting up socket listeners for room:', room);
 
-    // Восстанавливаем сообщения из кэша при монтировании
     const cachedMessages = messageCacheRef.current[room] || [];
     if (cachedMessages.length > 0 && messages.length === 0) {
       console.log('Restoring messages from cache:', cachedMessages);
@@ -322,7 +320,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       setUsers(updatedUsers);
     });
 
-    // Если кэш пуст или данных нет, запрашиваем историю
     if (!messageCacheRef.current[room]?.length) {
       console.log(`Requesting joinRoom for room: ${room} due to empty cache`);
       socket.emit('joinRoom', { room, lastTimestamp: null });
@@ -337,7 +334,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]); // Добавляем messages в зависимости
+  }, [messages]);
 
   const sendMessage = () => {
     if (message.trim() && room && socket) {
@@ -345,7 +342,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         text: message,
         room,
         timestamp: new Date().toISOString(),
-        photoUrl: currentUserPhotoUrl || ''
+        photoUrl: currentUserPhotoUrl || '',
       };
       socket.emit('sendMessage', newMessage);
       setMessage('');
@@ -355,11 +352,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const getAuthorName = (msg) => {
     if (msg.userId === userId) return '';
 
-    // Если пользователь — животное, используем name
     if (msg.isHuman === false && msg.name) {
       return msg.name;
     }
-
 
     const parts = [];
     if (msg.firstName) parts.push(msg.firstName);
@@ -387,12 +382,11 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     );
   };
 
-  // Новая функция для получения имени пользователя в списке
   const getUserDisplayName = (user) => {
     if (user.isHuman === false && user.name) {
-      return user.name; // Для животных используем name
+      return user.name;
     }
-    return user.firstName || `User ${user.userId}`; // Для людей используем firstName
+    return user.firstName || `User ${user.userId}`;
   };
 
   const formatTimestamp = (timestamp) => {

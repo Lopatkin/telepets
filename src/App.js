@@ -88,10 +88,10 @@ function App() {
       });
   
       socketRef.current.on('userUpdate', (updatedUser) => {
-        console.log('Received userUpdate:', updatedUser);
+        console.log('Received userUpdate from server:', updatedUser);
         setUser(prevUser => {
           const newUser = { ...prevUser, ...updatedUser };
-          console.log('Updated user state:', newUser); // Добавляем лог
+          console.log('Updated user state after userUpdate:', newUser);
           return newUser;
         });
         setIsRegistered(updatedUser.isRegistered);

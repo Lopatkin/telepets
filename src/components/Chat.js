@@ -299,6 +299,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       console.log('Received room users:', roomUsers);
       let updatedUsers = roomUsers.map(roomUser => {
         if (roomUser.userId === userId) {
+          console.log('Updating current user in roomUsers with photoUrl:', currentUserPhotoUrl);
           return { ...roomUser, photoUrl: currentUserPhotoUrl };
         }
         return roomUser;

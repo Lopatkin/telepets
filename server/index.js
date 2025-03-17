@@ -255,7 +255,7 @@ io.on('connection', (socket) => {
           residence: data.residence,
           animalType: data.animalType,
           name: data.name,
-          photoUrl: data.photoUrl || socket.userData.photoUrl || '', // Сохраняем photoUrl из data, если есть
+          photoUrl: data.photoUrl || socket.userData.photoUrl || '', // Сохраняем photoUrl из data
         },
         { new: true }
       );
@@ -264,41 +264,42 @@ io.on('connection', (socket) => {
         if (callback) callback({ success: false });
         return;
       }
-      console.log('Registration completed for user:', user.userId);
-
+      console.log('Registration completed for user:', user.userId, 'with photoUrl:', user.photoUrl);
+  
       // Обновляем socket.userData.photoUrl для животного
       if (!data.isHuman && data.photoUrl) {
         socket.userData.photoUrl = data.photoUrl;
+        console.log('Updated socket.userData.photoUrl for animal:', socket.userData.photoUrl);
       }
       if (!data.isHuman && data.name) {
-        socket.userData.name = data.name; // Добавляем name в socket.userData
+        socket.userData.name = data.name;
       }
-
+  
       // После успешной регистрации переводим игрока в "Автобусная остановка"
       const defaultRoom = 'Автобусная остановка';
       socket.join(defaultRoom);
       userCurrentRoom.set(user.userId, defaultRoom);
-
+  
       if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
       roomUsers[defaultRoom].forEach(u => {
         if (u.userId === user.userId) {
           roomUsers[defaultRoom].delete(u);
         }
       });
-
+  
       roomUsers[defaultRoom].add({
         userId: user.userId,
         firstName: user.firstName,
         username: user.username,
         lastName: user.lastName,
         photoUrl: user.photoUrl,
-        name: user.name, // Добавляем name в roomUsers
-        isHuman: user.isHuman, // Добавляем isHuman
+        name: user.name,
+        isHuman: user.isHuman,
       });
-
+  
       io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
       console.log(`User ${user.userId} joined room after registration: ${defaultRoom}`);
-
+  
       try {
         const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
         socket.emit('messageHistory', messages);
@@ -306,7 +307,7 @@ io.on('connection', (socket) => {
         console.error('Error fetching messages after registration:', err.message, err.stack);
         socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
       }
-
+  
       // Отправляем клиенту обновлённые данные пользователя
       socket.emit('userUpdate', {
         userId: user.userId,
@@ -319,7 +320,8 @@ io.on('connection', (socket) => {
         animalType: user.animalType,
         name: user.name,
       });
-
+      console.log('Sent userUpdate with photoUrl:', user.photoUrl);
+  
       if (callback) callback({ success: true });
     } catch (err) {
       console.error('Registration error:', err.message, err.stack);

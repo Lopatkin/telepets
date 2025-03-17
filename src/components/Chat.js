@@ -298,7 +298,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
     socket.on('roomUsers', (roomUsers) => {
       console.log('Received room users:', roomUsers);
-      let updatedUsers = roomUsers;
+      let updatedUsers = roomUsers.map(roomUser => {
+        // Для текущего пользователя обновляем photoUrl
+        if (roomUser.userId === userId) {
+          return { ...roomUser, photoUrl: currentUserPhotoUrl };
+        }
+        return roomUser;
+      });
       if (room === 'Парк') {
         updatedUsers = [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage }, ...roomUsers];
       } else if (room === 'Лес') {
@@ -326,7 +332,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       socket.off('message');
       socket.off('roomUsers');
     };
-  }, [socket, userId, room, messages]);
+  }, [socket, userId, room, messages, currentUserPhotoUrl]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

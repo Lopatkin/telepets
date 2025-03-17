@@ -14,12 +14,11 @@ const io = new Server(server, {
   pingInterval: 25000
 });
 
-
 mongoose.connect(process.env.MONGODB_URI, {})
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message));
 
-// Схема пользователя для регистрации
+// Схема пользователя
 const userSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
   firstName: String,
@@ -36,7 +35,7 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-// Остальные схемы остаются без изменений
+// Обновлённая схема сообщений с полем animalText
 const messageSchema = new mongoose.Schema({
   userId: String,
   text: String,
@@ -44,10 +43,12 @@ const messageSchema = new mongoose.Schema({
   username: String,
   lastName: String,
   photoUrl: String,
-  name: String, // Добавляем поле name
-  isHuman: Boolean, // Добавляем поле isHuman
+  name: String,
+  isHuman: Boolean,
+  animalType: String, // Добавляем animalType для определения "мяу" или "гав"
   room: String,
-  timestamp: { type: Date, default: Date.now }
+  timestamp: { type: Date, default: Date.now },
+  animalText: String // Новое поле для преобразованного текста
 });
 const Message = mongoose.model('Message', messageSchema);
 
@@ -75,7 +76,7 @@ const userCreditsSchema = new mongoose.Schema({
 });
 const UserCredits = mongoose.model('UserCredits', userCreditsSchema);
 
-// Хранилища остаются без изменений
+// Хранилища
 const roomUsers = {};
 const userCurrentRoom = new Map();
 const activeSockets = new Map();
@@ -92,8 +93,7 @@ io.on('connection', (socket) => {
       if (callback) callback({ success: false, message: 'Некорректные данные пользователя' });
       return;
     }
-  
-    // Проверяем или создаём пользователя в базе данных
+
     let user = await User.findOne({ userId: userData.userId });
     if (!user) {
       user = new User({
@@ -109,7 +109,7 @@ io.on('connection', (socket) => {
     } else {
       console.log('User authenticated:', user.userId);
     }
-  
+
     socket.userData = {
       userId: user.userId,
       firstName: user.firstName,
@@ -118,19 +118,19 @@ io.on('connection', (socket) => {
       photoUrl: user.photoUrl,
       name: user.name,
       isHuman: user.isHuman,
+      animalType: user.animalType // Добавляем animalType в socket.userData
     };
     console.log('Received auth data:', userData);
     console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
-  
+
     if (activeSockets.has(socket.userData.userId)) {
       console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
       const oldSocket = activeSockets.get(socket.userData.userId);
       oldSocket.disconnect();
     }
-  
+
     activeSockets.set(socket.userData.userId, socket);
-  
-    // Отправляем актуальные данные пользователя клиенту
+
     socket.emit('userUpdate', {
       userId: user.userId,
       firstName: user.firstName,
@@ -143,11 +143,10 @@ io.on('connection', (socket) => {
       name: user.name,
     });
     console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
-  
-    // Остальной код остаётся без изменений
+
     const userOwnerKey = `user_${socket.userData.userId}`;
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
-  
+
     let userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
     if (!userCredits) {
       userCredits = await UserCredits.create({
@@ -155,10 +154,10 @@ io.on('connection', (socket) => {
         credits: 0
       });
     }
-  
+
     socket.emit('creditsUpdate', userCredits.credits);
     console.log('Sent initial credits to client:', userCredits.credits);
-  
+
     const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
     if (!userLimit) {
       await InventoryLimit.create({
@@ -180,7 +179,7 @@ io.on('connection', (socket) => {
         { $inc: { currentWeight: 1 } }
       );
     }
-  
+
     const myHomeLimit = await InventoryLimit.findOne({ owner: myHomeOwnerKey });
     if (!myHomeLimit) {
       await InventoryLimit.create({
@@ -188,7 +187,7 @@ io.on('connection', (socket) => {
         maxWeight: 500
       });
     }
-  
+
     const workshopLimit = await InventoryLimit.findOne({ owner: 'Мастерская' });
     if (!workshopLimit) {
       await InventoryLimit.create({
@@ -196,7 +195,7 @@ io.on('connection', (socket) => {
         maxWeight: 1000
       });
     }
-  
+
     const rooms = [
       'Автобусная остановка',
       'Бар "У бобра" (18+)',
@@ -215,24 +214,24 @@ io.on('connection', (socket) => {
     ];
     console.log('Available static rooms:', rooms);
     console.log('Received lastRoom:', userData.lastRoom);
-  
+
     const isMyHome = userData.lastRoom && userData.lastRoom === `myhome_${socket.userData.userId}`;
     const isStaticRoom = userData.lastRoom && rooms.includes(userData.lastRoom);
     const defaultRoom = user.isRegistered ? (isMyHome || isStaticRoom ? userData.lastRoom : 'Полигон утилизации') : 'Автобусная остановка';
     console.log('Is lastRoom a personal home?', isMyHome);
     console.log('Is lastRoom a static room?', isStaticRoom);
     console.log('Selected defaultRoom:', defaultRoom);
-  
+
     socket.join(defaultRoom);
     userCurrentRoom.set(socket.userData.userId, defaultRoom);
-  
+
     if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
     roomUsers[defaultRoom].forEach(user => {
       if (user.userId === socket.userData.userId) {
         roomUsers[defaultRoom].delete(user);
       }
     });
-  
+
     roomUsers[defaultRoom].add({
       userId: socket.userData.userId,
       firstName: socket.userData.firstName,
@@ -242,10 +241,10 @@ io.on('connection', (socket) => {
       name: user.name,
       isHuman: user.isHuman,
     });
-  
+
     io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
     console.log(`User ${socket.userData.userId} auto-joined room: ${defaultRoom}`);
-  
+
     try {
       const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
       socket.emit('messageHistory', messages);
@@ -253,7 +252,7 @@ io.on('connection', (socket) => {
       console.error('Error fetching messages for default room:', err.message, err.stack);
       socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
     }
-  
+
     socket.emit('authSuccess', { defaultRoom, isRegistered: user.isRegistered });
     if (callback) callback({ success: true });
   });
@@ -269,7 +268,7 @@ io.on('connection', (socket) => {
           residence: data.residence,
           animalType: data.animalType,
           name: data.name,
-          photoUrl: data.photoUrl || socket.userData.photoUrl || '', // Сохраняем photoUrl из data
+          photoUrl: data.photoUrl || socket.userData.photoUrl || '',
         },
         { new: true }
       );
@@ -279,8 +278,7 @@ io.on('connection', (socket) => {
         return;
       }
       console.log('Registration completed for user:', user.userId, 'with photoUrl:', user.photoUrl);
-  
-      // Обновляем socket.userData.photoUrl для животного
+
       if (!data.isHuman && data.photoUrl) {
         socket.userData.photoUrl = data.photoUrl;
         console.log('Updated socket.userData.photoUrl for animal:', socket.userData.photoUrl);
@@ -288,19 +286,18 @@ io.on('connection', (socket) => {
       if (!data.isHuman && data.name) {
         socket.userData.name = data.name;
       }
-  
-      // После успешной регистрации переводим игрока в "Автобусная остановка"
+
       const defaultRoom = 'Автобусная остановка';
       socket.join(defaultRoom);
       userCurrentRoom.set(user.userId, defaultRoom);
-  
+
       if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
       roomUsers[defaultRoom].forEach(u => {
         if (u.userId === user.userId) {
           roomUsers[defaultRoom].delete(u);
         }
       });
-  
+
       roomUsers[defaultRoom].add({
         userId: user.userId,
         firstName: user.firstName,
@@ -310,10 +307,10 @@ io.on('connection', (socket) => {
         name: user.name,
         isHuman: user.isHuman,
       });
-  
+
       io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
       console.log(`User ${user.userId} joined room after registration: ${defaultRoom}`);
-  
+
       try {
         const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
         socket.emit('messageHistory', messages);
@@ -321,8 +318,7 @@ io.on('connection', (socket) => {
         console.error('Error fetching messages after registration:', err.message, err.stack);
         socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
       }
-  
-      // Отправляем клиенту обновлённые данные пользователя
+
       socket.emit('userUpdate', {
         userId: user.userId,
         firstName: user.firstName,
@@ -335,7 +331,7 @@ io.on('connection', (socket) => {
         name: user.name,
       });
       console.log('Sent userUpdate with photoUrl:', user.photoUrl);
-  
+
       if (callback) callback({ success: true });
     } catch (err) {
       console.error('Registration error:', err.message, err.stack);
@@ -371,7 +367,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const user = await User.findOne({ userId: socket.userData.userId }); // Загружаем пользователя из базы
+    const user = await User.findOne({ userId: socket.userData.userId });
     if (!user) {
       socket.emit('error', { message: 'Пользователь не найден в базе' });
       return;
@@ -428,8 +424,8 @@ io.on('connection', (socket) => {
       username: socket.userData.username,
       lastName: socket.userData.lastName,
       photoUrl: socket.userData.photoUrl,
-      name: user.name, // Добавляем name
-      isHuman: user.isHuman, // Добавляем isHuman
+      name: user.name,
+      isHuman: user.isHuman,
     });
 
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
@@ -472,31 +468,41 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', async (message) => {
     if (!socket.userData || !message || !message.room) {
       console.error('Invalid message data:', message);
+      socket.emit('error', { message: 'Некорректные данные сообщения' });
       return;
     }
 
     try {
-      const user = await User.findOne({ userId: socket.userData.userId }); // Загружаем пользователя из базы
+      const user = await User.findOne({ userId: socket.userData.userId });
       if (!user) {
         console.error('User not found for userId:', socket.userData.userId);
         socket.emit('error', { message: 'Пользователь не найден' });
         return;
       }
 
+      let animalText = '';
+      if (!user.isHuman) {
+        const words = message.text.split(/\s+/);
+        const replacement = user.animalType === 'cat' ? 'мяу' : 'гав';
+        animalText = words.map(() => replacement).join(' ');
+      }
+
       const newMessage = new Message({
         userId: socket.userData.userId,
         text: message.text,
-        firstName: user.firstName || '', // Берем из базы
+        firstName: user.firstName || '',
         username: user.username || '',
         lastName: user.lastName || '',
         photoUrl: user.photoUrl || '',
-        name: user.name || '', // Используем name из базы
-        isHuman: user.isHuman, // Используем isHuman из базы
+        name: user.name || '',
+        isHuman: user.isHuman,
+        animalType: user.animalType, // Сохраняем тип животного
         room: message.room,
         timestamp: message.timestamp || new Date().toISOString(),
+        animalText: animalText || undefined // Добавляем animalText
       });
       await newMessage.save();
-      console.log('Message saved:', newMessage);
+      console.log('Message saved:', { text: newMessage.text, animalText: newMessage.animalText });
       io.to(message.room).emit('message', newMessage);
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);

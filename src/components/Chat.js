@@ -64,7 +64,7 @@ const MessagesContainer = styled.div`
       return `url(${karnavalImage}) no-repeat center center fixed`;
     } else if (props.room === 'Полигон утилизации') {
       return `url(${poligonImage}) no-repeat center center fixed`;
-    } else if (props.room === 'Мастерская') { // Добавляем "Мастерскую"
+    } else if (props.room === 'Мастерская') {
       return `url(${workshopImage}) no-repeat center center fixed`;
     } else {
       return props.theme === 'dark' ? '#1A1A1A' : '#fff';
@@ -411,6 +411,15 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     setShowUserList(false);
   };
 
+  const getDisplayText = (msg) => {
+    // Если сообщение от животного и текущий пользователь — человек, показываем animalText
+    if (!msg.isHuman && user.isHuman) {
+      return msg.animalText || msg.text; // Используем animalText, если есть, иначе text
+    }
+    // В остальных случаях (животное видит животное или сообщение от человека) показываем text
+    return msg.text;
+  };
+
   return (
     <ChatContainer>
       <MessagesContainer room={room} theme={theme}>
@@ -423,7 +432,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
               </MessageHeader>
             )}
             <MessageContent>
-              <MessageText theme={theme} isOwn={msg.userId === userId}>{msg.text}</MessageText>
+              <MessageText theme={theme} isOwn={msg.userId === userId}>{getDisplayText(msg)}</MessageText>
               <Timestamp theme={theme}>{formatTimestamp(msg.timestamp)}</Timestamp>
             </MessageContent>
           </Message>

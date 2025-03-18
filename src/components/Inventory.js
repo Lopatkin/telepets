@@ -307,10 +307,15 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
   const handleItemsUpdate = useCallback((data) => {
-    if (!data || typeof data !== 'object' || !data.owner || !data.items) {
-      console.error('Invalid items data received:', data);
-      return; // Игнорируем некорректные данные
+    if (!data) {
+      console.error('Received null or undefined data in handleItemsUpdate:', data);
+      return;
     }
+    if (typeof data !== 'object' || !data.owner || !data.items) {
+      console.error('Invalid items data received:', data);
+      return;
+    }
+
     const { owner, items } = data;
     if (owner === userOwnerKey) {
       const updatedItems = items.map(item => ({
@@ -398,7 +403,8 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
 
     setIsActionCooldown(true);
     setAnimatingItem({ itemId, action: 'pickup' });
-    closeActionModal(); // Закрываем модальное окно сразу после клика
+    console.log('Calling closeActionModal', closeActionModal); // Отладка
+    closeActionModal();
 
     setTimeout(() => {
       const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
@@ -465,18 +471,10 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
   return (
     <InventoryContainer theme={theme}>
       <Tabs>
-        <Tab
-          active={activeSubTab === 'personal'}
-          onClick={() => setActiveSubTab('personal')}
-          theme={theme}
-        >
+        <Tab active={activeSubTab === 'personal'} onClick={() => setActiveSubTab('personal')} theme={theme}>
           Личные вещи
         </Tab>
-        <Tab
-          active={activeSubTab === 'location'}
-          onClick={() => setActiveSubTab('location')}
-          theme={theme}
-        >
+        <Tab active={activeSubTab === 'location'} onClick={() => setActiveSubTab('location')} theme={theme}>
           Локация
         </Tab>
       </Tabs>

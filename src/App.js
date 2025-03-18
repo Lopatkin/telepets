@@ -45,6 +45,10 @@ function App() {
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false); // Новое состояние для модального окна
 
+  const closeActionModal = () => {
+    setIsActionModalOpen(false);
+  };
+
   const handleItemsUpdate = (items) => {
     setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
   };
@@ -241,12 +245,12 @@ function App() {
         )}
         {activeTab === 'housing' && socket && (
           <Inventory
-            userId={user.userId}
+            userId={userId}
             currentRoom={currentRoom}
-            theme={appliedTheme}
+            theme={theme}
             socket={socket}
             onItemsUpdate={handleItemsUpdate}
-            closeActionModal={() => setIsActionModalOpen(false)} // Передаём функцию закрытия
+            closeActionModal={closeActionModal}
           />
         )}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}

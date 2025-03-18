@@ -1,4 +1,3 @@
-// App.js
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
@@ -43,9 +42,10 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [personalItems, setPersonalItems] = useState([]);
   const [isRegistered, setIsRegistered] = useState(null);
-  const [isActionModalOpen, setIsActionModalOpen] = useState(false); // Новое состояние для модального окна
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
   const closeActionModal = () => {
+    console.log('Closing action modal'); // Отладка
     setIsActionModalOpen(false);
   };
 
@@ -240,17 +240,18 @@ function App() {
             socket={socket}
             personalItems={personalItems}
             isModalOpen={isActionModalOpen}
-            setIsModalOpen={setIsActionModalOpen} // Передаём управление модальным окном
+            setIsModalOpen={setIsActionModalOpen}
           />
         )}
         {activeTab === 'housing' && socket && (
           <Inventory
-            userId={userId}
+            userId={user.userId}
             currentRoom={currentRoom}
-            theme={theme}
+            theme={appliedTheme}
             socket={socket}
             onItemsUpdate={handleItemsUpdate}
             closeActionModal={closeActionModal}
+            setIsModalOpen={setIsActionModalOpen} // Добавляем пропс
           />
         )}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}

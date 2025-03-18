@@ -376,7 +376,7 @@ const workshopActions = [
   },
 ];
 
-function Actions({ theme, currentRoom, userId, socket, personalItems }) {
+function Actions({ theme, currentRoom, userId, socket, personalItems, isModalOpen, setIsModalOpen }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [isCooldown, setIsCooldown] = useState(false);
@@ -447,6 +447,8 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
       return;
     }
     setSelectedAction(action);
+    setIsModalOpen(true); // Открываем модальное окно
+
     // Сбрасываем выбор предмета при открытии модального окна
     if (action.title === 'Столярная мастерская') {
       setSelectedCraftItem(action.craftableItems[0].name);
@@ -459,7 +461,8 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
 
   const handleCloseModal = () => {
     setSelectedAction(null);
-    setClickCount(0); // Сбрасываем при закрытии
+    setIsModalOpen(false); // Закрываем модальное окно
+    setClickCount(0);
     setCraftingProgress(0);
   };
 

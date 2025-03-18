@@ -290,7 +290,7 @@ const ConfirmButton = styled(ActionButton)`
   }
 `;
 
-function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeActionModal }) {
+function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeActionModal, setIsModalOpen }) {
   const [activeSubTab, setActiveSubTab] = useState('personal');
   const [personalItems, setPersonalItems] = useState([]);
   const [locationItems, setLocationItems] = useState([]);
@@ -311,7 +311,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
       console.error('Received null or undefined data in handleItemsUpdate:', data);
       return;
     }
-    if (typeof data !== 'object' || !data.owner || !data.items) {
+    if (typeof data !== 'object' || !('owner' in data) || !('items' in data)) {
       console.error('Invalid items data received:', data);
       return;
     }
@@ -403,8 +403,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
 
     setIsActionCooldown(true);
     setAnimatingItem({ itemId, action: 'pickup' });
-    console.log('Calling closeActionModal', closeActionModal); // Отладка
-    closeActionModal();
+    console.log('Calling closeActionModal and setIsModalOpen(false)');
+    closeActionModal(); // Оставляем для совместимости
+    setIsModalOpen(false); // Закрываем модальное окно в Actions.js
 
     setTimeout(() => {
       const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);

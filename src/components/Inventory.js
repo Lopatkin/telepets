@@ -394,16 +394,13 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
 
     setIsActionCooldown(true);
     setAnimatingItem({ itemId, action: 'pickup' });
+    closeActionModal(); // Закрываем модальное окно сразу после клика
 
     setTimeout(() => {
       const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
       setLocationItems(updatedLocationItems);
       setAnimatingItem(null);
-      socket.emit('pickupItem', { itemId }, (response) => {
-        if (response && response.success) {
-          closeActionModal(); // Закрываем модальное окно после успешного подбора
-        }
-      });
+      socket.emit('pickupItem', { itemId });
 
       setTimeout(() => {
         setIsActionCooldown(false);
@@ -587,7 +584,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
         )}
       </Modal>
     </InventoryContainer>
-    
   );
 }
 

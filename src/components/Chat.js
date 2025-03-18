@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
+import { catSounds, dogSounds } from './animalSounds'; // Импорт массивов
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
 import trainStationImage from '../images/train_station.jpg';
@@ -241,16 +242,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   console.log('Current user data:', user);
   console.log('Current user photo URL:', currentUserPhotoUrl);
 
- // Списки слов для замены
- const catSounds = [
-  'мяу', 'мрр', 'мяяу', 'мяяяу', 'мяяяяу', 'мур', 'мурр', 'муррр', 
-  'мууррр', 'мряу', 'мряяу', 'мряяяуу', 'мяф', 'мяяфф', 'мяяяффф', 'мяу', 'мяяу', 'мяяяу', 'миу'
-];
-const dogSounds = [
-  'гав', 'гаав', 'гааав', 'ваф', 'вааф', 'ваааф', 'гаф', 'гафф', 
-  'гаффф', 'гааф', 'гаааф', 'грр', 'гррр', 'грррр', 'гав', 'гаав', 'гааав', 'гав', 'гаав', 'гааав'
-];
-
   useEffect(() => {
     if (room === 'Парк') {
       const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false };
@@ -351,21 +342,18 @@ const dogSounds = [
       let animalText = '';
       if (!user.isHuman) {
         const sounds = user.animalType === 'Кошка' ? catSounds : dogSounds;
-        // Разбиваем текст на слова с примыкающими знаками препинания
         const parts = message.match(/[^\s,.!?;:]+[,.!?;:]*/g) || message.split(/\s+/);
         animalText = parts
           .map((part, index) => {
-            // Извлекаем слово и знаки препинания
             const wordMatch = part.match(/^([^\s,.!?;:]+)([,.!?;:]*)$/);
             if (wordMatch) {
               const [, word, punctuation] = wordMatch;
               const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
-              // Применяем регистр первой буквы оригинального слова
               const isUpperCase = word.charAt(0) === word.charAt(0).toUpperCase();
               const transformedSound = isUpperCase ? randomSound.charAt(0).toUpperCase() + randomSound.slice(1) : randomSound;
               return transformedSound + punctuation;
             }
-            return part; // Если не слово (например, пробел), оставляем как есть
+            return part;
           })
           .join(' ');
       }
@@ -377,7 +365,7 @@ const dogSounds = [
         photoUrl: currentUserPhotoUrl || '',
         animalText: animalText || undefined
       };
-      console.log('Sending message:', newMessage); // Для отладки
+      console.log('Sending message:', newMessage);
       socket.emit('sendMessage', newMessage);
       setMessage('');
     }

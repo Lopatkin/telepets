@@ -587,6 +587,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
         )}
       </Modal>
     </InventoryContainer>
+    
   );
 }
 

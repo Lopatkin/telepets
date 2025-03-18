@@ -48,7 +48,7 @@ const messageSchema = new mongoose.Schema({
   animalType: String,
   room: String,
   timestamp: { type: Date, default: Date.now },
-  animalText: String // Оставляем поле, но заполняется клиентом
+  animalText: String
 });
 const Message = mongoose.model('Message', messageSchema);
 
@@ -492,7 +492,7 @@ io.on('connection', (socket) => {
         animalType: user.animalType,
         room: message.room,
         timestamp: message.timestamp || new Date().toISOString(),
-        animalText: message.animalText || undefined // Принимаем animalText от клиента
+        animalText: message.animalText || undefined
       });
       await newMessage.save();
       console.log('Message saved:', { text: newMessage.text, animalText: newMessage.animalText });
@@ -527,42 +527,40 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('addItem', async (item, callback) => {
+  socket.on('addItem', async ({ owner, item }, callback) => {
     try {
-      const owner = item.owner;
-      if (item._id && itemLocks.has(item._id)) {
-        if (callback) callback({ success: false, message: 'Этот предмет уже обрабатывается' });
+      if (!owner || !item || !item.name) {
+        console.error('Invalid item data:', { owner, item });
+        if (callback) callback({ success: false, message: 'Некорректные данные предмета' });
         return;
       }
 
-      if (item._id) {
-        itemLocks.set(item._id, true);
-      }
+      console.log('Received addItem data:', { owner, item }); // Отладка
 
       const ownerLimit = await InventoryLimit.findOne({ owner });
       if (!ownerLimit) {
-        if (item._id) itemLocks.delete(item._id);
         if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
         return;
       }
 
       const itemWeight = parseFloat(item.weight) || 0;
       if (ownerLimit.currentWeight + itemWeight > ownerLimit.maxWeight) {
-        if (item._id) itemLocks.delete(item._id);
         if (callback) callback({ success: false, message: 'Превышен лимит веса' });
         return;
       }
 
       const newItem = new Item({
         name: item.name,
-        description: item.description,
-        rarity: item.rarity,
-        weight: item.weight,
-        cost: item.cost,
-        effect: item.effect,
+        description: item.description || '',
+        rarity: item.rarity || 'Обычный',
+        weight: item.weight || 0,
+        cost: item.cost || 0,
+        effect: item.effect || '',
         owner: owner
       });
       await newItem.save();
+
+      console.log('Saved new item:', newItem); // Отладка
 
       await InventoryLimit.updateOne(
         { owner },
@@ -585,10 +583,8 @@ io.on('connection', (socket) => {
       io.to(owner).emit('items', { owner, items: itemCache.get(owner) });
 
       if (callback) callback({ success: true });
-      if (item._id) itemLocks.delete(item._id);
     } catch (err) {
       console.error('Error adding item:', err.message, err.stack);
-      if (item._id) itemLocks.delete(item._id);
       if (callback) callback({ success: false, message: 'Ошибка при добавлении предмета' });
     }
   });

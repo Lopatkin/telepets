@@ -304,14 +304,14 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
   // Обновляем handleItemsUpdate, чтобы синхронизировать с сервером и заменить временный "Мусор"
   const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
+    console.log('Received items update:', data); // Отладка
     if (owner === userOwnerKey) {
-      // Заменяем временный "Мусор" на серверный, если он есть
       const updatedItems = items.map(item => ({
         ...item,
-        _id: item._id.toString(), // Убеждаемся, что ID в строковом формате
+        _id: item._id.toString(),
       }));
       setPersonalItems(updatedItems);
-      onItemsUpdate(updatedItems); // Передаем обновленные предметы в App.js
+      onItemsUpdate(updatedItems);
     } else if (owner === locationOwnerKey) {
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
         setLocationItems(items);

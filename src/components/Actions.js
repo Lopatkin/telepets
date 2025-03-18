@@ -523,6 +523,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
         cost: 5,
         effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
       };
+      console.log('Sending addItem with data:', { owner: `user_${userId}`, item: newItem }); // Отладка
       socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
         if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });

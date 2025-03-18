@@ -307,6 +307,10 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
   const handleItemsUpdate = useCallback((data) => {
+    if (!data || typeof data !== 'object' || !data.owner || !data.items) {
+      console.error('Invalid items data received:', data);
+      return; // Игнорируем некорректные данные
+    }
     const { owner, items } = data;
     if (owner === userOwnerKey) {
       const updatedItems = items.map(item => ({

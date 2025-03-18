@@ -1,3 +1,4 @@
+// App.js
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
@@ -42,6 +43,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [personalItems, setPersonalItems] = useState([]);
   const [isRegistered, setIsRegistered] = useState(null);
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false); // Новое состояние для модального окна
 
   const handleItemsUpdate = (items) => {
     setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
@@ -65,7 +67,6 @@ function App() {
         console.log('Socket connected:', socketRef.current.id);
         setSocket(socketRef.current);
 
-        // Отправляем начальную авторизацию с Telegram-данными
         if (window.Telegram?.WebApp) {
           window.Telegram.WebApp.ready();
           const telegramData = window.Telegram.WebApp.initDataUnsafe;
@@ -227,8 +228,27 @@ function App() {
             user={user}
           />
         )}
-        {activeTab === 'actions' && socket && <Actions theme={appliedTheme} currentRoom={currentRoom} userId={user.userId} socket={socket} personalItems={personalItems} />}
-        {activeTab === 'housing' && socket && <Inventory userId={user.userId} currentRoom={currentRoom} theme={appliedTheme} socket={socket} onItemsUpdate={handleItemsUpdate} />}
+        {activeTab === 'actions' && socket && (
+          <Actions
+            theme={appliedTheme}
+            currentRoom={currentRoom}
+            userId={user.userId}
+            socket={socket}
+            personalItems={personalItems}
+            isModalOpen={isActionModalOpen}
+            setIsModalOpen={setIsActionModalOpen} // Передаём управление модальным окном
+          />
+        )}
+        {activeTab === 'housing' && socket && (
+          <Inventory
+            userId={user.userId}
+            currentRoom={currentRoom}
+            theme={appliedTheme}
+            socket={socket}
+            onItemsUpdate={handleItemsUpdate}
+            closeActionModal={() => setIsActionModalOpen(false)} // Передаём функцию закрытия
+          />
+        )}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
         {activeTab === 'profile' && (
           <Profile
@@ -244,7 +264,6 @@ function App() {
       <Footer activeTab={activeTab} setActiveTab={setActiveTab} theme={appliedTheme} />
     </AppContainer>
   );
-  
 }
 
 export default App;

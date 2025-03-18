@@ -145,19 +145,21 @@ const ThemeLabel = styled.span`
 
 function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, progressValues }) {
   const photoUrl = user?.photoUrl || '';
-  const firstName = user?.firstName || 'User';
+  // Для животных используем поле name, для людей — firstName и lastName
+  const displayName = !user.isHuman && user.name 
+    ? user.name 
+    : `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim();
   const username = user?.username || '';
-  const lastName = user?.lastName || '';
-  const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
+  const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
 
   return (
     <ProfileContainer theme={theme}>
       {photoUrl ? (
-        <Avatar src={photoUrl} alt={`${firstName}'s avatar`} />
+        <Avatar src={photoUrl} alt={`${displayName}'s avatar`} />
       ) : (
         <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
       )}
-      <Name theme={theme}>{firstName} {lastName}</Name>
+      <Name theme={theme}>{displayName}</Name>
       {username && <Username theme={theme}>@{username}</Username>}
       <Info theme={theme}>ID: {user.userId}</Info>
       {progressValues && (

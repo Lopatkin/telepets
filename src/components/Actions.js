@@ -526,7 +526,10 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
       socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
         if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });
-          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          setTimeout(() => {
+            setNotification({ show: false, message: '' });
+            setSelectedAction(null); // Добавляем закрытие модального окна
+          }, 2000);
           setIsCooldown(true);
           setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
           setProgress(100);

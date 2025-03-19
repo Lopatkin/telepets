@@ -687,10 +687,11 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('pickupItem', async ({ itemId }) => {
+  socket.on('pickupItem', async ({ itemId }, callback) => {
     try {
       if (itemLocks.has(itemId)) {
         socket.emit('error', { message: 'Этот предмет уже обрабатывается другим пользователем' });
+        if (callback) callback({ success: false, message: 'Предмет уже обрабатывается' });
         return;
       }
 
@@ -700,6 +701,7 @@ io.on('connection', (socket) => {
       if (!item) {
         itemLocks.delete(itemId);
         socket.emit('error', { message: 'Предмет не найден' });
+        if (callback) callback({ success: false, message: 'Предмет не найден' });
         return;
       }
 
@@ -708,9 +710,16 @@ io.on('connection', (socket) => {
       const itemWeight = parseFloat(item.weight) || 0;
 
       const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
+      if (!userLimit) {
+        itemLocks.delete(itemId);
+        socket.emit('error', { message: 'Лимит инвентаря пользователя не найден' });
+        if (callback) callback({ success: false, message: 'Лимит инвентаря пользователя не найден' });
+        return;
+      }
       if (userLimit.currentWeight + itemWeight > userLimit.maxWeight) {
         itemLocks.delete(itemId);
         socket.emit('error', { message: 'Превышен лимит веса у пользователя' });
+        if (callback) callback({ success: false, message: 'Превышен лимит веса' });
         return;
       }
 
@@ -719,6 +728,7 @@ io.on('connection', (socket) => {
         console.error(`Inventory limit not found for owner: ${oldOwner}`);
         itemLocks.delete(itemId);
         socket.emit('error', { message: 'Лимиты инвентаря не найдены' });
+        if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
         return;
       }
 
@@ -741,6 +751,10 @@ io.on('connection', (socket) => {
 
       const updatedOldLimit = await InventoryLimit.findOne({ owner: oldOwner });
       const updatedUserLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
+
+      // Отправляем обновления напрямую клиенту
+      socket.emit('items', { owner: userOwnerKey, items: itemCache.get(userOwnerKey) || [] });
+      socket.emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) || [] });
       socket.emit('inventoryLimit', updatedOldLimit);
       socket.emit('inventoryLimit', updatedUserLimit);
 
@@ -754,11 +768,14 @@ io.on('connection', (socket) => {
         io.to(currentRoom).emit('inventoryLimit', updatedUserLimit);
       }
 
+      console.log(`Item ${itemId} picked up by ${userOwnerKey} from ${oldOwner}`);
       itemLocks.delete(itemId);
+      if (callback) callback({ success: true });
     } catch (err) {
       console.error('Error picking up item:', err.message, err.stack);
       itemLocks.delete(itemId);
       socket.emit('error', { message: 'Ошибка при подборе предмета' });
+      if (callback) callback({ success: false, message: 'Ошибка при подборе предмета' });
     }
   });
 

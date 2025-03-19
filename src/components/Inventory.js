@@ -307,7 +307,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
   const handleItemsUpdate = useCallback((data) => {
-    console.log('Received items data:', data); // Отладка
+    console.log('Received items data:', data);
     if (data === null || data === undefined) {
       console.error('Received null or undefined data in handleItemsUpdate:', data);
       return;
@@ -323,10 +323,12 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
         ...item,
         _id: item._id.toString(),
       }));
+      console.log('Updating personalItems:', updatedItems);
       setPersonalItems(updatedItems);
       onItemsUpdate(updatedItems);
     } else if (owner === locationOwnerKey) {
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
+        console.log('Updating locationItems:', items);
         setLocationItems(items);
       }
     }
@@ -415,14 +417,23 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
     setAnimatingItem({ itemId, action: 'pickup' });
     console.log('Attempting to pick up item:', itemId);
 
+    const itemToPickup = locationItems.find(item => item._id.toString() === itemId);
+    if (!itemToPickup) {
+      console.error('Item not found in locationItems:', itemId);
+      setIsActionCooldown(false);
+      return;
+    }
+
     socket.emit('pickupItem', { itemId }, (response) => {
       if (response && response.success) {
         setTimeout(() => {
           const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
           setLocationItems(updatedLocationItems);
+          setPersonalItems(prev => [...prev, itemToPickup]); // Добавляем предмет в личный инвентарь
           setAnimatingItem(null);
-          setIsModalOpen(false); // Закрываем модальное окно после успеха
+          setIsModalOpen(false); // Закрываем модальное окно
           setIsActionCooldown(false);
+          console.log('Item picked up successfully:', itemToPickup);
         }, 500);
       } else {
         console.error('Pickup failed:', response?.message);

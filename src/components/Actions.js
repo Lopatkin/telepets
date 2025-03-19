@@ -631,6 +631,11 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
       });
     }
 
+    // Мгновенно закрываем модальное окно перед отправкой запроса
+    setSelectedAction(null);
+    setClickCount(0);
+    setCraftingProgress(0);
+
     // Добавляем созданный предмет с правильной структурой
     socket.emit('addItem', { owner: 'Мастерская', item: craftedItem }, (response) => {
       if (response && response.success) {

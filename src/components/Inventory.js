@@ -58,27 +58,27 @@ const splitAndFade = keyframes`
   20% {
     opacity: 0.9;
     transform: scale(1.1);
-    clip-path: polygon(0% 0%, 40% 0%, 30% 100%, 0% 100%);
+    clip-path: polygon(0% 0%, 40% 0%, 30% 100%, 0% 100%); /* Первый кусок */
   }
   40% {
     opacity: 0.7;
     transform: scale(1.3) translate(10px, -15px);
-    clip-path: polygon(40% 0%, 70% 0%, 60% 100%, 30% 100%);
+    clip-path: polygon(40% 0%, 70% 0%, 60% 100%, 30% 100%); /* Второй кусок */
   }
   60% {
     opacity: 0.5;
     transform: scale(1.5) translate(-20px, 20px);
-    clip-path: polygon(70% 0%, 100% 0%, 100% 100%, 60% 100%);
+    clip-path: polygon(70% 0%, 100% 0%, 100% 100%, 60% 100%); /* Третий кусок */
   }
   80% {
     opacity: 0.3;
     transform: scale(1.7) translate(30px, -30px);
-    clip-path: polygon(0% 0%, 100% 0%, 100% 40%, 0% 60%);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 40%, 0% 60%); /* Четвёртый кусок */
   }
   100% {
     opacity: 0;
     transform: scale(2) translate(-40px, 40px);
-    clip-path: polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%);
+    clip-path: polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%); /* Полное исчезновение */
   }
 `;
 
@@ -125,10 +125,10 @@ const ItemList = styled.div`
   display: grid;
   gap: 15px;
   ${props => props.subTab === 'personal' && `
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* 1 элемент на строке */
   `}
   ${props => props.subTab === 'location' && `
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr); /* 2 элемента на строке */
   `}
 `;
 
@@ -192,12 +192,12 @@ const ActionButtons = styled.div`
 
 const ActionButton = styled.button`
   position: relative;
-  padding: 5px 10px;
+  padding: 5px 10px; /* Увеличили padding для текста */
   height: 30px;
   border: none;
   border-radius: 4px;
   cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
-  font-size: 12px;
+  font-size: 12px; /* Уменьшили шрифт для компактности */
   transition: background 0.2s;
   opacity: ${props => (props.disabled ? 0.5 : 1)};
   display: flex;
@@ -225,11 +225,6 @@ const MoveButton = styled(ActionButton)`
 
 const DeleteButton = styled(ActionButton)`
   background: #FF0000;
-  color: white;
-`;
-
-const PickupButton = styled(ActionButton)`
-  background: #32CD32;
   color: white;
 `;
 
@@ -290,7 +285,7 @@ const ConfirmButton = styled(ActionButton)`
   }
 `;
 
-function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeActionModal, setIsModalOpen }) {
+function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
   const [activeSubTab, setActiveSubTab] = useState('personal');
   const [personalItems, setPersonalItems] = useState([]);
   const [locationItems, setLocationItems] = useState([]);
@@ -306,29 +301,19 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
+  // Обновляем handleItemsUpdate, чтобы синхронизировать с сервером и заменить временный "Мусор"
   const handleItemsUpdate = useCallback((data) => {
-    console.log('Received items data:', data);
-    if (data === null || data === undefined) {
-      console.error('Received null or undefined data in handleItemsUpdate:', data);
-      return;
-    }
-    if (typeof data !== 'object' || !('owner' in data) || !('items' in data) || !Array.isArray(data.items)) {
-      console.error('Invalid items data received:', data);
-      return;
-    }
-
     const { owner, items } = data;
     if (owner === userOwnerKey) {
+      // Заменяем временный "Мусор" на серверный, если он есть
       const updatedItems = items.map(item => ({
         ...item,
-        _id: item._id.toString(),
+        _id: item._id.toString(), // Убеждаемся, что ID в строковом формате
       }));
-      console.log('Updating personalItems:', updatedItems);
       setPersonalItems(updatedItems);
-      onItemsUpdate(updatedItems);
+      onItemsUpdate(updatedItems); // Передаем обновленные предметы в App.js
     } else if (owner === locationOwnerKey) {
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
-        console.log('Updating locationItems:', items);
         setLocationItems(items);
       }
     }
@@ -362,30 +347,21 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
   useEffect(() => {
     if (!socket || !userId) return;
 
-    let isMounted = true; // Флаг монтирования
-
     socket.emit('getItems', { owner: userOwnerKey });
     socket.emit('getItems', { owner: locationOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
-    const handleItems = (data) => {
-      if (!isMounted) return; // Пропускаем, если компонент размонтирован
-      handleItemsUpdate(data);
-    };
-
-    socket.on('items', handleItems);
+    socket.on('items', handleItemsUpdate);
     socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
     socket.on('error', ({ message }) => {
-      if (!isMounted) return;
       setError(message);
       setTimeout(() => setError(null), 3000);
     });
 
     return () => {
-      isMounted = false; // Отмечаем компонент как размонтированный
-      socket.off('items', handleItems);
+      socket.off('items', handleItemsUpdate);
       socket.off('inventoryLimit', handleLimitUpdate);
       socket.off('itemAction', handleItemAction);
       socket.off('error');
@@ -412,31 +388,20 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
 
   const handlePickupItem = (itemId) => {
     if (isActionCooldown) return;
-  
+
     setIsActionCooldown(true);
     setAnimatingItem({ itemId, action: 'pickup' });
-    console.log('Attempting to pick up item:', itemId);
-  
-    socket.emit('pickupItem', { itemId }, (response) => {
-      if (response && response.success) {
-        setTimeout(() => {
-          const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
-          setLocationItems(updatedLocationItems);
-          setAnimatingItem(null);
-          setIsModalOpen(false); // Закрываем модальное окно
-          setIsActionCooldown(false);
-          console.log('Pickup successful, waiting for server items update');
-        }, 500);
-      } else {
-        console.error('Pickup failed:', response?.message);
-        setError(response?.message || 'Ошибка при подборе');
-        setTimeout(() => {
-          setError(null);
-          setIsActionCooldown(false);
-          setAnimatingItem(null);
-        }, 2000);
-      }
-    });
+
+    setTimeout(() => {
+      const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
+      setLocationItems(updatedLocationItems);
+      setAnimatingItem(null);
+      socket.emit('pickupItem', { itemId });
+
+      setTimeout(() => {
+        setIsActionCooldown(false);
+      }, 1000);
+    }, 500);
   };
 
   const handleDeleteItem = (itemId) => {
@@ -455,9 +420,12 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
       setAnimatingItem({ itemId, action: 'split' });
 
       setTimeout(() => {
+        // Удаляем предмет из списка
         const updatedItems = personalItems.filter(item => item._id.toString() !== itemId);
+
+        // Создаём временный "Мусор" с уникальным временным ID
         const trashItem = {
-          _id: `temp_${Date.now()}`,
+          _id: `temp_${Date.now()}`, // Временный ID, чтобы избежать конфликтов
           name: 'Мусор',
           description: 'Раньше это было чем-то полезным',
           rarity: 'Бесполезный',
@@ -465,7 +433,11 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
           cost: 1,
           effect: 'Чувство обременения чем-то бесполезным',
         };
+
+        // Добавляем "Мусор" в локальный список сразу
         setPersonalItems([...updatedItems, trashItem]);
+
+        // Отправляем запрос на удаление предмета
         socket.emit('deleteItem', { itemId });
 
         setAnimatingItem(null);
@@ -492,10 +464,18 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
   return (
     <InventoryContainer theme={theme}>
       <Tabs>
-        <Tab active={activeSubTab === 'personal'} onClick={() => setActiveSubTab('personal')} theme={theme}>
+        <Tab
+          active={activeSubTab === 'personal'}
+          onClick={() => setActiveSubTab('personal')}
+          theme={theme}
+        >
           Личные вещи
         </Tab>
-        <Tab active={activeSubTab === 'location'} onClick={() => setActiveSubTab('location')} theme={theme}>
+        <Tab
+          active={activeSubTab === 'location'}
+          onClick={() => setActiveSubTab('location')}
+          theme={theme}
+        >
           Локация
         </Tab>
       </Tabs>
@@ -537,6 +517,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
                   {isActionCooldown && <ProgressBar />}
                 </MoveButton>
               )}
+              {/* Условие: кнопка "Сломать" не отображается для предмета "Мусор" */}
               {item.name !== 'Мусор' && (
                 <DeleteButton
                   onClick={() => handleDeleteItem(item._id)}
@@ -609,5 +590,11 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
     </InventoryContainer>
   );
 }
+
+// Добавляем отсутствующую кнопку PickupButton (была упомянута, но не определена)
+const PickupButton = styled(ActionButton)`
+  background: #32CD32;
+  color: white;
+`;
 
 export default Inventory;

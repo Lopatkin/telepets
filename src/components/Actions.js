@@ -376,7 +376,7 @@ const workshopActions = [
   },
 ];
 
-function Actions({ theme, currentRoom, userId, socket, personalItems, isModalOpen, setIsModalOpen }) {
+function Actions({ theme, currentRoom, userId, socket, personalItems }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [isCooldown, setIsCooldown] = useState(false);
@@ -447,8 +447,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, isModalOpe
       return;
     }
     setSelectedAction(action);
-    setIsModalOpen(true); // Открываем модальное окно
-
     // Сбрасываем выбор предмета при открытии модального окна
     if (action.title === 'Столярная мастерская') {
       setSelectedCraftItem(action.craftableItems[0].name);
@@ -461,8 +459,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, isModalOpe
 
   const handleCloseModal = () => {
     setSelectedAction(null);
-    setIsModalOpen(false);
-    setClickCount(0);
+    setClickCount(0); // Сбрасываем при закрытии
     setCraftingProgress(0);
   };
 
@@ -525,15 +522,11 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, isModalOpe
         weight: 1,
         cost: 5,
         effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
-        owner: currentRoom,
       };
-      socket.emit('addItem', { owner: currentRoom, item: newItem }, (response) => {
+      socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
         if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });
-          setTimeout(() => {
-            setNotification({ show: false, message: '' });
-            handleCloseModal(); // Закрываем после успеха
-          }, 2000);
+          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
           setIsCooldown(true);
           setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
           setProgress(100);
@@ -792,29 +785,35 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, isModalOpe
   return (
     <ActionsContainer theme={theme}>
       <ActionGrid>
-        {availableActions.map((action) => (
-          <ActionCard
-            key={action.id}
-            theme={theme}
-            onClick={() => handleActionClick(action)}
-            disabled={isCooldown && action.title === 'Найти палку'}
-          >
-            <div>
-              <ActionTitle theme={theme}>{action.title}</ActionTitle>
-              <ActionDescription theme={theme}>{action.description}</ActionDescription>
-            </div>
-            {isCooldown && action.title === 'Найти палку' && (
-              <>
-                <ProgressBar progress={progress} />
-                <TimerDisplay theme={theme}>
-                  Осталось: {timeLeft} сек
-                </TimerDisplay>
-              </>
-            )}
-          </ActionCard>
-        ))}
+        {availableActions.length > 0 ? (
+          availableActions.map((action) => (
+            <ActionCard
+              key={action.id}
+              theme={theme}
+              onClick={() => handleActionClick(action)}
+              disabled={isCooldown && action.title === 'Найти палку'}
+            >
+              <div>
+                <ActionTitle theme={theme}>{action.title}</ActionTitle>
+                <ActionDescription theme={theme}>{action.description}</ActionDescription>
+              </div>
+              {isCooldown && action.title === 'Найти палку' && (
+                <>
+                  <ProgressBar progress={progress} />
+                  <TimerDisplay theme={theme}>
+                    Осталось: {timeLeft} сек
+                  </TimerDisplay>
+                </>
+              )}
+            </ActionCard>
+          ))
+        ) : (
+          <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+            Действия недоступны в этой комнате
+          </div>
+        )}
       </ActionGrid>
-      {isModalOpen && selectedAction && (
+      {selectedAction && (
         <ModalOverlay onClick={handleCloseModal}>
           <ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
             <CloseButton theme={theme} onClick={handleCloseModal}><FaTimes /></CloseButton>

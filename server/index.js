@@ -533,21 +533,16 @@ io.on('connection', (socket) => {
 
   socket.on('getItems', async ({ owner }) => {
     try {
-      if (!owner) {
-        socket.emit('error', { message: 'Owner not specified' });
+      if (itemCache.has(owner)) {
+        socket.emit('items', { owner, items: itemCache.get(owner) });
         return;
       }
 
-      let items = itemCache.get(owner);
-      if (!items) {
-        items = await Item.find({ owner });
-        itemCache.set(owner, items);
-      }
-
-      socket.emit('items', { owner, items: items || [] }); // Гарантируем массив
+      const items = await Item.find({ owner });
+      itemCache.set(owner, items);
+      socket.emit('items', { owner, items });
     } catch (err) {
       console.error('Error fetching items:', err.message, err.stack);
-      socket.emit('error', { message: 'Ошибка при получении предметов' });
     }
   });
 
@@ -560,9 +555,9 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('addItem', async (item, callback) => {
+  socket.on('addItem', async (item, callback) => { // Убрали лишний объект { owner, item }
     try {
-      const owner = item.owner;
+      const owner = item.owner; // Теперь owner берётся прямо из item
       if (item._id && itemLocks.has(item._id)) {
         if (callback) callback({ success: false, message: 'Этот предмет уже обрабатывается' });
         return;
@@ -615,7 +610,7 @@ io.on('connection', (socket) => {
         io.to(currentRoom).emit('inventoryLimit', updatedLimit);
       }
 
-      io.to(owner).emit('items', { owner, items: itemCache.get(owner) });
+      io.to(owner).emit('items', { owner, items: itemCache.get(owner) }); // Уведомляем владельца
 
       if (callback) callback({ success: true });
       if (item._id) itemLocks.delete(item._id);

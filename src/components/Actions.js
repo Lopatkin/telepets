@@ -525,16 +525,17 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
       };
       socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
         if (response && response.success) {
+          setSelectedAction(null); // Добавляем закрытие модального окна
           setNotification({ show: true, message: 'Вы нашли палку!' });
           setTimeout(() => {
             setNotification({ show: false, message: '' });
-            setSelectedAction(null); // Добавляем закрытие модального окна
           }, 2000);
           setIsCooldown(true);
           setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
           setProgress(100);
           localStorage.setItem(COOLDOWN_KEY, JSON.stringify({ startTime: Date.now() }));
         } else {
+          setSelectedAction(null); // Добавляем закрытие модального окна
           setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         }
@@ -542,10 +543,12 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
     } else if (selectedAction.title === 'Утилизировать мусор') {
       socket.emit('utilizeTrash', (response) => {
         if (response && response.success) {
+          setSelectedAction(null); // Добавляем закрытие модального окна
           setNotification({ show: true, message: response.message }); // Используем сообщение от сервера
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
           socket.emit('getItems', { owner: `user_${userId}` }); // Обновляем список предметов
         } else {
+          setSelectedAction(null); // Добавляем закрытие модального окна
           setNotification({ show: true, message: response?.message || 'Ошибка при утилизации' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         }

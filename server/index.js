@@ -615,64 +615,54 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('moveItem', async ({ itemId, newOwner }) => {
+  socket.on('moveItem', async ({ itemIds, newOwner }) => {
     try {
-      const item = await Item.findById(itemId);
-      if (!item) {
-        socket.emit('error', { message: 'Предмет не найден' });
+      let ids = Array.isArray(itemIds) ? itemIds : [itemIds]; // Поддержка как массива, так и одиночного ID
+      const items = await Item.find({ _id: { $in: ids } });
+      if (items.length !== ids.length) {
+        socket.emit('error', { message: 'Некоторые предметы не найдены' });
         return;
       }
 
-      const oldOwner = item.owner;
-      const itemWeight = parseFloat(item.weight) || 0;
+      const oldOwner = items[0].owner; // Предполагаем, что все предметы из одного инвентаря
+      const totalWeight = items.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
+
+      const newOwnerLimit = await InventoryLimit.findOne({ owner: newOwner });
+      if (!newOwnerLimit || newOwnerLimit.currentWeight + totalWeight > newOwnerLimit.maxWeight) {
+        socket.emit('error', { message: 'Превышен лимит веса в месте назначения' });
+        return;
+      }
+
+      await Item.updateMany({ _id: { $in: ids } }, { owner: newOwner });
+      await InventoryLimit.updateOne({ owner: oldOwner }, { $inc: { currentWeight: -totalWeight } });
+      await InventoryLimit.updateOne({ owner: newOwner }, { $inc: { currentWeight: totalWeight } });
+
+      const updatedItems = await Item.find({ _id: { $in: ids } });
+      updatedItems.forEach(item => {
+        const cachedOldOwnerItems = itemCache.get(oldOwner) || [];
+        itemCache.set(oldOwner, cachedOldOwnerItems.filter(i => i._id.toString() !== item._id.toString()));
+        const cachedNewOwnerItems = itemCache.get(newOwner) || [];
+        itemCache.set(newOwner, [...cachedNewOwnerItems, item]);
+      });
 
       const oldOwnerLimit = await InventoryLimit.findOne({ owner: oldOwner });
-      const newOwnerLimit = await InventoryLimit.findOne({ owner: newOwner });
+      const newOwnerLimitUpdated = await InventoryLimit.findOne({ owner: newOwner });
 
-      if (!oldOwnerLimit || !newOwnerLimit) {
-        socket.emit('error', { message: 'Лимиты инвентаря не найдены' });
-        return;
-      }
-
-      if (newOwnerLimit.currentWeight + itemWeight > newOwnerLimit.maxWeight) {
-        socket.emit('error', { message: 'Превышен лимит веса в новом месте' });
-        return;
-      }
-
-      item.owner = newOwner;
-      await item.save();
-
-      await InventoryLimit.updateOne(
-        { owner: oldOwner },
-        { $inc: { currentWeight: -itemWeight } }
-      );
-      await InventoryLimit.updateOne(
-        { owner: newOwner },
-        { $inc: { currentWeight: itemWeight } }
-      );
-
-      const oldOwnerItems = itemCache.get(oldOwner) || [];
-      itemCache.set(oldOwner, oldOwnerItems.filter(i => i._id.toString() !== itemId));
-      const newOwnerItems = itemCache.get(newOwner) || [];
-      itemCache.set(newOwner, [...newOwnerItems, item]);
-
-      const updatedOldLimit = await InventoryLimit.findOne({ owner: oldOwner });
-      const updatedNewLimit = await InventoryLimit.findOne({ owner: newOwner });
-      socket.emit('inventoryLimit', updatedOldLimit);
-      socket.emit('inventoryLimit', updatedNewLimit);
+      socket.emit('inventoryLimit', oldOwnerLimit);
+      socket.emit('inventoryLimit', newOwnerLimitUpdated);
+      io.to(oldOwner).emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) });
+      io.to(newOwner).emit('items', { owner: newOwner, items: itemCache.get(newOwner) });
 
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
-        io.to(currentRoom).emit('itemAction', { action: 'remove', owner: oldOwner, itemId });
-        io.to(currentRoom).emit('itemAction', { action: 'add', owner: newOwner, item });
-        io.to(currentRoom).emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) });
-        io.to(currentRoom).emit('items', { owner: newOwner, items: itemCache.get(newOwner) });
-        io.to(currentRoom).emit('inventoryLimit', updatedOldLimit);
-        io.to(currentRoom).emit('inventoryLimit', updatedNewLimit);
+        io.to(currentRoom).emit('itemAction', { action: 'remove', owner: oldOwner, itemId: ids });
+        io.to(currentRoom).emit('itemAction', { action: 'add', owner: newOwner, item: updatedItems[0] });
+        io.to(currentRoom).emit('inventoryLimit', oldOwnerLimit);
+        io.to(currentRoom).emit('inventoryLimit', newOwnerLimitUpdated);
       }
     } catch (err) {
-      console.error('Error moving item:', err.message, err.stack);
-      socket.emit('error', { message: 'Ошибка при перемещении предмета' });
+      console.error('Error moving items:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при перемещении предметов' });
     }
   });
 

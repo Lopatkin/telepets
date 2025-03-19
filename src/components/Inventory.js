@@ -471,18 +471,18 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
 
   const confirmActionQuantity = () => {
     if (!actionQuantity.itemName || isActionCooldown) return;
-
+  
     setIsActionCooldown(true);
     const { itemName, count, action } = actionQuantity;
-
+  
     if (action === 'move') {
       setAnimatingItem({ itemId: `${itemName}_move`, action: 'move' });
       setTimeout(() => {
         const itemsToMove = personalItems.filter(item => item.name === itemName).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
         setPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
-        socket.emit('removeItems', { owner: userOwnerKey, name: itemName, count });
-        itemsToMove.forEach(item => socket.emit('moveItem', { itemId: item._id, newOwner: locationOwnerKey }));
+        // Отправляем массив itemIds для перемещения
+        socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
       }, 500);
@@ -507,7 +507,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
         setTimeout(() => setIsActionCooldown(false), 1000);
       }, 1000);
     }
-
+  
     setActionQuantity({ itemName: null, count: 1, action: null });
   };
 

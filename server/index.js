@@ -559,52 +559,53 @@ io.on('connection', (socket) => {
   socket.on('addItem', async ({ owner, item }, callback) => {
     try {
       console.log('Received item data:', { owner, item }); // Для отладки
-      if (item._id && itemLocks.has(item._id)) {
-        if (callback) callback({ success: false, message: 'Этот предмет уже обрабатывается' });
+      if (!item || typeof item !== 'object') {
+        console.error('Invalid item data:', item);
+        if (callback) callback({ success: false, message: 'Некорректные данные предмета' });
         return;
       }
-  
+
       if (item._id) {
         itemLocks.set(item._id, true);
       }
-  
+
       const ownerLimit = await InventoryLimit.findOne({ owner });
       if (!ownerLimit) {
         if (item._id) itemLocks.delete(item._id);
         if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
         return;
       }
-  
+
       const itemWeight = parseFloat(item.weight) || 0;
       if (ownerLimit.currentWeight + itemWeight > ownerLimit.maxWeight) {
         if (item._id) itemLocks.delete(item._id);
         if (callback) callback({ success: false, message: 'Превышен лимит веса' });
         return;
       }
-  
+
       const newItem = await Item.create({ owner, ...item }); // Распаковываем item
       console.log('Saved item:', newItem); // Для отладки
-  
+
       await InventoryLimit.updateOne(
         { owner },
         { $inc: { currentWeight: itemWeight } }
       );
-  
+
       const ownerItems = itemCache.get(owner) || [];
       itemCache.set(owner, [...ownerItems, newItem]);
-  
+
       const updatedLimit = await InventoryLimit.findOne({ owner });
       socket.emit('inventoryLimit', updatedLimit);
-  
+
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
         io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: newItem });
         io.to(currentRoom).emit('items', { owner, items: itemCache.get(owner) });
         io.to(currentRoom).emit('inventoryLimit', updatedLimit);
       }
-  
+
       io.to(owner).emit('items', { owner, items: itemCache.get(owner) }); // Уведомляем владельца
-  
+
       if (callback) callback({ success: true });
       if (item._id) itemLocks.delete(item._id);
     } catch (err) {

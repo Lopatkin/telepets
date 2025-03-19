@@ -610,7 +610,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
       weight: getItemWeight(selectedCraftItem),
       cost: getItemCost(selectedCraftItem),
       effect: getItemEffect(selectedCraftItem),
-      owner: 'Мастерская', // Помещаем в инвентарь комнаты
     };
 
     // Удаляем использованные материалы
@@ -632,17 +631,21 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
       });
     }
 
-    // Добавляем созданный предмет
-    socket.emit('addItem', craftedItem);
-
-    setNotification({ show: true, message: `Вы успешно создали: ${selectedCraftItem}!` });
-    setTimeout(() => {
-      setNotification({ show: false, message: '' });
-      setSelectedAction(null);
-      setClickCount(0);
-      setCraftingProgress(0);
-    }, 2000);
-
+    // Добавляем созданный предмет с правильной структурой
+    socket.emit('addItem', { owner: 'Мастерская', item: craftedItem }, (response) => {
+      if (response && response.success) {
+        setNotification({ show: true, message: `Вы успешно создали: ${selectedCraftItem}!` });
+        setTimeout(() => {
+          setNotification({ show: false, message: '' });
+          setSelectedAction(null);
+          setClickCount(0);
+          setCraftingProgress(0);
+        }, 2000);
+      } else {
+        setNotification({ show: true, message: response?.message || 'Ошибка при создании предмета' });
+        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+      }
+    });
   };
 
   // Функции для получения данных о предметах

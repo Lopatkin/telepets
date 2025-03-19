@@ -846,20 +846,17 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
                 <ProgressBarContainer theme={theme}>
                   <Progress progress={craftingProgress} />
                 </ProgressBarContainer>
-                <ActionButton onClick={handleButtonClick} disabled={true}>
-                  {selectedAction.buttonText}
-                </ActionButton>
                 <StartButton onClick={handleStartClick} disabled={!canStartCrafting()}>
                   СТАРТ
                 </StartButton>
               </>
             ) : (
-              <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>
-            )}
-            {selectedAction.title !== 'Столярная мастерская' && (
-              <ActionButton onClick={handleButtonClick}>
-                {selectedAction.buttonText}
-              </ActionButton>
+              <>
+                <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>
+                <ActionButton onClick={handleButtonClick}>
+                  {selectedAction.buttonText}
+                </ActionButton>
+              </>
             )}
           </ModalContent>
         </ModalOverlay>

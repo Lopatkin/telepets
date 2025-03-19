@@ -1,6 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 
+const ItemCount = styled.span`
+  font-size: 12px;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+  margin-left: 5px;
+`;
+
+const QuantityModalContent = styled(ModalContent)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const QuantitySlider = styled.input.attrs({ type: 'range' })`
+  width: 100%;
+  margin: 10px 0;
+`;
+
+const QuantityText = styled.p`
+  font-size: 14px;
+  margin: 10px 0;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+`;
+
 // Анимация исчезновения с движением вправо (для текущего пользователя)
 const fadeOutRight = keyframes`
   0% {
@@ -297,24 +320,37 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
   const [isActionCooldown, setIsActionCooldown] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [actionQuantity, setActionQuantity] = useState({ itemName: null, count: 1, action: null });
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
+  const groupItemsByName = (items) => {
+    const grouped = items.reduce((acc, item) => {
+      const key = item.name;
+      if (!acc[key]) {
+        acc[key] = { item, count: 0, ids: [] };
+      }
+      acc[key].count += 1;
+      acc[key].ids.push(item._id);
+      return acc;
+    }, {});
+    return Object.values(grouped);
+  };
+
   // Обновляем handleItemsUpdate, чтобы синхронизировать с сервером и заменить временный "Мусор"
   const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
+    const updatedItems = items.map(item => ({
+      ...item,
+      _id: item._id.toString(),
+    }));
     if (owner === userOwnerKey) {
-      // Заменяем временный "Мусор" на серверный, если он есть
-      const updatedItems = items.map(item => ({
-        ...item,
-        _id: item._id.toString(), // Убеждаемся, что ID в строковом формате
-      }));
       setPersonalItems(updatedItems);
-      onItemsUpdate(updatedItems); // Передаем обновленные предметы в App.js
+      onItemsUpdate(updatedItems);
     } else if (owner === locationOwnerKey) {
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
-        setLocationItems(items);
+        setLocationItems(updatedItems);
       }
     }
   }, [userOwnerKey, locationOwnerKey, pendingItems, onItemsUpdate]);
@@ -368,22 +404,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     };
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate, handleItemAction]);
 
-  const handleMoveItem = (itemId, newOwner) => {
+  const handleMoveItem = (itemName, maxCount) => {
     if (isActionCooldown) return;
-
-    setIsActionCooldown(true);
-    setAnimatingItem({ itemId, action: 'move' });
-
-    setTimeout(() => {
-      const updatedPersonalItems = personalItems.filter(item => item._id.toString() !== itemId);
-      setPersonalItems(updatedPersonalItems);
-      setAnimatingItem(null);
-      socket.emit('moveItem', { itemId, newOwner });
-
-      setTimeout(() => {
-        setIsActionCooldown(false);
-      }, 1000);
-    }, 500);
+    setActionQuantity({ itemName, count: 1, action: 'move', maxCount });
   };
 
   const handlePickupItem = (itemId) => {
@@ -404,10 +427,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     }, 500);
   };
 
-  const handleDeleteItem = (itemId) => {
+  const handleDeleteItem = (itemName, maxCount) => {
     if (isActionCooldown) return;
-
-    setConfirmDelete(itemId);
+    setActionQuantity({ itemName, count: 1, action: 'delete', maxCount });
   };
 
   const confirmDeleteItem = (confirmed) => {
@@ -448,6 +470,48 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     }
 
     setConfirmDelete(null);
+  };
+
+  const confirmActionQuantity = () => {
+    if (!actionQuantity.itemName || isActionCooldown) return;
+
+    setIsActionCooldown(true);
+    const { itemName, count, action } = actionQuantity;
+
+    if (action === 'move') {
+      setAnimatingItem({ itemId: `${itemName}_move`, action: 'move' });
+      setTimeout(() => {
+        const itemsToMove = personalItems.filter(item => item.name === itemName).slice(0, count);
+        const itemIds = itemsToMove.map(item => item._id);
+        setPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
+        socket.emit('removeItems', { owner: userOwnerKey, name: itemName, count });
+        itemsToMove.forEach(item => socket.emit('moveItem', { itemId: item._id, newOwner: locationOwnerKey }));
+        setAnimatingItem(null);
+        setTimeout(() => setIsActionCooldown(false), 1000);
+      }, 500);
+    } else if (action === 'delete') {
+      setAnimatingItem({ itemId: `${itemName}_delete`, action: 'split' });
+      setTimeout(() => {
+        const itemsToDelete = personalItems.filter(item => item.name === itemName).slice(0, count);
+        const itemIds = itemsToDelete.map(item => item._id);
+        const updatedItems = personalItems.filter(item => !itemIds.includes(item._id));
+        const trashItems = itemsToDelete.map(item => ({
+          _id: `temp_${Date.now()}_${Math.random()}`, // Уникальный временный ID
+          name: 'Мусор',
+          description: 'Раньше это было чем-то полезным',
+          rarity: 'Бесполезный',
+          weight: item.weight,
+          cost: 1,
+          effect: 'Чувство обременения чем-то бесполезным',
+        }));
+        setPersonalItems([...updatedItems, ...trashItems]);
+        itemIds.forEach(itemId => socket.emit('deleteItem', { itemId }));
+        setAnimatingItem(null);
+        setTimeout(() => setIsActionCooldown(false), 1000);
+      }, 1000);
+    }
+
+    setActionQuantity({ itemName: null, count: 1, action: null });
   };
 
   const openModal = (item) => {
@@ -495,13 +559,13 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
         </WeightLimit>
       )}
       <ItemList subTab={activeSubTab}>
-        {activeSubTab === 'personal' && personalItems.map(item => (
+        {activeSubTab === 'personal' && groupItemsByName(personalItems).map(({ item, count }) => (
           <ItemCard
             key={item._id}
             theme={theme}
-            isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+            isAnimating={animatingItem && animatingItem.itemId === `${item.name}_move` || animatingItem.itemId === `${item.name}_delete` ? animatingItem.action : null}
           >
-            <ItemTitle theme={theme}>{item.name}</ItemTitle>
+            <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
             <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
             <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
             <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
@@ -510,17 +574,16 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             <ActionButtons>
               {locationOwnerKey && (
                 <MoveButton
-                  onClick={() => handleMoveItem(item._id, locationOwnerKey)}
+                  onClick={() => handleMoveItem(item.name, count)}
                   disabled={isActionCooldown}
                 >
                   Выложить
                   {isActionCooldown && <ProgressBar />}
                 </MoveButton>
               )}
-              {/* Условие: кнопка "Сломать" не отображается для предмета "Мусор" */}
               {item.name !== 'Мусор' && (
                 <DeleteButton
-                  onClick={() => handleDeleteItem(item._id)}
+                  onClick={() => handleDeleteItem(item.name, count)}
                   disabled={isActionCooldown}
                 >
                   Сломать
@@ -530,14 +593,14 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             </ActionButtons>
           </ItemCard>
         ))}
-        {activeSubTab === 'location' && locationItems.map(item => (
+        {activeSubTab === 'location' && groupItemsByName(locationItems).map(({ item, count }) => (
           <ItemCard
             key={item._id}
             theme={theme}
             isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
           >
             <ItemInfo theme={theme} onClick={() => openModal(item)}>
-              <ItemTitle theme={theme}>{item.name}</ItemTitle>
+              <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
               <ItemDetail theme={theme}>{item.description}</ItemDetail>
             </ItemInfo>
             <ActionButtons>
@@ -562,7 +625,12 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
           </div>
         )}
       </ItemList>
-      <Modal isOpen={!!selectedItem || !!confirmDelete} theme={theme} onClick={closeModal} isConfirm={!!confirmDelete}>
+      <Modal
+        isOpen={!!selectedItem || !!confirmDelete || !!actionQuantity.itemName}
+        theme={theme}
+        onClick={closeModal}
+        isConfirm={!!confirmDelete || !!actionQuantity.itemName}
+      >
         {selectedItem && (
           <ModalContent theme={theme}>
             <ItemTitle theme={theme}>{selectedItem.name}</ItemTitle>
@@ -585,6 +653,34 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
               </ConfirmButton>
             </ConfirmButtons>
           </ConfirmModalContent>
+        )}
+        {actionQuantity.itemName && (
+          <QuantityModalContent theme={theme}>
+            <ConfirmText>
+              {actionQuantity.action === 'move' ? 'Выложить' : 'Сломать'} {actionQuantity.itemName}
+            </ConfirmText>
+            <QuantityText theme={theme}>
+              Количество: {actionQuantity.count}
+            </QuantityText>
+            <QuantitySlider
+              min="1"
+              max={actionQuantity.maxCount}
+              value={actionQuantity.count}
+              onChange={(e) => setActionQuantity(prev => ({ ...prev, count: parseInt(e.target.value) }))}
+            />
+            <ConfirmButtons>
+              <ConfirmButton type="yes" onClick={confirmActionQuantity} disabled={isActionCooldown}>
+                Подтвердить
+              </ConfirmButton>
+              <ConfirmButton
+                type="no"
+                onClick={() => setActionQuantity({ itemName: null, count: 1, action: null })}
+                disabled={isActionCooldown}
+              >
+                Отмена
+              </ConfirmButton>
+            </ConfirmButtons>
+          </QuantityModalContent>
         )}
       </Modal>
     </InventoryContainer>

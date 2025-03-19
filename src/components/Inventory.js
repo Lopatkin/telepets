@@ -58,27 +58,27 @@ const splitAndFade = keyframes`
   20% {
     opacity: 0.9;
     transform: scale(1.1);
-    clip-path: polygon(0% 0%, 40% 0%, 30% 100%, 0% 100%); /* Первый кусок */
+    clip-path: polygon(0% 0%, 40% 0%, 30% 100%, 0% 100%);
   }
   40% {
     opacity: 0.7;
     transform: scale(1.3) translate(10px, -15px);
-    clip-path: polygon(40% 0%, 70% 0%, 60% 100%, 30% 100%); /* Второй кусок */
+    clip-path: polygon(40% 0%, 70% 0%, 60% 100%, 30% 100%);
   }
   60% {
     opacity: 0.5;
     transform: scale(1.5) translate(-20px, 20px);
-    clip-path: polygon(70% 0%, 100% 0%, 100% 100%, 60% 100%); /* Третий кусок */
+    clip-path: polygon(70% 0%, 100% 0%, 100% 100%, 60% 100%);
   }
   80% {
     opacity: 0.3;
     transform: scale(1.7) translate(30px, -30px);
-    clip-path: polygon(0% 0%, 100% 0%, 100% 40%, 0% 60%); /* Четвёртый кусок */
+    clip-path: polygon(0% 0%, 100% 0%, 100% 40%, 0% 60%);
   }
   100% {
     opacity: 0;
     transform: scale(2) translate(-40px, 40px);
-    clip-path: polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%); /* Полное исчезновение */
+    clip-path: polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%);
   }
 `;
 
@@ -125,10 +125,10 @@ const ItemList = styled.div`
   display: grid;
   gap: 15px;
   ${props => props.subTab === 'personal' && `
-    grid-template-columns: 1fr; /* 1 элемент на строке */
+    grid-template-columns: 1fr;
   `}
   ${props => props.subTab === 'location' && `
-    grid-template-columns: repeat(2, 1fr); /* 2 элемента на строке */
+    grid-template-columns: repeat(2, 1fr);
   `}
 `;
 
@@ -192,12 +192,12 @@ const ActionButtons = styled.div`
 
 const ActionButton = styled.button`
   position: relative;
-  padding: 5px 10px; /* Увеличили padding для текста */
+  padding: 5px 10px;
   height: 30px;
   border: none;
   border-radius: 4px;
   cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
-  font-size: 12px; /* Уменьшили шрифт для компактности */
+  font-size: 12px;
   transition: background 0.2s;
   opacity: ${props => (props.disabled ? 0.5 : 1)};
   display: flex;
@@ -225,6 +225,11 @@ const MoveButton = styled(ActionButton)`
 
 const DeleteButton = styled(ActionButton)`
   background: #FF0000;
+  color: white;
+`;
+
+const PickupButton = styled(ActionButton)`
+  background: #32CD32;
   color: white;
 `;
 
@@ -338,7 +343,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     return Object.values(grouped);
   };
 
-  // Обновляем handleItemsUpdate, чтобы синхронизировать с сервером и заменить временный "Мусор"
   const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
     const updatedItems = items.map(item => ({
@@ -442,12 +446,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
       setAnimatingItem({ itemId, action: 'split' });
 
       setTimeout(() => {
-        // Удаляем предмет из списка
         const updatedItems = personalItems.filter(item => item._id.toString() !== itemId);
-
-        // Создаём временный "Мусор" с уникальным временным ID
         const trashItem = {
-          _id: `temp_${Date.now()}`, // Временный ID, чтобы избежать конфликтов
+          _id: `temp_${Date.now()}`,
           name: 'Мусор',
           description: 'Раньше это было чем-то полезным',
           rarity: 'Бесполезный',
@@ -455,11 +456,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
           cost: 1,
           effect: 'Чувство обременения чем-то бесполезным',
         };
-
-        // Добавляем "Мусор" в локальный список сразу
         setPersonalItems([...updatedItems, trashItem]);
-
-        // Отправляем запрос на удаление предмета
         socket.emit('deleteItem', { itemId });
 
         setAnimatingItem(null);
@@ -496,7 +493,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
         const itemIds = itemsToDelete.map(item => item._id);
         const updatedItems = personalItems.filter(item => !itemIds.includes(item._id));
         const trashItems = itemsToDelete.map(item => ({
-          _id: `temp_${Date.now()}_${Math.random()}`, // Уникальный временный ID
+          _id: `temp_${Date.now()}_${Math.random()}`,
           name: 'Мусор',
           description: 'Раньше это было чем-то полезным',
           rarity: 'Бесполезный',
@@ -522,6 +519,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     if (e.target === e.currentTarget) {
       setSelectedItem(null);
       setConfirmDelete(null);
+      setActionQuantity({ itemName: null, count: 1, action: null });
     }
   };
 
@@ -570,7 +568,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
               ) ? animatingItem.action : null
             }
           >
-            <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme} />x{count}</ItemTitle>
+            <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
             <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
             <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
             <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
@@ -691,11 +689,5 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     </InventoryContainer>
   );
 }
-
-// Добавляем отсутствующую кнопку PickupButton (была упомянута, но не определена)
-const PickupButton = styled(ActionButton)`
-  background: #32CD32;
-  color: white;
-`;
 
 export default Inventory;

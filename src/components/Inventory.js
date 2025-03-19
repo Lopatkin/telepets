@@ -1,29 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 
-const ItemCount = styled.span`
-  font-size: 12px;
-  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
-  margin-left: 5px;
-`;
-
-const QuantityModalContent = styled(ModalContent)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const QuantitySlider = styled.input.attrs({ type: 'range' })`
-  width: 100%;
-  margin: 10px 0;
-`;
-
-const QuantityText = styled.p`
-  font-size: 14px;
-  margin: 10px 0;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-`;
-
 // Анимация исчезновения с движением вправо (для текущего пользователя)
 const fadeOutRight = keyframes`
   0% {
@@ -306,6 +283,29 @@ const ConfirmButton = styled(ActionButton)`
   &:hover {
     opacity: ${props => props.disabled ? 0.5 : 0.9};
   }
+`;
+
+const ItemCount = styled.span`
+  font-size: 12px;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+  margin-left: 5px;
+`;
+
+const QuantityModalContent = styled(ModalContent)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const QuantitySlider = styled.input.attrs({ type: 'range' })`
+  width: 100%;
+  margin: 10px 0;
+`;
+
+const QuantityText = styled.p`
+  font-size: 14px;
+  margin: 10px 0;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
 `;
 
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {

@@ -563,9 +563,14 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
           <ItemCard
             key={item._id}
             theme={theme}
-            isAnimating={animatingItem && animatingItem.itemId === `${item.name}_move` || animatingItem.itemId === `${item.name}_delete` ? animatingItem.action : null}
+            isAnimating={
+              animatingItem && (
+                (animatingItem.itemId === `${item.name}_move`) ||
+                (animatingItem.itemId === `${item.name}_delete`)
+              ) ? animatingItem.action : null
+            }
           >
-            <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
+            <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme} />x{count}</ItemTitle>
             <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
             <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
             <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>

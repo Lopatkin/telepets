@@ -393,7 +393,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
   const [clickCount, setClickCount] = useState(0); // Счётчик нажатий
   const [craftingProgress, setCraftingProgress] = useState(0); // Прогресс в процентах
 
-  const COOLDOWN_DURATION = 20 * 1000; // 20 секунд в миллисекундах
+  const COOLDOWN_DURATION = 10 * 1000; // 20 секунд в миллисекундах
   const COOLDOWN_KEY = `findStickCooldown_${userId}`; // Уникальный ключ для localStorage
 
   // Восстановление состояния таймера при монтировании компонента

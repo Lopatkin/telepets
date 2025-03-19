@@ -505,16 +505,21 @@ io.on('connection', (socket) => {
 
   socket.on('getItems', async ({ owner }) => {
     try {
-      if (itemCache.has(owner)) {
-        socket.emit('items', { owner, items: itemCache.get(owner) });
+      if (!owner) {
+        socket.emit('error', { message: 'Owner not specified' });
         return;
       }
 
-      const items = await Item.find({ owner });
-      itemCache.set(owner, items);
-      socket.emit('items', { owner, items });
+      let items = itemCache.get(owner);
+      if (!items) {
+        items = await Item.find({ owner });
+        itemCache.set(owner, items);
+      }
+
+      socket.emit('items', { owner, items: items || [] }); // Гарантируем массив
     } catch (err) {
       console.error('Error fetching items:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при получении предметов' });
     }
   });
 

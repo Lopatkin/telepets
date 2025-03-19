@@ -525,12 +525,16 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, isModalOpe
         weight: 1,
         cost: 5,
         effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
+        owner: currentRoom, // Помещаем в локацию
       };
-      console.log('Sending addItem with data:', { owner: `user_${userId}`, item: newItem }); // Отладка
-      socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
+      console.log('Sending addItem with data:', { owner: currentRoom, item: newItem });
+      socket.emit('addItem', { owner: currentRoom, item: newItem }, (response) => {
         if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });
-          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          setTimeout(() => {
+            setNotification({ show: false, message: '' });
+            handleCloseModal(); // Закрываем модальное окно после успеха
+          }, 2000);
           setIsCooldown(true);
           setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
           setProgress(100);
@@ -789,35 +793,29 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, isModalOpe
   return (
     <ActionsContainer theme={theme}>
       <ActionGrid>
-        {availableActions.length > 0 ? (
-          availableActions.map((action) => (
-            <ActionCard
-              key={action.id}
-              theme={theme}
-              onClick={() => handleActionClick(action)}
-              disabled={isCooldown && action.title === 'Найти палку'}
-            >
-              <div>
-                <ActionTitle theme={theme}>{action.title}</ActionTitle>
-                <ActionDescription theme={theme}>{action.description}</ActionDescription>
-              </div>
-              {isCooldown && action.title === 'Найти палку' && (
-                <>
-                  <ProgressBar progress={progress} />
-                  <TimerDisplay theme={theme}>
-                    Осталось: {timeLeft} сек
-                  </TimerDisplay>
-                </>
-              )}
-            </ActionCard>
-          ))
-        ) : (
-          <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-            Действия недоступны в этой комнате
-          </div>
-        )}
+        {availableActions.map((action) => (
+          <ActionCard
+            key={action.id}
+            theme={theme}
+            onClick={() => handleActionClick(action)}
+            disabled={isCooldown && action.title === 'Найти палку'}
+          >
+            <div>
+              <ActionTitle theme={theme}>{action.title}</ActionTitle>
+              <ActionDescription theme={theme}>{action.description}</ActionDescription>
+            </div>
+            {isCooldown && action.title === 'Найти палку' && (
+              <>
+                <ProgressBar progress={progress} />
+                <TimerDisplay theme={theme}>
+                  Осталось: {timeLeft} сек
+                </TimerDisplay>
+              </>
+            )}
+          </ActionCard>
+        ))}
       </ActionGrid>
-      {selectedAction && (
+      {isModalOpen && selectedAction && (
         <ModalOverlay onClick={handleCloseModal}>
           <ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
             <CloseButton theme={theme} onClick={handleCloseModal}><FaTimes /></CloseButton>

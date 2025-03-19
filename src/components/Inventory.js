@@ -307,11 +307,12 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
   const handleItemsUpdate = useCallback((data) => {
-    if (!data) {
+    console.log('Received items data:', data); // Отладка
+    if (data === null || data === undefined) {
       console.error('Received null or undefined data in handleItemsUpdate:', data);
       return;
     }
-    if (typeof data !== 'object' || !('owner' in data) || !('items' in data)) {
+    if (typeof data !== 'object' || !('owner' in data) || !('items' in data) || !Array.isArray(data.items)) {
       console.error('Invalid items data received:', data);
       return;
     }
@@ -359,21 +360,30 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
   useEffect(() => {
     if (!socket || !userId) return;
 
+    let isMounted = true; // Флаг монтирования
+
     socket.emit('getItems', { owner: userOwnerKey });
     socket.emit('getItems', { owner: locationOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
-    socket.on('items', handleItemsUpdate);
+    const handleItems = (data) => {
+      if (!isMounted) return; // Пропускаем, если компонент размонтирован
+      handleItemsUpdate(data);
+    };
+
+    socket.on('items', handleItems);
     socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
     socket.on('error', ({ message }) => {
+      if (!isMounted) return;
       setError(message);
       setTimeout(() => setError(null), 3000);
     });
 
     return () => {
-      socket.off('items', handleItemsUpdate);
+      isMounted = false; // Отмечаем компонент как размонтированный
+      socket.off('items', handleItems);
       socket.off('inventoryLimit', handleLimitUpdate);
       socket.off('itemAction', handleItemAction);
       socket.off('error');

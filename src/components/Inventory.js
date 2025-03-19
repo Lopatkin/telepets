@@ -325,14 +325,14 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
   const [isActionCooldown, setIsActionCooldown] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [actionQuantity, setActionQuantity] = useState({ itemName: null, count: 1, action: null });
+  const [actionQuantity, setActionQuantity] = useState({ itemName: null, weight: null, count: 1, action: null });
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
 
-  const groupItemsByName = (items) => {
+  const groupItemsByNameAndWeight = (items) => {
     const grouped = items.reduce((acc, item) => {
-      const key = item.name;
+      const key = `${item.name}_${item.weight}`;
       if (!acc[key]) {
         acc[key] = { item, count: 0, ids: [] };
       }
@@ -408,9 +408,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     };
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate, handleItemAction]);
 
-  const handleMoveItem = (itemName, maxCount) => {
+  const handleMoveItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
-    setActionQuantity({ itemName, count: 1, action: 'move', maxCount });
+    setActionQuantity({ itemName, weight, count: 1, action: 'move', maxCount });
   };
 
   const handlePickupItem = (itemId) => {
@@ -431,9 +431,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     }, 500);
   };
 
-  const handleDeleteItem = (itemName, maxCount) => {
+  const handleDeleteItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
-    setActionQuantity({ itemName, count: 1, action: 'delete', maxCount });
+    setActionQuantity({ itemName, weight, count: 1, action: 'delete', maxCount });
   };
 
   const confirmDeleteItem = (confirmed) => {
@@ -471,25 +471,24 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
 
   const confirmActionQuantity = () => {
     if (!actionQuantity.itemName || isActionCooldown) return;
-  
+
     setIsActionCooldown(true);
-    const { itemName, count, action } = actionQuantity;
-  
+    const { itemName, weight, count, action } = actionQuantity;
+
     if (action === 'move') {
-      setAnimatingItem({ itemId: `${itemName}_move`, action: 'move' });
+      setAnimatingItem({ itemId: `${itemName}_${weight}_move`, action: 'move' });
       setTimeout(() => {
-        const itemsToMove = personalItems.filter(item => item.name === itemName).slice(0, count);
+        const itemsToMove = personalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
         setPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
-        // Отправляем массив itemIds для перемещения
         socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
       }, 500);
     } else if (action === 'delete') {
-      setAnimatingItem({ itemId: `${itemName}_delete`, action: 'split' });
+      setAnimatingItem({ itemId: `${itemName}_${weight}_delete`, action: 'split' });
       setTimeout(() => {
-        const itemsToDelete = personalItems.filter(item => item.name === itemName).slice(0, count);
+        const itemsToDelete = personalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
         const updatedItems = personalItems.filter(item => !itemIds.includes(item._id));
         const trashItems = itemsToDelete.map(item => ({
@@ -507,8 +506,8 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
         setTimeout(() => setIsActionCooldown(false), 1000);
       }, 1000);
     }
-  
-    setActionQuantity({ itemName: null, count: 1, action: null });
+
+    setActionQuantity({ itemName: null, weight: null, count: 1, action: null });
   };
 
   const openModal = (item) => {
@@ -519,7 +518,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     if (e.target === e.currentTarget) {
       setSelectedItem(null);
       setConfirmDelete(null);
-      setActionQuantity({ itemName: null, count: 1, action: null });
+      setActionQuantity({ itemName: null, weight: null, count: 1, action: null });
     }
   };
 
@@ -557,14 +556,14 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
         </WeightLimit>
       )}
       <ItemList subTab={activeSubTab}>
-        {activeSubTab === 'personal' && groupItemsByName(personalItems).map(({ item, count }) => (
+        {activeSubTab === 'personal' && groupItemsByNameAndWeight(personalItems).map(({ item, count }) => (
           <ItemCard
             key={item._id}
             theme={theme}
             isAnimating={
               animatingItem && (
-                (animatingItem.itemId === `${item.name}_move`) ||
-                (animatingItem.itemId === `${item.name}_delete`)
+                (animatingItem.itemId === `${item.name}_${item.weight}_move`) ||
+                (animatingItem.itemId === `${item.name}_${item.weight}_delete`)
               ) ? animatingItem.action : null
             }
           >
@@ -577,7 +576,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             <ActionButtons>
               {locationOwnerKey && (
                 <MoveButton
-                  onClick={() => handleMoveItem(item.name, count)}
+                  onClick={() => handleMoveItem(item.name, item.weight, count)}
                   disabled={isActionCooldown}
                 >
                   Выложить
@@ -586,7 +585,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
               )}
               {item.name !== 'Мусор' && (
                 <DeleteButton
-                  onClick={() => handleDeleteItem(item.name, count)}
+                  onClick={() => handleDeleteItem(item.name, item.weight, count)}
                   disabled={isActionCooldown}
                 >
                   Сломать
@@ -596,7 +595,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             </ActionButtons>
           </ItemCard>
         ))}
-        {activeSubTab === 'location' && groupItemsByName(locationItems).map(({ item, count }) => (
+        {activeSubTab === 'location' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
           <ItemCard
             key={item._id}
             theme={theme}
@@ -629,10 +628,10 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
         )}
       </ItemList>
       <Modal
-        isOpen={!!selectedItem || !!confirmDelete || !!actionQuantity.itemName}
+        isOpen={!!selectedItem || !!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
         theme={theme}
         onClick={closeModal}
-        isConfirm={!!confirmDelete || !!actionQuantity.itemName}
+        isConfirm={!!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
       >
         {selectedItem && (
           <ModalContent theme={theme}>
@@ -657,7 +656,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             </ConfirmButtons>
           </ConfirmModalContent>
         )}
-        {actionQuantity.itemName && (
+        {actionQuantity.itemName && actionQuantity.weight && (
           <QuantityModalContent theme={theme}>
             <ConfirmText>
               {actionQuantity.action === 'move' ? 'Выложить' : 'Сломать'} {actionQuantity.itemName}
@@ -677,7 +676,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
               </ConfirmButton>
               <ConfirmButton
                 type="no"
-                onClick={() => setActionQuantity({ itemName: null, count: 1, action: null })}
+                onClick={() => setActionQuantity({ itemName: null, weight: null, count: 1, action: null })}
                 disabled={isActionCooldown}
               >
                 Отмена

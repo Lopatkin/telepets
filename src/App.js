@@ -251,7 +251,7 @@ function App() {
             socket={socket}
             onItemsUpdate={handleItemsUpdate}
             closeActionModal={closeActionModal}
-            setIsModalOpen={setIsActionModalOpen} // Добавляем пропс
+            setIsModalOpen={setIsActionModalOpen} // Убедись, что это есть
           />
         )}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}

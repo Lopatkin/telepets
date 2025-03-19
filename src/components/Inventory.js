@@ -413,20 +413,27 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
 
     setIsActionCooldown(true);
     setAnimatingItem({ itemId, action: 'pickup' });
-    console.log('Calling closeActionModal and setIsModalOpen(false)');
-    closeActionModal(); // Оставляем для совместимости
-    setIsModalOpen(false); // Закрываем модальное окно в Actions.js
+    console.log('Attempting to pick up item:', itemId);
 
-    setTimeout(() => {
-      const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
-      setLocationItems(updatedLocationItems);
-      setAnimatingItem(null);
-      socket.emit('pickupItem', { itemId });
-
-      setTimeout(() => {
-        setIsActionCooldown(false);
-      }, 1000);
-    }, 500);
+    socket.emit('pickupItem', { itemId }, (response) => {
+      if (response && response.success) {
+        setTimeout(() => {
+          const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
+          setLocationItems(updatedLocationItems);
+          setAnimatingItem(null);
+          setIsModalOpen(false); // Закрываем модальное окно после успеха
+          setIsActionCooldown(false);
+        }, 500);
+      } else {
+        console.error('Pickup failed:', response?.message);
+        setError(response?.message || 'Ошибка при подборе');
+        setTimeout(() => {
+          setError(null);
+          setIsActionCooldown(false);
+          setAnimatingItem(null);
+        }, 2000);
+      }
+    });
   };
 
   const handleDeleteItem = (itemId) => {

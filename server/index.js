@@ -212,6 +212,34 @@ io.on('connection', (socket) => {
       'Район Дачный',
       'Торговый центр "Карнавал"',
     ];
+
+    const staticRooms = [
+      'Автобусная остановка',
+      'Бар "У бобра" (18+)',
+      'Бизнес центр "Альбион"',
+      'Вокзал',
+      'ЖК Сфера',
+      'Завод',
+      'Кофейня "Ляля-Фа"',
+      'Лес',
+      'Мастерская',
+      'Парк',
+      'Полигон утилизации',
+      'Приют для животных "Кошкин дом"',
+      'Район Дачный',
+      'Торговый центр "Карнавал"',
+    ];
+
+    for (const room of staticRooms) {
+      const roomLimit = await InventoryLimit.findOne({ owner: room });
+      if (!roomLimit) {
+        await InventoryLimit.create({
+          owner: room,
+          maxWeight: 10000, // Установи подходящий лимит для локаций
+        });
+      }
+    }
+
     console.log('Available static rooms:', rooms);
     console.log('Received lastRoom:', userData.lastRoom);
 
@@ -688,6 +716,7 @@ io.on('connection', (socket) => {
 
       const oldOwnerLimit = await InventoryLimit.findOne({ owner: oldOwner });
       if (!oldOwnerLimit) {
+        console.error(`Inventory limit not found for owner: ${oldOwner}`);
         itemLocks.delete(itemId);
         socket.emit('error', { message: 'Лимиты инвентаря не найдены' });
         return;

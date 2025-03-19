@@ -461,7 +461,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, isModalOpe
 
   const handleCloseModal = () => {
     setSelectedAction(null);
-    setIsModalOpen(false); // Закрываем модальное окно
+    setIsModalOpen(false);
     setClickCount(0);
     setCraftingProgress(0);
   };
@@ -525,15 +525,14 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, isModalOpe
         weight: 1,
         cost: 5,
         effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
-        owner: currentRoom, // Помещаем в локацию
+        owner: currentRoom,
       };
-      console.log('Sending addItem with data:', { owner: currentRoom, item: newItem });
       socket.emit('addItem', { owner: currentRoom, item: newItem }, (response) => {
         if (response && response.success) {
           setNotification({ show: true, message: 'Вы нашли палку!' });
           setTimeout(() => {
             setNotification({ show: false, message: '' });
-            handleCloseModal(); // Закрываем модальное окно после успеха
+            handleCloseModal(); // Закрываем после успеха
           }, 2000);
           setIsCooldown(true);
           setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));

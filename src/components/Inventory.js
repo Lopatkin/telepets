@@ -412,28 +412,20 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, closeAct
 
   const handlePickupItem = (itemId) => {
     if (isActionCooldown) return;
-
+  
     setIsActionCooldown(true);
     setAnimatingItem({ itemId, action: 'pickup' });
     console.log('Attempting to pick up item:', itemId);
-
-    const itemToPickup = locationItems.find(item => item._id.toString() === itemId);
-    if (!itemToPickup) {
-      console.error('Item not found in locationItems:', itemId);
-      setIsActionCooldown(false);
-      return;
-    }
-
+  
     socket.emit('pickupItem', { itemId }, (response) => {
       if (response && response.success) {
         setTimeout(() => {
           const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
           setLocationItems(updatedLocationItems);
-          setPersonalItems(prev => [...prev, itemToPickup]); // Добавляем предмет в личный инвентарь
           setAnimatingItem(null);
           setIsModalOpen(false); // Закрываем модальное окно
           setIsActionCooldown(false);
-          console.log('Item picked up successfully:', itemToPickup);
+          console.log('Pickup successful, waiting for server items update');
         }, 500);
       } else {
         console.error('Pickup failed:', response?.message);

@@ -710,13 +710,7 @@ io.on('connection', (socket) => {
       const itemWeight = parseFloat(item.weight) || 0;
 
       const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
-      if (!userLimit) {
-        itemLocks.delete(itemId);
-        socket.emit('error', { message: 'Лимит инвентаря пользователя не найден' });
-        if (callback) callback({ success: false, message: 'Лимит инвентаря пользователя не найден' });
-        return;
-      }
-      if (userLimit.currentWeight + itemWeight > userLimit.maxWeight) {
+      if (!userLimit || userLimit.currentWeight + itemWeight > userLimit.maxWeight) {
         itemLocks.delete(itemId);
         socket.emit('error', { message: 'Превышен лимит веса у пользователя' });
         if (callback) callback({ success: false, message: 'Превышен лимит веса' });
@@ -744,17 +738,18 @@ io.on('connection', (socket) => {
         { $inc: { currentWeight: itemWeight } }
       );
 
-      const oldOwnerItems = itemCache.get(oldOwner) || [];
-      itemCache.set(oldOwner, oldOwnerItems.filter(i => i._id.toString() !== itemId));
-      const userItems = itemCache.get(userOwnerKey) || [];
-      itemCache.set(userOwnerKey, [...userItems, item]);
+      // Получаем актуальные данные из базы
+      const updatedUserItems = await Item.find({ owner: userOwnerKey });
+      const updatedOldOwnerItems = await Item.find({ owner: oldOwner });
+      itemCache.set(userOwnerKey, updatedUserItems);
+      itemCache.set(oldOwner, updatedOldOwnerItems);
 
       const updatedOldLimit = await InventoryLimit.findOne({ owner: oldOwner });
       const updatedUserLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
 
-      // Отправляем обновления напрямую клиенту
-      socket.emit('items', { owner: userOwnerKey, items: itemCache.get(userOwnerKey) || [] });
-      socket.emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) || [] });
+      // Отправляем актуальные данные клиенту
+      socket.emit('items', { owner: userOwnerKey, items: updatedUserItems });
+      socket.emit('items', { owner: oldOwner, items: updatedOldOwnerItems });
       socket.emit('inventoryLimit', updatedOldLimit);
       socket.emit('inventoryLimit', updatedUserLimit);
 
@@ -762,13 +757,14 @@ io.on('connection', (socket) => {
       if (currentRoom) {
         io.to(currentRoom).emit('itemAction', { action: 'remove', owner: oldOwner, itemId });
         io.to(currentRoom).emit('itemAction', { action: 'add', owner: userOwnerKey, item });
-        io.to(currentRoom).emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) || [] });
-        io.to(currentRoom).emit('items', { owner: userOwnerKey, items: itemCache.get(userOwnerKey) || [] });
+        io.to(currentRoom).emit('items', { owner: oldOwner, items: updatedOldOwnerItems });
+        io.to(currentRoom).emit('items', { owner: userOwnerKey, items: updatedUserItems });
         io.to(currentRoom).emit('inventoryLimit', updatedOldLimit);
         io.to(currentRoom).emit('inventoryLimit', updatedUserLimit);
       }
 
       console.log(`Item ${itemId} picked up by ${userOwnerKey} from ${oldOwner}`);
+      console.log('Updated user items:', updatedUserItems);
       itemLocks.delete(itemId);
       if (callback) callback({ success: true });
     } catch (err) {

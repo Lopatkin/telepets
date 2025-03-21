@@ -25,6 +25,9 @@ import workshopImage from '../images/workshop.jpg';
 import babushka1Image from '../images/babushka_1.jpg'; // Добавляем аватарки
 import babushka2Image from '../images/babushka_2.jpg';
 import babushka3Image from '../images/babushka_3.jpg';
+import volonterIraImage from '../images/volonter_Ira.jpg'; // Добавляем аватарки волонтёров
+import volonterKatyaImage from '../images/volonter_Katya.jpg';
+import volonterZhannaImage from '../images/volonter_Zhanna.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -251,6 +254,28 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     return hours === 6 && minutes >= 0 && minutes <= 59;
   };
 
+  // Проверка времени для волонтёров Иры и Кати (8:03–20:05)
+  const isIraKatyaTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const startMinutes = 8 * 60 + 3; // 8:03
+    const endMinutes = 20 * 60 + 5;  // 20:05
+    return totalMinutes >= startMinutes && totalMinutes <= endMinutes;
+  };
+
+  // Проверка времени для волонтёра Жанны (19:53–8:12 следующего дня)
+  const isZhannaTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const startMinutes = 19 * 60 + 53; // 19:53
+    const endMinutes = 8 * 60 + 12;    // 8:12
+    return totalMinutes >= startMinutes || totalMinutes <= endMinutes;
+  };
+
   useEffect(() => {
     if (room === 'Парк') {
       const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false };
@@ -281,8 +306,27 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         if (!prevUsers.some(user => user.userId === 'npc_babushka_zina')) updatedUsers.unshift(babushkaZina);
         return updatedUsers;
       });
+    } else if (room === 'Приют для животных "Кошкин дом"') {
+      const volonterIra = { userId: 'npc_volonter_ira', firstName: 'Волонтёр Ира', photoUrl: volonterIraImage, isHuman: true };
+      const volonterKatya = { userId: 'npc_volonter_katya', firstName: 'Волонтёр Катя', photoUrl: volonterKatyaImage, isHuman: true };
+      const volonterZhanna = { userId: 'npc_volonter_zhanna', firstName: 'Волонтёр Жанна', photoUrl: volonterZhannaImage, isHuman: true };
+      setUsers(prevUsers => {
+        const updatedUsers = [...prevUsers];
+        if (isIraKatyaTime()) {
+          if (!prevUsers.some(user => user.userId === 'npc_volonter_ira')) updatedUsers.unshift(volonterIra);
+          if (!prevUsers.some(user => user.userId === 'npc_volonter_katya')) updatedUsers.unshift(volonterKatya);
+        }
+        if (isZhannaTime()) {
+          if (!prevUsers.some(user => user.userId === 'npc_volonter_zhanna')) updatedUsers.unshift(volonterZhanna);
+        }
+        return updatedUsers;
+      });
     } else {
-      setUsers(prevUsers => prevUsers.filter(user => !['npc_belochka', 'npc_fox', 'npc_ezhik', 'npc_security', 'npc_guard', 'npc_babushka_galya', 'npc_babushka_vera', 'npc_babushka_zina'].includes(user.userId)));
+      setUsers(prevUsers => prevUsers.filter(user => ![
+        'npc_belochka', 'npc_fox', 'npc_ezhik', 'npc_security', 'npc_guard',
+        'npc_babushka_galya', 'npc_babushka_vera', 'npc_babushka_zina',
+        'npc_volonter_ira', 'npc_volonter_katya', 'npc_volonter_zhanna'
+      ].includes(user.userId)));
     }
   }, [room]);
 
@@ -337,6 +381,20 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           { userId: 'npc_babushka_zina', firstName: 'Бабушка Зина', photoUrl: babushka3Image, isHuman: true },
           ...updatedUsers
         ];
+      } else if (room === 'Приют для животных "Кошкин дом"') {
+        if (isIraKatyaTime()) {
+          updatedUsers = [
+            { userId: 'npc_volonter_ira', firstName: 'Волонтёр Ира', photoUrl: volonterIraImage, isHuman: true },
+            { userId: 'npc_volonter_katya', firstName: 'Волонтёр Катя', photoUrl: volonterKatyaImage, isHuman: true },
+            ...updatedUsers
+          ];
+        }
+        if (isZhannaTime()) {
+          updatedUsers = [
+            { userId: 'npc_volonter_zhanna', firstName: 'Волонтёр Жанна', photoUrl: volonterZhannaImage, isHuman: true },
+            ...updatedUsers
+          ];
+        }
       }
       setUsers(updatedUsers);
     });

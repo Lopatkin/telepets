@@ -544,13 +544,13 @@ io.on('connection', (socket) => {
       userId: socket.userData?.userId,
       messageData: message
     });
-
+  
     if (!socket.userData || !message || !message.room) {
       console.error('Invalid message data:', message);
       socket.emit('error', { message: 'Некорректные данные сообщения' });
       return;
     }
-
+  
     try {
       const user = await User.findOne({ userId: socket.userData.userId });
       if (!user) {
@@ -558,7 +558,7 @@ io.on('connection', (socket) => {
         socket.emit('error', { message: 'Пользователь не найден' });
         return;
       }
-
+  
       const newMessage = new Message({
         userId: socket.userData.userId,
         text: message.text,
@@ -576,38 +576,75 @@ io.on('connection', (socket) => {
       await newMessage.save();
       console.log('Message saved:', { text: newMessage.text, animalText: newMessage.animalText, room: message.room });
       io.to(message.room).emit('message', newMessage);
-
+  
       console.log('Checking catch conditions for user:', {
         userId: socket.userData.userId,
         isHuman: user.isHuman,
         animalType: user.animalType,
         currentRoom: message.room
       });
-
+  
       if (!user.isHuman && (user.animalType === 'Кошка' || user.animalType === 'Собака')) {
         console.log('User is an animal (cat or dog), proceeding with catch check');
         const currentRoomUsers = roomUsers[message.room] || new Set();
         console.log('Current room users:', Array.from(currentRoomUsers).map(u => u.userId));
-        const hasLovec = Array.from(currentRoomUsers).some(u =>
+        const hasLovec = Array.from(currentRoomUsers).some(u => 
           u.userId === 'npc_lovec_park' || u.userId === 'npc_lovec_dachny'
         );
         console.log('Lovec present in room:', hasLovec);
-
+  
         if (hasLovec) {
           const catchChance = Math.random();
           console.log('Catch chance rolled:', catchChance);
-          if (catchChance <= 0.1) { // 10% шанс
+          if (catchChance <= 0.1) {
             console.log('User caught by Lovec! Initiating move to shelter');
             const newRoom = 'Приют для животных "Кошкин дом"';
-            // ... остальная логика перемещения без изменений ...
+            
+            // Обновляем комнату пользователя в базе
+            user.lastRoom = newRoom;
+            await user.save();
+            console.log(`Updated user ${socket.userData.userId} lastRoom to ${newRoom}`);
+  
+            // Удаляем пользователя из текущей комнаты
+            if (roomUsers[message.room]) {
+              roomUsers[message.room].forEach(u => {
+                if (u.userId === socket.userData.userId) roomUsers[message.room].delete(u);
+              });
+              console.log(`Removed user ${socket.userData.userId} from room ${message.room}`);
+            }
+  
+            // Добавляем пользователя в новую комнату
+            if (!roomUsers[newRoom]) roomUsers[newRoom] = new Set();
+            roomUsers[newRoom].add({
+              userId: socket.userData.userId,
+              firstName: user.firstName,
+              username: user.username,
+              lastName: user.lastName,
+              photoUrl: user.photoUrl,
+              name: user.name,
+              isHuman: user.isHuman,
+              animalType: user.animalType
+            });
+            console.log(`Added user ${socket.userData.userId} to room ${newRoom}`);
+  
+            // Отправляем событие клиенту
+            socket.emit('forceRoomChange', { newRoom });
+            console.log(`Emitted forceRoomChange to client ${socket.userData.userId} for room ${newRoom}`);
+  
+            // Уведомляем старую комнату
+            io.to(message.room).emit('message', {
+              userId: 'system',
+              text: `${user.name || user.firstName} был пойман Ловцом и отправлен в приют!`,
+              room: message.room,
+              timestamp: new Date().toISOString()
+            });
+            console.log(`Notified room ${message.room} about user catch`);
           } else {
             console.log('Catch chance failed, user stays in room');
           }
         } else {
           console.log('No Lovec in room, skipping catch check');
         }
-      } else {
-        console.log('User is not an animal or not a cat/dog, skipping catch check');
       }
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);

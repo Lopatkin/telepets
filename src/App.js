@@ -54,6 +54,20 @@ function App() {
   };
 
   useEffect(() => {
+    socket.on('forceRoomChange', ({ newRoom }) => {
+      console.log('Received forceRoomChange event:', { newRoom });
+      setRoom(newRoom);
+      localStorage.setItem('room', JSON.stringify({ [userId]: newRoom }));
+      socket.emit('joinRoom', newRoom);
+      console.log(`Force joined room ${newRoom} due to catch`);
+    });
+
+    return () => {
+      socket.off('forceRoomChange');
+    };
+  }, [socket, userId]);
+
+  useEffect(() => {
     console.log('Initializing socket connection -', new Date().toISOString());
     const initializeSocket = () => {
       if (socketRef.current) return;

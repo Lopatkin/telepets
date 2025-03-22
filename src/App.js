@@ -128,6 +128,21 @@ function App() {
         setIsRegistered(updatedUser.isRegistered);
       });
 
+      socketRef.current.on('forceRoomChange', ({ newRoom }) => {
+        console.log('Received forceRoomChange to:', newRoom);
+        setCurrentRoom(newRoom);
+        joinedRoomsRef.current.add(newRoom);
+
+        if (user?.userId) {
+          const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
+          storedRooms[user.userId] = newRoom;
+          localStorage.setItem('userRooms', JSON.stringify(storedRooms));
+          console.log('Updated localStorage with forced room:', storedRooms);
+        }
+
+        socketRef.current.emit('joinRoom', { room: newRoom, lastTimestamp: null });
+      });
+
       socketRef.current.on('error', ({ message }) => {
         console.error('Server error:', message);
       });

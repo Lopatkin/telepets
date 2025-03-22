@@ -166,7 +166,7 @@ function App() {
     };
 
     initializeSocket();
-  }, []);
+  }, [user?.userId]);
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);

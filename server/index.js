@@ -31,7 +31,8 @@ const userSchema = new mongoose.Schema({
   residence: String,
   animalType: String,
   name: String,
-  credits: { type: Number, default: 0 }
+  credits: { type: Number, default: 0 },
+  lastRoom: String // Добавляем поле для хранения последней комнаты
 });
 const User = mongoose.model('User', userSchema);
 
@@ -48,7 +49,7 @@ const messageSchema = new mongoose.Schema({
   animalType: String,
   room: String,
   timestamp: { type: Date, default: Date.now },
-  animalText: String // Оставляем поле, но заполняется клиентом
+  animalText: String
 });
 const Message = mongoose.model('Message', messageSchema);
 
@@ -85,7 +86,6 @@ const roomJoinTimes = new WeakMap();
 const itemCache = new Map();
 const itemLocks = new Map();
 
-// Функция проверки времени для Ловца в Парке
 // Функция проверки времени для Ловца в Парке (чётные часы 8:00–23:00 UTC)
 const isLovecParkTime = () => {
   const now = new Date();
@@ -93,10 +93,21 @@ const isLovecParkTime = () => {
   return hour >= 8 && hour <= 23 && hour % 2 === 0;
 };
 
+// Функция проверки времени для Ловца в Район Дачный (нечётные часы 7:00–22:00 UTC)
 const isLovecDachnyTime = () => {
   const now = new Date();
   const hour = now.getUTCHours();
   return hour >= 7 && hour <= 22 && hour % 2 === 1;
+};
+
+// Функция проверки времени для волонтёров
+const isVolunteerTime = (volunteer) => {
+  const now = new Date();
+  const hour = now.getUTCHours();
+  if (volunteer === 'npc_volonter_ira') return hour >= 8 && hour <= 16; // Ира: 8:00–16:00 UTC
+  if (volunteer === 'npc_volonter_katya') return hour >= 10 && hour <= 18; // Катя: 10:00–18:00 UTC
+  if (volunteer === 'npc_volonter_zhanna') return hour >= 12 && hour <= 20; // Жанна: 12:00–20:00 UTC
+  return false;
 };
 
 // Обновление NPC в комнатах
@@ -156,6 +167,38 @@ const updateNPCsInRooms = () => {
       io.to('Район Дачный').emit('roomUsers', Array.from(roomUsers['Район Дачный']));
     }
   }
+
+  // Волонтёры в Приюте
+  const shelterRoom = 'Приют для животных "Кошкин дом"';
+  if (!roomUsers[shelterRoom]) roomUsers[shelterRoom] = new Set();
+
+  const volunteers = [
+    { userId: 'npc_volonter_ira', name: 'Волонтёр Ира', photoUrl: '/static/media/volonter_Ira.37aa122867faeaa93641.jpg' },
+    { userId: 'npc_volonter_katya', name: 'Волонтёр Катя', photoUrl: '/static/media/volonter_Katya.37aa122867faeaa93641.jpg' },
+    { userId: 'npc_volonter_zhanna', name: 'Волонтёр Жанна', photoUrl: '/static/media/volonter_Zhanna.37aa122867faeaa93641.jpg' }
+  ];
+
+  volunteers.forEach(volunteer => {
+    roomUsers[shelterRoom].forEach(u => {
+      if (u.userId === volunteer.userId) roomUsers[shelterRoom].delete(u);
+    });
+    if (isVolunteerTime(volunteer.userId)) {
+      roomUsers[shelterRoom].add({
+        userId: volunteer.userId,
+        firstName: volunteer.name,
+        username: '',
+        lastName: '',
+        photoUrl: volunteer.photoUrl,
+        name: volunteer.name,
+        isHuman: true
+      });
+      console.log(`Added ${volunteer.userId} to room ${shelterRoom}`);
+    } else {
+      console.log(`Removed ${volunteer.userId} from room ${shelterRoom}`);
+    }
+  });
+
+  io.to(shelterRoom).emit('roomUsers', Array.from(roomUsers[shelterRoom]));
 };
 
 // Запускаем проверку каждые 5 минут
@@ -277,23 +320,6 @@ io.on('connection', (socket) => {
       });
     }
 
-    const rooms = [
-      'Автобусная остановка',
-      'Бар "У бобра" (18+)',
-      'Бизнес центр "Альбион"',
-      'Вокзал',
-      'ЖК Сфера',
-      'Завод',
-      'Кофейня "Ляля-Фа"',
-      'Лес',
-      'Мастерская',
-      'Парк',
-      'Полигон утилизации',
-      'Приют для животных "Кошкин дом"',
-      'Район Дачный',
-      'Торговый центр "Карнавал"',
-    ];
-
     const staticRooms = [
       'Автобусная остановка',
       'Бар "У бобра" (18+)',
@@ -308,7 +334,7 @@ io.on('connection', (socket) => {
       'Полигон утилизации',
       'Приют для животных "Кошкин дом"',
       'Район Дачный',
-      'Торговый центр "Карнавал"',
+      'Торговый центр "Карнавал"'
     ];
 
     for (const room of staticRooms) {
@@ -316,16 +342,14 @@ io.on('connection', (socket) => {
       if (!roomLimit) {
         await InventoryLimit.create({
           owner: room,
-          maxWeight: 10000, // Установи подходящий лимит для локаций
+          maxWeight: 10000,
         });
       }
     }
 
-    console.log('Available static rooms:', rooms);
+    console.log('Available static rooms:', staticRooms);
     console.log('Received lastRoom:', userData.lastRoom);
 
-    const isMyHome = userData.lastRoom && userData.lastRoom === `myhome_${socket.userData.userId}`;
-    const isStaticRoom = userData.lastRoom && rooms.includes(userData.lastRoom);
     const defaultRoom = user.isRegistered ? user.lastRoom || 'Полигон утилизации' : 'Автобусная остановка';
     console.log('Selected defaultRoom from DB:', defaultRoom);
 
@@ -374,6 +398,7 @@ io.on('connection', (socket) => {
           animalType: data.animalType,
           name: data.name,
           photoUrl: data.photoUrl || socket.userData.photoUrl || '',
+          lastRoom: 'Автобусная остановка' // Устанавливаем начальную комнату
         },
         { new: true }
       );
@@ -461,7 +486,7 @@ io.on('connection', (socket) => {
 
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {
     if (typeof room !== 'string') {
-      console.error('Invalid room type:', room);
+      console.log(`Invalid room type: ${room}`);
       socket.emit('error', { message: 'Некорректное название комнаты' });
       return;
     }
@@ -475,6 +500,31 @@ io.on('connection', (socket) => {
     const user = await User.findOne({ userId: socket.userData.userId });
     if (!user) {
       socket.emit('error', { message: 'Пользователь не найден в базе' });
+      return;
+    }
+
+    const staticRooms = [
+      'Автобусная остановка',
+      'Бар "У бобра" (18+)',
+      'Бизнес центр "Альбион"',
+      'Вокзал',
+      'ЖК Сфера',
+      'Завод',
+      'Кофейня "Ляля-Фа"',
+      'Лес',
+      'Мастерская',
+      'Парк',
+      'Полигон утилизации',
+      'Приют для животных "Кошкин дом"',
+      'Район Дачный',
+      'Торговый центр "Карнавал"'
+    ];
+
+    console.log(`User ${socket.userData.userId} attempting to join room: ${room}`);
+    const roomType = room.startsWith('myhome_') ? 'home' : (staticRooms.includes(room) ? 'static' : undefined);
+    if (!roomType) {
+      console.log(`Invalid room type: ${roomType}, room: ${room}, staticRooms: ${staticRooms}`);
+      socket.emit('error', { message: 'Некорректное название комнаты' });
       return;
     }
 
@@ -657,7 +707,7 @@ io.on('connection', (socket) => {
               animalType: user.animalType
             });
             console.log(`Added user ${socket.userData.userId} to room ${newRoom}`);
-            io.to(newRoom).emit('roomUsers', Array.from(roomUsers[newRoom])); // Отправляем обновлённый список в приют
+            io.to(newRoom).emit('roomUsers', Array.from(roomUsers[newRoom]));
 
             socket.emit('forceRoomChange', { newRoom });
             console.log(`Emitted forceRoomChange to client ${socket.userData.userId} for room ${newRoom}`);
@@ -708,7 +758,7 @@ io.on('connection', (socket) => {
 
   socket.on('addItem', async ({ owner, item }, callback) => {
     try {
-      console.log('Received item data:', { owner, item }); // Для отладки
+      console.log('Received item data:', { owner, item });
       if (!item || typeof item !== 'object') {
         console.error('Invalid item data:', item);
         if (callback) callback({ success: false, message: 'Некорректные данные предмета' });
@@ -733,8 +783,8 @@ io.on('connection', (socket) => {
         return;
       }
 
-      const newItem = await Item.create({ owner, ...item }); // Распаковываем item
-      console.log('Saved item:', newItem); // Для отладки
+      const newItem = await Item.create({ owner, ...item });
+      console.log('Saved item:', newItem);
 
       await InventoryLimit.updateOne(
         { owner },
@@ -754,7 +804,7 @@ io.on('connection', (socket) => {
         io.to(currentRoom).emit('inventoryLimit', updatedLimit);
       }
 
-      io.to(owner).emit('items', { owner, items: itemCache.get(owner) }); // Уведомляем владельца
+      io.to(owner).emit('items', { owner, items: itemCache.get(owner) });
 
       if (callback) callback({ success: true });
       if (item._id) itemLocks.delete(item._id);
@@ -767,14 +817,14 @@ io.on('connection', (socket) => {
 
   socket.on('moveItem', async ({ itemIds, newOwner }) => {
     try {
-      let ids = Array.isArray(itemIds) ? itemIds : [itemIds]; // Поддержка как массива, так и одиночного ID
+      let ids = Array.isArray(itemIds) ? itemIds : [itemIds];
       const items = await Item.find({ _id: { $in: ids } });
       if (items.length !== ids.length) {
         socket.emit('error', { message: 'Некоторые предметы не найдены' });
         return;
       }
 
-      const oldOwner = items[0].owner; // Предполагаем, что все предметы из одного инвентаря
+      const oldOwner = items[0].owner;
       const totalWeight = items.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
 
       const newOwnerLimit = await InventoryLimit.findOne({ owner: newOwner });

@@ -62,7 +62,7 @@ function App() {
       const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
       storedRooms[user.userId] = newRoom;
       localStorage.setItem('userRooms', JSON.stringify(storedRooms));
-      socket.emit('joinRoom', newRoom);
+      socket.emit('joinRoom', { room: newRoom, lastTimestamp: null });
       console.log(`Force joined room ${newRoom} due to catch`);
     });
 
@@ -133,6 +133,9 @@ function App() {
         setIsRegistered(isRegistered);
         if (isRegistered) {
           setCurrentRoom(defaultRoom);
+          const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
+          storedRooms[user?.userId || 'unknown'] = defaultRoom;
+          localStorage.setItem('userRooms', JSON.stringify(storedRooms));
           joinedRoomsRef.current.add(defaultRoom);
           socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
         }

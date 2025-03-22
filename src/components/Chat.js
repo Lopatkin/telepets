@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
-import { catSounds, dogSounds } from './animalSounds'; // Импорт массивов
+import { catSounds, dogSounds } from './animalSounds';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
 import trainStationImage from '../images/train_station.jpg';
@@ -10,11 +10,6 @@ import factoryImage from '../images/factory.jpg';
 import forestImage from '../images/forest.jpg';
 import parkImage from '../images/park.jpg';
 import villageImage from '../images/village.jpg';
-import npcBelochkaImage from '../images/npc_belochka.jpg';
-import npcFoxImage from '../images/npc_fox.jpg';
-import npcEzhikImage from '../images/npc_ezhik.jpg';
-import npcSecurityImage from '../images/npc_security.jpg';
-import npcGuardImage from '../images/npc_guard.jpg';
 import barImage from '../images/bar.jpg';
 import cafeImage from '../images/cafe.jpg';
 import priyutImage from '../images/priyut.jpg';
@@ -22,14 +17,6 @@ import albionImage from '../images/albion.jpg';
 import karnavalImage from '../images/karnaval.jpg';
 import poligonImage from '../images/poligon.jpg';
 import workshopImage from '../images/workshop.jpg';
-import babushka1Image from '../images/babushka_1.jpg'; // Добавляем аватарки
-import babushka2Image from '../images/babushka_2.jpg';
-import babushka3Image from '../images/babushka_3.jpg';
-import volonterIraImage from '../images/volonter_Ira.jpg'; // Добавляем аватарки волонтёров
-import volonterKatyaImage from '../images/volonter_Katya.jpg';
-import volonterZhannaImage from '../images/volonter_Zhanna.jpg';
-import lovec1Image from '../images/lovec_1.jpg'; // Добавляем аватарки ловцов
-import lovec2Image from '../images/lovec_2.jpg';
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -248,125 +235,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   const currentUserPhotoUrl = user?.photoUrl || '';
 
-  // Проверка времени для появления бабушек (6:00–7:00)
-  const isBabushkaTime = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    return hours === 6 && minutes >= 0 && minutes <= 59;
-  };
-
-  // Проверка времени для волонтёров Иры и Кати (8:03–20:05)
-  const isIraKatyaTime = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 8 * 60 + 3; // 8:03
-    const endMinutes = 20 * 60 + 5;  // 20:05
-    return totalMinutes >= startMinutes && totalMinutes <= endMinutes;
-  };
-
-  // Проверка времени для волонтёра Жанны (19:53–8:12 следующего дня)
-  const isZhannaTime = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 19 * 60 + 53; // 19:53
-    const endMinutes = 8 * 60 + 12;    // 8:12
-    return totalMinutes >= startMinutes || totalMinutes <= endMinutes;
-  };
-
-  // Проверка времени для Ловца животных в Парке (8:00–23:00, чётные часы)
-  const isLovecParkTime = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 8 * 60;   // 8:00
-    const endMinutes = 23 * 60;    // 23:00
-    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
-  };
-
-  // Проверка времени для Ловца животных в Районе Дачном (7:00–22:00, нечётные часы)
-  const isLovecDachnyTime = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 7 * 60;   // 7:00
-    const endMinutes = 22 * 60;    // 22:00
-    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
-  };
-
-  useEffect(() => {
-    if (room === 'Парк') {
-      const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false };
-      const lovecPark = { userId: 'npc_lovec_park', firstName: 'Ловец животных', photoUrl: lovec1Image, isHuman: true };
-      setUsers(prevUsers => {
-        const updatedUsers = [...prevUsers];
-        if (!prevUsers.some(user => user.userId === 'npc_belochka')) updatedUsers.unshift(belochka);
-        if (isLovecParkTime() && !prevUsers.some(user => user.userId === 'npc_lovec_park')) updatedUsers.unshift(lovecPark);
-        return updatedUsers;
-      });
-    } else if (room === 'Лес') {
-      const fox = { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage, isHuman: false };
-      const ezhik = { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage, isHuman: false };
-      setUsers(prevUsers => {
-        const updatedUsers = [...prevUsers];
-        if (!prevUsers.some(user => user.userId === 'npc_fox')) updatedUsers.unshift(fox);
-        if (!prevUsers.some(user => user.userId === 'npc_ezhik')) updatedUsers.unshift(ezhik);
-        return updatedUsers;
-      });
-    } else if (room === 'Район Дачный') {
-      const security = { userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage, isHuman: true };
-      const lovecDachny = { userId: 'npc_lovec_dachny', firstName: 'Ловец животных', photoUrl: lovec2Image, isHuman: true };
-      setUsers(prevUsers => {
-        const updatedUsers = [...prevUsers];
-        if (!prevUsers.some(user => user.userId === 'npc_security')) updatedUsers.unshift(security);
-        if (isLovecDachnyTime() && !prevUsers.some(user => user.userId === 'npc_lovec_dachny')) updatedUsers.unshift(lovecDachny);
-        return updatedUsers;
-      });
-    } else if (room === 'Завод') {
-      const guard = { userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage, isHuman: true };
-      setUsers(prevUsers => !prevUsers.some(user => user.userId === 'npc_guard') ? [guard, ...prevUsers] : prevUsers);
-    } else if (room === 'Автобусная остановка' && isBabushkaTime()) {
-      const babushkaGalya = { userId: 'npc_babushka_galya', firstName: 'Бабушка Галя', photoUrl: babushka1Image, isHuman: true };
-      const babushkaVera = { userId: 'npc_babushka_vera', firstName: 'Бабушка Вера', photoUrl: babushka2Image, isHuman: true };
-      const babushkaZina = { userId: 'npc_babushka_zina', firstName: 'Бабушка Зина', photoUrl: babushka3Image, isHuman: true };
-      setUsers(prevUsers => {
-        const updatedUsers = [...prevUsers];
-        if (!prevUsers.some(user => user.userId === 'npc_babushka_galya')) updatedUsers.unshift(babushkaGalya);
-        if (!prevUsers.some(user => user.userId === 'npc_babushka_vera')) updatedUsers.unshift(babushkaVera);
-        if (!prevUsers.some(user => user.userId === 'npc_babushka_zina')) updatedUsers.unshift(babushkaZina);
-        return updatedUsers;
-      });
-    } else if (room === 'Приют для животных "Кошкин дом"') {
-      const volonterIra = { userId: 'npc_volonter_ira', firstName: 'Волонтёр Ира', photoUrl: volonterIraImage, isHuman: true };
-      const volonterKatya = { userId: 'npc_volonter_katya', firstName: 'Волонтёр Катя', photoUrl: volonterKatyaImage, isHuman: true };
-      const volonterZhanna = { userId: 'npc_volonter_zhanna', firstName: 'Волонтёр Жанна', photoUrl: volonterZhannaImage, isHuman: true };
-      setUsers(prevUsers => {
-        const updatedUsers = [...prevUsers];
-        if (isIraKatyaTime()) {
-          if (!prevUsers.some(user => user.userId === 'npc_volonter_ira')) updatedUsers.unshift(volonterIra);
-          if (!prevUsers.some(user => user.userId === 'npc_volonter_katya')) updatedUsers.unshift(volonterKatya);
-        }
-        if (isZhannaTime()) {
-          if (!prevUsers.some(user => user.userId === 'npc_volonter_zhanna')) updatedUsers.unshift(volonterZhanna);
-        }
-        return updatedUsers;
-      });
-    } else {
-      setUsers(prevUsers => prevUsers.filter(user => ![
-        'npc_belochka', 'npc_fox', 'npc_ezhik', 'npc_security', 'npc_guard',
-        'npc_babushka_galya', 'npc_babushka_vera', 'npc_babushka_zina',
-        'npc_volonter_ira', 'npc_volonter_katya', 'npc_volonter_zhanna',
-        'npc_lovec_park', 'npc_lovec_dachny'
-      ].includes(user.userId)));
-    }
-  }, [room]);
-
   useEffect(() => {
     if (!socket || !room) return;
 
@@ -393,6 +261,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     });
 
     socket.on('roomUsers', (roomUsers) => {
+      console.log('Received roomUsers:', roomUsers);
       setUsers(roomUsers.map(roomUser => {
         if (roomUser.userId === userId) {
           return { ...roomUser, photoUrl: currentUserPhotoUrl };

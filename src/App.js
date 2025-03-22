@@ -62,7 +62,6 @@ function App() {
           origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
           methods: ["GET", "POST"]
         },
-        
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000

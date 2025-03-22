@@ -590,7 +590,9 @@ io.on('connection', (socket) => {
     const startMinutes = 1 * 60;   // 8:00
     const endMinutes = 9 * 60;    // 23:00
 
-    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
+    // return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
+    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
+
   };
 
   const isLovecDachnyTime = () => {

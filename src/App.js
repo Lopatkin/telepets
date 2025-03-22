@@ -45,7 +45,7 @@ function App() {
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
   const closeActionModal = () => {
-    console.log('Closing action modal'); // Отладка
+    console.log('Closing action modal');
     setIsActionModalOpen(false);
   };
 
@@ -54,10 +54,12 @@ function App() {
   };
 
   useEffect(() => {
+    if (!socket) return;
+
     socket.on('forceRoomChange', ({ newRoom }) => {
       console.log('Received forceRoomChange event:', { newRoom });
-      setRoom(newRoom);
-      localStorage.setItem('room', JSON.stringify({ [userId]: newRoom }));
+      setCurrentRoom(newRoom);
+      localStorage.setItem('room', JSON.stringify({ [user.userId]: newRoom }));
       socket.emit('joinRoom', newRoom);
       console.log(`Force joined room ${newRoom} due to catch`);
     });
@@ -65,7 +67,7 @@ function App() {
     return () => {
       socket.off('forceRoomChange');
     };
-  }, [socket, userId]);
+  }, [socket, user]);
 
   useEffect(() => {
     console.log('Initializing socket connection -', new Date().toISOString());
@@ -141,15 +143,6 @@ function App() {
           return newUser;
         });
         setIsRegistered(updatedUser.isRegistered);
-      });
-
-      socketRef.current.on('forceRoomChange', ({ newRoom, reason }) => {
-        console.log(`Received forceRoomChange event: moving to ${newRoom}. Reason: ${reason}`);
-        setCurrentRoom(newRoom);
-        joinedRoomsRef.current.add(newRoom);
-        socketRef.current.emit('joinRoom', { room: newRoom, lastTimestamp: null });
-        console.log(`Joined new room ${newRoom} after force change`);
-        alert(reason);
       });
 
       socketRef.current.on('error', ({ message }) => {
@@ -275,7 +268,7 @@ function App() {
             socket={socket}
             onItemsUpdate={handleItemsUpdate}
             closeActionModal={closeActionModal}
-            setIsModalOpen={setIsActionModalOpen} // Убедись, что это есть
+            setIsModalOpen={setIsActionModalOpen}
           />
         )}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}

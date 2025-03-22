@@ -86,37 +86,74 @@ const itemCache = new Map();
 const itemLocks = new Map();
 
 // Функция проверки времени для Ловца в Парке
+// Функция проверки времени для Ловца в Парке (чётные часы 8:00–23:00 UTC)
 const isLovecParkTime = () => {
   const now = new Date();
-  const hour = now.getUTCHours(); // Используем UTC, так как Render работает в UTC
-  return hour >= 8 && hour <= 23 && hour % 2 === 0; // Чётные часы с 8:00 до 23:00
+  const hour = now.getUTCHours();
+  return hour >= 8 && hour <= 23 && hour % 2 === 0;
 };
 
-// Обновление списка пользователей в комнатах
+const isLovecDachnyTime = () => {
+  const now = new Date();
+  const hour = now.getUTCHours();
+  return hour >= 7 && hour <= 22 && hour % 2 === 1;
+};
+
+// Обновление NPC в комнатах
 const updateNPCsInRooms = () => {
+  // Ловец в Парке
   if (isLovecParkTime()) {
     if (!roomUsers['Парк']) roomUsers['Парк'] = new Set();
-    const lovecData = {
+    const lovecParkData = {
       userId: 'npc_lovec_park',
       firstName: 'Ловец',
       username: '',
       lastName: '',
       photoUrl: '/static/media/lovec_1.c6ffd5711d81355a98da.jpg',
       name: 'Ловец животных',
-      isHuman: true // Ловец — человек
+      isHuman: true
     };
-    // Удаляем, если уже есть, чтобы обновить данные
     roomUsers['Парк'].forEach(u => {
       if (u.userId === 'npc_lovec_park') roomUsers['Парк'].delete(u);
     });
-    roomUsers['Парк'].add(lovecData);
+    roomUsers['Парк'].add(lovecParkData);
     console.log('Added npc_lovec_park to room Парк');
+    io.to('Парк').emit('roomUsers', Array.from(roomUsers['Парк']));
   } else {
     if (roomUsers['Парк']) {
       roomUsers['Парк'].forEach(u => {
         if (u.userId === 'npc_lovec_park') roomUsers['Парк'].delete(u);
       });
       console.log('Removed npc_lovec_park from room Парк');
+      io.to('Парк').emit('roomUsers', Array.from(roomUsers['Парк']));
+    }
+  }
+
+  // Ловец в Район Дачный
+  if (isLovecDachnyTime()) {
+    if (!roomUsers['Район Дачный']) roomUsers['Район Дачный'] = new Set();
+    const lovecDachnyData = {
+      userId: 'npc_lovec_dachny',
+      firstName: 'Ловец',
+      username: '',
+      lastName: '',
+      photoUrl: '/static/media/lovec_1.c6ffd5711d81355a98da.jpg',
+      name: 'Ловец животных',
+      isHuman: true
+    };
+    roomUsers['Район Дачный'].forEach(u => {
+      if (u.userId === 'npc_lovec_dachny') roomUsers['Район Дачный'].delete(u);
+    });
+    roomUsers['Район Дачный'].add(lovecDachnyData);
+    console.log('Added npc_lovec_dachny to room Район Дачный');
+    io.to('Район Дачный').emit('roomUsers', Array.from(roomUsers['Район Дачный']));
+  } else {
+    if (roomUsers['Район Дачный']) {
+      roomUsers['Район Дачный'].forEach(u => {
+        if (u.userId === 'npc_lovec_dachny') roomUsers['Район Дачный'].delete(u);
+      });
+      console.log('Removed npc_lovec_dachny from room Район Дачный');
+      io.to('Район Дачный').emit('roomUsers', Array.from(roomUsers['Район Дачный']));
     }
   }
 };
@@ -544,13 +581,13 @@ io.on('connection', (socket) => {
       userId: socket.userData?.userId,
       messageData: message
     });
-  
+
     if (!socket.userData || !message || !message.room) {
       console.error('Invalid message data:', message);
       socket.emit('error', { message: 'Некорректные данные сообщения' });
       return;
     }
-  
+
     try {
       const user = await User.findOne({ userId: socket.userData.userId });
       if (!user) {
@@ -558,7 +595,7 @@ io.on('connection', (socket) => {
         socket.emit('error', { message: 'Пользователь не найден' });
         return;
       }
-  
+
       const newMessage = new Message({
         userId: socket.userData.userId,
         text: message.text,
@@ -576,35 +613,35 @@ io.on('connection', (socket) => {
       await newMessage.save();
       console.log('Message saved:', { text: newMessage.text, animalText: newMessage.animalText, room: message.room });
       io.to(message.room).emit('message', newMessage);
-  
+
       console.log('Checking catch conditions for user:', {
         userId: socket.userData.userId,
         isHuman: user.isHuman,
         animalType: user.animalType,
         currentRoom: message.room
       });
-  
+
       if (!user.isHuman && (user.animalType === 'Кошка' || user.animalType === 'Собака')) {
         console.log('User is an animal (cat or dog), proceeding with catch check');
         const currentRoomUsers = roomUsers[message.room] || new Set();
         console.log('Current room users:', Array.from(currentRoomUsers).map(u => u.userId));
-        const hasLovec = Array.from(currentRoomUsers).some(u => 
+        const hasLovec = Array.from(currentRoomUsers).some(u =>
           u.userId === 'npc_lovec_park' || u.userId === 'npc_lovec_dachny'
         );
         console.log('Lovec present in room:', hasLovec);
-  
+
         if (hasLovec) {
           const catchChance = Math.random();
           console.log('Catch chance rolled:', catchChance);
           if (catchChance <= 0.1) {
             console.log('User caught by Lovec! Initiating move to shelter');
             const newRoom = 'Приют для животных "Кошкин дом"';
-            
+
             // Обновляем комнату пользователя в базе
             user.lastRoom = newRoom;
             await user.save();
             console.log(`Updated user ${socket.userData.userId} lastRoom to ${newRoom}`);
-  
+
             // Удаляем пользователя из текущей комнаты
             if (roomUsers[message.room]) {
               roomUsers[message.room].forEach(u => {
@@ -612,7 +649,7 @@ io.on('connection', (socket) => {
               });
               console.log(`Removed user ${socket.userData.userId} from room ${message.room}`);
             }
-  
+
             // Добавляем пользователя в новую комнату
             if (!roomUsers[newRoom]) roomUsers[newRoom] = new Set();
             roomUsers[newRoom].add({
@@ -626,11 +663,11 @@ io.on('connection', (socket) => {
               animalType: user.animalType
             });
             console.log(`Added user ${socket.userData.userId} to room ${newRoom}`);
-  
+
             // Отправляем событие клиенту
             socket.emit('forceRoomChange', { newRoom });
             console.log(`Emitted forceRoomChange to client ${socket.userData.userId} for room ${newRoom}`);
-  
+
             // Уведомляем старую комнату
             io.to(message.room).emit('message', {
               userId: 'system',

@@ -56,7 +56,7 @@ function App() {
   useEffect(() => {
     const initializeSocket = () => {
       if (socketRef.current) return;
-
+  
       socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com', {
         cors: {
           origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
@@ -66,11 +66,11 @@ function App() {
         reconnectionAttempts: 5,
         reconnectionDelay: 1000
       });
-
+  
       socketRef.current.on('connect', () => {
         console.log('Socket connected:', socketRef.current.id);
         setSocket(socketRef.current);
-
+  
         if (window.Telegram?.WebApp) {
           window.Telegram.WebApp.ready();
           const telegramData = window.Telegram.WebApp.initDataUnsafe;
@@ -96,17 +96,17 @@ function App() {
           setTelegramTheme('light');
         }
       });
-
+  
       socketRef.current.on('disconnect', (reason) => {
         console.log('Socket disconnected:', reason);
         setSocket(null);
         setIsAuthenticated(false);
       });
-
+  
       socketRef.current.on('connect_error', (error) => {
         console.error('Connection error:', error.message);
       });
-
+  
       socketRef.current.on('authSuccess', ({ defaultRoom, isRegistered }) => {
         console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
         setIsAuthenticated(true);
@@ -117,7 +117,7 @@ function App() {
           socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
         }
       });
-
+  
       socketRef.current.on('userUpdate', (updatedUser) => {
         console.log('Received userUpdate from server:', updatedUser);
         setUser(prevUser => {
@@ -127,11 +127,19 @@ function App() {
         });
         setIsRegistered(updatedUser.isRegistered);
       });
-
+  
+      socketRef.current.on('forceRoomChange', ({ newRoom, reason }) => {
+        console.log(`Forced room change to ${newRoom}. Reason: ${reason}`);
+        setCurrentRoom(newRoom);
+        joinedRoomsRef.current.add(newRoom);
+        socketRef.current.emit('joinRoom', { room: newRoom, lastTimestamp: null });
+        alert(reason); // Уведомление пользователя
+      });
+  
       socketRef.current.on('error', ({ message }) => {
         console.error('Server error:', message);
       });
-
+  
       return () => {
         if (socketRef.current) {
           socketRef.current.disconnect();
@@ -139,7 +147,7 @@ function App() {
         }
       };
     };
-
+  
     initializeSocket();
   }, []);
 

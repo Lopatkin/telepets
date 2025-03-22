@@ -521,11 +521,67 @@ io.on('connection', (socket) => {
         animalType: user.animalType,
         room: message.room,
         timestamp: message.timestamp || new Date().toISOString(),
-        animalText: message.animalText || undefined // Принимаем animalText от клиента
+        animalText: message.animalText || undefined
       });
       await newMessage.save();
       console.log('Message saved:', { text: newMessage.text, animalText: newMessage.animalText });
       io.to(message.room).emit('message', newMessage);
+
+      // Проверка на животное и присутствие Ловца животных
+      if (!user.isHuman && (user.animalType === 'Кошка' || user.animalType === 'Собака')) {
+        const currentRoomUsers = roomUsers[message.room] || new Set();
+        const hasLovec = Array.from(currentRoomUsers).some(u =>
+          u.userId === 'npc_lovec_park' || u.userId === 'npc_lovec_dachny'
+        );
+
+        if (hasLovec) {
+          const catchChance = Math.random(); // Генерация случайного числа от 0 до 1
+          if (catchChance <= 0.1) { // 10% вероятность
+            const newRoom = 'Приют для животных "Кошкин дом"';
+
+            // Удаляем пользователя из текущей комнаты
+            if (roomUsers[message.room]) {
+              roomUsers[message.room].forEach(u => {
+                if (u.userId === socket.userData.userId) {
+                  roomUsers[message.room].delete(u);
+                }
+              });
+              io.to(message.room).emit('roomUsers', Array.from(roomUsers[message.room]));
+            }
+
+            // Добавляем пользователя в новую комнату
+            userCurrentRoom.set(socket.userData.userId, newRoom);
+            socket.leave(message.room);
+            socket.join(newRoom);
+
+            if (!roomUsers[newRoom]) roomUsers[newRoom] = new Set();
+            roomUsers[newRoom].forEach(u => {
+              if (u.userId === socket.userData.userId) {
+                roomUsers[newRoom].delete(u);
+              }
+            });
+            roomUsers[newRoom].add({
+              userId: socket.userData.userId,
+              firstName: socket.userData.firstName,
+              username: socket.userData.username,
+              lastName: socket.userData.lastName,
+              photoUrl: socket.userData.photoUrl,
+              name: user.name,
+              isHuman: user.isHuman,
+            });
+
+            io.to(newRoom).emit('roomUsers', Array.from(roomUsers[newRoom]));
+
+            // Отправляем историю сообщений новой комнаты
+            const messages = await Message.find({ room: newRoom }).sort({ timestamp: 1 }).limit(100);
+            socket.emit('messageHistory', messages);
+
+            // Уведомляем клиента о перемещении
+            socket.emit('forceRoomChange', { newRoom, reason: 'Вас поймал Ловец животных!' });
+            console.log(`User ${socket.userData.userId} was caught by Lovec and moved to ${newRoom}`);
+          }
+        }
+      }
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);
       socket.emit('error', { message: 'Ошибка при сохранении сообщения' });

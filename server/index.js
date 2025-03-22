@@ -85,6 +85,8 @@ const roomJoinTimes = new WeakMap();
 const itemCache = new Map();
 const itemLocks = new Map();
 
+console.log('Server starting with updated code - Catch logic v1.0 -', new Date().toISOString());
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -495,12 +497,18 @@ io.on('connection', (socket) => {
   });
 
   socket.on('sendMessage', async (message) => {
+    console.log('Received sendMessage event from client:', {
+      socketId: socket.id,
+      userId: socket.userData?.userId,
+      messageData: message
+    });
+  
     if (!socket.userData || !message || !message.room) {
       console.error('Invalid message data:', message);
       socket.emit('error', { message: 'Некорректные данные сообщения' });
       return;
     }
-
+  
     try {
       const user = await User.findOne({ userId: socket.userData.userId });
       if (!user) {
@@ -508,7 +516,7 @@ io.on('connection', (socket) => {
         socket.emit('error', { message: 'Пользователь не найден' });
         return;
       }
-
+  
       const newMessage = new Message({
         userId: socket.userData.userId,
         text: message.text,
@@ -526,32 +534,30 @@ io.on('connection', (socket) => {
       await newMessage.save();
       console.log('Message saved:', { text: newMessage.text, animalText: newMessage.animalText, room: message.room });
       io.to(message.room).emit('message', newMessage);
-
-      // Проверка на животное и присутствие Ловца животных
+  
       console.log('Checking catch conditions for user:', {
         userId: socket.userData.userId,
         isHuman: user.isHuman,
         animalType: user.animalType,
         currentRoom: message.room
       });
-
+  
       if (!user.isHuman && (user.animalType === 'Кошка' || user.animalType === 'Собака')) {
         console.log('User is an animal (cat or dog), proceeding with catch check');
         const currentRoomUsers = roomUsers[message.room] || new Set();
         console.log('Current room users:', Array.from(currentRoomUsers).map(u => u.userId));
-        const hasLovec = Array.from(currentRoomUsers).some(u =>
+        const hasLovec = Array.from(currentRoomUsers).some(u => 
           u.userId === 'npc_lovec_park' || u.userId === 'npc_lovec_dachny'
         );
         console.log('Lovec present in room:', hasLovec);
-
+  
         if (hasLovec) {
           const catchChance = Math.random();
           console.log('Catch chance rolled:', catchChance);
-          if (catchChance <= 0.1) { // 10% вероятность
+          if (catchChance <= 0.1) {
             console.log('User caught by Lovec! Initiating move to shelter');
             const newRoom = 'Приют для животных "Кошкин дом"';
-
-            // Удаляем пользователя из текущей комнаты
+  
             if (roomUsers[message.room]) {
               roomUsers[message.room].forEach(u => {
                 if (u.userId === socket.userData.userId) {
@@ -561,13 +567,12 @@ io.on('connection', (socket) => {
               console.log('User removed from current room. Updated users:', Array.from(roomUsers[message.room]).map(u => u.userId));
               io.to(message.room).emit('roomUsers', Array.from(roomUsers[message.room]));
             }
-
-            // Добавляем пользователя в новую комнату
+  
             userCurrentRoom.set(socket.userData.userId, newRoom);
             socket.leave(message.room);
             socket.join(newRoom);
             console.log('User socket moved to new room:', newRoom);
-
+  
             if (!roomUsers[newRoom]) roomUsers[newRoom] = new Set();
             roomUsers[newRoom].forEach(u => {
               if (u.userId === socket.userData.userId) {
@@ -584,15 +589,13 @@ io.on('connection', (socket) => {
               isHuman: user.isHuman,
             });
             console.log('User added to new room. Updated users:', Array.from(roomUsers[newRoom]).map(u => u.userId));
-
+  
             io.to(newRoom).emit('roomUsers', Array.from(roomUsers[newRoom]));
-
-            // Отправляем историю сообщений новой комнаты
+  
             const messages = await Message.find({ room: newRoom }).sort({ timestamp: 1 }).limit(100);
             socket.emit('messageHistory', messages);
             console.log('Message history sent for new room:', newRoom);
-
-            // Уведомляем клиента о перемещении
+  
             socket.emit('forceRoomChange', { newRoom, reason: 'Вас поймал Ловец животных!' });
             console.log(`User ${socket.userData.userId} was caught by Lovec and moved to ${newRoom}`);
           } else {

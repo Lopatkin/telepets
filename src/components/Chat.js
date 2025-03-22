@@ -460,6 +460,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   const sendMessage = () => {
     if (message.trim() && room && socket) {
+      console.log('Preparing to send message from client:', {
+        userId,
+        room,
+        message: message.trim(),
+        isHuman: user.isHuman,
+        animalType: user.animalType
+      });
+  
       let animalText = '';
       if (!user.isHuman) {
         const sounds = user.animalType === 'Кошка' ? catSounds : dogSounds;
@@ -478,7 +486,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           })
           .join(' ');
       }
-
+  
       const newMessage = {
         text: message,
         room,
@@ -486,9 +494,11 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         photoUrl: currentUserPhotoUrl || '',
         animalText: animalText || undefined
       };
-      console.log('Sending message:', newMessage);
+      console.log('Emitting sendMessage to server:', newMessage);
       socket.emit('sendMessage', newMessage);
       setMessage('');
+    } else {
+      console.log('Send message failed - missing data:', { message: message.trim(), room, socket: !!socket });
     }
   };
 

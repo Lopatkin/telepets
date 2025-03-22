@@ -129,11 +129,12 @@ function App() {
       });
   
       socketRef.current.on('forceRoomChange', ({ newRoom, reason }) => {
-        console.log(`Forced room change to ${newRoom}. Reason: ${reason}`);
+        console.log(`Received forceRoomChange event: moving to ${newRoom}. Reason: ${reason}`);
         setCurrentRoom(newRoom);
         joinedRoomsRef.current.add(newRoom);
         socketRef.current.emit('joinRoom', { room: newRoom, lastTimestamp: null });
-        alert(reason); // Уведомление пользователя
+        console.log(`Joined new room ${newRoom} after force change`);
+        alert(reason);
       });
   
       socketRef.current.on('error', ({ message }) => {

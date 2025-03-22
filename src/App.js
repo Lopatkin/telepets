@@ -69,6 +69,7 @@ function App() {
     return () => {
       socket.off('forceRoomChange');
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, user]);
 
   useEffect(() => {

@@ -283,7 +283,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, messages.length]);
 
   const sendMessage = () => {
     console.log('sendMessage function called with:', { message: message.trim(), room, socket: !!socket, user });

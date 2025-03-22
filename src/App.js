@@ -156,6 +156,7 @@ function App() {
     };
 
     initializeSocket();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleRegistrationComplete = (defaultRoom) => {

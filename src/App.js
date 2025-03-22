@@ -45,7 +45,7 @@ function App() {
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
   const closeActionModal = () => {
-    console.log('Closing action modal');
+    console.log('Closing action modal'); // Отладка
     setIsActionModalOpen(false);
   };
 
@@ -53,28 +53,7 @@ function App() {
     setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
   };
 
-
-
   useEffect(() => {
-    if (!socket) return;
-
-    socket.on('forceRoomChange', ({ newRoom }) => {
-      console.log('Received forceRoomChange event:', { newRoom });
-      setCurrentRoom(newRoom);
-      const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
-      storedRooms[user.userId] = newRoom;
-      localStorage.setItem('userRooms', JSON.stringify(storedRooms));
-      socket.emit('joinRoom', { room: newRoom, lastTimestamp: null });
-      console.log(`Force joined room ${newRoom} due to catch`);
-    });
-
-    return () => {
-      socket.off('forceRoomChange');
-    };
-  }, [socket, user, user.userId]);
-
-  useEffect(() => {
-    console.log('Initializing socket connection -', new Date().toISOString());
     const initializeSocket = () => {
       if (socketRef.current) return;
 
@@ -83,6 +62,7 @@ function App() {
           origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
           methods: ["GET", "POST"]
         },
+        
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000
@@ -103,9 +83,8 @@ function App() {
               lastName: telegramData.user.last_name || '',
               photoUrl: telegramData.user.photo_url || '',
             };
-            const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
             console.log('Sending initial auth with Telegram data:', initialUserData);
-            socketRef.current.emit('auth', { ...initialUserData, lastRoom: storedRooms[telegramData.user.id] || 'Полигон утилизации' });
+            socketRef.current.emit('auth', { ...initialUserData, lastRoom: JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации' });
             setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
           } else {
             const testUser = { userId: 'test123', firstName: 'Test User' };
@@ -135,9 +114,6 @@ function App() {
         setIsRegistered(isRegistered);
         if (isRegistered) {
           setCurrentRoom(defaultRoom);
-          const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
-          storedRooms[user?.userId || 'unknown'] = defaultRoom;
-          localStorage.setItem('userRooms', JSON.stringify(storedRooms));
           joinedRoomsRef.current.add(defaultRoom);
           socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
         }
@@ -166,7 +142,7 @@ function App() {
     };
 
     initializeSocket();
-  }, [user?.userId]);
+  }, []);
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);
@@ -276,7 +252,7 @@ function App() {
             socket={socket}
             onItemsUpdate={handleItemsUpdate}
             closeActionModal={closeActionModal}
-            setIsModalOpen={setIsActionModalOpen}
+            setIsModalOpen={setIsActionModalOpen} // Убедись, что это есть
           />
         )}
         {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}

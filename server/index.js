@@ -31,8 +31,7 @@ const userSchema = new mongoose.Schema({
   residence: String,
   animalType: String,
   name: String,
-  credits: { type: Number, default: 0 },
-  lastRoom: String // Добавляем поле для хранения последней комнаты
+  credits: { type: Number, default: 0 }
 });
 const User = mongoose.model('User', userSchema);
 
@@ -49,7 +48,7 @@ const messageSchema = new mongoose.Schema({
   animalType: String,
   room: String,
   timestamp: { type: Date, default: Date.now },
-  animalText: String
+  animalText: String // Оставляем поле, но заполняется клиентом
 });
 const Message = mongoose.model('Message', messageSchema);
 
@@ -85,128 +84,6 @@ const activeSockets = new Map();
 const roomJoinTimes = new WeakMap();
 const itemCache = new Map();
 const itemLocks = new Map();
-
-// Функция проверки времени для Ловца в Парке (чётные часы 8:00–23:00 UTC)
-const isLovecParkTime = () => {
-  const now = new Date();
-  const hour = now.getUTCHours();
-  return hour >= 8 && hour <= 23 && hour % 2 === 0;
-};
-
-// Функция проверки времени для Ловца в Район Дачный (нечётные часы 7:00–22:00 UTC)
-const isLovecDachnyTime = () => {
-  const now = new Date();
-  const hour = now.getUTCHours();
-  return hour >= 7 && hour <= 22 && hour % 2 === 1;
-};
-
-// Функция проверки времени для волонтёров
-const isVolunteerTime = (volunteer) => {
-  const now = new Date();
-  const hour = now.getUTCHours();
-  if (volunteer === 'npc_volonter_ira') return hour >= 8 && hour <= 16; // Ира: 8:00–16:00 UTC
-  if (volunteer === 'npc_volonter_katya') return hour >= 10 && hour <= 18; // Катя: 10:00–18:00 UTC
-  if (volunteer === 'npc_volonter_zhanna') return hour >= 12 && hour <= 20; // Жанна: 12:00–20:00 UTC
-  return false;
-};
-
-// Обновление NPC в комнатах
-const updateNPCsInRooms = () => {
-  // Ловец в Парке
-  if (isLovecParkTime()) {
-    if (!roomUsers['Парк']) roomUsers['Парк'] = new Set();
-    const lovecParkData = {
-      userId: 'npc_lovec_park',
-      firstName: 'Ловец',
-      username: '',
-      lastName: '',
-      photoUrl: '/static/media/lovec_1.c6ffd5711d81355a98da.jpg',
-      name: 'Ловец животных',
-      isHuman: true
-    };
-    roomUsers['Парк'].forEach(u => {
-      if (u.userId === 'npc_lovec_park') roomUsers['Парк'].delete(u);
-    });
-    roomUsers['Парк'].add(lovecParkData);
-    console.log('Added npc_lovec_park to room Парк');
-    io.to('Парк').emit('roomUsers', Array.from(roomUsers['Парк']));
-  } else {
-    if (roomUsers['Парк']) {
-      roomUsers['Парк'].forEach(u => {
-        if (u.userId === 'npc_lovec_park') roomUsers['Парк'].delete(u);
-      });
-      console.log('Removed npc_lovec_park from room Парк');
-      io.to('Парк').emit('roomUsers', Array.from(roomUsers['Парк']));
-    }
-  }
-
-  // Ловец в Район Дачный
-  if (isLovecDachnyTime()) {
-    if (!roomUsers['Район Дачный']) roomUsers['Район Дачный'] = new Set();
-    const lovecDachnyData = {
-      userId: 'npc_lovec_dachny',
-      firstName: 'Ловец',
-      username: '',
-      lastName: '',
-      photoUrl: '/static/media/lovec_1.c6ffd5711d81355a98da.jpg',
-      name: 'Ловец животных',
-      isHuman: true
-    };
-    roomUsers['Район Дачный'].forEach(u => {
-      if (u.userId === 'npc_lovec_dachny') roomUsers['Район Дачный'].delete(u);
-    });
-    roomUsers['Район Дачный'].add(lovecDachnyData);
-    console.log('Added npc_lovec_dachny to room Район Дачный');
-    io.to('Район Дачный').emit('roomUsers', Array.from(roomUsers['Район Дачный']));
-  } else {
-    if (roomUsers['Район Дачный']) {
-      roomUsers['Район Дачный'].forEach(u => {
-        if (u.userId === 'npc_lovec_dachny') roomUsers['Район Дачный'].delete(u);
-      });
-      console.log('Removed npc_lovec_dachny from room Район Дачный');
-      io.to('Район Дачный').emit('roomUsers', Array.from(roomUsers['Район Дачный']));
-    }
-  }
-
-  // Волонтёры в Приюте
-  const shelterRoom = 'Приют для животных "Кошкин дом"';
-  if (!roomUsers[shelterRoom]) roomUsers[shelterRoom] = new Set();
-
-  const volunteers = [
-    { userId: 'npc_volonter_ira', name: 'Волонтёр Ира', photoUrl: '/static/media/volonter_Ira.37aa122867faeaa93641.jpg' },
-    { userId: 'npc_volonter_katya', name: 'Волонтёр Катя', photoUrl: '/static/media/volonter_Katya.37aa122867faeaa93641.jpg' },
-    { userId: 'npc_volonter_zhanna', name: 'Волонтёр Жанна', photoUrl: '/static/media/volonter_Zhanna.37aa122867faeaa93641.jpg' }
-  ];
-
-  volunteers.forEach(volunteer => {
-    roomUsers[shelterRoom].forEach(u => {
-      if (u.userId === volunteer.userId) roomUsers[shelterRoom].delete(u);
-    });
-    if (isVolunteerTime(volunteer.userId)) {
-      roomUsers[shelterRoom].add({
-        userId: volunteer.userId,
-        firstName: volunteer.name,
-        username: '',
-        lastName: '',
-        photoUrl: volunteer.photoUrl,
-        name: volunteer.name,
-        isHuman: true
-      });
-      console.log(`Added ${volunteer.userId} to room ${shelterRoom}`);
-    } else {
-      console.log(`Removed ${volunteer.userId} from room ${shelterRoom}`);
-    }
-  });
-
-  io.to(shelterRoom).emit('roomUsers', Array.from(roomUsers[shelterRoom]));
-};
-
-// Запускаем проверку каждые 5 минут
-setInterval(updateNPCsInRooms, 5 * 60 * 1000);
-// Выполняем сразу при старте
-updateNPCsInRooms();
-
-console.log('Server starting with updated code - Catch logic v1.1 -', new Date().toISOString());
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -320,6 +197,23 @@ io.on('connection', (socket) => {
       });
     }
 
+    const rooms = [
+      'Автобусная остановка',
+      'Бар "У бобра" (18+)',
+      'Бизнес центр "Альбион"',
+      'Вокзал',
+      'ЖК Сфера',
+      'Завод',
+      'Кофейня "Ляля-Фа"',
+      'Лес',
+      'Мастерская',
+      'Парк',
+      'Полигон утилизации',
+      'Приют для животных "Кошкин дом"',
+      'Район Дачный',
+      'Торговый центр "Карнавал"',
+    ];
+
     const staticRooms = [
       'Автобусная остановка',
       'Бар "У бобра" (18+)',
@@ -334,7 +228,7 @@ io.on('connection', (socket) => {
       'Полигон утилизации',
       'Приют для животных "Кошкин дом"',
       'Район Дачный',
-      'Торговый центр "Карнавал"'
+      'Торговый центр "Карнавал"',
     ];
 
     for (const room of staticRooms) {
@@ -342,23 +236,29 @@ io.on('connection', (socket) => {
       if (!roomLimit) {
         await InventoryLimit.create({
           owner: room,
-          maxWeight: 10000,
+          maxWeight: 10000, // Установи подходящий лимит для локаций
         });
       }
     }
 
-    console.log('Available static rooms:', staticRooms);
+    console.log('Available static rooms:', rooms);
     console.log('Received lastRoom:', userData.lastRoom);
 
-    const defaultRoom = user.isRegistered ? user.lastRoom || 'Полигон утилизации' : 'Автобусная остановка';
-    console.log('Selected defaultRoom from DB:', defaultRoom);
+    const isMyHome = userData.lastRoom && userData.lastRoom === `myhome_${socket.userData.userId}`;
+    const isStaticRoom = userData.lastRoom && rooms.includes(userData.lastRoom);
+    const defaultRoom = user.isRegistered ? (isMyHome || isStaticRoom ? userData.lastRoom : 'Полигон утилизации') : 'Автобусная остановка';
+    console.log('Is lastRoom a personal home?', isMyHome);
+    console.log('Is lastRoom a static room?', isStaticRoom);
+    console.log('Selected defaultRoom:', defaultRoom);
 
     socket.join(defaultRoom);
     userCurrentRoom.set(socket.userData.userId, defaultRoom);
 
     if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
     roomUsers[defaultRoom].forEach(user => {
-      if (user.userId === socket.userData.userId) roomUsers[defaultRoom].delete(user);
+      if (user.userId === socket.userData.userId) {
+        roomUsers[defaultRoom].delete(user);
+      }
     });
 
     roomUsers[defaultRoom].add({
@@ -398,7 +298,6 @@ io.on('connection', (socket) => {
           animalType: data.animalType,
           name: data.name,
           photoUrl: data.photoUrl || socket.userData.photoUrl || '',
-          lastRoom: 'Автобусная остановка' // Устанавливаем начальную комнату
         },
         { new: true }
       );
@@ -486,7 +385,7 @@ io.on('connection', (socket) => {
 
   socket.on('joinRoom', async ({ room, lastTimestamp }) => {
     if (typeof room !== 'string') {
-      console.log(`Invalid room type: ${room}`);
+      console.error('Invalid room type:', room);
       socket.emit('error', { message: 'Некорректное название комнаты' });
       return;
     }
@@ -500,31 +399,6 @@ io.on('connection', (socket) => {
     const user = await User.findOne({ userId: socket.userData.userId });
     if (!user) {
       socket.emit('error', { message: 'Пользователь не найден в базе' });
-      return;
-    }
-
-    const staticRooms = [
-      'Автобусная остановка',
-      'Бар "У бобра" (18+)',
-      'Бизнес центр "Альбион"',
-      'Вокзал',
-      'ЖК Сфера',
-      'Завод',
-      'Кофейня "Ляля-Фа"',
-      'Лес',
-      'Мастерская',
-      'Парк',
-      'Полигон утилизации',
-      'Приют для животных "Кошкин дом"',
-      'Район Дачный',
-      'Торговый центр "Карнавал"'
-    ];
-
-    console.log(`User ${socket.userData.userId} attempting to join room: ${room}`);
-    const roomType = room.startsWith('myhome_') ? 'home' : (staticRooms.includes(room) ? 'static' : undefined);
-    if (!roomType) {
-      console.log(`Invalid room type: ${roomType}, room: ${room}, staticRooms: ${staticRooms}`);
-      socket.emit('error', { message: 'Некорректное название комнаты' });
       return;
     }
 
@@ -620,14 +494,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Обработчик отправки сообщения
   socket.on('sendMessage', async (message) => {
-    console.log('Received sendMessage event from client:', {
-      socketId: socket.id,
-      userId: socket.userData?.userId,
-      messageData: message
-    });
-
     if (!socket.userData || !message || !message.room) {
       console.error('Invalid message data:', message);
       socket.emit('error', { message: 'Некорректные данные сообщения' });
@@ -654,78 +521,11 @@ io.on('connection', (socket) => {
         animalType: user.animalType,
         room: message.room,
         timestamp: message.timestamp || new Date().toISOString(),
-        animalText: message.animalText || undefined
+        animalText: message.animalText || undefined // Принимаем animalText от клиента
       });
       await newMessage.save();
-      console.log('Message saved:', { text: newMessage.text, animalText: newMessage.animalText, room: message.room });
+      console.log('Message saved:', { text: newMessage.text, animalText: newMessage.animalText });
       io.to(message.room).emit('message', newMessage);
-
-      console.log('Checking catch conditions for user:', {
-        userId: socket.userData.userId,
-        isHuman: user.isHuman,
-        animalType: user.animalType,
-        currentRoom: message.room
-      });
-
-      if (!user.isHuman && (user.animalType === 'Кошка' || user.animalType === 'Собака')) {
-        console.log('User is an animal (cat or dog), proceeding with catch check');
-        const currentRoomUsers = roomUsers[message.room] || new Set();
-        console.log('Current room users:', Array.from(currentRoomUsers).map(u => u.userId));
-        const hasLovec = Array.from(currentRoomUsers).some(u =>
-          u.userId === 'npc_lovec_park' || u.userId === 'npc_lovec_dachny'
-        );
-        console.log('Lovec present in room:', hasLovec);
-
-        if (hasLovec) {
-          const catchChance = Math.random();
-          console.log('Catch chance rolled:', catchChance);
-          if (catchChance <= 0.1) {
-            console.log('User caught by Lovec! Initiating move to shelter');
-            const newRoom = 'Приют для животных "Кошкин дом"';
-
-            user.lastRoom = newRoom;
-            await user.save();
-            console.log(`Updated user ${socket.userData.userId} lastRoom to ${newRoom}`);
-
-            if (roomUsers[message.room]) {
-              roomUsers[message.room].forEach(u => {
-                if (u.userId === socket.userData.userId) roomUsers[message.room].delete(u);
-              });
-              console.log(`Removed user ${socket.userData.userId} from room ${message.room}`);
-              io.to(message.room).emit('roomUsers', Array.from(roomUsers[message.room]));
-            }
-
-            if (!roomUsers[newRoom]) roomUsers[newRoom] = new Set();
-            roomUsers[newRoom].add({
-              userId: socket.userData.userId,
-              firstName: user.firstName,
-              username: user.username,
-              lastName: user.lastName,
-              photoUrl: user.photoUrl,
-              name: user.name,
-              isHuman: user.isHuman,
-              animalType: user.animalType
-            });
-            console.log(`Added user ${socket.userData.userId} to room ${newRoom}`);
-            io.to(newRoom).emit('roomUsers', Array.from(roomUsers[newRoom]));
-
-            socket.emit('forceRoomChange', { newRoom });
-            console.log(`Emitted forceRoomChange to client ${socket.userData.userId} for room ${newRoom}`);
-
-            io.to(message.room).emit('message', {
-              userId: 'system',
-              text: `${user.name || user.firstName} был пойман Ловцом и отправлен в приют!`,
-              room: message.room,
-              timestamp: new Date().toISOString()
-            });
-            console.log(`Notified room ${message.room} about user catch`);
-          } else {
-            console.log('Catch chance failed, user stays in room');
-          }
-        } else {
-          console.log('No Lovec in room, skipping catch check');
-        }
-      }
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);
       socket.emit('error', { message: 'Ошибка при сохранении сообщения' });
@@ -758,7 +558,7 @@ io.on('connection', (socket) => {
 
   socket.on('addItem', async ({ owner, item }, callback) => {
     try {
-      console.log('Received item data:', { owner, item });
+      console.log('Received item data:', { owner, item }); // Для отладки
       if (!item || typeof item !== 'object') {
         console.error('Invalid item data:', item);
         if (callback) callback({ success: false, message: 'Некорректные данные предмета' });
@@ -783,8 +583,8 @@ io.on('connection', (socket) => {
         return;
       }
 
-      const newItem = await Item.create({ owner, ...item });
-      console.log('Saved item:', newItem);
+      const newItem = await Item.create({ owner, ...item }); // Распаковываем item
+      console.log('Saved item:', newItem); // Для отладки
 
       await InventoryLimit.updateOne(
         { owner },
@@ -804,7 +604,7 @@ io.on('connection', (socket) => {
         io.to(currentRoom).emit('inventoryLimit', updatedLimit);
       }
 
-      io.to(owner).emit('items', { owner, items: itemCache.get(owner) });
+      io.to(owner).emit('items', { owner, items: itemCache.get(owner) }); // Уведомляем владельца
 
       if (callback) callback({ success: true });
       if (item._id) itemLocks.delete(item._id);
@@ -817,14 +617,14 @@ io.on('connection', (socket) => {
 
   socket.on('moveItem', async ({ itemIds, newOwner }) => {
     try {
-      let ids = Array.isArray(itemIds) ? itemIds : [itemIds];
+      let ids = Array.isArray(itemIds) ? itemIds : [itemIds]; // Поддержка как массива, так и одиночного ID
       const items = await Item.find({ _id: { $in: ids } });
       if (items.length !== ids.length) {
         socket.emit('error', { message: 'Некоторые предметы не найдены' });
         return;
       }
 
-      const oldOwner = items[0].owner;
+      const oldOwner = items[0].owner; // Предполагаем, что все предметы из одного инвентаря
       const totalWeight = items.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
 
       const newOwnerLimit = await InventoryLimit.findOne({ owner: newOwner });

@@ -459,6 +459,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   }, [messages]);
 
   const sendMessage = () => {
+    console.log('sendMessage function called with:', { message: message.trim(), room, socket: !!socket, user });
     if (message.trim() && room && socket) {
       console.log('Preparing to send message from client:', {
         userId,

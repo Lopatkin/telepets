@@ -85,7 +85,7 @@ const roomJoinTimes = new WeakMap();
 const itemCache = new Map();
 const itemLocks = new Map();
 
-console.log('Server starting with updated code - Catch logic v1.0 -', new Date().toISOString());
+console.log('Server starting with updated code - Catch logic v1.1 -', new Date().toISOString());
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);

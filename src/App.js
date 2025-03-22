@@ -71,8 +71,7 @@ function App() {
     return () => {
       socket.off('forceRoomChange');
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, user]);
+  }, [socket, user, user.userId]);
 
   useEffect(() => {
     console.log('Initializing socket connection -', new Date().toISOString());

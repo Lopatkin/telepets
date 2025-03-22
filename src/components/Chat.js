@@ -438,7 +438,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (
             <UserItem key={index}>
-              
+
               {getAvatar(user)}
               <UserName theme={theme}>{getUserDisplayName(user)}</UserName>
             </UserItem>

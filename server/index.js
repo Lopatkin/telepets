@@ -326,19 +326,15 @@ io.on('connection', (socket) => {
 
     const isMyHome = userData.lastRoom && userData.lastRoom === `myhome_${socket.userData.userId}`;
     const isStaticRoom = userData.lastRoom && rooms.includes(userData.lastRoom);
-    const defaultRoom = user.isRegistered ? (isMyHome || isStaticRoom ? userData.lastRoom : 'Полигон утилизации') : 'Автобусная остановка';
-    console.log('Is lastRoom a personal home?', isMyHome);
-    console.log('Is lastRoom a static room?', isStaticRoom);
-    console.log('Selected defaultRoom:', defaultRoom);
+    const defaultRoom = user.isRegistered ? user.lastRoom || 'Полигон утилизации' : 'Автобусная остановка';
+    console.log('Selected defaultRoom from DB:', defaultRoom);
 
     socket.join(defaultRoom);
     userCurrentRoom.set(socket.userData.userId, defaultRoom);
 
     if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
     roomUsers[defaultRoom].forEach(user => {
-      if (user.userId === socket.userData.userId) {
-        roomUsers[defaultRoom].delete(user);
-      }
+      if (user.userId === socket.userData.userId) roomUsers[defaultRoom].delete(user);
     });
 
     roomUsers[defaultRoom].add({
@@ -637,20 +633,18 @@ io.on('connection', (socket) => {
             console.log('User caught by Lovec! Initiating move to shelter');
             const newRoom = 'Приют для животных "Кошкин дом"';
 
-            // Обновляем комнату пользователя в базе
             user.lastRoom = newRoom;
             await user.save();
             console.log(`Updated user ${socket.userData.userId} lastRoom to ${newRoom}`);
 
-            // Удаляем пользователя из текущей комнаты
             if (roomUsers[message.room]) {
               roomUsers[message.room].forEach(u => {
                 if (u.userId === socket.userData.userId) roomUsers[message.room].delete(u);
               });
               console.log(`Removed user ${socket.userData.userId} from room ${message.room}`);
+              io.to(message.room).emit('roomUsers', Array.from(roomUsers[message.room]));
             }
 
-            // Добавляем пользователя в новую комнату
             if (!roomUsers[newRoom]) roomUsers[newRoom] = new Set();
             roomUsers[newRoom].add({
               userId: socket.userData.userId,
@@ -663,12 +657,11 @@ io.on('connection', (socket) => {
               animalType: user.animalType
             });
             console.log(`Added user ${socket.userData.userId} to room ${newRoom}`);
+            io.to(newRoom).emit('roomUsers', Array.from(roomUsers[newRoom])); // Отправляем обновлённый список в приют
 
-            // Отправляем событие клиенту
             socket.emit('forceRoomChange', { newRoom });
             console.log(`Emitted forceRoomChange to client ${socket.userData.userId} for room ${newRoom}`);
 
-            // Уведомляем старую комнату
             io.to(message.room).emit('message', {
               userId: 'system',
               text: `${user.name || user.firstName} был пойман Ловцом и отправлен в приют!`,

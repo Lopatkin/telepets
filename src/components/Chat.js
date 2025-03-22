@@ -393,53 +393,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     });
 
     socket.on('roomUsers', (roomUsers) => {
-      let updatedUsers = roomUsers.map(roomUser => {
+      setUsers(roomUsers.map(roomUser => {
         if (roomUser.userId === userId) {
           return { ...roomUser, photoUrl: currentUserPhotoUrl };
         }
         return roomUser;
-      });
-      if (room === 'Парк') {
-        updatedUsers = [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false }, ...updatedUsers];
-        if (isLovecParkTime()) {
-          updatedUsers = [{ userId: 'npc_lovec_park', firstName: 'Ловец животных', photoUrl: lovec1Image, isHuman: true }, ...updatedUsers];
-        }
-      } else if (room === 'Лес') {
-        updatedUsers = [
-          { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage, isHuman: false },
-          { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage, isHuman: false },
-          ...updatedUsers
-        ];
-      } else if (room === 'Район Дачный') {
-        updatedUsers = [{ userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage, isHuman: true }, ...updatedUsers];
-        if (isLovecDachnyTime()) {
-          updatedUsers = [{ userId: 'npc_lovec_dachny', firstName: 'Ловец животных', photoUrl: lovec2Image, isHuman: true }, ...updatedUsers];
-        }
-      } else if (room === 'Завод') {
-        updatedUsers = [{ userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage, isHuman: true }, ...updatedUsers];
-      } else if (room === 'Автобусная остановка' && isBabushkaTime()) {
-        updatedUsers = [
-          { userId: 'npc_babushka_galya', firstName: 'Бабушка Галя', photoUrl: babushka1Image, isHuman: true },
-          { userId: 'npc_babushka_vera', firstName: 'Бабушка Вера', photoUrl: babushka2Image, isHuman: true },
-          { userId: 'npc_babushka_zina', firstName: 'Бабушка Зина', photoUrl: babushka3Image, isHuman: true },
-          ...updatedUsers
-        ];
-      } else if (room === 'Приют для животных "Кошкин дом"') {
-        if (isIraKatyaTime()) {
-          updatedUsers = [
-            { userId: 'npc_volonter_ira', firstName: 'Волонтёр Ира', photoUrl: volonterIraImage, isHuman: true },
-            { userId: 'npc_volonter_katya', firstName: 'Волонтёр Катя', photoUrl: volonterKatyaImage, isHuman: true },
-            ...updatedUsers
-          ];
-        }
-        if (isZhannaTime()) {
-          updatedUsers = [
-            { userId: 'npc_volonter_zhanna', firstName: 'Волонтёр Жанна', photoUrl: volonterZhannaImage, isHuman: true },
-            ...updatedUsers
-          ];
-        }
-      }
-      setUsers(updatedUsers);
+      }));
     });
 
     if (!messageCacheRef.current[room]?.length) {
@@ -451,8 +410,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       socket.off('message');
       socket.off('roomUsers');
     };
-  }, [socket, userId, room, messages, currentUserPhotoUrl]);
-  
+  }, [socket, userId, room, currentUserPhotoUrl]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -468,7 +426,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         isHuman: user.isHuman,
         animalType: user.animalType
       });
-  
+
       let animalText = '';
       if (!user.isHuman) {
         const sounds = user.animalType === 'Кошка' ? catSounds : dogSounds;
@@ -487,7 +445,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           })
           .join(' ');
       }
-  
+
       const newMessage = {
         text: message,
         room,

@@ -59,7 +59,9 @@ function App() {
     socket.on('forceRoomChange', ({ newRoom }) => {
       console.log('Received forceRoomChange event:', { newRoom });
       setCurrentRoom(newRoom);
-      localStorage.setItem('room', JSON.stringify({ [user.userId]: newRoom }));
+      const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
+      storedRooms[user.userId] = newRoom;
+      localStorage.setItem('userRooms', JSON.stringify(storedRooms));
       socket.emit('joinRoom', newRoom);
       console.log(`Force joined room ${newRoom} due to catch`);
     });
@@ -99,8 +101,9 @@ function App() {
               lastName: telegramData.user.last_name || '',
               photoUrl: telegramData.user.photo_url || '',
             };
+            const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
             console.log('Sending initial auth with Telegram data:', initialUserData);
-            socketRef.current.emit('auth', { ...initialUserData, lastRoom: JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации' });
+            socketRef.current.emit('auth', { ...initialUserData, lastRoom: storedRooms[telegramData.user.id] || 'Полигон утилизации' });
             setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
           } else {
             const testUser = { userId: 'test123', firstName: 'Test User' };

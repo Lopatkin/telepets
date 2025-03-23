@@ -105,12 +105,12 @@ io.on('connection', (socket) => {
         username: userData.username || '',
         photoUrl: userData.photoUrl || '',
         isRegistered: false,
-        lastRoom: 'Полигон утилизации' // Дефолтная комната для новых пользователей
+        lastRoom: 'Полигон утилизации'
       });
       await user.save();
       console.log('New user created:', user.userId);
     } else {
-      console.log('User lastRoom from DB:', user.lastRoom);
+      console.log('User data from DB:', JSON.stringify(user));
     }
 
     socket.userData = {
@@ -536,15 +536,33 @@ io.on('connection', (socket) => {
         (message.room === 'Район Дачный' && isLovecDachnyTime())
       );
 
+      console.log(`sendMessage - User data: ${JSON.stringify(user)}`);
       console.log('sendMessage - isAnimal:', isAnimal);
       console.log('sendMessage - isCatchableLocation:', isCatchableLocation);
       console.log('sendMessage - hasAnimalCatcher:', hasAnimalCatcher);
-      console.log('sendMessage - Math.random() < 0.5:', Math.random() < 0.5);
+      console.log('sendMessage - Random chance (Math.random() < 0.5):', Math.random() < 0.5);
 
       if (isAnimal && isCatchableLocation && hasAnimalCatcher && Math.random() < 0.5) {
         const newRoom = 'Приют для животных "Кошкин дом"';
-        // Сохранение новой комнаты в базе данных
-        await User.updateOne({ userId: socket.userData.userId }, { lastRoom: newRoom });
+        console.log(`Attempting to update lastRoom for user ${socket.userData.userId} to ${newRoom}`);
+
+        try {
+          const updateResult = await User.updateOne(
+            { userId: socket.userData.userId },
+            { lastRoom: newRoom }
+          );
+          console.log(`Update result: ${JSON.stringify(updateResult)}`);
+          if (updateResult.nModified === 0) {
+            console.log(`No documents were updated for user ${socket.userData.userId}`);
+          }
+
+          // Проверяем обновление в базе данных
+          const updatedUser = await User.findOne({ userId: socket.userData.userId });
+          console.log(`Updated user lastRoom: ${updatedUser.lastRoom}`);
+        } catch (error) {
+          console.error(`Error updating lastRoom for user ${socket.userData.userId}:`, error);
+        }
+
         socket.emit('forceRoomChange', { newRoom });
 
         // Удаляем пользователя из текущей комнаты
@@ -578,9 +596,6 @@ io.on('connection', (socket) => {
         // Отправляем историю сообщений новой комнаты
         const messages = await Message.find({ room: newRoom }).sort({ timestamp: 1 }).limit(100);
         socket.emit('messageHistory', messages);
-
-        // Уведомляем клиента о перемещении
-        socket.emit('forceRoomChange', { newRoom });
       }
     } catch (err) {
       console.error('Error saving message:', err.message, err.stack);

@@ -551,9 +551,9 @@ io.on('connection', (socket) => {
       console.log('sendMessage - isAnimal:', isAnimal);
       console.log('sendMessage - isCatchableLocation:', isCatchableLocation);
       console.log('sendMessage - hasAnimalCatcher:', hasAnimalCatcher);
-      console.log('sendMessage - Random chance (Math.random() < 0.5):', Math.random() < 0.5);
+      console.log('sendMessage - Random chance (Math.random() < 0.1):', Math.random() < 0.1);
 
-      if (isAnimal && isCatchableLocation && hasAnimalCatcher && Math.random() < 0.5) {
+      if (isAnimal && isCatchableLocation && hasAnimalCatcher && Math.random() < 0.1) {
         const newRoom = 'Приют для животных "Кошкин дом"';
         console.log(`Attempting to update lastRoom for user ${socket.userData.userId} to ${newRoom}`);
 

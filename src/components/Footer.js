@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { FaComments, FaTasks, FaBox, FaMap, FaUser } from 'react-icons/fa'; // Заменили FaHome на FaBox
+import { FaComments, FaTasks, FaBox, FaMap, FaUser } from 'react-icons/fa';
 
 const FooterContainer = styled.div`
   position: sticky;
@@ -23,7 +23,7 @@ const TabButton = styled.button`
   border: none;
   padding: 8px 12px;
   border-radius: 4px;
-  cursor: pointer;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   font-size: 32px;
   flex: 1;
   margin: 0 4px;
@@ -32,6 +32,7 @@ const TabButton = styled.button`
   align-items: center;
   justify-content: center;
   max-width: 20%;
+  opacity: ${props => props.disabled ? 0.5 : 1};
 
   @media (max-width: 400px) {
     font-size: 24px;
@@ -39,13 +40,25 @@ const TabButton = styled.button`
   }
 `;
 
-function Footer({ activeTab, setActiveTab, theme }) {
+function Footer({ activeTab, setActiveTab, theme, user, currentRoom }) {
+  // Проверяем, является ли игрок животным в приюте
+  const isAnimalInShelter = !user?.isHuman && currentRoom === 'Приют для животных "Кошкин дом"';
+
+  // Обработчик нажатия на вкладку
+  const handleTabClick = (tab) => {
+    if (tab === 'map' && isAnimalInShelter) {
+      alert('Извините, но из приюта бездомному животному без хозяина просто так не сбежать.');
+      return;
+    }
+    setActiveTab(tab);
+  };
+
   const tabs = [
     { key: 'chat', icon: <FaComments /> },
     { key: 'actions', icon: <FaTasks /> },
-    { key: 'housing', icon: <FaBox /> }, // Заменили FaHome на FaBox
-    { key: 'map', icon: <FaMap /> },
-    { key: 'profile', icon: <FaUser /> }
+    { key: 'housing', icon: <FaBox /> },
+    { key: 'map', icon: <FaMap />, disabled: isAnimalInShelter },
+    { key: 'profile', icon: <FaUser /> },
   ];
 
   return (
@@ -54,8 +67,9 @@ function Footer({ activeTab, setActiveTab, theme }) {
         <TabButton
           key={tab.key}
           active={activeTab === tab.key}
-          onClick={() => setActiveTab(tab.key)}
+          onClick={() => handleTabClick(tab.key)}
           theme={theme}
+          disabled={tab.disabled}
         >
           {tab.icon}
         </TabButton>

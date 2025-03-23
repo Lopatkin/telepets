@@ -280,7 +280,7 @@ function App() {
           />
         )}
       </Content>
-      <Footer activeTab={activeTab} setActiveTab={setActiveTab} theme={appliedTheme} />
+      <Footer activeTab={activeTab} setActiveTab={setActiveTab} theme={appliedTheme} user={user} currentRoom={currentRoom} />
     </AppContainer>
   );
 }

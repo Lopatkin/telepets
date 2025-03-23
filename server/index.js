@@ -31,7 +31,8 @@ const userSchema = new mongoose.Schema({
   residence: String,
   animalType: String,
   name: String,
-  credits: { type: Number, default: 0 }
+  credits: { type: Number, default: 0 },
+  lastRoom: { type: String, default: 'Полигон утилизации' } // Новое поле для последней комнаты
 });
 const User = mongoose.model('User', userSchema);
 
@@ -103,12 +104,13 @@ io.on('connection', (socket) => {
         lastName: userData.lastName || '',
         username: userData.username || '',
         photoUrl: userData.photoUrl || '',
-        isRegistered: false
+        isRegistered: false,
+        lastRoom: 'Полигон утилизации' // Дефолтная комната для новых пользователей
       });
       await user.save();
       console.log('New user created:', user.userId);
     } else {
-      console.log('User authenticated:', user.userId);
+      console.log('User lastRoom from DB:', user.lastRoom);
     }
 
     socket.userData = {
@@ -247,11 +249,11 @@ io.on('connection', (socket) => {
     // Проверяем переданную последнюю комнату
     const isMyHome = userData.lastRoom && userData.lastRoom === `myhome_${socket.userData.userId}`;
     const isStaticRoom = userData.lastRoom && rooms.includes(userData.lastRoom); // rooms — список статичных комнат
-    const defaultRoom = userData.lastRoom && (isMyHome || isStaticRoom) ? userData.lastRoom : 'Полигон утилизации';
-    console.log('Выбрана стартовая комната:', defaultRoom); // Для отладки
+    const defaultRoom = user.isRegistered ? (user.lastRoom || 'Полигон утилизации') : 'Автобусная остановка';
+    console.log('Выбрана стартовая комната:', defaultRoom);
 
-    socket.join(defaultRoom); // Подключаем игрока к комнате
-    userCurrentRoom.set(socket.userData.userId, defaultRoom); // Сохраняем текущую комнату
+    socket.join(defaultRoom);
+    userCurrentRoom.set(socket.userData.userId, defaultRoom);
 
     if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
     roomUsers[defaultRoom].forEach(user => {
@@ -541,6 +543,9 @@ io.on('connection', (socket) => {
 
       if (isAnimal && isCatchableLocation && hasAnimalCatcher && Math.random() < 0.5) {
         const newRoom = 'Приют для животных "Кошкин дом"';
+        // Сохранение новой комнаты в базе данных
+        await User.updateOne({ userId: socket.userData.userId }, { lastRoom: newRoom });
+        socket.emit('forceRoomChange', { newRoom });
 
         // Удаляем пользователя из текущей комнаты
         if (roomUsers[message.room]) {

@@ -85,20 +85,20 @@ function App() {
             // Загружаем последнюю комнату из localStorage, по умолчанию "Полигон утилизации"
             const lastRoom = JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации';
             console.log('Загружена последняя комната из localStorage:', lastRoom); // Для отладки
-            socketRef.current.emit('auth', { ...initialUserData, lastRoom });
+            socketRef.current.emit('auth', { ...initialUserData });
             setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
           } else {
             const testUser = { userId: 'test123', firstName: 'Test User' };
             const lastRoom = 'Полигон утилизации';
             console.log('Используется дефолтная комната для тестового пользователя:', lastRoom); // Для отладки
-            socketRef.current.emit('auth', { ...testUser, lastRoom });
+            socketRef.current.emit('auth', { ...testUser });
             setTelegramTheme('light');
           }
         } else {
           const testUser = { userId: 'test123', firstName: 'Test User' };
           const lastRoom = 'Полигон утилизации';
           console.log('Используется дефолтная комната для тестового пользователя:', lastRoom); // Для отладки
-          socketRef.current.emit('auth', { ...testUser, lastRoom });
+          socketRef.current.emit('auth', { ...testUser });
           setTelegramTheme('light');
         }
       });
@@ -135,18 +135,9 @@ function App() {
       });
 
       socketRef.current.on('forceRoomChange', ({ newRoom }) => {
-        console.log('Перемещение в новую комнату:', newRoom); // Для отладки
-        setCurrentRoom(newRoom); // Обновляем текущую комнату
+        console.log('Перемещение в новую комнату:', newRoom);
+        setCurrentRoom(newRoom);
         joinedRoomsRef.current.add(newRoom);
-
-        if (user?.userId) {
-          // Сохраняем локацию в localStorage
-          const storedRooms = JSON.parse(localStorage.getItem('userRooms') || '{}');
-          storedRooms[user.userId] = newRoom;
-          localStorage.setItem('userRooms', JSON.stringify(storedRooms));
-          console.log('Сохранена комната в localStorage:', storedRooms); // Для отладки
-        }
-
         socketRef.current.emit('joinRoom', { room: newRoom, lastTimestamp: null });
       });
 

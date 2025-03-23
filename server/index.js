@@ -585,13 +585,13 @@ io.on('connection', (socket) => {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    // const startMinutes = 8 * 60;   // 8:00
-    // const endMinutes = 23 * 60;    // 23:00
-    const startMinutes = 1 * 60;   // 8:00
-    const endMinutes = 9 * 60;    // 23:00
+    const startMinutes = 8 * 60;   // 8:00
+    const endMinutes = 23 * 60;    // 23:00
+    // const startMinutes = 1 * 60;   // 8:00
+    // const endMinutes = 9 * 60;    // 23:00
 
-    // return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
-    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
+    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
+    // return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
 
   };
 

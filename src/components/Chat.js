@@ -284,11 +284,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 1 * 60;   // 8:00
-    const endMinutes = 9 * 60;    // 23:00
+    const startMinutes = 8 * 60;   // 8:00
+    const endMinutes = 23 * 60;    // 23:00
+    // const startMinutes = 1 * 60;   // 8:00
+    // const endMinutes = 9 * 60;    // 23:00
 
-    // return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
-    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
+    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
+    // return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
   };
 
   // Проверка времени для Ловца животных в Районе Дачном (7:00–22:00, нечётные часы)
@@ -371,12 +373,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   useEffect(() => {
     if (!socket || !room) return;
-  
+
     const cachedMessages = messageCacheRef.current[room] || [];
     if (cachedMessages.length > 0 && messages.length === 0) {
       setMessages(cachedMessages);
     }
-  
+
     socket.on('messageHistory', (history) => {
       setMessages(prev => {
         const cached = messageCacheRef.current[room] || [];
@@ -385,7 +387,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         return newMessages;
       });
     });
-  
+
     socket.on('message', (msg) => {
       setMessages(prev => {
         const updated = [...prev, msg];
@@ -393,7 +395,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         return updated;
       });
     });
-  
+
     socket.on('roomUsers', (roomUsers) => {
       let updatedUsers = roomUsers.map(roomUser => {
         if (roomUser.userId === userId) {
@@ -444,18 +446,18 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       }
       setUsers(updatedUsers);
     });
-  
+
     if (!messageCacheRef.current[room]?.length) {
       socket.emit('joinRoom', { room, lastTimestamp: null });
     }
-  
+
     return () => {
       socket.off('messageHistory');
       socket.off('message');
       socket.off('roomUsers');
     };
   }, [socket, userId, room, messages, currentUserPhotoUrl]);
-  
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

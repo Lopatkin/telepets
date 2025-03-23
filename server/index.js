@@ -403,6 +403,17 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Обновление lastRoom в базе данных
+    try {
+      await User.updateOne(
+        { userId: socket.userData.userId },
+        { lastRoom: room }
+      );
+      console.log(`Updated lastRoom for user ${socket.userData.userId} to ${room}`);
+    } catch (error) {
+      console.error(`Error updating lastRoom for user ${socket.userData.userId}:`, error);
+    }
+
     Object.keys(roomUsers).forEach(currentRoom => {
       if (currentRoom !== room) {
         roomUsers[currentRoom].forEach(user => {

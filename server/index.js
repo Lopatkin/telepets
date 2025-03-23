@@ -244,15 +244,14 @@ io.on('connection', (socket) => {
     console.log('Available static rooms:', rooms);
     console.log('Received lastRoom:', userData.lastRoom);
 
+    // Проверяем переданную последнюю комнату
     const isMyHome = userData.lastRoom && userData.lastRoom === `myhome_${socket.userData.userId}`;
-    const isStaticRoom = userData.lastRoom && rooms.includes(userData.lastRoom);
-    const defaultRoom = user.isRegistered ? (isMyHome || isStaticRoom ? userData.lastRoom : 'Полигон утилизации') : 'Автобусная остановка';
-    console.log('Is lastRoom a personal home?', isMyHome);
-    console.log('Is lastRoom a static room?', isStaticRoom);
-    console.log('Selected defaultRoom:', defaultRoom);
+    const isStaticRoom = userData.lastRoom && rooms.includes(userData.lastRoom); // rooms — список статичных комнат
+    const defaultRoom = userData.lastRoom && (isMyHome || isStaticRoom) ? userData.lastRoom : 'Полигон утилизации';
+    console.log('Выбрана стартовая комната:', defaultRoom); // Для отладки
 
-    socket.join(defaultRoom);
-    userCurrentRoom.set(socket.userData.userId, defaultRoom);
+    socket.join(defaultRoom); // Подключаем игрока к комнате
+    userCurrentRoom.set(socket.userData.userId, defaultRoom); // Сохраняем текущую комнату
 
     if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
     roomUsers[defaultRoom].forEach(user => {

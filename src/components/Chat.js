@@ -444,6 +444,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           ];
         }
       }
+      console.log('Updated users in room:', updatedUsers);
       setUsers(updatedUsers);
     });
 

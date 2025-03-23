@@ -131,6 +131,7 @@ function App() {
       socketRef.current.on('forceRoomChange', ({ newRoom }) => {
         console.log('Received forceRoomChange to:', newRoom);
         setCurrentRoom(newRoom);
+        console.log('Updated currentRoom to:', newRoom);
         joinedRoomsRef.current.add(newRoom);
 
         if (user?.userId) {

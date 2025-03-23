@@ -535,6 +535,11 @@ io.on('connection', (socket) => {
         (message.room === 'Район Дачный' && isLovecDachnyTime())
       );
 
+      console.log('sendMessage - isAnimal:', isAnimal);
+      console.log('sendMessage - isCatchableLocation:', isCatchableLocation);
+      console.log('sendMessage - hasAnimalCatcher:', hasAnimalCatcher);
+      console.log('sendMessage - Math.random() < 0.5:', Math.random() < 0.5);
+
       if (isAnimal && isCatchableLocation && hasAnimalCatcher && Math.random() < 0.5) {
         const newRoom = 'Приют для животных "Кошкин дом"';
 

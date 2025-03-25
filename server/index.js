@@ -32,7 +32,10 @@ const userSchema = new mongoose.Schema({
   animalType: String,
   name: String,
   credits: { type: Number, default: 0 },
-  lastRoom: { type: String, default: 'Полигон утилизации' } // Новое поле для последней комнаты
+  lastRoom: { type: String, default: 'Полигон утилизации' }, // Новое поле для последней комнаты
+  homeless: { type: Boolean, default: true }, // Поле "homeless" с значением по умолчанию true
+  inPocket: { type: Boolean, default: false }, // Поле "inPocket" с значением по умолчанию false
+  lastActivity: { type: Date, default: Date.now } // Добавляем поле для отслеживания активности
 });
 const User = mongoose.model('User', userSchema);
 
@@ -88,6 +91,43 @@ const itemLocks = new Map();
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
+
+  socket.on('getShelterAnimals', async () => {
+    if (!socket.userData || !socket.userData.userId) {
+      socket.emit('error', { message: 'Пользователь не аутентифицирован' });
+      return;
+    }
+
+    const currentRoom = userCurrentRoom.get(socket.userData.userId);
+    if (currentRoom !== 'Приют для животных "Кошкин дом"') {
+      socket.emit('error', { message: 'Вы не в приюте для животных' });
+      return;
+    }
+
+    try {
+      const shelterAnimals = await User.find({
+        lastRoom: 'Приют для животных "Кошкин дом"',
+        homeless: true,
+        inPocket: false,
+        isHuman: false // Предполагаем, что животные имеют isHuman: false
+      }).select('userId name photoUrl lastActivity isHuman animalType');
+
+      // Определяем статус онлайн (например, активность за последние 5 минут)
+      const now = new Date();
+      const animalsWithStatus = shelterAnimals.map(animal => ({
+        userId: animal.userId,
+        name: animal.name,
+        photoUrl: animal.photoUrl,
+        isOnline: (now - new Date(animal.lastActivity || 0)) < 5 * 60 * 1000,
+        animalType: animal.animalType
+      }));
+
+      socket.emit('shelterAnimals', animalsWithStatus);
+    } catch (err) {
+      console.error('Error fetching shelter animals:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при загрузке списка животных' });
+    }
+  });
 
   socket.on('auth', async (userData, callback) => {
     if (!userData || !userData.userId) {
@@ -536,6 +576,13 @@ io.on('connection', (socket) => {
         animalText: message.animalText || undefined
       });
       await newMessage.save();
+
+      // Обновляем активность, потом добавить на смену локации и авторизацию
+      await User.updateOne(
+        { userId: socket.userData.userId },
+        { lastActivity: new Date() }
+      );
+
       console.log('Message saved:', { text: newMessage.text, animalText: newMessage.animalText });
       io.to(message.room).emit('message', newMessage);
 

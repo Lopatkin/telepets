@@ -1,6 +1,56 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 
+const AnimalList = styled.div`
+  display: grid;
+  gap: 10px;
+`;
+
+const AnimalCard = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const StatusCircle = styled.div`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: ${props => props.isOnline ? 'green' : 'gray'};
+  margin-right: 10px;
+`;
+
+const Avatar = styled.img`
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 10px;
+`;
+
+const AnimalName = styled.span`
+  font-size: 14px;
+  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
+  flex-grow: 1;
+`;
+
+const TakeHomeButton = styled.button`
+  padding: 5px 10px;
+  background: #32CD32;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+
+  &:hover {
+    background: #28A828;
+  }
+`;
+
 // Анимация исчезновения с движением вправо (для текущего пользователя)
 const fadeOutRight = keyframes`
   0% {
@@ -317,6 +367,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
   const [activeSubTab, setActiveSubTab] = useState('personal');
   const [personalItems, setPersonalItems] = useState([]);
   const [locationItems, setLocationItems] = useState([]);
+  const [shelterAnimals, setShelterAnimals] = useState([]); // Новое состояние для животных
   const [personalLimit, setPersonalLimit] = useState(null);
   const [locationLimit, setLocationLimit] = useState(null);
   const [error, setError] = useState(null);
@@ -384,6 +435,11 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     }
   }, [locationOwnerKey]);
 
+  // Добавляем обработчик для получения животных
+  const handleShelterAnimals = useCallback((animals) => {
+    setShelterAnimals(animals);
+  }, []);
+
   useEffect(() => {
     if (!socket || !userId) return;
 
@@ -392,9 +448,15 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
+    // Запрашиваем животных, если находимся в приюте
+    if (currentRoom === 'Приют для животных "Кошкин дом"') {
+      socket.emit('getShelterAnimals');
+    }
+
     socket.on('items', handleItemsUpdate);
     socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
+    socket.on('shelterAnimals', handleShelterAnimals); // Новый слушатель
     socket.on('error', ({ message }) => {
       setError(message);
       setTimeout(() => setError(null), 3000);
@@ -404,9 +466,16 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
       socket.off('items', handleItemsUpdate);
       socket.off('inventoryLimit', handleLimitUpdate);
       socket.off('itemAction', handleItemAction);
+      socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate, handleItemAction]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals]);
+
+  // Функция для кнопки "Забрать домой" (пока заглушка)
+  const handleTakeHome = (animalId) => {
+    console.log(`Забрать домой животное с ID: ${animalId}`);
+    // Здесь будет дальнейшая логика
+  };
 
   const handleMoveItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
@@ -595,7 +664,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             </ActionButtons>
           </ItemCard>
         ))}
-        {activeSubTab === 'location' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+        {activeSubTab === 'location' && currentRoom !== 'Приют для животных "Кошкин дом"' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
           <ItemCard
             key={item._id}
             theme={theme}
@@ -616,7 +685,29 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             </ActionButtons>
           </ItemCard>
         ))}
-        {activeSubTab === 'personal' && personalItems.length === 0 && (
+
+
+        {activeSubTab === 'location' && currentRoom === 'Приют для животных "Кошкин дом"' && (
+          <AnimalList>
+            {shelterAnimals.map(animal => (
+              <AnimalCard key={animal.userId} theme={theme}>
+                <StatusCircle isOnline={animal.isOnline} />
+                <Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
+                <AnimalName theme={theme}>{animal.name}</AnimalName>
+                <TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
+                  Забрать домой
+                </TakeHomeButton>
+              </AnimalCard>
+            ))}
+            {shelterAnimals.length === 0 && (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                В приюте нет животных
+              </div>
+            )}
+          </AnimalList>
+        )}
+
+        {activeSubTab === 'location' && currentRoom !== 'Приют для животных "Кошкин дом"' && locationItems.length === 0 && (
           <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
             У вас пока нет предметов
           </div>

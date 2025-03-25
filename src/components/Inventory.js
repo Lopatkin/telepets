@@ -491,7 +491,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals]);
 
   // Функция для кнопки "Забрать домой" (пока заглушка)
   const handleTakeHome = (animalId) => {

@@ -23,8 +23,10 @@ const SubTab = styled.button`
 `;
 
 const AnimalList = styled.div`
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
+  padding: 0 5px; /* Небольшие отступы слева и справа */
 `;
 
 const AnimalCard = styled.div`
@@ -35,6 +37,8 @@ const AnimalCard = styled.div`
   border-radius: 8px;
   padding: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%; /* Растягиваем на всю ширину контейнера */
+  box-sizing: border-box; /* Учитываем padding в общей ширине */
 `;
 
 const StatusCircle = styled.div`
@@ -55,7 +59,7 @@ const Avatar = styled.img`
 const AnimalName = styled.span`
   font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
-  flex-grow: 1;
+  flex-grow: 1; /* Растягиваем имя, чтобы заполнить пространство */
 `;
 
 const TakeHomeButton = styled.button`

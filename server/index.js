@@ -339,6 +339,7 @@ io.on('connection', (socket) => {
           animalType: data.animalType,
           name: data.name,
           photoUrl: data.photoUrl || socket.userData.photoUrl || '',
+          homeless: data.isHuman ? false : true // Устанавливаем homeless: false для людей, true для животных
         },
         { new: true }
       );

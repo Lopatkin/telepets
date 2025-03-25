@@ -402,6 +402,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
+  const isShelter = currentRoom === 'Приют для животных "Кошкин дом"'; // Проверка на приют
 
   const groupItemsByNameAndWeight = (items) => {
     const grouped = items.reduce((acc, item) => {
@@ -470,7 +471,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
-    if (currentRoom === 'Приют для животных "Кошкин дом"') {
+    if (isShelter) {
       socket.emit('getShelterAnimals');
     }
 
@@ -630,7 +631,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
           Локация
         </Tab>
       </Tabs>
-      {activeTab === 'location' && (
+      {activeTab === 'location' && isShelter && (
         <SubTabs>
           <SubTab
             active={activeLocationSubTab === 'items'}
@@ -703,7 +704,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             </ActionButtons>
           </ItemCard>
         ))}
-        {activeTab === 'location' && activeLocationSubTab === 'items' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+        {activeTab === 'location' && !isShelter && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
           <ItemCard
             key={item._id}
             theme={theme}
@@ -724,7 +725,28 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             </ActionButtons>
           </ItemCard>
         ))}
-        {activeTab === 'location' && activeLocationSubTab === 'animals' && currentRoom === 'Приют для животных "Кошкин дом"' && (
+        {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+          <ItemCard
+            key={item._id}
+            theme={theme}
+            isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+          >
+            <ItemInfo theme={theme} onClick={() => openModal(item)}>
+              <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
+              <ItemDetail theme={theme}>{item.description}</ItemDetail>
+            </ItemInfo>
+            <ActionButtons>
+              <PickupButton
+                onClick={() => handlePickupItem(item._id)}
+                disabled={isActionCooldown}
+              >
+                Подобрать
+                {isActionCooldown && <ProgressBar />}
+              </PickupButton>
+            </ActionButtons>
+          </ItemCard>
+        ))}
+        {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' && (
           <AnimalList>
             {shelterAnimals.map(animal => (
               <AnimalCard key={animal.userId} theme={theme}>
@@ -748,14 +770,14 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             У вас пока нет предметов
           </div>
         )}
-        {activeTab === 'location' && activeLocationSubTab === 'items' && locationItems.length === 0 && (
+        {activeTab === 'location' && !isShelter && locationItems.length === 0 && (
           <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
             На этой локации нет предметов
           </div>
         )}
-        {activeTab === 'location' && activeLocationSubTab === 'animals' && currentRoom !== 'Приют для животных "Кошкин дом"' && (
+        {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && locationItems.length === 0 && (
           <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-            Животные доступны только в приюте
+            На этой локации нет предметов
           </div>
         )}
       </ItemList>

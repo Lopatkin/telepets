@@ -1,6 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 
+const SubTabs = styled.div`
+  display: flex;
+  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  margin-bottom: 15px;
+`;
+
+const SubTab = styled.button`
+  flex: 1;
+  padding: 8px;
+  background: ${props => props.active ? '#007AFF' : 'transparent'};
+  color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#333')};
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: ${props => props.active ? '#005BBB' : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
+  }
+`;
+
 const AnimalList = styled.div`
   display: grid;
   gap: 10px;
@@ -364,7 +385,8 @@ const QuantityText = styled.p`
 `;
 
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
-  const [activeSubTab, setActiveSubTab] = useState('personal');
+  const [activeTab, setActiveTab] = useState('personal'); // Переименовал activeSubTab в activeTab для ясности
+  const [activeLocationSubTab, setActiveLocationSubTab] = useState('items'); // Новая переменная для подвкладок "Локация"
   const [personalItems, setPersonalItems] = useState([]);
   const [locationItems, setLocationItems] = useState([]);
   const [shelterAnimals, setShelterAnimals] = useState([]); // Новое состояние для животных
@@ -448,7 +470,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
-    // Запрашиваем животных, если находимся в приюте
     if (currentRoom === 'Приют для животных "Кошкин дом"') {
       socket.emit('getShelterAnimals');
     }
@@ -456,7 +477,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     socket.on('items', handleItemsUpdate);
     socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
-    socket.on('shelterAnimals', handleShelterAnimals); // Новый слушатель
+    socket.on('shelterAnimals', handleShelterAnimals);
     socket.on('error', ({ message }) => {
       setError(message);
       setTimeout(() => setError(null), 3000);
@@ -595,37 +616,55 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
     <InventoryContainer theme={theme}>
       <Tabs>
         <Tab
-          active={activeSubTab === 'personal'}
-          onClick={() => setActiveSubTab('personal')}
+          active={activeTab === 'personal'}
+          onClick={() => setActiveTab('personal')}
           theme={theme}
         >
           Личные вещи
         </Tab>
         <Tab
-          active={activeSubTab === 'location'}
-          onClick={() => setActiveSubTab('location')}
+          active={activeTab === 'location'}
+          onClick={() => setActiveTab('location')}
           theme={theme}
         >
           Локация
         </Tab>
       </Tabs>
+      {activeTab === 'location' && (
+        <SubTabs>
+          <SubTab
+            active={activeLocationSubTab === 'items'}
+            onClick={() => setActiveLocationSubTab('items')}
+            theme={theme}
+          >
+            Предметы
+          </SubTab>
+          <SubTab
+            active={activeLocationSubTab === 'animals'}
+            onClick={() => setActiveLocationSubTab('animals')}
+            theme={theme}
+          >
+            Животные
+          </SubTab>
+        </SubTabs>
+      )}
       {error && (
         <div style={{ color: 'red', textAlign: 'center', marginBottom: '10px' }}>
           {error}
         </div>
       )}
-      {activeSubTab === 'personal' && personalLimit && (
+      {activeTab === 'personal' && personalLimit && (
         <WeightLimit theme={theme}>
           Вес: {personalLimit.currentWeight} кг / {personalLimit.maxWeight} кг
         </WeightLimit>
       )}
-      {activeSubTab === 'location' && locationLimit && (
+      {activeTab === 'location' && locationLimit && (
         <WeightLimit theme={theme}>
           Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
         </WeightLimit>
       )}
-      <ItemList subTab={activeSubTab}>
-        {activeSubTab === 'personal' && groupItemsByNameAndWeight(personalItems).map(({ item, count }) => (
+      <ItemList subTab={activeTab}>
+        {activeTab === 'personal' && groupItemsByNameAndWeight(personalItems).map(({ item, count }) => (
           <ItemCard
             key={item._id}
             theme={theme}
@@ -664,7 +703,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             </ActionButtons>
           </ItemCard>
         ))}
-        {activeSubTab === 'location' && currentRoom !== 'Приют для животных "Кошкин дом"' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+        {activeTab === 'location' && activeLocationSubTab === 'items' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
           <ItemCard
             key={item._id}
             theme={theme}
@@ -685,9 +724,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             </ActionButtons>
           </ItemCard>
         ))}
-
-
-        {activeSubTab === 'location' && currentRoom === 'Приют для животных "Кошкин дом"' && (
+        {activeTab === 'location' && activeLocationSubTab === 'animals' && currentRoom === 'Приют для животных "Кошкин дом"' && (
           <AnimalList>
             {shelterAnimals.map(animal => (
               <AnimalCard key={animal.userId} theme={theme}>
@@ -706,15 +743,19 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
             )}
           </AnimalList>
         )}
-
-        {activeSubTab === 'location' && currentRoom !== 'Приют для животных "Кошкин дом"' && locationItems.length === 0 && (
+        {activeTab === 'personal' && personalItems.length === 0 && (
           <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
             У вас пока нет предметов
           </div>
         )}
-        {activeSubTab === 'location' && locationItems.length === 0 && (
+        {activeTab === 'location' && activeLocationSubTab === 'items' && locationItems.length === 0 && (
           <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
             На этой локации нет предметов
+          </div>
+        )}
+        {activeTab === 'location' && activeLocationSubTab === 'animals' && currentRoom !== 'Приют для животных "Кошкин дом"' && (
+          <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+            Животные доступны только в приюте
           </div>
         )}
       </ItemList>

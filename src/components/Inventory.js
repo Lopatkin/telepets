@@ -406,7 +406,8 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
   const [actionQuantity, setActionQuantity] = useState({ itemName: null, weight: null, count: 1, action: null });
 
   const userOwnerKey = `user_${userId}`;
-  const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
+  // const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
+  const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"'; // Проверка на приют
 
   const groupItemsByNameAndWeight = (items) => {

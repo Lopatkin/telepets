@@ -231,6 +231,7 @@ function App() {
   }
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
+  const isAnimalAtHome = user && !user.isHuman && currentRoom && currentRoom.startsWith('myhome_');
 
   return (
     <AppContainer>
@@ -265,10 +266,19 @@ function App() {
             socket={socket}
             onItemsUpdate={handleItemsUpdate}
             closeActionModal={closeActionModal}
-            setIsModalOpen={setIsActionModalOpen} // Убедись, что это есть
+            setIsModalOpen={setIsActionModalOpen}
           />
         )}
-        {activeTab === 'map' && <Map userId={user.userId} onRoomSelect={handleRoomSelect} theme={appliedTheme} currentRoom={currentRoom} />}
+
+        {activeTab === 'map' && !isAnimalAtHome && (
+          <Map
+            userId={user.userId}
+            onRoomSelect={handleRoomSelect}
+            theme={appliedTheme}
+            currentRoom={currentRoom}
+          />
+        )}
+
         {activeTab === 'profile' && (
           <Profile
             user={user}
@@ -280,7 +290,16 @@ function App() {
           />
         )}
       </Content>
-      <Footer activeTab={activeTab} setActiveTab={setActiveTab} theme={appliedTheme} user={user} currentRoom={currentRoom} />
+
+      <Footer
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        theme={appliedTheme}
+        user={user}
+        currentRoom={currentRoom}
+        isAnimalAtHome={isAnimalAtHome} // Передаём флаг в Footer
+      />
+      
     </AppContainer>
   );
 }

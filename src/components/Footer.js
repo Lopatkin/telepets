@@ -40,15 +40,23 @@ const TabButton = styled.button`
   }
 `;
 
-function Footer({ activeTab, setActiveTab, theme, user, currentRoom }) {
+function Footer({ activeTab, setActiveTab, theme, user, currentRoom, isAnimalAtHome }) {
   // Проверяем, является ли игрок животным в приюте
   const isAnimalInShelter = !user?.isHuman && currentRoom === 'Приют для животных "Кошкин дом"';
+  // Используем переданный флаг isAnimalAtHome для проверки животного в доме
+  const isMapDisabled = isAnimalInShelter || isAnimalAtHome;
 
   // Обработчик нажатия на вкладку
   const handleTabClick = (tab) => {
-    if (tab === 'map' && isAnimalInShelter) {
-      alert('Извините, но из приюта бездомному животному без хозяина просто так не сбежать.');
-      return;
+    if (tab === 'map') {
+      if (isAnimalInShelter) {
+        alert('Извините, но из приюта бездомному животному без хозяина просто так не сбежать.');
+        return;
+      }
+      if (isAnimalAtHome) {
+        alert('Вы находитесь дома у хозяина и не можете самостоятельно перемещаться.');
+        return;
+      }
     }
     setActiveTab(tab);
   };
@@ -57,7 +65,7 @@ function Footer({ activeTab, setActiveTab, theme, user, currentRoom }) {
     { key: 'chat', icon: <FaComments /> },
     { key: 'actions', icon: <FaTasks /> },
     { key: 'housing', icon: <FaBox /> },
-    { key: 'map', icon: <FaMap />, disabled: isAnimalInShelter },
+    { key: 'map', icon: <FaMap />, disabled: isMapDisabled },
     { key: 'profile', icon: <FaUser /> },
   ];
 

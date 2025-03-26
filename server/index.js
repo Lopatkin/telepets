@@ -456,6 +456,67 @@ io.on('connection', (socket) => {
       console.error(`Error updating lastRoom for user ${socket.userData.userId}:`, error);
     }
 
+
+    // Проверяем, есть ли в инвентаре предметы-животные с playerID
+    const userOwnerKey = `user_${socket.userData.userId}`;
+    const animalItems = await Item.find({ owner: userOwnerKey, playerID: { $exists: true } });
+    if (animalItems.length > 0) {
+      const animalIds = animalItems.map(item => item.playerID);
+      try {
+        // Обновляем lastRoom для всех связанных животных
+        await User.updateMany(
+          { userId: { $in: animalIds } },
+          { lastRoom: room }
+        );
+        console.log(`Updated lastRoom for animals ${animalIds.join(', ')} to ${room}`);
+
+        // Уведомляем животных о перемещении
+        animalIds.forEach(animalId => {
+          const animalSocket = activeSockets.get(animalId);
+          if (animalSocket) {
+            animalSocket.leave(userCurrentRoom.get(animalId) || '');
+            animalSocket.join(room);
+            userCurrentRoom.set(animalId, room);
+
+            // Удаляем животное из старой комнаты
+            const oldRoom = userCurrentRoom.get(animalId);
+            if (oldRoom && roomUsers[oldRoom]) {
+              roomUsers[oldRoom].forEach(u => {
+                if (u.userId === animalId) {
+                  roomUsers[oldRoom].delete(u);
+                }
+              });
+              io.to(oldRoom).emit('roomUsers', Array.from(roomUsers[oldRoom]));
+            }
+
+            // Добавляем животное в новую комнату
+            if (!roomUsers[room]) roomUsers[room] = new Set();
+            const animalUser = animalItems.find(item => item.playerID === animalId);
+            roomUsers[room].add({
+              userId: animalId,
+              firstName: '',
+              username: '',
+              lastName: '',
+              photoUrl: animalUser?.photoUrl || '',
+              name: animalUser?.name || '',
+              isHuman: false,
+            });
+            io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
+
+            // Отправляем животному событие forceRoomChange
+            animalSocket.emit('forceRoomChange', { newRoom: room });
+
+            // Отправляем историю сообщений новой комнаты
+            Message.find({ room }).sort({ timestamp: 1 }).limit(100)
+              .then(messages => animalSocket.emit('messageHistory', messages))
+              .catch(err => console.error('Error sending message history to animal:', err.message));
+          }
+        });
+      } catch (error) {
+        console.error(`Error updating lastRoom for animals:`, error);
+      }
+    }
+
     Object.keys(roomUsers).forEach(currentRoom => {
       if (currentRoom !== room) {
         roomUsers[currentRoom].forEach(user => {

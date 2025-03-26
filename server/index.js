@@ -64,6 +64,7 @@ const itemSchema = new mongoose.Schema({
   weight: { type: Number },
   cost: { type: Number },
   effect: { type: String },
+  playerID: { type: String, required: false } // Новое поле для ID игрока-животного
 }, { timestamps: true });
 
 const Item = mongoose.model('Item', itemSchema);
@@ -990,6 +991,7 @@ io.on('connection', (socket) => {
         name: animalUser.name,
         description: animalUser.animalType, // Тип животного (Кошка или Собака) как описание
         weight: 0, // Вес не учитывается
+        playerID: animalId // Добавляем ID игрока-животного
       });
       await animalItem.save();
 

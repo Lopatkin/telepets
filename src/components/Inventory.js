@@ -500,8 +500,12 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
 
   // Функция для кнопки "Забрать домой" (пока заглушка)
   const handleTakeHome = (animalId) => {
-    console.log(`Забрать домой животное с ID: ${animalId}`);
-    // Здесь будет дальнейшая логика
+    if (!socket || !userId) {
+      console.error('Socket or userId not available');
+      return;
+    }
+    socket.emit('takeAnimalHome', { animalId });
+    console.log(`Sent takeAnimalHome request for animal ID: ${animalId}`);
   };
 
   const handleMoveItem = (itemName, weight, maxCount) => {
@@ -702,11 +706,17 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
               }
             >
               <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
-              <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
-              <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
-              <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
-              <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
-              <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
+              {item.description === 'Кошка' || item.description === 'Собака' ? (
+                <ItemDetail theme={theme}>{item.description}</ItemDetail>
+              ) : (
+                <>
+                  <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
+                  <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
+                  <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
+                  <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
+                  <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
+                </>
+              )}
               <ActionButtons>
                 {locationOwnerKey && (
                   <MoveButton

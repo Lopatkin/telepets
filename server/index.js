@@ -956,6 +956,83 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('takeAnimalHome', async ({ animalId }) => {
+    try {
+      if (!socket.userData || !socket.userData.userId) {
+        socket.emit('error', { message: 'Пользователь не аутентифицирован' });
+        return;
+      }
+
+      // Проверяем, что текущий пользователь — человек
+      const humanUser = await User.findOne({ userId: socket.userData.userId });
+      if (!humanUser || !humanUser.isHuman) {
+        socket.emit('error', { message: 'Только люди могут забирать животных домой' });
+        return;
+      }
+
+      // Проверяем, что животное существует и находится в приюте
+      const animalUser = await User.findOne({ userId: animalId });
+      if (!animalUser || animalUser.isHuman || !animalUser.homeless || animalUser.inPocket) {
+        socket.emit('error', { message: 'Животное не найдено или уже забрано' });
+        return;
+      }
+
+      const currentRoom = userCurrentRoom.get(socket.userData.userId);
+      if (currentRoom !== 'Приют для животных "Кошкин дом"') {
+        socket.emit('error', { message: 'Вы должны находиться в приюте, чтобы забрать животное' });
+        return;
+      }
+
+      // Создаём предмет-животное в инвентаре человека
+      const userOwnerKey = `user_${socket.userData.userId}`;
+      const animalItem = new Item({
+        owner: userOwnerKey,
+        name: animalUser.name,
+        description: animalUser.animalType, // Тип животного (Кошка или Собака) как описание
+        weight: 0, // Вес не учитывается
+      });
+      await animalItem.save();
+
+      // Обновляем поле inPocket у животного
+      await User.updateOne(
+        { userId: animalId },
+        { inPocket: true }
+      );
+
+      // Обновляем кэш предметов
+      const ownerItems = itemCache.get(userOwnerKey) || [];
+      itemCache.set(userOwnerKey, [...ownerItems, animalItem]);
+
+      // Уведомляем клиента об обновлении инвентаря
+      io.to(userOwnerKey).emit('items', { owner: userOwnerKey, items: itemCache.get(userOwnerKey) });
+
+      // Обновляем список животных в приюте
+      const shelterAnimals = await User.find({
+        lastRoom: 'Приют для животных "Кошкин дом"',
+        homeless: true,
+        inPocket: false,
+        isHuman: false
+      }).select('userId name photoUrl lastActivity isHuman animalType');
+
+      const now = new Date();
+      const animalsWithStatus = shelterAnimals.map(animal => ({
+        userId: animal.userId,
+        name: animal.name,
+        photoUrl: animal.photoUrl,
+        isOnline: (now - new Date(animal.lastActivity || 0)) < 5 * 60 * 1000,
+        animalType: animal.animalType
+      }));
+
+      // Уведомляем всех в комнате приюта об обновлённом списке животных
+      io.to('Приют для животных "Кошкин дом"').emit('shelterAnimals', animalsWithStatus);
+
+      console.log(`User ${socket.userData.userId} took animal ${animalId} home`);
+    } catch (err) {
+      console.error('Error in takeAnimalHome:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при попытке забрать животное домой' });
+    }
+  });
+
   socket.on('utilizeTrash', async (callback) => {
     if (!socket.userData || !socket.userData.userId) {
       if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });

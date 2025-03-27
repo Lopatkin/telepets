@@ -1061,40 +1061,22 @@ io.on('connection', (socket) => {
         return;
       }
 
+      // Формируем userOwnerKey для владельца (человека)
+      const userOwnerKey = `user_${socket.userData.userId}`;
+
       // Обновляем данные животного: устанавливаем owner и onLeash
       await User.updateOne(
         { userId: animalId },
         {
           owner: socket.userData.userId,
           onLeash: true,
-          homeless: false // Предполагаем, что животное больше не бездомное
+          homeless: false // Животное больше не бездомное
         }
       );
 
-      const ownerItems = itemCache.get(userOwnerKey) || [];
-      itemCache.set(userOwnerKey, [...ownerItems, animalItem]);
-
-      io.to(userOwnerKey).emit('items', { owner: userOwnerKey, items: itemCache.get(userOwnerKey) });
-
-      const animalSocket = activeSockets.get(animalId);
-      if (animalSocket) {
-        animalSocket.emit('userUpdate', {
-          userId: animalId,
-          isRegistered: true,
-          isHuman: false,
-          name: updatedAnimal.name,
-          animalType: updatedAnimal.animalType,
-          onLeash: true,
-          owner: socket.userData.userId,
-          ownerOnline: true
-        });
-      }
-
-      // Отправляем обновление человеку о новом действии в "Питомцы"
-      socket.emit('petActionAdded', {
-        actionName: updatedAnimal.name,
-        animalId: animalId
-      });
+      // Убираем некорректное добавление животного как предмета в инвентарь
+      // Вместо этого обновляем данные животного и уведомляем клиента
+      const updatedAnimal = await User.findOne({ userId: animalId });
 
       // Обновляем список животных в приюте
       const shelterAnimals = await User.find({
@@ -1116,6 +1098,27 @@ io.on('connection', (socket) => {
       }));
 
       io.to('Приют для животных "Кошкин дом"').emit('shelterAnimals', animalsWithStatus);
+
+      // Уведомляем владельца об успешном действии
+      socket.emit('takeAnimalHomeSuccess', {
+        animalId,
+        owner: socket.userData.userId
+      });
+
+      // Уведомляем животное, если оно онлайн
+      const animalSocket = activeSockets.get(animalId);
+      if (animalSocket) {
+        animalSocket.emit('userUpdate', {
+          userId: animalId,
+          isRegistered: true,
+          isHuman: false,
+          name: updatedAnimal.name,
+          animalType: updatedAnimal.animalType,
+          onLeash: true,
+          owner: socket.userData.userId,
+          ownerOnline: true
+        });
+      }
 
       console.log(`User ${socket.userData.userId} took animal ${animalId} home`);
     } catch (err) {

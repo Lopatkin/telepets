@@ -242,7 +242,7 @@ const UserName = styled.span`
 const PovodokIcon = styled.img`
   width: 16px;
   height: 16px;
-  margin-left: 5px;
+  // margin-left: 5px;
 `;
 
 function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {

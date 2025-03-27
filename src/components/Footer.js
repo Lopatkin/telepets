@@ -40,13 +40,10 @@ const TabButton = styled.button`
   }
 `;
 
-function Footer({ activeTab, setActiveTab, theme, user, currentRoom, isAnimalAtHome }) {
-  // Проверяем, является ли игрок животным в приюте
+function Footer({ activeTab, setActiveTab, theme, user, currentRoom, isAnimalAtHome, isAnimalInPocketWithOwnerOnline }) {
   const isAnimalInShelter = !user?.isHuman && currentRoom === 'Приют для животных "Кошкин дом"';
-  // Используем переданный флаг isAnimalAtHome для проверки животного в доме
-  const isMapDisabled = isAnimalInShelter || isAnimalAtHome;
+  const isMapDisabled = isAnimalInShelter || isAnimalAtHome || isAnimalInPocketWithOwnerOnline;
 
-  // Обработчик нажатия на вкладку
   const handleTabClick = (tab) => {
     if (tab === 'map') {
       if (isAnimalInShelter) {
@@ -55,6 +52,10 @@ function Footer({ activeTab, setActiveTab, theme, user, currentRoom, isAnimalAtH
       }
       if (isAnimalAtHome) {
         alert('Вы находитесь дома у хозяина и не можете самостоятельно перемещаться.');
+        return;
+      }
+      if (isAnimalInPocketWithOwnerOnline) {
+        alert('Вы привязаны к хозяину и не можете перемещаться, пока он онлайн.');
         return;
       }
     }

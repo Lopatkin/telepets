@@ -232,6 +232,7 @@ function App() {
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
   const isAnimalAtHome = user && !user.isHuman && currentRoom && currentRoom.startsWith('myhome_');
+  const isAnimalInPocketWithOwnerOnline = user && !user.isHuman && user.inPocket && user.ownerOnline;
 
   return (
     <AppContainer>
@@ -270,7 +271,7 @@ function App() {
           />
         )}
 
-        {activeTab === 'map' && !isAnimalAtHome && (
+        {activeTab === 'map' && !isAnimalAtHome && !isAnimalInPocketWithOwnerOnline && (
           <Map
             userId={user.userId}
             onRoomSelect={handleRoomSelect}
@@ -298,8 +299,9 @@ function App() {
         user={user}
         currentRoom={currentRoom}
         isAnimalAtHome={isAnimalAtHome} // Передаём флаг в Footer
+        isAnimalInPocketWithOwnerOnline={isAnimalInPocketWithOwnerOnline} // Передаём новое условие
       />
-      
+
     </AppContainer>
   );
 }

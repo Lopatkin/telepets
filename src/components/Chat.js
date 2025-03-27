@@ -617,8 +617,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           {users.map((user, index) => (
             <UserItem key={index}>
               {getAvatar(user)}
-              <UserName theme={theme}>{getUserDisplayName(user)}</UserName>
               {user.inPocket && !user.isHuman && <PovodokIcon src={povodokIcon} alt="Поводок" />}
+              <UserName theme={theme}>{getUserDisplayName(user)}</UserName>
             </UserItem>
           ))}
         </UserListModal>

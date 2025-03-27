@@ -467,6 +467,11 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     setShelterAnimals(animals);
   }, []);
 
+  // Временное логирование для отладки
+  useEffect(() => {
+    console.log('Inventory props:', { userId, currentRoom, user });
+  }, [userId, currentRoom, user]);
+
   useEffect(() => {
     if (!socket || !userId) return;
 

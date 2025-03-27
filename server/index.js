@@ -573,7 +573,7 @@ io.on('connection', (socket) => {
       photoUrl: socket.userData.photoUrl,
       name: user.name,
       isHuman: user.isHuman,
-      inPocket: userData.inPocket // Добавляем поле inPocket
+      inPocket: user.inPocket // Добавляем поле inPocket
     });
 
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));

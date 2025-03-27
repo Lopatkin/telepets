@@ -682,9 +682,11 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
               <StatusCircle isOnline={animal.isOnline} />
               <Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
               <AnimalName theme={theme}>{animal.name}</AnimalName>
-              <TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
-                Забрать домой
-              </TakeHomeButton>
+              {!animal.owner && (
+                <TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
+                  Забрать домой
+                </TakeHomeButton>
+              )}
             </AnimalCard>
           ))}
           {shelterAnimals.length === 0 && (

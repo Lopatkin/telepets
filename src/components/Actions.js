@@ -413,9 +413,34 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [clickCount, setClickCount] = useState(0);
   const [craftingProgress, setCraftingProgress] = useState(0);
   const [activeSubTab, setActiveSubTab] = useState('general'); // Новая вкладка: "Общие" по умолчанию
+  const [petActions, setPetActions] = useState([]); // Список действий для питомцев
 
   const COOLDOWN_DURATION = 10 * 1000;
   const COOLDOWN_KEY = `findStickCooldown_${userId}`;
+
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('petActionAdded', ({ actionName, animalId }) => {
+      setPetActions(prev => [...prev, { name: actionName, animalId }]);
+    });
+
+    return () => {
+      socket.off('petActionAdded');
+    };
+  }, [socket]);
+
+  const handlePetActionClick = (petAction) => {
+    setSelectedAction({
+      id: `pet_${petAction.animalId}`,
+      title: petAction.name,
+      description: `Действие с питомцем ${petAction.name}`,
+      modalTitle: petAction.name,
+      modalDescription: `Вы взаимодействуете с питомцем ${petAction.name}. Пока это просто заглушка.`,
+      buttonText: 'Взаимодействовать'
+    });
+  };
 
   // Восстановление состояния таймера при монтировании компонента
   useEffect(() => {
@@ -599,6 +624,12 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
 
       setNotification({ show: true, message: `Нажмите "СТАРТ" для создания: ${selectedCraftItem}` });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+    } else if (petActions.some(pet => pet.name === selectedAction.title)) {
+      setNotification({ show: true, message: `Вы взаимодействуете с ${selectedAction.title}` });
+      setTimeout(() => {
+        setNotification({ show: false, message: '' });
+        setSelectedAction(null);
+      }, 2000);
     }
   };
 
@@ -868,9 +899,22 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
             </div>
           )
         ) : (
-          <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-            Пока здесь ничего нет
-          </div>
+          petActions.length > 0 ? (
+            petActions.map((petAction) => (
+              <ActionCard
+                key={`pet_${petAction.animalId}`}
+                theme={theme}
+                onClick={() => handlePetActionClick(petAction)}
+              >
+                <ActionTitle theme={theme}>{petAction.name}</ActionTitle>
+                <ActionDescription theme={theme}>Ваш питомец</ActionDescription>
+              </ActionCard>
+            ))
+          ) : (
+            <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+              У вас пока нет питомцев
+            </div>
+          )
         )}
       </ActionGrid>
       {selectedAction && (

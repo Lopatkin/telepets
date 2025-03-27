@@ -1061,19 +1061,14 @@ io.on('connection', (socket) => {
         return;
       }
 
-      const userOwnerKey = `user_${socket.userData.userId}`;
-      const animalItem = new Item({
-        owner: userOwnerKey,
-        name: animalUser.name,
-        description: animalUser.animalType,
-        weight: 0,
-        playerID: animalId
-      });
-      await animalItem.save();
-
+      // Обновляем данные животного: устанавливаем owner и onLeash
       await User.updateOne(
         { userId: animalId },
-        { onLeash: true, owner: socket.userData.userId } // Устанавливаем owner как ID человека
+        {
+          owner: socket.userData.userId,
+          onLeash: true,
+          homeless: false // Предполагаем, что животное больше не бездомное
+        }
       );
 
       const ownerItems = itemCache.get(userOwnerKey) || [];
@@ -1087,18 +1082,27 @@ io.on('connection', (socket) => {
           userId: animalId,
           isRegistered: true,
           isHuman: false,
+          name: updatedAnimal.name,
+          animalType: updatedAnimal.animalType,
           onLeash: true,
-          owner: socket.userData.userId, // Передаём owner животному
-          ownerOnline: true // Владелец только что забрал животное, значит, он онлайн
+          owner: socket.userData.userId,
+          ownerOnline: true
         });
       }
 
+      // Отправляем обновление человеку о новом действии в "Питомцы"
+      socket.emit('petActionAdded', {
+        actionName: updatedAnimal.name,
+        animalId: animalId
+      });
+
+      // Обновляем список животных в приюте
       const shelterAnimals = await User.find({
         lastRoom: 'Приют для животных "Кошкин дом"',
         homeless: true,
         onLeash: false,
         isHuman: false,
-        owner: null // Фильтруем только животных без владельца
+        owner: null
       }).select('userId name photoUrl lastActivity isHuman animalType owner');
 
       const now = new Date();

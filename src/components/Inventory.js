@@ -682,7 +682,10 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
               <StatusCircle isOnline={animal.isOnline} />
               <Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
               <AnimalName theme={theme}>{animal.name}</AnimalName>
-              {!animal.owner && (
+              {/* Кнопка отображается только если: 
+                1. У животного нет владельца (animal.owner === null)
+                2. Текущий пользователь - человек (user.isHuman) */}
+              {!animal.owner && user?.isHuman && currentRoom === 'Приют для животных "Кошкин дом"' && (
                 <TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
                   Забрать домой
                 </TakeHomeButton>

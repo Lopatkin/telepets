@@ -302,17 +302,17 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   };
 
   // Проверка времени для Ловца животных в Районе Дачном (7:00–22:00, нечётные часы)
-  // const isLovecDachnyTime = () => {
-  //   const now = new Date();
-  //   const hours = now.getHours();
-  //   const minutes = now.getMinutes();
-  //   const totalMinutes = hours * 60 + minutes;
-  //   const startMinutes = 7 * 60;   // 7:00
-  //   const endMinutes = 22 * 60;    // 22:00
-  //   return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
-  // };
+  const isLovecDachnyTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const startMinutes = 7 * 60;   // 7:00
+    const endMinutes = 22 * 60;    // 22:00
+    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
+  };
 
-  const isLovecDachnyTime = () => true;
+  // const isLovecDachnyTime = () => true;
 
   useEffect(() => {
     if (room === 'Парк') {
@@ -617,7 +617,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           {users.map((user, index) => (
             <UserItem key={index}>
               {getAvatar(user)}
-              {user.inPocket && !user.isHuman && <PovodokIcon src={povodokIcon} alt="Поводок" />}
+              {user.onLeash && !user.isHuman && <PovodokIcon src={povodokIcon} alt="Поводок" />}
               <UserName theme={theme}>{getUserDisplayName(user)}</UserName>
             </UserItem>
           ))}

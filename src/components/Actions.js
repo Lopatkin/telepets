@@ -2,6 +2,27 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 
+const SubTabs = styled.div`
+  display: flex;
+  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  margin-bottom: 15px;
+`;
+
+const SubTab = styled.button`
+  flex: 1;
+  padding: 8px;
+  background: ${props => props.active ? '#007AFF' : 'transparent'};
+  color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#333')};
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: ${props => props.active ? '#005BBB' : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
+  }
+`;
+
 const ProgressBarContainer = styled.div`
   width: 100%;
   height: 10px;
@@ -376,25 +397,25 @@ const workshopActions = [
   },
 ];
 
-function Actions({ theme, currentRoom, userId, socket, personalItems }) {
+function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [isCooldown, setIsCooldown] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [progress, setProgress] = useState(100);
-  const [selectedCraftItem, setSelectedCraftItem] = useState('Доска'); // По умолчанию "Доска"
-  const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 }); // Значения ползунков
+  const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
+  const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 });
   const [checkboxes, setCheckboxes] = useState({
     prepareMachine: false,
     measureAndMark: false,
     secureMaterials: false,
-  }); // Состояние чекбоксов
+  });
+  const [clickCount, setClickCount] = useState(0);
+  const [craftingProgress, setCraftingProgress] = useState(0);
+  const [activeSubTab, setActiveSubTab] = useState('general'); // Новая вкладка: "Общие" по умолчанию
 
-  const [clickCount, setClickCount] = useState(0); // Счётчик нажатий
-  const [craftingProgress, setCraftingProgress] = useState(0); // Прогресс в процентах
-
-  const COOLDOWN_DURATION = 10 * 1000; // 20 секунд в миллисекундах
-  const COOLDOWN_KEY = `findStickCooldown_${userId}`; // Уникальный ключ для localStorage
+  const COOLDOWN_DURATION = 10 * 1000;
+  const COOLDOWN_KEY = `findStickCooldown_${userId}`;
 
   // Восстановление состояния таймера при монтировании компонента
   useEffect(() => {
@@ -798,32 +819,57 @@ function Actions({ theme, currentRoom, userId, socket, personalItems }) {
 
   return (
     <ActionsContainer theme={theme}>
+      {/* Добавляем подвкладки только для человека */}
+      {user?.isHuman && (
+        <SubTabs>
+          <SubTab
+            active={activeSubTab === 'general'}
+            onClick={() => setActiveSubTab('general')}
+            theme={theme}
+          >
+            Общие
+          </SubTab>
+          <SubTab
+            active={activeSubTab === 'pets'}
+            onClick={() => setActiveSubTab('pets')}
+            theme={theme}
+          >
+            Питомцы
+          </SubTab>
+        </SubTabs>
+      )}
       <ActionGrid>
-        {availableActions.length > 0 ? (
-          availableActions.map((action) => (
-            <ActionCard
-              key={action.id}
-              theme={theme}
-              onClick={() => handleActionClick(action)}
-              disabled={isCooldown && action.title === 'Найти палку'}
-            >
-              <div>
-                <ActionTitle theme={theme}>{action.title}</ActionTitle>
-                <ActionDescription theme={theme}>{action.description}</ActionDescription>
-              </div>
-              {isCooldown && action.title === 'Найти палку' && (
-                <>
-                  <ProgressBar progress={progress} />
-                  <TimerDisplay theme={theme}>
-                    Осталось: {timeLeft} сек
-                  </TimerDisplay>
-                </>
-              )}
-            </ActionCard>
-          ))
+        {activeSubTab === 'general' ? (
+          availableActions.length > 0 ? (
+            availableActions.map((action) => (
+              <ActionCard
+                key={action.id}
+                theme={theme}
+                onClick={() => handleActionClick(action)}
+                disabled={isCooldown && action.title === 'Найти палку'}
+              >
+                <div>
+                  <ActionTitle theme={theme}>{action.title}</ActionTitle>
+                  <ActionDescription theme={theme}>{action.description}</ActionDescription>
+                </div>
+                {isCooldown && action.title === 'Найти палку' && (
+                  <>
+                    <ProgressBar progress={progress} />
+                    <TimerDisplay theme={theme}>
+                      Осталось: {timeLeft} сек
+                    </TimerDisplay>
+                  </>
+                )}
+              </ActionCard>
+            ))
+          ) : (
+            <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+              Действия недоступны в этой комнате
+            </div>
+          )
         ) : (
           <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-            Действия недоступны в этой комнате
+            Пока здесь ничего нет
           </div>
         )}
       </ActionGrid>

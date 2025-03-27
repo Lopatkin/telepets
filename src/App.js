@@ -81,6 +81,7 @@ function App() {
               username: telegramData.user.username || '',
               lastName: telegramData.user.last_name || '',
               photoUrl: telegramData.user.photo_url || '',
+              owner: telegramData.isHuman === false ? null : undefined // Добавляем owner для животных
             };
             // Загружаем последнюю комнату из localStorage, по умолчанию "Полигон утилизации"
             const lastRoom = JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации';
@@ -88,14 +89,22 @@ function App() {
             socketRef.current.emit('auth', { ...initialUserData });
             setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
           } else {
-            const testUser = { userId: 'test123', firstName: 'Test User' };
+            const testUser = {
+              userId: 'test123',
+              firstName: 'Test User',
+              isHuman: false // Предполагаем, что тестовый пользователь — человек
+            };
             const lastRoom = 'Полигон утилизации';
             console.log('Используется дефолтная комната для тестового пользователя:', lastRoom); // Для отладки
             socketRef.current.emit('auth', { ...testUser });
             setTelegramTheme('light');
           }
         } else {
-          const testUser = { userId: 'test123', firstName: 'Test User' };
+          const testUser = {
+            userId: 'test123',
+            firstName: 'Test User',
+            isHuman: false // Предполагаем, что тестовый пользователь — человек
+          };
           const lastRoom = 'Полигон утилизации';
           console.log('Используется дефолтная комната для тестового пользователя:', lastRoom); // Для отладки
           socketRef.current.emit('auth', { ...testUser });
@@ -239,7 +248,7 @@ function App() {
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
   const isAnimalAtHome = user && !user.isHuman && currentRoom && currentRoom.startsWith('myhome_');
-  const isAnimalInPocketWithOwnerOnline = user && !user.isHuman && user.inPocket && user.ownerOnline;
+  const isAnimalOnLeashWithOwnerOnline = user && !user.isHuman && user.onLeash && user.ownerOnline;
 
   return (
     <AppContainer>
@@ -264,6 +273,7 @@ function App() {
             personalItems={personalItems}
             isModalOpen={isActionModalOpen}
             setIsModalOpen={setIsActionModalOpen}
+            user={user} // Добавляем пропс user
           />
         )}
         {activeTab === 'housing' && socket && (
@@ -277,7 +287,7 @@ function App() {
             setIsModalOpen={setIsActionModalOpen}
           />
         )}
-        {activeTab === 'map' && !isAnimalAtHome && !isAnimalInPocketWithOwnerOnline && (
+        {activeTab === 'map' && !isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline && (
           <Map
             userId={user?.userId}
             onRoomSelect={handleRoomSelect}
@@ -303,7 +313,7 @@ function App() {
         user={user}
         currentRoom={currentRoom}
         isAnimalAtHome={isAnimalAtHome}
-        isAnimalInPocketWithOwnerOnline={isAnimalInPocketWithOwnerOnline}
+        isAnimalOnLeashWithOwnerOnline={isAnimalOnLeashWithOwnerOnline}
       />
     </AppContainer>
   );

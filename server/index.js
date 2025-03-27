@@ -34,8 +34,9 @@ const userSchema = new mongoose.Schema({
   credits: { type: Number, default: 0 },
   lastRoom: { type: String, default: 'Полигон утилизации' },
   homeless: { type: Boolean, default: true },
-  inPocket: { type: Boolean, default: false },
-  lastActivity: { type: Date, default: Date.now }
+  onLeash: { type: Boolean, default: false },
+  lastActivity: { type: Date, default: Date.now },
+  owner: { type: String, default: null } // Добавляем поле owner для животных
 });
 const User = mongoose.model('User', userSchema);
 
@@ -101,7 +102,18 @@ const isLovecParkTime = () => {
   return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
 };
 
-const isLovecDachnyTime = () => true;
+// Проверка времени для Ловца животных в Районе Дачном (7:00–22:00, нечётные часы)
+const isLovecDachnyTime = () => {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const totalMinutes = hours * 60 + minutes;
+  const startMinutes = 7 * 60;   // 7:00
+  const endMinutes = 22 * 60;    // 22:00
+  return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
+};
+
+// const isLovecDachnyTime = () => true;
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -122,9 +134,10 @@ io.on('connection', (socket) => {
       const shelterAnimals = await User.find({
         lastRoom: 'Приют для животных "Кошкин дом"',
         homeless: true,
-        inPocket: false,
-        isHuman: false
-      }).select('userId name photoUrl lastActivity isHuman animalType');
+        onLeash: false,
+        isHuman: false,
+        owner: null // Добавляем фильтр: только животные без владельца
+      }).select('userId name photoUrl lastActivity isHuman animalType owner');
 
       const now = new Date();
       const animalsWithStatus = shelterAnimals.map(animal => ({
@@ -132,7 +145,8 @@ io.on('connection', (socket) => {
         name: animal.name,
         photoUrl: animal.photoUrl,
         isOnline: (now - new Date(animal.lastActivity || 0)) < 5 * 60 * 1000,
-        animalType: animal.animalType
+        animalType: animal.animalType,
+        owner: animal.owner
       }));
 
       socket.emit('shelterAnimals', animalsWithStatus);
@@ -158,7 +172,8 @@ io.on('connection', (socket) => {
         username: userData.username || '',
         photoUrl: userData.photoUrl || '',
         isRegistered: false,
-        lastRoom: 'Полигон утилизации'
+        lastRoom: 'Полигон утилизации',
+        owner: userData.owner || null // Добавляем owner из userData, если есть (по умолчанию null)
       });
       await user.save();
       console.log('New user created:', user.userId);
@@ -174,7 +189,8 @@ io.on('connection', (socket) => {
       photoUrl: user.photoUrl,
       name: user.name,
       isHuman: user.isHuman,
-      animalType: user.animalType
+      animalType: user.animalType,
+      owner: user.owner // Добавляем owner в socket.userData
     };
     console.log('Received auth data:', userData);
     console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
@@ -187,14 +203,10 @@ io.on('connection', (socket) => {
 
     activeSockets.set(socket.userData.userId, socket);
 
-    // Проверка владельца для животного с inPocket: true
+    // Проверка владельца для животного с onLeash: true
     let ownerOnline = false;
-    if (user && user.inPocket) {
-      const ownerItem = await Item.findOne({ playerID: user.userId, name: user.name });
-      if (ownerItem) {
-        const ownerId = ownerItem.owner.replace('user_', '');
-        ownerOnline = activeSockets.has(ownerId); // Проверяем, онлайн ли владелец
-      }
+    if (user && user.onLeash && user.owner) {
+      ownerOnline = activeSockets.has(user.owner); // Проверяем, онлайн ли владелец по owner
     }
 
     socket.emit('userUpdate', {
@@ -207,7 +219,8 @@ io.on('connection', (socket) => {
       isHuman: user.isHuman,
       animalType: user.animalType,
       name: user.name,
-      inPocket: user.inPocket,
+      onLeash: user.onLeash,
+      owner: user.owner, // Добавляем owner в userUpdate
       ownerOnline // Добавляем флаг ownerOnline
     });
     console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
@@ -334,7 +347,8 @@ io.on('connection', (socket) => {
       photoUrl: socket.userData.photoUrl,
       name: user.name,
       isHuman: user.isHuman,
-      inPocket: user.inPocket
+      onLeash: user.onLeash,
+      owner: user.owner // Добавляем owner в roomUsers
     });
 
     io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -364,7 +378,8 @@ io.on('connection', (socket) => {
           animalType: data.animalType,
           name: data.name,
           photoUrl: data.photoUrl || socket.userData.photoUrl || '',
-          homeless: data.isHuman ? false : true
+          homeless: data.isHuman ? false : true,
+          owner: data.isHuman ? undefined : data.owner // Сохраняем owner (null для животных)
         },
         { new: true }
       );
@@ -381,6 +396,9 @@ io.on('connection', (socket) => {
       }
       if (!data.isHuman && data.name) {
         socket.userData.name = data.name;
+      }
+      if (!data.isHuman && data.owner !== undefined) {
+        socket.userData.owner = data.owner; // Обновляем owner в socket.userData
       }
 
       const defaultRoom = 'Автобусная остановка';
@@ -402,7 +420,8 @@ io.on('connection', (socket) => {
         photoUrl: user.photoUrl,
         name: user.name,
         isHuman: user.isHuman,
-        inPocket: user.inPocket
+        onLeash: user.onLeash,
+        owner: user.owner // Добавляем owner в roomUsers
       });
 
       io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -426,6 +445,7 @@ io.on('connection', (socket) => {
         isHuman: user.isHuman,
         animalType: user.animalType,
         name: user.name,
+        owner: user.owner // Добавляем owner в userUpdate
       });
       console.log('Sent userUpdate with photoUrl:', user.photoUrl);
 
@@ -470,14 +490,11 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Проверка владельца для животного с inPocket: true
+    // Проверка владельца для животного с onLeash: true
+    // Проверка владельца для животного с onLeash: true
     let ownerOnline = false;
-    if (user && user.inPocket) {
-      const ownerItem = await Item.findOne({ playerID: user.userId, name: user.name });
-      if (ownerItem) {
-        const ownerId = ownerItem.owner.replace('user_', '');
-        ownerOnline = activeSockets.has(ownerId); // Проверяем, онлайн ли владелец
-      }
+    if (user && user.onLeash && user.owner) {
+      ownerOnline = activeSockets.has(user.owner); // Проверяем, онлайн ли владелец по owner
     }
 
     socket.emit('userUpdate', {
@@ -490,7 +507,8 @@ io.on('connection', (socket) => {
       isHuman: user.isHuman,
       animalType: user.animalType,
       name: user.name,
-      inPocket: user.inPocket,
+      onLeash: user.onLeash,
+      owner: user.owner, // Добавляем owner в userUpdate
       ownerOnline // Добавляем флаг ownerOnline
     });
 
@@ -543,7 +561,8 @@ io.on('connection', (socket) => {
               photoUrl: animalUser?.photoUrl || '',
               name: animalUser?.name || '',
               isHuman: false,
-              inPocket: true
+              onLeash: true,
+              owner: socket.userData.userId // Указываем владельца животного
             });
             io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
 
@@ -612,7 +631,8 @@ io.on('connection', (socket) => {
       photoUrl: socket.userData.photoUrl,
       name: user.name,
       isHuman: user.isHuman,
-      inPocket: user.inPocket
+      onLeash: user.onLeash,
+      owner: user.owner // Добавляем owner в roomUsers
     });
 
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
@@ -698,7 +718,7 @@ io.on('connection', (socket) => {
         (message.room === 'Район Дачный' && isLovecDachnyTime())
       );
 
-      if (isAnimal && isCatchableLocation && hasAnimalCatcher && Math.random() < 0.1) {
+      if (isAnimal && isCatchableLocation && hasAnimalCatcher && !user.owner && Math.random() < 0.1) { // Учитываем отсутствие owner
         const newRoom = 'Приют для животных "Кошкин дом"';
         console.log(`Attempting to update lastRoom for user ${socket.userData.userId} to ${newRoom}`);
 
@@ -736,6 +756,7 @@ io.on('connection', (socket) => {
           photoUrl: socket.userData.photoUrl,
           name: user.name,
           isHuman: user.isHuman,
+          owner: user.owner // Добавляем owner
         });
         io.to(newRoom).emit('roomUsers', Array.from(roomUsers[newRoom]));
 
@@ -1029,7 +1050,7 @@ io.on('connection', (socket) => {
       }
 
       const animalUser = await User.findOne({ userId: animalId });
-      if (!animalUser || animalUser.isHuman || !animalUser.homeless || animalUser.inPocket) {
+      if (!animalUser || animalUser.isHuman || !animalUser.homeless || animalUser.onLeash) {
         socket.emit('error', { message: 'Животное не найдено или уже забрано' });
         return;
       }
@@ -1052,7 +1073,7 @@ io.on('connection', (socket) => {
 
       await User.updateOne(
         { userId: animalId },
-        { inPocket: true }
+        { onLeash: true, owner: socket.userData.userId } // Устанавливаем owner как ID человека
       );
 
       const ownerItems = itemCache.get(userOwnerKey) || [];
@@ -1066,7 +1087,8 @@ io.on('connection', (socket) => {
           userId: animalId,
           isRegistered: true,
           isHuman: false,
-          inPocket: true,
+          onLeash: true,
+          owner: socket.userData.userId, // Передаём owner животному
           ownerOnline: true // Владелец только что забрал животное, значит, он онлайн
         });
       }
@@ -1074,9 +1096,10 @@ io.on('connection', (socket) => {
       const shelterAnimals = await User.find({
         lastRoom: 'Приют для животных "Кошкин дом"',
         homeless: true,
-        inPocket: false,
-        isHuman: false
-      }).select('userId name photoUrl lastActivity isHuman animalType');
+        onLeash: false,
+        isHuman: false,
+        owner: null // Фильтруем только животных без владельца
+      }).select('userId name photoUrl lastActivity isHuman animalType owner');
 
       const now = new Date();
       const animalsWithStatus = shelterAnimals.map(animal => ({
@@ -1084,7 +1107,8 @@ io.on('connection', (socket) => {
         name: animal.name,
         photoUrl: animal.photoUrl,
         isOnline: (now - new Date(animal.lastActivity || 0)) < 5 * 60 * 1000,
-        animalType: animal.animalType
+        animalType: animal.animalType,
+        owner: animal.owner
       }));
 
       io.to('Приют для животных "Кошкин дом"').emit('shelterAnimals', animalsWithStatus);
@@ -1219,7 +1243,8 @@ io.on('connection', (socket) => {
                     isHuman: animalUser.isHuman,
                     animalType: animalUser.animalType,
                     name: animalUser.name,
-                    inPocket: animalUser.inPocket,
+                    onLeash: animalUser.onLeash,
+                    owner: animalUser.owner, // Добавляем owner
                     ownerOnline: false // Владелец вышел из сети
                   });
                 }

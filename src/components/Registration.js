@@ -183,21 +183,22 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   const handleComplete = () => {
     const registrationData = isHuman
       ? {
-          userId: user.userId,
-          isHuman: true,
-          formerProfession: getRandomProfession(),
-          residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
-          isRegistered: true,
-        }
+        userId: user.userId,
+        isHuman: true,
+        formerProfession: getRandomProfession(),
+        residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
+        isRegistered: true,
+      }
       : {
-          userId: user.userId,
-          isHuman: false,
-          animalType,
-          name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
-          residence: 'Город Туманный',
-          isRegistered: true,
-          photoUrl: selectedAvatar, // Добавляем выбранную аватарку для животного
-        };
+        userId: user.userId,
+        isHuman: false,
+        animalType,
+        name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
+        residence: 'Город Туманный',
+        isRegistered: true,
+        photoUrl: selectedAvatar, // Добавляем выбранную аватарку для животного
+        owner: null // Добавляем поле owner для животных
+      };
 
     socket.emit('completeRegistration', registrationData, (response) => {
       if (response.success) {
@@ -353,7 +354,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
             </div>
           </>
         )}
-        
+
       </ContentWrapper>
     </RegistrationContainer>
   );

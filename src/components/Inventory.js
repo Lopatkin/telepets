@@ -389,7 +389,7 @@ const QuantityText = styled.p`
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
 `;
 
-function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
+function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
   const [activeTab, setActiveTab] = useState('personal'); // Переименовал activeSubTab в activeTab для ясности
   const [activeLocationSubTab, setActiveLocationSubTab] = useState('items'); // Новая переменная для подвкладок "Локация"
   const [personalItems, setPersonalItems] = useState([]);
@@ -683,9 +683,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate }) {
               <Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
               <AnimalName theme={theme}>{animal.name}</AnimalName>
               {/* Кнопка отображается только если: 
-                1. У животного нет владельца (animal.owner === null)
-                2. Текущий пользователь - человек (user.isHuman) */}
-              {!animal.owner && user?.isHuman && currentRoom === 'Приют для животных "Кошкин дом"' && (
+          1. У животного нет владельца (animal.owner === null)
+          2. Текущий пользователь - человек (user.isHuman) */}
+              {!animal.owner && user?.isHuman && (
                 <TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
                   Забрать домой
                 </TakeHomeButton>

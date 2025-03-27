@@ -1099,10 +1099,18 @@ io.on('connection', (socket) => {
 
       io.to('Приют для животных "Кошкин дом"').emit('shelterAnimals', animalsWithStatus);
 
-      // Уведомляем владельца об успешном действии
+      // Отправляем полные данные о питомце
       socket.emit('takeAnimalHomeSuccess', {
         animalId,
-        owner: socket.userData.userId
+        owner: socket.userData.userId,
+        animal: {
+          userId: updatedAnimal.userId,
+          name: updatedAnimal.name,
+          animalType: updatedAnimal.animalType,
+          photoUrl: updatedAnimal.photoUrl,
+          onLeash: updatedAnimal.onLeash,
+          owner: updatedAnimal.owner
+        }
       });
 
       // Уведомляем животное, если оно онлайн

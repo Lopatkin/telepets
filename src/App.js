@@ -41,6 +41,7 @@ function App() {
   const [socket, setSocket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [personalItems, setPersonalItems] = useState([]);
+  const [pets, setPets] = useState([]); // Новое состояние для питомцев
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
@@ -110,6 +111,39 @@ function App() {
           socketRef.current.emit('auth', { ...testUser });
           setTelegramTheme('light');
         }
+
+        // Загрузка начального списка питомцев при подключении
+        socketRef.current.on('userUpdate', (updatedUser) => {
+          console.log('Received userUpdate from server:', updatedUser);
+          setUser(prevUser => {
+            const newUser = { ...prevUser, ...updatedUser };
+            console.log('Updated user state after userUpdate:', newUser);
+            return newUser;
+          });
+          if (updatedUser.isRegistered !== undefined) {
+            setIsRegistered(updatedUser.isRegistered);
+          }
+          // Загружаем питомцев для человека
+          if (updatedUser.isHuman) {
+            User.find({ owner: updatedUser.userId, isHuman: false })
+              .then(petsFromDB => setPets(petsFromDB.map(pet => ({
+                userId: pet.userId,
+                name: pet.name,
+                animalType: pet.animalType,
+                photoUrl: pet.photoUrl,
+                onLeash: pet.onLeash,
+                owner: pet.owner
+              }))))
+              .catch(err => console.error('Error fetching pets:', err));
+          }
+        });
+
+        // Обработка добавления нового питомца
+        socketRef.current.on('takeAnimalHomeSuccess', ({ animalId, owner, animal }) => {
+          if (owner === user?.userId) {
+            setPets(prevPets => [...prevPets, animal]);
+          }
+        });
       });
 
       socketRef.current.on('disconnect', (reason) => {
@@ -271,6 +305,7 @@ function App() {
             userId={user?.userId}
             socket={socket}
             personalItems={personalItems}
+            pets={pets} // Передаём питомцев
             isModalOpen={isActionModalOpen}
             setIsModalOpen={setIsActionModalOpen}
             user={user} // Добавляем пропс user

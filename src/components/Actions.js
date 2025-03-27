@@ -32,11 +32,11 @@ const ProgressBarContainer = styled.div`
 `;
 
 const Progress = styled.div`
-  width: ${props => props.progress}%; // Теперь ширина зависит от пропса progress
+  width: ${props => props.progress}%;
   height: 100%;
   background: #007AFF;
   border-radius: 5px;
-  transition: width 0.3s ease; // Плавная анимация
+  transition: width 0.3s ease;
 `;
 
 const StartButton = styled.button`
@@ -124,7 +124,6 @@ const SliderValue = styled.span`
   margin-left: 10px;
 `;
 
-// Добавляем новый стиль для выпадающего списка
 const Select = styled.select`
   width: 100%;
   padding: 8px;
@@ -136,7 +135,6 @@ const Select = styled.select`
   font-size: 14px;
 `;
 
-// Добавляем стиль для текста с материалами
 const MaterialsText = styled.p`
   font-size: 14px;
   margin: 0 0 20px 0;
@@ -260,7 +258,7 @@ const ProgressBar = styled.div`
   height: 100%;
   background: rgba(255, 255, 255, 0.3);
   width: ${props => props.progress}%;
-  transition: width 1s linear; /* Обновляем каждую секунду */
+  transition: width 1s linear;
   z-index: 1;
 `;
 
@@ -283,7 +281,7 @@ const TimerDisplay = styled.div`
   color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
   margin-top: 10px;
   text-align: center;
-  white-space: nowrap; /* Запрещаем перенос текста */
+  white-space: nowrap;
   z-index: 2;
 `;
 
@@ -397,7 +395,7 @@ const workshopActions = [
   },
 ];
 
-function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
+function Actions({ theme, currentRoom, userId, socket, personalItems, pets, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [isCooldown, setIsCooldown] = useState(false);
@@ -412,33 +410,20 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   });
   const [clickCount, setClickCount] = useState(0);
   const [craftingProgress, setCraftingProgress] = useState(0);
-  const [activeSubTab, setActiveSubTab] = useState('general'); // Новая вкладка: "Общие" по умолчанию
-  const [petActions, setPetActions] = useState([]); // Список действий для питомцев
+  const [activeSubTab, setActiveSubTab] = useState('general');
 
   const COOLDOWN_DURATION = 10 * 1000;
   const COOLDOWN_KEY = `findStickCooldown_${userId}`;
 
-
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.on('petActionAdded', ({ actionName, animalId }) => {
-      setPetActions(prev => [...prev, { name: actionName, animalId }]);
-    });
-
-    return () => {
-      socket.off('petActionAdded');
-    };
-  }, [socket]);
-
-  const handlePetActionClick = (petAction) => {
+  // Обработчик клика по действию питомца
+  const handlePetActionClick = (pet) => {
     setSelectedAction({
-      id: `pet_${petAction.animalId}`,
-      title: petAction.name,
-      description: `Действие с питомцем ${petAction.name}`,
-      modalTitle: petAction.name,
-      modalDescription: `Вы взаимодействуете с питомцем ${petAction.name}. Пока это просто заглушка.`,
-      buttonText: 'Взаимодействовать'
+      id: `pet_${pet.userId}`,
+      title: pet.name,
+      description: `Действие с питомцем ${pet.name}`,
+      modalTitle: pet.name,
+      modalDescription: `Вы взаимодействуете с питомцем ${pet.name}. Пока это просто заглушка.`,
+      buttonText: 'Взаимодействовать',
     });
   };
 
@@ -493,19 +478,18 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       return;
     }
     setSelectedAction(action);
-    // Сбрасываем выбор предмета при открытии модального окна
     if (action.title === 'Столярная мастерская') {
       setSelectedCraftItem(action.craftableItems[0].name);
       setSliderValues({ sticks: 0, boards: 0 });
-      setCheckboxes({ prepareMachine: false, measureAndMark: false, secureMaterials: false }); // Сбрасываем чекбоксы
-      setClickCount(0); // Сбрасываем счётчик нажатий
-      setCraftingProgress(0); // Сбрасываем прогресс
+      setCheckboxes({ prepareMachine: false, measureAndMark: false, secureMaterials: false });
+      setClickCount(0);
+      setCraftingProgress(0);
     }
   };
 
   const handleCloseModal = () => {
     setSelectedAction(null);
-    setClickCount(0); // Сбрасываем при закрытии
+    setClickCount(0);
     setCraftingProgress(0);
   };
 
@@ -513,7 +497,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     setSelectedCraftItem(e.target.value);
     setSliderValues({ sticks: 0, boards: 0 });
     setCheckboxes({ prepareMachine: false, measureAndMark: false, secureMaterials: false });
-    setClickCount(0); // Сбрасываем при смене предмета
+    setClickCount(0);
     setCraftingProgress(0);
   };
 
@@ -525,7 +509,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     setCheckboxes(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Проверка наличия материалов в инвентаре
   const hasEnoughMaterials = () => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return false;
     const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
@@ -538,7 +521,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     return stickCount >= requiredSticks && boardCount >= requiredBoards;
   };
 
-  // Проверка всех условий для активации кнопки "СТАРТ"
   const canStartCrafting = () => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return false;
     const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
@@ -571,7 +553,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       };
       socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
         if (response && response.success) {
-          setSelectedAction(null); // Добавляем закрытие модального окна
+          setSelectedAction(null);
           setNotification({ show: true, message: 'Вы нашли палку!' });
           setTimeout(() => {
             setNotification({ show: false, message: '' });
@@ -581,7 +563,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
           setProgress(100);
           localStorage.setItem(COOLDOWN_KEY, JSON.stringify({ startTime: Date.now() }));
         } else {
-          setSelectedAction(null); // Добавляем закрытие модального окна
+          setSelectedAction(null);
           setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         }
@@ -589,12 +571,12 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     } else if (selectedAction.title === 'Утилизировать мусор') {
       socket.emit('utilizeTrash', (response) => {
         if (response && response.success) {
-          setSelectedAction(null); // Добавляем закрытие модального окна
-          setNotification({ show: true, message: response.message }); // Используем сообщение от сервера
+          setSelectedAction(null);
+          setNotification({ show: true, message: response.message });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-          socket.emit('getItems', { owner: `user_${userId}` }); // Обновляем список предметов
+          socket.emit('getItems', { owner: `user_${userId}` });
         } else {
-          setSelectedAction(null); // Добавляем закрытие модального окна
+          setSelectedAction(null);
           setNotification({ show: true, message: response?.message || 'Ошибка при утилизации' });
           setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         }
@@ -624,7 +606,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
 
       setNotification({ show: true, message: `Нажмите "СТАРТ" для создания: ${selectedCraftItem}` });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-    } else if (petActions.some(pet => pet.name === selectedAction.title)) {
+    } else if (pets.some(pet => pet.name === selectedAction.title)) {
       setNotification({ show: true, message: `Вы взаимодействуете с ${selectedAction.title}` });
       setTimeout(() => {
         setNotification({ show: false, message: '' });
@@ -654,7 +636,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       return;
     }
 
-    // Когда достигнуто нужное количество нажатий
     const craftedItem = {
       name: selectedCraftItem,
       description: getItemDescription(selectedCraftItem),
@@ -664,7 +645,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       effect: getItemEffect(selectedCraftItem),
     };
 
-    // Удаляем использованные материалы
     const requiredSticks = item.materials.sticks;
     const requiredBoards = item.materials.boards;
 
@@ -683,12 +663,10 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       });
     }
 
-    // Мгновенно закрываем модальное окно перед отправкой запроса
     setSelectedAction(null);
     setClickCount(0);
     setCraftingProgress(0);
 
-    // Добавляем созданный предмет с правильной структурой
     socket.emit('addItem', { owner: 'Мастерская', item: craftedItem }, (response) => {
       if (response && response.success) {
         setNotification({ show: true, message: `Вы успешно создали: ${selectedCraftItem}!` });
@@ -705,7 +683,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     });
   };
 
-  // Функции для получения данных о предметах
   const getItemDescription = (name) => {
     switch (name) {
       case 'Доска': return 'Материал для изготовления';
@@ -750,7 +727,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     }
   };
 
-
   let availableActions = [];
   if (currentRoom && currentRoom.startsWith(`myhome_${userId}`)) {
     availableActions = homeActions;
@@ -760,11 +736,10 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     availableActions = forestActions;
   } else if (currentRoom === 'Полигон утилизации') {
     availableActions = disposalActions;
-  } else if (currentRoom === 'Мастерская') { // Добавляем "Мастерскую"
+  } else if (currentRoom === 'Мастерская') {
     availableActions = workshopActions;
   }
 
-  // Функция для отображения необходимых материалов
   const getMaterialsText = () => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return '';
     const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
@@ -818,7 +793,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     return sliders;
   };
 
-  // Функция для рендера чекбоксов
   const renderCheckboxes = () => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return null;
     return (
@@ -850,7 +824,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
 
   return (
     <ActionsContainer theme={theme}>
-      {/* Добавляем подвкладки только для человека */}
       {user?.isHuman && (
         <SubTabs>
           <SubTab
@@ -899,15 +872,15 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
             </div>
           )
         ) : (
-          petActions.length > 0 ? (
-            petActions.map((petAction) => (
+          pets.length > 0 ? (
+            pets.map((pet) => (
               <ActionCard
-                key={`pet_${petAction.animalId}`}
+                key={`pet_${pet.userId}`}
                 theme={theme}
-                onClick={() => handlePetActionClick(petAction)}
+                onClick={() => handlePetActionClick(pet)}
               >
-                <ActionTitle theme={theme}>{petAction.name}</ActionTitle>
-                <ActionDescription theme={theme}>Ваш питомец</ActionDescription>
+                <ActionTitle theme={theme}>{pet.name}</ActionTitle>
+                <ActionDescription theme={theme}>{pet.animalType}</ActionDescription>
               </ActionCard>
             ))
           ) : (

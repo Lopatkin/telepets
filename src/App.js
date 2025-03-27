@@ -112,7 +112,6 @@ function App() {
           setTelegramTheme('light');
         }
 
-        // Загрузка начального списка питомцев при подключении
         socketRef.current.on('userUpdate', (updatedUser) => {
           console.log('Received userUpdate from server:', updatedUser);
           setUser(prevUser => {
@@ -123,18 +122,9 @@ function App() {
           if (updatedUser.isRegistered !== undefined) {
             setIsRegistered(updatedUser.isRegistered);
           }
-          // Загружаем питомцев для человека
+          // Запрашиваем питомцев для человека
           if (updatedUser.isHuman) {
-            User.find({ owner: updatedUser.userId, isHuman: false })
-              .then(petsFromDB => setPets(petsFromDB.map(pet => ({
-                userId: pet.userId,
-                name: pet.name,
-                animalType: pet.animalType,
-                photoUrl: pet.photoUrl,
-                onLeash: pet.onLeash,
-                owner: pet.owner
-              }))))
-              .catch(err => console.error('Error fetching pets:', err));
+            socketRef.current.emit('getPets', { userId: updatedUser.userId });
           }
         });
 
@@ -144,6 +134,20 @@ function App() {
             setPets(prevPets => [...prevPets, animal]);
           }
         });
+
+        // Новый обработчик для получения списка питомцев
+        socketRef.current.on('petsList', (petsData) => {
+          setPets(petsData.map(pet => ({
+            userId: pet.userId,
+            name: pet.name,
+            animalType: pet.animalType,
+            photoUrl: pet.photoUrl,
+            onLeash: pet.onLeash,
+            owner: pet.owner
+          })));
+        });
+
+
       });
 
       socketRef.current.on('disconnect', (reason) => {
@@ -205,7 +209,7 @@ function App() {
 
     initializeSocket();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);

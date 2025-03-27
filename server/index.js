@@ -118,6 +118,16 @@ const isLovecDachnyTime = () => {
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
+  socket.on('getPets', async ({ userId }) => {
+    try {
+      const pets = await User.find({ owner: userId, isHuman: false }).select('userId name animalType photoUrl onLeash owner');
+      socket.emit('petsList', pets);
+    } catch (err) {
+      console.error('Error fetching pets:', err);
+      socket.emit('error', { message: 'Ошибка при загрузке питомцев' });
+    }
+  });
+
   socket.on('getShelterAnimals', async () => {
     if (!socket.userData || !socket.userData.userId) {
       socket.emit('error', { message: 'Пользователь не аутентифицирован' });

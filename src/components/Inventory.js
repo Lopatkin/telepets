@@ -390,11 +390,11 @@ const QuantityText = styled.p`
 `;
 
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
-  const [activeTab, setActiveTab] = useState('personal'); // Переименовал activeSubTab в activeTab для ясности
-  const [activeLocationSubTab, setActiveLocationSubTab] = useState('items'); // Новая переменная для подвкладок "Локация"
+  const [activeTab, setActiveTab] = useState('personal');
+  const [activeLocationSubTab, setActiveLocationSubTab] = useState('items');
   const [personalItems, setPersonalItems] = useState([]);
   const [locationItems, setLocationItems] = useState([]);
-  const [shelterAnimals, setShelterAnimals] = useState([]); // Новое состояние для животных
+  const [shelterAnimals, setShelterAnimals] = useState([]);
   const [personalLimit, setPersonalLimit] = useState(null);
   const [locationLimit, setLocationLimit] = useState(null);
   const [error, setError] = useState(null);
@@ -406,9 +406,8 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   const [actionQuantity, setActionQuantity] = useState({ itemName: null, weight: null, count: 1, action: null });
 
   const userOwnerKey = `user_${userId}`;
-  // const locationOwnerKey = currentRoom && currentRoom.startsWith('myhome_') ? `myhome_${userId}` : currentRoom;
   const locationOwnerKey = currentRoom;
-  const isShelter = currentRoom === 'Приют для животных "Кошкин дом"'; // Проверка на приют
+  const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
 
   const groupItemsByNameAndWeight = (items) => {
     const grouped = items.reduce((acc, item) => {
@@ -464,7 +463,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     }
   }, [locationOwnerKey]);
 
-  // Добавляем обработчик для получения животных
   const handleShelterAnimals = useCallback((animals) => {
     setShelterAnimals(animals);
   }, []);
@@ -499,7 +497,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     };
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals]);
 
-  // Функция для кнопки "Забрать домой" (пока заглушка)
   const handleTakeHome = (animalId) => {
     if (!socket || !userId) {
       console.error('Socket or userId not available');
@@ -660,7 +657,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         </SubTabs>
       )}
       {error && (
-        <div style={{ color: 'red', textAlign: 'center', marginBottom: '10px' }}>
+        <div style={{ textAlign: 'center', color: 'red', marginBottom: '10px' }}>
           {error}
         </div>
       )}
@@ -674,7 +671,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
           Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
         </WeightLimit>
       )}
-      {/* Разделяем отображение животных и предметов */}
       {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (
         <AnimalList>
           {shelterAnimals.map(animal => (
@@ -682,9 +678,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
               <StatusCircle isOnline={animal.isOnline} />
               <Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
               <AnimalName theme={theme}>{animal.name}</AnimalName>
-              {/* Кнопка отображается только если: 
-          1. У животного нет владельца (animal.owner === null)
-          2. Текущий пользователь - человек (user.isHuman) */}
               {!animal.owner && user?.isHuman && (
                 <TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
                   Забрать домой

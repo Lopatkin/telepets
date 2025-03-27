@@ -311,6 +311,7 @@ io.on('connection', (socket) => {
       photoUrl: socket.userData.photoUrl,
       name: user.name,
       isHuman: user.isHuman,
+      inPocket: user.inPocket // Добавляем inPocket
     });
 
     io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -378,6 +379,7 @@ io.on('connection', (socket) => {
         photoUrl: user.photoUrl,
         name: user.name,
         isHuman: user.isHuman,
+        inPocket: user.inPocket // Добавляем inPocket
       });
 
       io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -500,6 +502,7 @@ io.on('connection', (socket) => {
               photoUrl: animalUser?.photoUrl || '',
               name: animalUser?.name || '',
               isHuman: false,
+              inPocket: true // Устанавливаем inPocket: true для животного
             });
             io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
 
@@ -570,6 +573,7 @@ io.on('connection', (socket) => {
       photoUrl: socket.userData.photoUrl,
       name: user.name,
       isHuman: user.isHuman,
+      inPocket: userData.inPocket // Добавляем поле inPocket
     });
 
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));

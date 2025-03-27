@@ -30,6 +30,7 @@ import volonterKatyaImage from '../images/volonter_Katya.jpg';
 import volonterZhannaImage from '../images/volonter_Zhanna.jpg';
 import lovec1Image from '../images/lovec_1.jpg'; // Добавляем аватарки ловцов
 import lovec2Image from '../images/lovec_2.jpg';
+import povodokIcon from '../images/povodok.png'; // Импорт иконки
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -235,6 +236,13 @@ const UserItem = styled.div`
 const UserName = styled.span`
   font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
+  margin-right: 5px; // Добавляем отступ перед иконкой
+`;
+
+const PovodokIcon = styled.img`
+  width: 16px;
+  height: 16px;
+  margin-left: 5px;
 `;
 
 function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
@@ -610,6 +618,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
             <UserItem key={index}>
               {getAvatar(user)}
               <UserName theme={theme}>{getUserDisplayName(user)}</UserName>
+              {user.inPocket && !user.isHuman && <PovodokIcon src={povodokIcon} alt="Поводок" />}
             </UserItem>
           ))}
         </UserListModal>

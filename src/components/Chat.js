@@ -236,7 +236,7 @@ const UserItem = styled.div`
 const UserName = styled.span`
   font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
-  margin-right: 5px; // Добавляем отступ перед иконкой
+  margin-left: 5px; // Добавляем отступ перед иконкой
 `;
 
 const PovodokIcon = styled.img`

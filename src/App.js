@@ -285,6 +285,7 @@ function App() {
             onItemsUpdate={handleItemsUpdate}
             closeActionModal={closeActionModal}
             setIsModalOpen={setIsActionModalOpen}
+            user={user} // Добавляем user
           />
         )}
         {activeTab === 'map' && !isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline && (

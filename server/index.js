@@ -1203,14 +1203,26 @@ io.on('connection', (socket) => {
         const ownerKey = `user_${socket.userData.userId}`;
         Item.find({ owner: ownerKey, playerID: { $exists: true } })
           .then(animalItems => {
-            animalItems.forEach(item => {
+            animalItems.forEach(async (item) => {
               const animalSocket = activeSockets.get(item.playerID);
               if (animalSocket) {
-                animalSocket.emit('userUpdate', {
-                  userId: item.playerID,
-                  inPocket: true,
-                  ownerOnline: false // Владелец вышел из сети
-                });
+                // Получаем полные данные животного из базы
+                const animalUser = await User.findOne({ userId: item.playerID });
+                if (animalUser) {
+                  animalSocket.emit('userUpdate', {
+                    userId: animalUser.userId,
+                    firstName: animalUser.firstName,
+                    username: animalUser.username,
+                    lastName: animalUser.lastName,
+                    photoUrl: animalUser.photoUrl,
+                    isRegistered: animalUser.isRegistered,
+                    isHuman: animalUser.isHuman,
+                    animalType: animalUser.animalType,
+                    name: animalUser.name,
+                    inPocket: animalUser.inPocket,
+                    ownerOnline: false // Владелец вышел из сети
+                  });
+                }
               }
             });
           })

@@ -127,11 +127,18 @@ function App() {
       socketRef.current.on('userUpdate', (updatedUser) => {
         console.log('Received userUpdate from server:', updatedUser);
         setUser(prevUser => {
+          if (!prevUser) {
+            // Если user ещё не инициализирован, используем полный объект
+            return updatedUser;
+          }
+          // Обновляем только те поля, которые пришли в updatedUser
           const newUser = { ...prevUser, ...updatedUser };
           console.log('Updated user state after userUpdate:', newUser);
           return newUser;
         });
-        setIsRegistered(updatedUser.isRegistered);
+        if (updatedUser.isRegistered !== undefined) {
+          setIsRegistered(updatedUser.isRegistered);
+        }
       });
 
       socketRef.current.on('forceRoomChange', ({ newRoom }) => {
@@ -240,7 +247,7 @@ function App() {
       <Content>
         {activeTab === 'chat' && (
           <Chat
-            userId={user.userId}
+            userId={user?.userId}
             room={currentRoom}
             theme={appliedTheme}
             socket={socket}
@@ -252,7 +259,7 @@ function App() {
           <Actions
             theme={appliedTheme}
             currentRoom={currentRoom}
-            userId={user.userId}
+            userId={user?.userId}
             socket={socket}
             personalItems={personalItems}
             isModalOpen={isActionModalOpen}
@@ -261,7 +268,7 @@ function App() {
         )}
         {activeTab === 'housing' && socket && (
           <Inventory
-            userId={user.userId}
+            userId={user?.userId}
             currentRoom={currentRoom}
             theme={appliedTheme}
             socket={socket}
@@ -270,16 +277,14 @@ function App() {
             setIsModalOpen={setIsActionModalOpen}
           />
         )}
-
         {activeTab === 'map' && !isAnimalAtHome && !isAnimalInPocketWithOwnerOnline && (
           <Map
-            userId={user.userId}
+            userId={user?.userId}
             onRoomSelect={handleRoomSelect}
             theme={appliedTheme}
             currentRoom={currentRoom}
           />
         )}
-
         {activeTab === 'profile' && (
           <Profile
             user={user}
@@ -291,17 +296,15 @@ function App() {
           />
         )}
       </Content>
-
       <Footer
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         theme={appliedTheme}
         user={user}
         currentRoom={currentRoom}
-        isAnimalAtHome={isAnimalAtHome} // Передаём флаг в Footer
-        isAnimalInPocketWithOwnerOnline={isAnimalInPocketWithOwnerOnline} // Передаём новое условие
+        isAnimalAtHome={isAnimalAtHome}
+        isAnimalInPocketWithOwnerOnline={isAnimalInPocketWithOwnerOnline}
       />
-
     </AppContainer>
   );
 }

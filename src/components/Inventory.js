@@ -38,8 +38,8 @@ const AnimalCard = styled.div`
   border-radius: 8px;
   padding: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 100%; /* Растягиваем на всю ширину контейнера */
-  box-sizing: border-box; /* Учитываем padding в общей ширине */
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 const StatusCircle = styled.div`
@@ -170,16 +170,18 @@ const fillProgress = keyframes`
 
 const InventoryContainer = styled.div`
   height: 100%;
-  padding: 5px;
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#f5f5f5'};
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0; /* Убираем отступы сверху */
+  box-sizing: border-box;
 `;
 
 const Tabs = styled.div`
   display: flex;
   border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  margin-bottom: 20px;
+  margin-bottom: 10px; /* Как в Map.js */
 `;
 
 const Tab = styled.button`
@@ -195,6 +197,12 @@ const Tab = styled.button`
   &:hover {
     background: ${props => props.active ? '#005BBB' : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
   }
+`;
+
+const ContentContainer = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 5px; /* Отступы для контента, а не вкладок */
 `;
 
 const ItemList = styled.div`
@@ -643,165 +651,167 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
           Локация
         </Tab>
       </Tabs>
-      {activeTab === 'location' && isShelter && (
-        <SubTabs>
-          <SubTab
-            active={activeLocationSubTab === 'items'}
-            onClick={() => setActiveLocationSubTab('items')}
-            theme={theme}
-          >
-            Предметы
-          </SubTab>
-          <SubTab
-            active={activeLocationSubTab === 'animals'}
-            onClick={() => setActiveLocationSubTab('animals')}
-            theme={theme}
-          >
-            Животные
-          </SubTab>
-        </SubTabs>
-      )}
-      {error && (
-        <div style={{ textAlign: 'center', color: 'red', marginBottom: '10px' }}>
-          {error}
-        </div>
-      )}
-      {activeTab === 'personal' && personalLimit && (
-        <WeightLimit theme={theme}>
-          Вес: {personalLimit.currentWeight} кг / {personalLimit.maxWeight} кг
-        </WeightLimit>
-      )}
-      {activeTab === 'location' && locationLimit && (
-        <WeightLimit theme={theme}>
-          Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
-        </WeightLimit>
-      )}
-      {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (
-        <AnimalList>
-          {shelterAnimals.map(animal => (
-            <AnimalCard key={animal.userId} theme={theme}>
-              <StatusCircle isOnline={animal.isOnline} />
-              <Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
-              <AnimalName theme={theme}>{animal.name}</AnimalName>
-              {!animal.owner && user?.isHuman && (
-                <TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
-                  Забрать домой
-                </TakeHomeButton>
-              )}
-            </AnimalCard>
-          ))}
-          {shelterAnimals.length === 0 && (
-            <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-              В приюте нет животных
-            </div>
-          )}
-        </AnimalList>
-      ) : (
-        <ItemList subTab={activeTab}>
-          {activeTab === 'personal' && groupItemsByNameAndWeight(personalItems).map(({ item, count }) => (
-            <ItemCard
-              key={item._id}
+      <ContentContainer>
+        {activeTab === 'location' && isShelter && (
+          <SubTabs>
+            <SubTab
+              active={activeLocationSubTab === 'items'}
+              onClick={() => setActiveLocationSubTab('items')}
               theme={theme}
-              isAnimating={
-                animatingItem && (
-                  (animatingItem.itemId === `${item.name}_${item.weight}_move`) ||
-                  (animatingItem.itemId === `${item.name}_${item.weight}_delete`)
-                ) ? animatingItem.action : null
-              }
             >
-              <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
-              {item.description === 'Кошка' || item.description === 'Собака' ? (
-                <ItemDetail theme={theme}>{item.description}</ItemDetail>
-              ) : (
-                <>
-                  <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
-                  <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
-                  <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
-                  <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
-                  <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
-                </>
-              )}
-              <ActionButtons>
-                {locationOwnerKey && (
-                  <MoveButton
-                    onClick={() => handleMoveItem(item.name, item.weight, count)}
+              Предметы
+            </SubTab>
+            <SubTab
+              active={activeLocationSubTab === 'animals'}
+              onClick={() => setActiveLocationSubTab('animals')}
+              theme={theme}
+            >
+              Животные
+            </SubTab>
+          </SubTabs>
+        )}
+        {error && (
+          <div style={{ textAlign: 'center', color: 'red', marginBottom: '10px' }}>
+            {error}
+          </div>
+        )}
+        {activeTab === 'personal' && personalLimit && (
+          <WeightLimit theme={theme}>
+            Вес: {personalLimit.currentWeight} кг / {personalLimit.maxWeight} кг
+          </WeightLimit>
+        )}
+        {activeTab === 'location' && locationLimit && (
+          <WeightLimit theme={theme}>
+            Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
+          </WeightLimit>
+        )}
+        {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (
+          <AnimalList>
+            {shelterAnimals.map(animal => (
+              <AnimalCard key={animal.userId} theme={theme}>
+                <StatusCircle isOnline={animal.isOnline} />
+                <Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
+                <AnimalName theme={theme}>{animal.name}</AnimalName>
+                {!animal.owner && user?.isHuman && (
+                  <TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
+                    Забрать домой
+                  </TakeHomeButton>
+                )}
+              </AnimalCard>
+            ))}
+            {shelterAnimals.length === 0 && (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                В приюте нет животных
+              </div>
+            )}
+          </AnimalList>
+        ) : (
+          <ItemList subTab={activeTab}>
+            {activeTab === 'personal' && groupItemsByNameAndWeight(personalItems).map(({ item, count }) => (
+              <ItemCard
+                key={item._id}
+                theme={theme}
+                isAnimating={
+                  animatingItem && (
+                    (animatingItem.itemId === `${item.name}_${item.weight}_move`) ||
+                    (animatingItem.itemId === `${item.name}_${item.weight}_delete`)
+                  ) ? animatingItem.action : null
+                }
+              >
+                <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
+                {item.description === 'Кошка' || item.description === 'Собака' ? (
+                  <ItemDetail theme={theme}>{item.description}</ItemDetail>
+                ) : (
+                  <>
+                    <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
+                    <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
+                    <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
+                    <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
+                    <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
+                  </>
+                )}
+                <ActionButtons>
+                  {locationOwnerKey && (
+                    <MoveButton
+                      onClick={() => handleMoveItem(item.name, item.weight, count)}
+                      disabled={isActionCooldown}
+                    >
+                      Выложить
+                      {isActionCooldown && <ProgressBar />}
+                    </MoveButton>
+                  )}
+                  {item.name !== 'Мусор' && (
+                    <DeleteButton
+                      onClick={() => handleDeleteItem(item.name, item.weight, count)}
+                      disabled={isActionCooldown}
+                    >
+                      Сломать
+                      {isActionCooldown && <ProgressBar />}
+                    </DeleteButton>
+                  )}
+                </ActionButtons>
+              </ItemCard>
+            ))}
+            {activeTab === 'location' && !isShelter && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+              <ItemCard
+                key={item._id}
+                theme={theme}
+                isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+              >
+                <ItemInfo theme={theme} onClick={() => openModal(item)}>
+                  <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
+                  <ItemDetail theme={theme}>{item.description}</ItemDetail>
+                </ItemInfo>
+                <ActionButtons>
+                  <PickupButton
+                    onClick={() => handlePickupItem(item._id)}
                     disabled={isActionCooldown}
                   >
-                    Выложить
+                    Подобрать
                     {isActionCooldown && <ProgressBar />}
-                  </MoveButton>
-                )}
-                {item.name !== 'Мусор' && (
-                  <DeleteButton
-                    onClick={() => handleDeleteItem(item.name, item.weight, count)}
+                  </PickupButton>
+                </ActionButtons>
+              </ItemCard>
+            ))}
+            {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+              <ItemCard
+                key={item._id}
+                theme={theme}
+                isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+              >
+                <ItemInfo theme={theme} onClick={() => openModal(item)}>
+                  <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
+                  <ItemDetail theme={theme}>{item.description}</ItemDetail>
+                </ItemInfo>
+                <ActionButtons>
+                  <PickupButton
+                    onClick={() => handlePickupItem(item._id)}
                     disabled={isActionCooldown}
                   >
-                    Сломать
+                    Подобрать
                     {isActionCooldown && <ProgressBar />}
-                  </DeleteButton>
-                )}
-              </ActionButtons>
-            </ItemCard>
-          ))}
-          {activeTab === 'location' && !isShelter && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
-            <ItemCard
-              key={item._id}
-              theme={theme}
-              isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-            >
-              <ItemInfo theme={theme} onClick={() => openModal(item)}>
-                <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
-                <ItemDetail theme={theme}>{item.description}</ItemDetail>
-              </ItemInfo>
-              <ActionButtons>
-                <PickupButton
-                  onClick={() => handlePickupItem(item._id)}
-                  disabled={isActionCooldown}
-                >
-                  Подобрать
-                  {isActionCooldown && <ProgressBar />}
-                </PickupButton>
-              </ActionButtons>
-            </ItemCard>
-          ))}
-          {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
-            <ItemCard
-              key={item._id}
-              theme={theme}
-              isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-            >
-              <ItemInfo theme={theme} onClick={() => openModal(item)}>
-                <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
-                <ItemDetail theme={theme}>{item.description}</ItemDetail>
-              </ItemInfo>
-              <ActionButtons>
-                <PickupButton
-                  onClick={() => handlePickupItem(item._id)}
-                  disabled={isActionCooldown}
-                >
-                  Подобрать
-                  {isActionCooldown && <ProgressBar />}
-                </PickupButton>
-              </ActionButtons>
-            </ItemCard>
-          ))}
-          {activeTab === 'personal' && personalItems.length === 0 && (
-            <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-              У вас пока нет предметов
-            </div>
-          )}
-          {activeTab === 'location' && !isShelter && locationItems.length === 0 && (
-            <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-              На этой локации нет предметов
-            </div>
-          )}
-          {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && locationItems.length === 0 && (
-            <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-              На этой локации нет предметов
-            </div>
-          )}
-        </ItemList>
-      )}
+                  </PickupButton>
+                </ActionButtons>
+              </ItemCard>
+            ))}
+            {activeTab === 'personal' && personalItems.length === 0 && (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                У вас пока нет предметов
+              </div>
+            )}
+            {activeTab === 'location' && !isShelter && locationItems.length === 0 && (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                На этой локации нет предметов
+              </div>
+            )}
+            {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && locationItems.length === 0 && (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                На этой локации нет предметов
+              </div>
+            )}
+          </ItemList>
+        )}
+      </ContentContainer>
       <Modal
         isOpen={!!selectedItem || !!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
         theme={theme}

@@ -43,7 +43,7 @@ const RoomList = styled.ul`
 
 const RoomItem = styled.li`
   padding: 10px;
-  margin: 5px 0;
+  margin: 5px;
   background: ${props => props.isCurrent 
     ? '#007AFF' 
     : (props.theme === 'dark' ? '#333' : '#f0f0f0')};

@@ -174,7 +174,7 @@ const InventoryContainer = styled.div`
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   display: flex;
   flex-direction: column;
-  padding: 0; /* Убираем отступы сверху */
+  padding: 10; /* Убираем отступы сверху */
   box-sizing: border-box;
 `;
 

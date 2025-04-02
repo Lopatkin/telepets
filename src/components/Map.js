@@ -7,7 +7,7 @@ const MapContainer = styled.div`
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#fff'};
   display: flex;
   flex-direction: column;
-  padding: 0px;
+  padding: 10px;
   box-sizing: border-box;
   position: relative;
 `;

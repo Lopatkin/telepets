@@ -7,7 +7,7 @@ const MapContainer = styled.div`
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#fff'};
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: 0px;
   box-sizing: border-box;
   position: relative;
 `;
@@ -35,7 +35,7 @@ const Tab = styled.button`
 
 const RoomList = styled.ul`
   list-style: none;
-  padding: 0;
+  padding: 5px;
   margin: 0 0 10px 0;
   flex: 1;
   overflow-y: auto;

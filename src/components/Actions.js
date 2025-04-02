@@ -5,17 +5,17 @@ import { FaTimes } from 'react-icons/fa';
 const SubTabs = styled.div`
   display: flex;
   border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  margin-bottom: 15px;
+  margin-bottom: 10px; /* Как в Map.js */
 `;
 
 const SubTab = styled.button`
   flex: 1;
-  padding: 8px;
+  padding: 10px; /* Как в Map.js */
   background: ${props => props.active ? '#007AFF' : 'transparent'};
   color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#333')};
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px; /* Как в Map.js */
   transition: background 0.2s;
 
   &:hover {
@@ -143,10 +143,12 @@ const MaterialsText = styled.p`
 
 const ActionsContainer = styled.div`
   height: 100%;
-  padding: 20px;
   background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0; /* Убираем лишние отступы */
+  box-sizing: border-box;
 `;
 
 const ActionGrid = styled.div`
@@ -155,6 +157,13 @@ const ActionGrid = styled.div`
   gap: 20px;
   max-width: 600px;
   margin: 0 auto;
+`;
+
+// Новый контейнер для прокручиваемого контента
+const ContentContainer = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px; /* Отступы для контента, как было в ActionsContainer */
 `;
 
 const ActionCard = styled.div`
@@ -842,54 +851,56 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, pets, user
           </SubTab>
         </SubTabs>
       )}
-      <ActionGrid>
-        {activeSubTab === 'general' ? (
-          availableActions.length > 0 ? (
-            availableActions.map((action) => (
-              <ActionCard
-                key={action.id}
-                theme={theme}
-                onClick={() => handleActionClick(action)}
-                disabled={isCooldown && action.title === 'Найти палку'}
-              >
-                <div>
-                  <ActionTitle theme={theme}>{action.title}</ActionTitle>
-                  <ActionDescription theme={theme}>{action.description}</ActionDescription>
-                </div>
-                {isCooldown && action.title === 'Найти палку' && (
-                  <>
-                    <ProgressBar progress={progress} />
-                    <TimerDisplay theme={theme}>
-                      Осталось: {timeLeft} сек
-                    </TimerDisplay>
-                  </>
-                )}
-              </ActionCard>
-            ))
+      <ContentContainer>
+        <ActionGrid>
+          {activeSubTab === 'general' ? (
+            availableActions.length > 0 ? (
+              availableActions.map((action) => (
+                <ActionCard
+                  key={action.id}
+                  theme={theme}
+                  onClick={() => handleActionClick(action)}
+                  disabled={isCooldown && action.title === 'Найти палку'}
+                >
+                  <div>
+                    <ActionTitle theme={theme}>{action.title}</ActionTitle>
+                    <ActionDescription theme={theme}>{action.description}</ActionDescription>
+                  </div>
+                  {isCooldown && action.title === 'Найти палку' && (
+                    <>
+                      <ProgressBar progress={progress} />
+                      <TimerDisplay theme={theme}>
+                        Осталось: {timeLeft} сек
+                      </TimerDisplay>
+                    </>
+                  )}
+                </ActionCard>
+              ))
+            ) : (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                Действия недоступны в этой комнате
+              </div>
+            )
           ) : (
-            <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-              Действия недоступны в этой комнате
-            </div>
-          )
-        ) : (
-          pets.length > 0 ? (
-            pets.map((pet) => (
-              <ActionCard
-                key={`pet_${pet.userId}`}
-                theme={theme}
-                onClick={() => handlePetActionClick(pet)}
-              >
-                <ActionTitle theme={theme}>{pet.name}</ActionTitle>
-                <ActionDescription theme={theme}>{pet.animalType}</ActionDescription>
-              </ActionCard>
-            ))
-          ) : (
-            <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-              У вас пока нет питомцев
-            </div>
-          )
-        )}
-      </ActionGrid>
+            pets.length > 0 ? (
+              pets.map((pet) => (
+                <ActionCard
+                  key={`pet_${pet.userId}`}
+                  theme={theme}
+                  onClick={() => handlePetActionClick(pet)}
+                >
+                  <ActionTitle theme={theme}>{pet.name}</ActionTitle>
+                  <ActionDescription theme={theme}>{pet.animalType}</ActionDescription>
+                </ActionCard>
+              ))
+            ) : (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                У вас пока нет питомцев
+              </div>
+            )
+          )}
+        </ActionGrid>
+      </ContentContainer>
       {selectedAction && (
         <ModalOverlay onClick={handleCloseModal}>
           <ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>

@@ -156,7 +156,8 @@ io.on('connection', (socket) => {
         photoUrl: animal.photoUrl,
         isOnline: (now - new Date(animal.lastActivity || 0)) < 5 * 60 * 1000,
         animalType: animal.animalType,
-        owner: animal.owner
+        owner: animal.owner,
+        homeless: animal.homeless // Добавляем homeless
       }));
 
       socket.emit('shelterAnimals', animalsWithStatus);
@@ -200,7 +201,8 @@ io.on('connection', (socket) => {
       name: user.name,
       isHuman: user.isHuman,
       animalType: user.animalType,
-      owner: user.owner // Добавляем owner в socket.userData
+      owner: user.owner, // Добавляем owner в socket.userData
+      homeless: user.homeless // Добавляем homeless в socket.userData
     };
     console.log('Received auth data:', userData);
     console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
@@ -231,7 +233,8 @@ io.on('connection', (socket) => {
       name: user.name,
       onLeash: user.onLeash,
       owner: user.owner, // Добавляем owner в userUpdate
-      ownerOnline // Добавляем флаг ownerOnline
+      ownerOnline, // Добавляем флаг ownerOnline
+      homeless: user.homeless // Добавляем homeless в userUpdate
     });
     console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 
@@ -358,7 +361,8 @@ io.on('connection', (socket) => {
       name: user.name,
       isHuman: user.isHuman,
       onLeash: user.onLeash,
-      owner: user.owner // Добавляем owner в roomUsers
+      owner: user.owner, // Добавляем owner в roomUsers
+      homeless: user.homeless // Добавляем homeless в roomUsers
     });
 
     io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -411,6 +415,8 @@ io.on('connection', (socket) => {
         socket.userData.owner = data.owner; // Обновляем owner в socket.userData
       }
 
+      socket.userData.homeless = user.homeless; // Обновляем homeless в socket.userData
+
       const defaultRoom = 'Автобусная остановка';
       socket.join(defaultRoom);
       userCurrentRoom.set(user.userId, defaultRoom);
@@ -431,7 +437,8 @@ io.on('connection', (socket) => {
         name: user.name,
         isHuman: user.isHuman,
         onLeash: user.onLeash,
-        owner: user.owner // Добавляем owner в roomUsers
+        owner: user.owner, // Добавляем owner в roomUsers
+        homeless: user.homeless // Добавляем homeless
       });
 
       io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -455,7 +462,8 @@ io.on('connection', (socket) => {
         isHuman: user.isHuman,
         animalType: user.animalType,
         name: user.name,
-        owner: user.owner // Добавляем owner в userUpdate
+        owner: user.owner, // Добавляем owner в userUpdate
+        homeless: user.homeless // Добавляем homeless
       });
       console.log('Sent userUpdate with photoUrl:', user.photoUrl);
 
@@ -519,7 +527,8 @@ io.on('connection', (socket) => {
       name: user.name,
       onLeash: user.onLeash,
       owner: user.owner, // Добавляем owner в userUpdate
-      ownerOnline // Добавляем флаг ownerOnline
+      ownerOnline, // Добавляем флаг ownerOnline
+      homeless: user.homeless // Добавляем homeless
     });
 
     // Обновление lastRoom в базе данных
@@ -572,7 +581,8 @@ io.on('connection', (socket) => {
               name: animalUser?.name || '',
               isHuman: false,
               onLeash: true,
-              owner: socket.userData.userId // Указываем владельца животного
+              owner: socket.userData.userId, // Указываем владельца животного
+              homeless: false // Животное на поводке не бездомное
             });
             io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
 
@@ -642,7 +652,8 @@ io.on('connection', (socket) => {
       name: user.name,
       isHuman: user.isHuman,
       onLeash: user.onLeash,
-      owner: user.owner // Добавляем owner в roomUsers
+      owner: user.owner, // Добавляем owner в roomUsers
+      homeless: user.homeless // Добавляем homeless
     });
 
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
@@ -766,7 +777,8 @@ io.on('connection', (socket) => {
           photoUrl: socket.userData.photoUrl,
           name: user.name,
           isHuman: user.isHuman,
-          owner: user.owner // Добавляем owner
+          owner: user.owner, // Добавляем owner
+          homeless: user.homeless // Добавляем homeless
         });
         io.to(newRoom).emit('roomUsers', Array.from(roomUsers[newRoom]));
 
@@ -1104,7 +1116,8 @@ io.on('connection', (socket) => {
         photoUrl: animal.photoUrl,
         isOnline: (now - new Date(animal.lastActivity || 0)) < 5 * 60 * 1000,
         animalType: animal.animalType,
-        owner: animal.owner
+        owner: animal.owner,
+        homeless: animal.homeless // Добавляем homeless
       }));
 
       io.to('Приют для животных "Кошкин дом"').emit('shelterAnimals', animalsWithStatus);
@@ -1119,7 +1132,8 @@ io.on('connection', (socket) => {
           animalType: updatedAnimal.animalType,
           photoUrl: updatedAnimal.photoUrl,
           onLeash: updatedAnimal.onLeash,
-          owner: updatedAnimal.owner
+          owner: updatedAnimal.owner,
+          homeless: updatedAnimal.homeless // Добавляем homeless
         }
       });
 
@@ -1134,7 +1148,8 @@ io.on('connection', (socket) => {
           animalType: updatedAnimal.animalType,
           onLeash: true,
           owner: socket.userData.userId,
-          ownerOnline: true
+          ownerOnline: true,
+          homeless: false // Обновляем homeless для животного
         });
       }
 
@@ -1270,7 +1285,8 @@ io.on('connection', (socket) => {
                     name: animalUser.name,
                     onLeash: animalUser.onLeash,
                     owner: animalUser.owner, // Добавляем owner
-                    ownerOnline: false // Владелец вышел из сети
+                    ownerOnline: false, // Владелец вышел из сети
+                    homeless: animalUser.homeless // Добавляем homeless
                   });
                 }
               }

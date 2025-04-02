@@ -19,7 +19,7 @@ import barImage from '../images/bar.jpg';
 import cafeImage from '../images/cafe.jpg';
 import priyutImage from '../images/priyut.jpg';
 import albionImage from '../images/albion.jpg';
-import karnavalImage from '../images/karnaval.jpg';
+import karnavalImage from '../images/univermag.jpg';
 import poligonImage from '../images/poligon.jpg';
 import workshopImage from '../images/workshop.jpg';
 import babushka1Image from '../images/babushka_1.jpg'; // Добавляем аватарки
@@ -70,7 +70,7 @@ const MessagesContainer = styled.div`
       return `url(${priyutImage}) no-repeat center center fixed`;
     } else if (props.room === 'Бизнес центр "Альбион"') {
       return `url(${albionImage}) no-repeat center center fixed`;
-    } else if (props.room === 'Торговый центр "Карнавал"') {
+    } else if (props.room === 'Магазин "Всё на свете"') {
       return `url(${karnavalImage}) no-repeat center center fixed`;
     } else if (props.room === 'Полигон утилизации') {
       return `url(${poligonImage}) no-repeat center center fixed`;

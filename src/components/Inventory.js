@@ -264,6 +264,7 @@ const ItemDetail = styled.p`
 `;
 
 const WeightLimit = styled.div`
+  padding: 10px;
   margin-bottom: 10px;
   font-size: 12px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};

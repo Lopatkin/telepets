@@ -105,7 +105,7 @@ const RoomName = styled.span`
   font-size: 16px;
 `;
 
-function Map({ userId, onRoomSelect, theme, currentRoom }) {
+function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
   const [activeSubTab, setActiveSubTab] = useState('locations'); // Состояние для переключения подвкладок
   const [isDragging, setIsDragging] = useState(false); // Флаг перетаскивания
   const [position, setPosition] = useState({ top: 0, left: 0 }); // Позиция изображения
@@ -369,6 +369,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
       <HomeButton 
         onClick={() => onRoomSelect(myHomeRoom)} 
         theme={theme}
+        disabled={user?.homeless === true} // Отключаем кнопку, если homeless === true
       >
         Домой
       </HomeButton>

@@ -333,6 +333,7 @@ function App() {
             onRoomSelect={handleRoomSelect}
             theme={appliedTheme}
             currentRoom={currentRoom}
+            user={user} // Уже передаётся
           />
         )}
         {activeTab === 'profile' && (

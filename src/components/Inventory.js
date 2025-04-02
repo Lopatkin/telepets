@@ -202,7 +202,7 @@ const Tab = styled.button`
 const ContentContainer = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 50px; /* Отступы для контента, а не вкладок */
+  padding: 5px; /* Отступы для контента, а не вкладок */
 `;
 
 const ItemList = styled.div`

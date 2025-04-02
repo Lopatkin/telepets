@@ -206,6 +206,7 @@ const ContentContainer = styled.div`
 `;
 
 const ItemList = styled.div`
+  padding: 5px;
   display: grid;
   gap: 15px;
   ${props => props.subTab === 'personal' && `

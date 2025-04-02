@@ -130,7 +130,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom }) {
     'Полигон утилизации',
     'Приют для животных "Кошкин дом"',
     'Район Дачный',
-    'Торговый центр "Карнавал"',
+    'Магазин "Всё на свете"',
   ].sort(); // Сортировка по алфавиту
 
   const myHomeRoom = `myhome_${userId}`;

@@ -11,7 +11,7 @@ import Inventory from './components/Inventory';
 import { ClipLoader } from 'react-spinners';
 import Registration from './components/Registration';
 
-// Создаём сокет вне компонента, чтобы он был глобальным
+// Глобальный сокет
 const socket = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com', {
   cors: {
     origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
@@ -59,7 +59,6 @@ function App() {
   };
 
   useEffect(() => {
-    // Инициализация сокета
     socket.on('connect', () => {
       console.log('Socket connected:', socket.id);
 
@@ -170,12 +169,11 @@ function App() {
       console.error('Server error:', message);
     });
 
-    // Cleanup только при размонтировании всего приложения
     return () => {
       socket.disconnect();
       console.log('Socket disconnected on unmount');
     };
-  }, []); // Зависимости пустые, так как сокет глобальный
+  }, []);
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);
@@ -219,6 +217,11 @@ function App() {
       socket.emit('joinRoom', { room, lastTimestamp: null });
     }
   };
+
+  // Добавляем useEffect для handleRoomSelect с правильными зависимостями
+  useEffect(() => {
+    // Этот useEffect пустой, так как handleRoomSelect вызывается вручную
+  }, [currentRoom, isAuthenticated, user?.userId]);
 
   useEffect(() => {
     if (activeTab !== 'chat' && currentRoom && socket.connected) {

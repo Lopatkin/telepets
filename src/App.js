@@ -230,7 +230,7 @@ function App() {
     if (activeTab !== 'chat' && currentRoom && socketRef.current) {
       console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
     }
-  }, [activeTab, currentRoom, user?.userId]); // Добавлена зависимость user?.userId
+  }, [activeTab, currentRoom]); // Добавлена зависимость user?.userId
 
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);

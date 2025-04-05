@@ -44,11 +44,6 @@ function App() {
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
-  const closeActionModal = () => {
-    console.log('Closing action modal');
-    setIsActionModalOpen(false);
-  };
-
   const handleItemsUpdate = (items) => {
     setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
   };
@@ -90,7 +85,7 @@ function App() {
             const testUser = {
               userId: 'test123',
               firstName: 'Test User',
-              isHuman: true // Исправлено с false на true для тестового пользователя
+              isHuman: true
             };
             const lastRoom = 'Полигон утилизации';
             console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
@@ -101,7 +96,7 @@ function App() {
           const testUser = {
             userId: 'test123',
             firstName: 'Test User',
-            isHuman: true // Исправлено с false на true для тестового пользователя
+            isHuman: true
           };
           const lastRoom = 'Полигон утилизации';
           console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
@@ -186,7 +181,7 @@ function App() {
         console.log('Socket disconnected on unmount');
       }
     };
-  }, []); // Убрана зависимость [user]
+  }, []);
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);
@@ -235,7 +230,7 @@ function App() {
     if (activeTab !== 'chat' && currentRoom && socketRef.current) {
       console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
     }
-  }, [activeTab, currentRoom]);
+  }, [activeTab, currentRoom, user?.userId]); // Добавлена зависимость user?.userId
 
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);

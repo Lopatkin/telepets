@@ -136,8 +136,11 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       setError(message);
       setTimeout(() => setError(null), 3000);
     });
-    socket.on('creditsUpdate', (credits) => { // Обновляем кредиты при получении
-      setCredits(credits);
+    socket.on('creditsUpdate', (newCredits) => {
+      console.log('Credits updated in Inventory.js:', newCredits); // Логируем
+      if (typeof newCredits === 'number') {
+        setCredits(newCredits);
+      }
     });
 
     return () => {
@@ -150,10 +153,10 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     };
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems]);
 
-  // Обновляем handleBuyItem с проверкой кредитов
   const handleBuyItem = (item) => {
     if (isActionCooldown) return;
 
+    console.log('Attempting to buy item:', item, 'Current credits:', credits); // Логируем
     if (credits < item.cost) {
       setError('Недостаточно кредитов для покупки');
       setTimeout(() => setError(null), 3000);
@@ -161,7 +164,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     }
 
     setIsActionCooldown(true);
-    socket.emit('buyItem', { // Изменяем событие на buyItem
+    socket.emit('buyItem', {
       owner: userOwnerKey,
       item: {
         name: item.name,
@@ -171,9 +174,10 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         cost: item.cost,
         effect: item.effect,
       },
-    }, (response) => { // Добавляем callback для обработки ответа
+    }, (response) => {
+      console.log('Buy item response:', response); // Логируем ответ сервера
       if (response.success) {
-        setCredits(prev => prev - item.cost); // Обновляем кредиты локально
+        setCredits(prev => prev - item.cost);
       } else {
         setError(response.message || 'Ошибка при покупке');
         setTimeout(() => setError(null), 3000);

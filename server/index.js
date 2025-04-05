@@ -808,7 +808,8 @@ io.on('connection', (socket) => {
         return;
       }
 
-      if (user.credits < item.cost) {
+      console.log('Server: User credits:', user.credits, 'Item cost:', item.cost); // Логируем
+      if (parseInt(user.credits) < item.cost) {
         if (callback) callback({ success: false, message: 'Недостаточно кредитов' });
         return;
       }

@@ -181,7 +181,7 @@ function App() {
         console.log('Socket disconnected on unmount');
       }
     };
-  }, []);
+  }, [user?.userId]);
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);

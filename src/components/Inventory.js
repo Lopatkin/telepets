@@ -114,7 +114,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   useEffect(() => {
     if (!socket || !userId) return;
 
-    console.log('Inventory.js: Setting up socket listeners for userId:', userId);
+    console.log('Inventory.js: Setting up socket listeners for userId:', userId, 'Socket ID:', socket.id);
 
     socket.on('items', handleItemsUpdate);
     socket.on('inventoryLimit', handleLimitUpdate);

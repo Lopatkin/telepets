@@ -149,8 +149,10 @@ function Header({ user, room, theme, socket }) {
   useEffect(() => {
     if (!socket || !user?.userId) return;
 
+    console.log('Header.js: Setting up socket listeners with socket ID:', socket.id); // Добавляем лог
+
     const handleCreditsUpdate = (newCredits) => {
-      console.log('Header.js: Credits updated via socket:', newCredits); // Логируем
+      console.log('Header.js: Credits updated via socket:', newCredits);
       if (typeof newCredits === 'number') {
         setCredits(newCredits);
       } else {

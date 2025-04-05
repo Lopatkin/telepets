@@ -842,8 +842,9 @@ io.on('connection', (socket) => {
       itemCache.set(owner, [...ownerItems, newItem]);
 
       const updatedLimit = await InventoryLimit.findOne({ owner });
-      io.to(owner).emit('inventoryLimit', updatedLimit); // Обновляем всем клиентам
-      io.to(owner).emit('creditsUpdate', updatedUser.credits); // Обновляем всем клиентам
+      io.to(owner).emit('inventoryLimit', updatedLimit);
+      io.to(owner).emit('creditsUpdate', updatedUser.credits); // Уведомляем всех клиентов пользователя
+      console.log('Server: Sent creditsUpdate to owner:', owner, 'Credits:', updatedUser.credits);
 
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {

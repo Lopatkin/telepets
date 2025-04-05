@@ -230,7 +230,7 @@ function App() {
   useEffect(() => {
     // Этот useEffect не должен автоматически вызывать handleRoomSelect
     // Он предназначен для обработки внешних вызовов handleRoomSelect, поэтому оставляем его пустым
-  }, [currentRoom, isAuthenticated, socketRef.current, user?.userId]); // Добавлены все зависимости
+  }, [currentRoom, isAuthenticated, user?.userId]); // Добавлены все зависимости
 
   useEffect(() => {
     if (activeTab !== 'chat' && currentRoom && socketRef.current) {

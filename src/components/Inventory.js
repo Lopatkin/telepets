@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Д�
 import * as S from './InventoryStyles'; // Импорт всех стилей
 
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
+  const [credits, setCredits] = useState(0);
   const [shopItems, setShopItems] = useState([]);
   const [activeTab, setActiveTab] = useState('personal');
   const [activeLocationSubTab, setActiveLocationSubTab] = useState('items');
@@ -114,6 +115,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     socket.emit('getItems', { owner: locationOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
+    socket.emit('getCredits'); // Запрашиваем кредиты
 
     if (isShelter) {
       socket.emit('getShelterAnimals');
@@ -134,7 +136,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       setError(message);
       setTimeout(() => setError(null), 3000);
     });
-
+    socket.on('creditsUpdate', (credits) => { // Обновляем кредиты при получении
+      setCredits(credits);
+    });
 
     return () => {
       socket.off('items', handleItemsUpdate);
@@ -142,15 +146,22 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       socket.off('itemAction', handleItemAction);
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
+      socket.off('creditsUpdate');
     };
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems]);
 
-  // Добавляем обработчик покупки
+  // Обновляем handleBuyItem с проверкой кредитов
   const handleBuyItem = (item) => {
     if (isActionCooldown) return;
 
+    if (credits < item.cost) {
+      setError('Недостаточно кредитов для покупки');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
     setIsActionCooldown(true);
-    socket.emit('addItem', {
+    socket.emit('buyItem', { // Изменяем событие на buyItem
       owner: userOwnerKey,
       item: {
         name: item.name,
@@ -160,12 +171,15 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         cost: item.cost,
         effect: item.effect,
       },
+    }, (response) => { // Добавляем callback для обработки ответа
+      if (response.success) {
+        setCredits(prev => prev - item.cost); // Обновляем кредиты локально
+      } else {
+        setError(response.message || 'Ошибка при покупке');
+        setTimeout(() => setError(null), 3000);
+      }
+      setTimeout(() => setIsActionCooldown(false), 1000);
     });
-
-    // После покупки убираем предмет из списка магазина (имитация, пока не обновим сервер)
-    setTimeout(() => {
-      setIsActionCooldown(false);
-    }, 1000);
   };
 
   const handleTakeHome = (animalId) => {

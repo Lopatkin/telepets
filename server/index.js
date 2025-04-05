@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema({
   homeless: { type: Boolean, default: true },
   onLeash: { type: Boolean, default: false },
   lastActivity: { type: Date, default: Date.now },
-  owner: { type: String, default: null } // Добавляем поле owner для животных
+  owner: { type: String, default: null }
 });
 const User = mongoose.model('User', userSchema);
 
@@ -77,12 +77,6 @@ const inventoryLimitSchema = new mongoose.Schema({
 });
 const InventoryLimit = mongoose.model('InventoryLimit', inventoryLimitSchema);
 
-const userCreditsSchema = new mongoose.Schema({
-  userId: { type: String, unique: true },
-  credits: { type: Number, default: 0, min: 0 }
-});
-const UserCredits = mongoose.model('UserCredits', userCreditsSchema);
-
 // Хранилища
 const roomUsers = {};
 const userCurrentRoom = new Map();
@@ -102,7 +96,6 @@ const isLovecParkTime = () => {
   return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
 };
 
-// Проверка времени для Ловца животных в Районе Дачном (7:00–22:00, нечётные часы)
 const isLovecDachnyTime = () => {
   const now = new Date();
   const hours = now.getHours();
@@ -112,8 +105,6 @@ const isLovecDachnyTime = () => {
   const endMinutes = 22 * 60;    // 22:00
   return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
 };
-
-// const isLovecDachnyTime = () => true;
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -146,7 +137,7 @@ io.on('connection', (socket) => {
         homeless: true,
         onLeash: false,
         isHuman: false,
-        owner: null // Добавляем фильтр: только животные без владельца
+        owner: null
       }).select('userId name photoUrl lastActivity isHuman animalType owner');
 
       const now = new Date();
@@ -157,7 +148,7 @@ io.on('connection', (socket) => {
         isOnline: (now - new Date(animal.lastActivity || 0)) < 5 * 60 * 1000,
         animalType: animal.animalType,
         owner: animal.owner,
-        homeless: animal.homeless // Добавляем homeless
+        homeless: animal.homeless
       }));
 
       socket.emit('shelterAnimals', animalsWithStatus);
@@ -184,7 +175,7 @@ io.on('connection', (socket) => {
         photoUrl: userData.photoUrl || '',
         isRegistered: false,
         lastRoom: 'Полигон утилизации',
-        owner: userData.owner || null // Добавляем owner из userData, если есть (по умолчанию null)
+        owner: userData.owner || null
       });
       await user.save();
       console.log('New user created:', user.userId);
@@ -201,8 +192,8 @@ io.on('connection', (socket) => {
       name: user.name,
       isHuman: user.isHuman,
       animalType: user.animalType,
-      owner: user.owner, // Добавляем owner в socket.userData
-      homeless: user.homeless // Добавляем homeless в socket.userData
+      owner: user.owner,
+      homeless: user.homeless
     };
     console.log('Received auth data:', userData);
     console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
@@ -215,10 +206,9 @@ io.on('connection', (socket) => {
 
     activeSockets.set(socket.userData.userId, socket);
 
-    // Проверка владельца для животного с onLeash: true
     let ownerOnline = false;
     if (user && user.onLeash && user.owner) {
-      ownerOnline = activeSockets.has(user.owner); // Проверяем, онлайн ли владелец по owner
+      ownerOnline = activeSockets.has(user.owner);
     }
 
     socket.emit('userUpdate', {
@@ -232,25 +222,18 @@ io.on('connection', (socket) => {
       animalType: user.animalType,
       name: user.name,
       onLeash: user.onLeash,
-      owner: user.owner, // Добавляем owner в userUpdate
-      ownerOnline, // Добавляем флаг ownerOnline
-      homeless: user.homeless // Добавляем homeless в userUpdate
+      owner: user.owner,
+      ownerOnline,
+      homeless: user.homeless,
+      credits: user.credits
     });
     console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 
+    socket.emit('creditsUpdate', user.credits);
+    console.log('Sent initial credits to client:', user.credits);
+
     const userOwnerKey = `user_${socket.userData.userId}`;
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
-
-    let userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
-    if (!userCredits) {
-      userCredits = await UserCredits.create({
-        userId: socket.userData.userId,
-        credits: 0
-      });
-    }
-
-    socket.emit('creditsUpdate', userCredits.credits);
-    console.log('Sent initial credits to client:', userCredits.credits);
 
     const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
     if (!userLimit) {
@@ -361,8 +344,8 @@ io.on('connection', (socket) => {
       name: user.name,
       isHuman: user.isHuman,
       onLeash: user.onLeash,
-      owner: user.owner, // Добавляем owner в roomUsers
-      homeless: user.homeless // Добавляем homeless в roomUsers
+      owner: user.owner,
+      homeless: user.homeless
     });
 
     io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -393,7 +376,7 @@ io.on('connection', (socket) => {
           name: data.name,
           photoUrl: data.photoUrl || socket.userData.photoUrl || '',
           homeless: data.isHuman ? false : true,
-          owner: data.isHuman ? undefined : data.owner // Сохраняем owner (null для животных)
+          owner: data.isHuman ? undefined : data.owner
         },
         { new: true }
       );
@@ -412,10 +395,10 @@ io.on('connection', (socket) => {
         socket.userData.name = data.name;
       }
       if (!data.isHuman && data.owner !== undefined) {
-        socket.userData.owner = data.owner; // Обновляем owner в socket.userData
+        socket.userData.owner = data.owner;
       }
 
-      socket.userData.homeless = user.homeless; // Обновляем homeless в socket.userData
+      socket.userData.homeless = user.homeless;
 
       const defaultRoom = 'Автобусная остановка';
       socket.join(defaultRoom);
@@ -437,8 +420,8 @@ io.on('connection', (socket) => {
         name: user.name,
         isHuman: user.isHuman,
         onLeash: user.onLeash,
-        owner: user.owner, // Добавляем owner в roomUsers
-        homeless: user.homeless // Добавляем homeless
+        owner: user.owner,
+        homeless: user.homeless
       });
 
       io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
@@ -462,8 +445,8 @@ io.on('connection', (socket) => {
         isHuman: user.isHuman,
         animalType: user.animalType,
         name: user.name,
-        owner: user.owner, // Добавляем owner в userUpdate
-        homeless: user.homeless // Добавляем homeless
+        owner: user.owner,
+        homeless: user.homeless
       });
       console.log('Sent userUpdate with photoUrl:', user.photoUrl);
 
@@ -481,8 +464,8 @@ io.on('connection', (socket) => {
       return;
     }
     try {
-      const userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
-      if (callback) callback({ success: true, credits: userCredits ? userCredits.credits : 0 });
+      const user = await User.findOne({ userId: socket.userData.userId });
+      if (callback) callback({ success: true, credits: user ? user.credits : 0 });
     } catch (err) {
       console.error('Error fetching credits:', err.message);
       if (callback) callback({ success: false, message: 'Ошибка при получении кредитов' });
@@ -508,11 +491,9 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Проверка владельца для животного с onLeash: true
-    // Проверка владельца для животного с onLeash: true
     let ownerOnline = false;
     if (user && user.onLeash && user.owner) {
-      ownerOnline = activeSockets.has(user.owner); // Проверяем, онлайн ли владелец по owner
+      ownerOnline = activeSockets.has(user.owner);
     }
 
     socket.emit('userUpdate', {
@@ -526,12 +507,11 @@ io.on('connection', (socket) => {
       animalType: user.animalType,
       name: user.name,
       onLeash: user.onLeash,
-      owner: user.owner, // Добавляем owner в userUpdate
-      ownerOnline, // Добавляем флаг ownerOnline
-      homeless: user.homeless // Добавляем homeless
+      owner: user.owner,
+      ownerOnline,
+      homeless: user.homeless
     });
 
-    // Обновление lastRoom в базе данных
     try {
       await User.updateOne(
         { userId: socket.userData.userId },
@@ -581,8 +561,8 @@ io.on('connection', (socket) => {
               name: animalUser?.name || '',
               isHuman: false,
               onLeash: true,
-              owner: socket.userData.userId, // Указываем владельца животного
-              homeless: false // Животное на поводке не бездомное
+              owner: socket.userData.userId,
+              homeless: false
             });
             io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
 
@@ -652,8 +632,8 @@ io.on('connection', (socket) => {
       name: user.name,
       isHuman: user.isHuman,
       onLeash: user.onLeash,
-      owner: user.owner, // Добавляем owner в roomUsers
-      homeless: user.homeless // Добавляем homeless
+      owner: user.owner,
+      homeless: user.homeless
     });
 
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
@@ -739,7 +719,7 @@ io.on('connection', (socket) => {
         (message.room === 'Район Дачный' && isLovecDachnyTime())
       );
 
-      if (isAnimal && isCatchableLocation && hasAnimalCatcher && !user.owner && Math.random() < 0.1) { // Учитываем отсутствие owner
+      if (isAnimal && isCatchableLocation && hasAnimalCatcher && !user.owner && Math.random() < 0.1) {
         const newRoom = 'Приют для животных "Кошкин дом"';
         console.log(`Attempting to update lastRoom for user ${socket.userData.userId} to ${newRoom}`);
 
@@ -777,8 +757,8 @@ io.on('connection', (socket) => {
           photoUrl: socket.userData.photoUrl,
           name: user.name,
           isHuman: user.isHuman,
-          owner: user.owner, // Добавляем owner
-          homeless: user.homeless // Добавляем homeless
+          owner: user.owner,
+          homeless: user.homeless
         });
         io.to(newRoom).emit('roomUsers', Array.from(roomUsers[newRoom]));
 
@@ -815,46 +795,53 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('addItem', async ({ owner, item }, callback) => {
+  socket.on('buyItem', async ({ owner, item }, callback) => {
     try {
-      console.log('Received item data:', { owner, item });
-      if (!item || typeof item !== 'object') {
-        console.error('Invalid item data:', item);
-        if (callback) callback({ success: false, message: 'Некорректные данные предмета' });
+      if (!socket.userData || !socket.userData.userId) {
+        if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
         return;
       }
 
-      if (item._id) {
-        itemLocks.set(item._id, true);
+      const user = await User.findOne({ userId: socket.userData.userId });
+      if (!user) {
+        if (callback) callback({ success: false, message: 'Пользователь не найден' });
+        return;
+      }
+
+      if (user.credits < item.cost) {
+        if (callback) callback({ success: false, message: 'Недостаточно кредитов' });
+        return;
       }
 
       const ownerLimit = await InventoryLimit.findOne({ owner });
       if (!ownerLimit) {
-        if (item._id) itemLocks.delete(item._id);
         if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
         return;
       }
 
       const itemWeight = parseFloat(item.weight) || 0;
       if (ownerLimit.currentWeight + itemWeight > ownerLimit.maxWeight) {
-        if (item._id) itemLocks.delete(item._id);
         if (callback) callback({ success: false, message: 'Превышен лимит веса' });
         return;
       }
 
       const newItem = await Item.create({ owner, ...item });
-      console.log('Saved item:', newItem);
-
       await InventoryLimit.updateOne(
         { owner },
         { $inc: { currentWeight: itemWeight } }
       );
+      await User.updateOne(
+        { userId: socket.userData.userId },
+        { $inc: { credits: -item.cost } }
+      );
 
+      const updatedUser = await User.findOne({ userId: socket.userData.userId });
       const ownerItems = itemCache.get(owner) || [];
       itemCache.set(owner, [...ownerItems, newItem]);
 
       const updatedLimit = await InventoryLimit.findOne({ owner });
       socket.emit('inventoryLimit', updatedLimit);
+      socket.emit('creditsUpdate', updatedUser.credits);
 
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {
@@ -866,11 +853,9 @@ io.on('connection', (socket) => {
       io.to(owner).emit('items', { owner, items: itemCache.get(owner) });
 
       if (callback) callback({ success: true });
-      if (item._id) itemLocks.delete(item._id);
     } catch (err) {
-      console.error('Error adding item:', err.message, err.stack);
-      if (item._id) itemLocks.delete(item._id);
-      if (callback) callback({ success: false, message: 'Ошибка при добавлении предмета' });
+      console.error('Error buying item:', err.message, err.stack);
+      if (callback) callback({ success: false, message: 'Ошибка при покупке предмета' });
     }
   });
 
@@ -1083,24 +1068,19 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Формируем userOwnerKey для владельца (человека)
       const userOwnerKey = `user_${socket.userData.userId}`;
 
-      // Обновляем данные животного: устанавливаем owner и onLeash
       await User.updateOne(
         { userId: animalId },
         {
           owner: socket.userData.userId,
           onLeash: true,
-          homeless: false // Животное больше не бездомное
+          homeless: false
         }
       );
 
-      // Убираем некорректное добавление животного как предмета в инвентарь
-      // Вместо этого обновляем данные животного и уведомляем клиента
       const updatedAnimal = await User.findOne({ userId: animalId });
 
-      // Обновляем список животных в приюте
       const shelterAnimals = await User.find({
         lastRoom: 'Приют для животных "Кошкин дом"',
         homeless: true,
@@ -1117,12 +1097,11 @@ io.on('connection', (socket) => {
         isOnline: (now - new Date(animal.lastActivity || 0)) < 5 * 60 * 1000,
         animalType: animal.animalType,
         owner: animal.owner,
-        homeless: animal.homeless // Добавляем homeless
+        homeless: animal.homeless
       }));
 
       io.to('Приют для животных "Кошкин дом"').emit('shelterAnimals', animalsWithStatus);
 
-      // Отправляем полные данные о питомце
       socket.emit('takeAnimalHomeSuccess', {
         animalId,
         owner: socket.userData.userId,
@@ -1133,11 +1112,10 @@ io.on('connection', (socket) => {
           photoUrl: updatedAnimal.photoUrl,
           onLeash: updatedAnimal.onLeash,
           owner: updatedAnimal.owner,
-          homeless: updatedAnimal.homeless // Добавляем homeless
+          homeless: updatedAnimal.homeless
         }
       });
 
-      // Уведомляем животное, если оно онлайн
       const animalSocket = activeSockets.get(animalId);
       if (animalSocket) {
         animalSocket.emit('userUpdate', {
@@ -1149,7 +1127,7 @@ io.on('connection', (socket) => {
           onLeash: true,
           owner: socket.userData.userId,
           ownerOnline: true,
-          homeless: false // Обновляем homeless для животного
+          homeless: false
         });
       }
 
@@ -1190,24 +1168,21 @@ io.on('connection', (socket) => {
         { $inc: { currentWeight: -totalWeight } }
       );
 
-      const userCredits = await UserCredits.findOneAndUpdate(
+      const updatedUser = await User.findOneAndUpdate(
         { userId: socket.userData.userId },
         { $inc: { credits: creditsEarned } },
-        { new: true, upsert: true }
+        { new: true }
       );
 
       const updatedItems = await Item.find({ owner });
       itemCache.set(owner, updatedItems);
-      console.log('Trash items deleted for:', owner);
-      console.log('Credits earned:', creditsEarned);
-      console.log('Sending updated items:', updatedItems);
-      io.to(owner).emit('items', { owner, items: updatedItems });
 
       const updatedLimit = await InventoryLimit.findOne({ owner });
+      io.to(owner).emit('items', { owner, items: updatedItems });
       io.to(owner).emit('inventoryLimit', updatedLimit);
 
-      socket.emit('creditsUpdate', userCredits.credits);
-      console.log('Sent creditsUpdate to client:', userCredits.credits);
+      socket.emit('creditsUpdate', updatedUser.credits);
+      console.log('Sent creditsUpdate to client:', updatedUser.credits);
 
       if (callback) callback({ success: true, message: `Мусор утилизирован. Получено ${creditsEarned} кредитов.` });
     } catch (err) {
@@ -1263,14 +1238,12 @@ io.on('connection', (socket) => {
         activeSockets.delete(socket.userData.userId);
         console.log(`Removed socket for user ${socket.userData.userId}`);
 
-        // Проверяем, есть ли животные, привязанные к этому пользователю
         const ownerKey = `user_${socket.userData.userId}`;
         Item.find({ owner: ownerKey, playerID: { $exists: true } })
           .then(animalItems => {
             animalItems.forEach(async (item) => {
               const animalSocket = activeSockets.get(item.playerID);
               if (animalSocket) {
-                // Получаем полные данные животного из базы
                 const animalUser = await User.findOne({ userId: item.playerID });
                 if (animalUser) {
                   animalSocket.emit('userUpdate', {
@@ -1284,9 +1257,9 @@ io.on('connection', (socket) => {
                     animalType: animalUser.animalType,
                     name: animalUser.name,
                     onLeash: animalUser.onLeash,
-                    owner: animalUser.owner, // Добавляем owner
-                    ownerOnline: false, // Владелец вышел из сети
-                    homeless: animalUser.homeless // Добавляем homeless
+                    owner: animalUser.owner,
+                    ownerOnline: false,
+                    homeless: animalUser.homeless
                   });
                 }
               }

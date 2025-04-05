@@ -226,6 +226,12 @@ function App() {
     }
   };
 
+  // Исправленный useEffect для handleRoomSelect
+  useEffect(() => {
+    // Этот useEffect не должен автоматически вызывать handleRoomSelect
+    // Он предназначен для обработки внешних вызовов handleRoomSelect, поэтому оставляем его пустым
+  }, [currentRoom, isAuthenticated, socketRef.current, user?.userId]); // Добавлены все зависимости
+
   useEffect(() => {
     if (activeTab !== 'chat' && currentRoom && socketRef.current) {
       console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);

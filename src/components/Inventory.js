@@ -135,6 +135,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       setTimeout(() => setError(null), 3000);
     });
 
+    
     return () => {
       socket.off('items', handleItemsUpdate);
       socket.off('inventoryLimit', handleLimitUpdate);

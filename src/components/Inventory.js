@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Добавляем импорт useMemo
-import * as S from './InventoryStyles'; // Импорт всех стилей
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import * as S from './InventoryStyles';
 
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
   const [credits, setCredits] = useState(0);
@@ -23,7 +23,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
 
-  const groupItemsByNameAndWeight = (items) => {
+  const groupItemsByNameAndWeight = useCallback((items) => {
     const grouped = items.reduce((acc, item) => {
       const key = `${item.name}_${item.weight}`;
       if (!acc[key]) {
@@ -34,7 +34,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       return acc;
     }, {});
     return Object.values(grouped);
-  };
+  }, []);
 
   const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
@@ -81,7 +81,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     setShelterAnimals(animals);
   }, []);
 
-  // Переносим shopStaticItems в useMemo
   const shopStaticItems = useMemo(() => [
     {
       _id: 'shop_collar',
@@ -101,25 +100,21 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       cost: 200,
       effect: 'Вы чувствуете власть над кем-то. Приятно.',
     },
-  ], []); // Пустой массив зависимостей, так как данные статичны
-
-  useEffect(() => {
-    console.log('Inventory props:', { userId, currentRoom, user });
-  }, [userId, currentRoom, user]);
+  ], []);
 
   useEffect(() => {
     if (!socket || !userId) return;
 
     console.log('Inventory.js: Setting up socket listeners for userId:', userId);
 
-    const handleCreditsUpdate = (newCredits) => {
+    const handleCreditsUpdate = useCallback((newCredits) => {
       console.log('Inventory.js: Received creditsUpdate:', newCredits);
       if (typeof newCredits === 'number') {
         setCredits(newCredits);
       } else {
         console.error('Inventory.js: Invalid credits value:', newCredits);
       }
-    };
+    }, []);
 
     socket.on('items', handleItemsUpdate);
     socket.on('inventoryLimit', handleLimitUpdate);
@@ -148,7 +143,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       socket.off('error');
       socket.off('creditsUpdate', handleCreditsUpdate);
     };
-  }, [socket, userId, userOwnerKey, locationOwnerKey, isShelter]); // Уменьшили зависимости
+  }, [socket, userId, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals]);
 
   useEffect(() => {
     if (!socket || !userId) return;
@@ -165,9 +160,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     } else {
       setShopItems([]);
     }
-  }, [socket, userId, currentRoom, user, shopStaticItems]); // Отдельный эффект для getCredits и shopItems
+  }, [socket, userId, currentRoom, user, shopStaticItems]);
 
-  const handleBuyItem = (item) => {
+  const handleBuyItem = useCallback((item) => {
     if (isActionCooldown) return;
 
     console.log('Inventory.js: Attempting to buy item:', item, 'Current credits:', credits);
@@ -191,30 +186,30 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     }, (response) => {
       console.log('Inventory.js: Buy item response:', response);
       if (response.success) {
-        setCredits(prev => prev - item.cost); // Локально уменьшаем кредиты
+        setCredits(prev => prev - item.cost);
       } else {
         setError(response.message || 'Ошибка при покупке');
         setTimeout(() => setError(null), 3000);
       }
       setTimeout(() => setIsActionCooldown(false), 1000);
     });
-  };
+  }, [isActionCooldown, credits, socket, userOwnerKey]);
 
-  const handleTakeHome = (animalId) => {
+  const handleTakeHome = useCallback((animalId) => {
     if (!socket || !userId) {
       console.error('Socket or userId not available');
       return;
     }
     socket.emit('takeAnimalHome', { animalId });
     console.log(`Sent takeAnimalHome request for animal ID: ${animalId}`);
-  };
+  }, [socket, userId]);
 
-  const handleMoveItem = (itemName, weight, maxCount) => {
+  const handleMoveItem = useCallback((itemName, weight, maxCount) => {
     if (isActionCooldown) return;
     setActionQuantity({ itemName, weight, count: 1, action: 'move', maxCount });
-  };
+  }, [isActionCooldown]);
 
-  const handlePickupItem = (itemId) => {
+  const handlePickupItem = useCallback((itemId) => {
     if (isActionCooldown) return;
 
     setIsActionCooldown(true);
@@ -230,14 +225,14 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         setIsActionCooldown(false);
       }, 1000);
     }, 500);
-  };
+  }, [isActionCooldown, locationItems, socket]);
 
-  const handleDeleteItem = (itemName, weight, maxCount) => {
+  const handleDeleteItem = useCallback((itemName, weight, maxCount) => {
     if (isActionCooldown) return;
     setActionQuantity({ itemName, weight, count: 1, action: 'delete', maxCount });
-  };
+  }, [isActionCooldown]);
 
-  const confirmDeleteItem = (confirmed) => {
+  const confirmDeleteItem = useCallback((confirmed) => {
     if (confirmed && confirmDelete) {
       const itemId = confirmDelete;
       const itemToDelete = personalItems.find(item => item._id.toString() === itemId);
@@ -268,9 +263,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     }
 
     setConfirmDelete(null);
-  };
+  }, [confirmDelete, personalItems, socket]);
 
-  const confirmActionQuantity = () => {
+  const confirmActionQuantity = useCallback(() => {
     if (!actionQuantity.itemName || isActionCooldown) return;
 
     setIsActionCooldown(true);
@@ -309,20 +304,21 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     }
 
     setActionQuantity({ itemName: null, weight: null, count: 1, action: null });
-  };
+  }, [actionQuantity, isActionCooldown, personalItems, socket, locationOwnerKey]);
 
-  const openModal = (item) => {
+  const openModal = useCallback((item) => {
     setSelectedItem(item);
-  };
+  }, []);
 
-  const closeModal = (e) => {
+  const closeModal = useCallback((e) => {
     if (e.target === e.currentTarget) {
       setSelectedItem(null);
       setConfirmDelete(null);
       setActionQuantity({ itemName: null, weight: null, count: 1, action: null });
     }
-  };
+  }, []);
 
+  // Рендеринг остаётся без изменений
   return (
     <S.InventoryContainer theme={theme}>
       <S.Tabs>

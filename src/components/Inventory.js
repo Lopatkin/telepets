@@ -108,7 +108,10 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   }, [userId, currentRoom, user]);
 
   useEffect(() => {
-    if (!socket || !userId) return;
+    if (!socket || !userId) {
+      console.log('Inventory.js: No socket or userId, skipping setup');
+      return;
+    }
 
     console.log('Inventory.js: Setting up socket listeners for userId:', userId);
 
@@ -116,7 +119,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     socket.emit('getItems', { owner: locationOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
-    socket.emit('getCredits'); // Запрашиваем кредиты при монтировании
+    socket.emit('getCredits'); // Запрашиваем кредиты
 
     if (isShelter) {
       socket.emit('getShelterAnimals');
@@ -137,17 +140,20 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       setTimeout(() => setError(null), 3000);
     });
     socket.on('creditsUpdate', (newCredits) => {
-      console.log('Inventory.js: Received creditsUpdate:', newCredits); // Логируем получение
+      console.log('Inventory.js: Received creditsUpdate:', newCredits);
       if (typeof newCredits === 'number') {
         setCredits(newCredits);
       } else {
-        console.error('Invalid credits value received:', newCredits);
+        console.error('Inventory.js: Invalid credits value received:', newCredits);
       }
     });
-    socket.on('getCredits', ({ success, credits }) => { // Добавляем обработчик ответа
+    // Исправляем обработчик для getCredits, так как это callback, а не событие
+    socket.emit('getCredits', ({ success, credits }) => {
       console.log('Inventory.js: Received getCredits response:', { success, credits });
       if (success && typeof credits === 'number') {
         setCredits(credits);
+      } else {
+        console.error('Inventory.js: Failed to fetch credits:', { success, credits });
       }
     });
 
@@ -158,7 +164,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
       socket.off('creditsUpdate');
-      socket.off('getCredits');
     };
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems]);
 

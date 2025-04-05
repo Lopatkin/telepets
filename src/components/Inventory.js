@@ -1,408 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import styled, { keyframes } from 'styled-components';
-
-const BuyButton = styled(ActionButton)`
-  background: #FFA500; /* Оранжевый цвет для отличия */
-  color: white;
-`;
-
-const SubTabs = styled.div`
-  display: flex;
-  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  margin-bottom: 15px;
-`;
-
-const SubTab = styled.button`
-  flex: 1;
-  padding: 8px;
-  background: ${props => props.active ? '#007AFF' : 'transparent'};
-  color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#333')};
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.2s;
-
-  &:hover {
-    background: ${props => props.active ? '#005BBB' : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
-  }
-`;
-
-const AnimalList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0 5px; /* Небольшие отступы слева и справа */
-  width: 100%; /* Убеждаемся, что сам список занимает всю ширину */
-`;
-
-const AnimalCard = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
-  border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  box-sizing: border-box;
-`;
-
-const StatusCircle = styled.div`
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: ${props => props.isOnline ? 'green' : 'gray'};
-  margin-right: 10px;
-`;
-
-const Avatar = styled.img`
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  margin-right: 10px;
-`;
-
-const AnimalName = styled.span`
-  font-size: 14px;
-  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
-  flex-grow: 1; /* Растягиваем имя, чтобы заполнить пространство */
-`;
-
-const TakeHomeButton = styled.button`
-  padding: 5px 10px;
-  background: #32CD32;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-
-  &:hover {
-    background: #28A828;
-  }
-`;
-
-// Анимация исчезновения с движением вправо (для текущего пользователя)
-const fadeOutRight = keyframes`
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(100px);
-  }
-`;
-
-// Анимация исчезновения с движением влево (для текущего пользователя)
-const fadeOutLeft = keyframes`
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-100px);
-  }
-`;
-
-// Анимация уменьшения в точку (для других пользователей)
-const shrinkToPoint = keyframes`
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0);
-  }
-`;
-
-// Анимация появления с увеличением из точки (для других пользователей)
-const growFromPoint = keyframes`
-  0% {
-    opacity: 0;
-    transform: scale(0);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-`;
-
-// Анимация расщепления на куски и исчезновения с более сложными стадиями
-const splitAndFade = keyframes`
-  0% {
-    opacity: 1;
-    transform: scale(1) translate(0, 0);
-  }
-  20% {
-    opacity: 0.9;
-    transform: scale(1.1);
-    clip-path: polygon(0% 0%, 40% 0%, 30% 100%, 0% 100%);
-  }
-  40% {
-    opacity: 0.7;
-    transform: scale(1.3) translate(10px, -15px);
-    clip-path: polygon(40% 0%, 70% 0%, 60% 100%, 30% 100%);
-  }
-  60% {
-    opacity: 0.5;
-    transform: scale(1.5) translate(-20px, 20px);
-    clip-path: polygon(70% 0%, 100% 0%, 100% 100%, 60% 100%);
-  }
-  80% {
-    opacity: 0.3;
-    transform: scale(1.7) translate(30px, -30px);
-    clip-path: polygon(0% 0%, 100% 0%, 100% 40%, 0% 60%);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(2) translate(-40px, 40px);
-    clip-path: polygon(0% 0%, 0% 0%, 0% 0%, 0% 0%);
-  }
-`;
-
-// Анимация заполнения прогресс-бара
-const fillProgress = keyframes`
-  0% {
-    width: 0%;
-  }
-  100% {
-    width: 100%;
-  }
-`;
-
-const InventoryContainer = styled.div`
-  height: 100%;
-  background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#f5f5f5'};
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  display: flex;
-  flex-direction: column;
-  padding: 10; /* Убираем отступы сверху */
-  box-sizing: border-box;
-`;
-
-const Tabs = styled.div`
-  display: flex;
-  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  margin-bottom: 10px; /* Как в Map.js */
-`;
-
-const Tab = styled.button`
-  flex: 1;
-  padding: 10px;
-  background: ${props => props.active ? '#007AFF' : 'transparent'};
-  color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#333')};
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.2s;
-
-  &:hover {
-    background: ${props => props.active ? '#005BBB' : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
-  }
-`;
-
-const ContentContainer = styled.div`
-  flex: 1;
-  overflow-y: auto;
-  padding: 0px; /* Отступы для контента, а не вкладок */
-`;
-
-const ItemList = styled.div`
-  padding: 5px;
-  display: grid;
-  gap: 15px;
-  ${props => props.subTab === 'personal' && `
-    grid-template-columns: 1fr;
-  `}
-  ${props => props.subTab === 'location' && `
-    grid-template-columns: repeat(2, 1fr);
-  `}
-`;
-
-const ItemCard = styled.div`
-  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
-  border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: relative;
-  animation: ${props => {
-    if (props.isAnimating === 'move') return fadeOutRight;
-    if (props.isAnimating === 'pickup') return fadeOutLeft;
-    if (props.isAnimating === 'shrink') return shrinkToPoint;
-    if (props.isAnimating === 'grow') return growFromPoint;
-    if (props.isAnimating === 'split') return splitAndFade;
-    return 'none';
-  }};
-  animation-duration: 1s;
-  animation-fill-mode: forwards;
-
-  &:hover {
-    background: ${props => props.theme === 'dark' ? '#333' : '#f0f0f0'};
-  }
-`;
-
-const ItemInfo = styled.div`
-  cursor: pointer;
-
-  &:hover {
-    background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#f0f0f0'};
-  }
-`;
-
-const ItemTitle = styled.h4`
-  font-size: 14px;
-  margin: 0 0 5px 0;
-  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-`;
-
-const ItemDetail = styled.p`
-  font-size: 12px;
-  margin: 2px 0;
-  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-`;
-
-const WeightLimit = styled.div`
-  padding: 10px;
-  // margin-bottom: 10px;
-  font-size: 12px;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 5px;
-  margin-top: 5px;
-`;
-
-const ActionButton = styled.button`
-  position: relative;
-  padding: 5px 10px;
-  height: 30px;
-  border: none;
-  border-radius: 4px;
-  cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
-  font-size: 12px;
-  transition: background 0.2s;
-  opacity: ${props => (props.disabled ? 0.5 : 1)};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    opacity: ${props => (props.disabled ? 0.5 : 0.9)};
-  }
-`;
-
-const ProgressBar = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.3);
-  animation: ${fillProgress} 1.5s linear forwards;
-`;
-
-const MoveButton = styled(ActionButton)`
-  background: #007AFF;
-  color: white;
-`;
-
-const DeleteButton = styled(ActionButton)`
-  background: #FF0000;
-  color: white;
-`;
-
-const PickupButton = styled(ActionButton)`
-  background: #32CD32;
-  color: white;
-`;
-
-const Modal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: ${props => (props.isOpen ? 'flex' : 'none')};
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-
-  &:hover {
-    cursor: ${props => props.isConfirm ? 'auto' : 'pointer'};
-  }
-`;
-
-const ModalContent = styled.div`
-  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
-  padding: 20px;
-  border-radius: 8px;
-  width: 400px;
-  max-height: 80vh;
-  overflow-y: auto;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  text-align: center;
-`;
-
-const ConfirmModalContent = styled(ModalContent)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const ConfirmText = styled.p`
-  font-size: 16px;
-  margin-bottom: 20px;
-`;
-
-const ConfirmButtons = styled.div`
-  display: flex;
-  gap: 20px;
-`;
-
-const ConfirmButton = styled(ActionButton)`
-  width: 80px;
-  height: 40px;
-  background: ${props => props.type === 'yes' ? '#32CD32' : '#FF0000'};
-  color: white;
-  font-size: 16px;
-  padding: 0;
-
-  &:hover {
-    opacity: ${props => props.disabled ? 0.5 : 0.9};
-  }
-`;
-
-const ItemCount = styled.span`
-  font-size: 12px;
-  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
-  margin-left: 5px;
-`;
-
-const QuantityModalContent = styled(ModalContent)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const QuantitySlider = styled.input.attrs({ type: 'range' })`
-  width: 100%;
-  margin: 10px 0;
-`;
-
-const QuantityText = styled.p`
-  font-size: 14px;
-  margin: 10px 0;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-`;
+import * as S from './InventoryStyles'; // Импорт всех стилей
 
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
   const [activeTab, setActiveTab] = useState('personal');
@@ -482,32 +79,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     setShelterAnimals(animals);
   }, []);
 
-  const shopItems = currentRoom === 'Магазин "Всё на свете"' ? [
-    {
-      _id: 'static_collar',
-      name: 'Ошейник',
-      description: 'С ним вы сможете взять питомца из приюта.',
-      rarity: 'Обычный',
-      weight: 0.5,
-      cost: 250,
-      effect: 'Вы чувствуете, что вам это пригодится.',
-      owner: 'Магазин "Всё на свете"',
-    },
-    {
-      _id: 'static_leash',
-      name: 'Поводок',
-      description: 'Животное будет следовать за вами везде.',
-      rarity: 'Обычный',
-      weight: 0.5,
-      cost: 200,
-      effect: 'Вы чувствуете власть над кем-то. Приятно.',
-      owner: 'Магазин "Всё на свете"',
-    },
-  ] : [];
-
-  const allLocationItems = [...locationItems, ...shopItems];
-
-  // Временное логирование для отладки
   useEffect(() => {
     console.log('Inventory props:', { userId, currentRoom, user });
   }, [userId, currentRoom, user]);
@@ -666,41 +237,41 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   };
 
   return (
-    <InventoryContainer theme={theme}>
-      <Tabs>
-        <Tab
+    <S.InventoryContainer theme={theme}>
+      <S.Tabs>
+        <S.Tab
           active={activeTab === 'personal'}
           onClick={() => setActiveTab('personal')}
           theme={theme}
         >
           Личные вещи
-        </Tab>
-        <Tab
+        </S.Tab>
+        <S.Tab
           active={activeTab === 'location'}
           onClick={() => setActiveTab('location')}
           theme={theme}
         >
           Локация
-        </Tab>
-      </Tabs>
-      <ContentContainer>
+        </S.Tab>
+      </S.Tabs>
+      <S.ContentContainer>
         {activeTab === 'location' && isShelter && (
-          <SubTabs>
-            <SubTab
+          <S.SubTabs>
+            <S.SubTab
               active={activeLocationSubTab === 'items'}
               onClick={() => setActiveLocationSubTab('items')}
               theme={theme}
             >
               Предметы
-            </SubTab>
-            <SubTab
+            </S.SubTab>
+            <S.SubTab
               active={activeLocationSubTab === 'animals'}
               onClick={() => setActiveLocationSubTab('animals')}
               theme={theme}
             >
               Животные
-            </SubTab>
-          </SubTabs>
+            </S.SubTab>
+          </S.SubTabs>
         )}
         {error && (
           <div style={{ textAlign: 'center', color: 'red', marginBottom: '10px' }}>
@@ -708,39 +279,39 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
           </div>
         )}
         {activeTab === 'personal' && personalLimit && (
-          <WeightLimit theme={theme}>
+          <S.WeightLimit theme={theme}>
             Вес: {personalLimit.currentWeight} кг / {personalLimit.maxWeight} кг
-          </WeightLimit>
+          </S.WeightLimit>
         )}
         {activeTab === 'location' && locationLimit && (
-          <WeightLimit theme={theme}>
+          <S.WeightLimit theme={theme}>
             Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
-          </WeightLimit>
+          </S.WeightLimit>
         )}
         {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (
-          <AnimalList>
+          <S.AnimalList>
             {shelterAnimals.map(animal => (
-              <AnimalCard key={animal.userId} theme={theme}>
-                <StatusCircle isOnline={animal.isOnline} />
-                <Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
-                <AnimalName theme={theme}>{animal.name}</AnimalName>
+              <S.AnimalCard key={animal.userId} theme={theme}>
+                <S.StatusCircle isOnline={animal.isOnline} />
+                <S.Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
+                <S.AnimalName theme={theme}>{animal.name}</S.AnimalName>
                 {!animal.owner && user?.isHuman && (
-                  <TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
+                  <S.TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
                     Забрать домой
-                  </TakeHomeButton>
+                  </S.TakeHomeButton>
                 )}
-              </AnimalCard>
+              </S.AnimalCard>
             ))}
             {shelterAnimals.length === 0 && (
               <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
                 В приюте нет животных
               </div>
             )}
-          </AnimalList>
+          </S.AnimalList>
         ) : (
-          <ItemList subTab={activeTab}>
+          <S.ItemList subTab={activeTab}>
             {activeTab === 'personal' && groupItemsByNameAndWeight(personalItems).map(({ item, count }) => (
-              <ItemCard
+              <S.ItemCard
                 key={item._id}
                 theme={theme}
                 isAnimating={
@@ -750,97 +321,88 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                   ) ? animatingItem.action : null
                 }
               >
-                <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
+                <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
                 {item.description === 'Кошка' || item.description === 'Собака' ? (
-                  <ItemDetail theme={theme}>{item.description}</ItemDetail>
+                  <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
                 ) : (
                   <>
-                    <ItemDetail theme={theme}>Описание: {item.description}</ItemDetail>
-                    <ItemDetail theme={theme}>Редкость: {item.rarity}</ItemDetail>
-                    <ItemDetail theme={theme}>Вес: {item.weight}</ItemDetail>
-                    <ItemDetail theme={theme}>Стоимость: {item.cost}</ItemDetail>
-                    <ItemDetail theme={theme}>Эффект: {item.effect}</ItemDetail>
+                    <S.ItemDetail theme={theme}>Описание: {item.description}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Вес: {item.weight}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Стоимость: {item.cost}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Эффект: {item.effect}</S.ItemDetail>
                   </>
                 )}
-                <ActionButtons>
+                <S.ActionButtons>
                   {locationOwnerKey && (
-                    <MoveButton
+                    <S.MoveButton
                       onClick={() => handleMoveItem(item.name, item.weight, count)}
                       disabled={isActionCooldown}
                     >
                       Выложить
-                      {isActionCooldown && <ProgressBar />}
-                    </MoveButton>
+                      {isActionCooldown && <S.ProgressBar />}
+                    </S.MoveButton>
                   )}
                   {item.name !== 'Мусор' && (
-                    <DeleteButton
+                    <S.DeleteButton
                       onClick={() => handleDeleteItem(item.name, item.weight, count)}
                       disabled={isActionCooldown}
                     >
                       Сломать
-                      {isActionCooldown && <ProgressBar />}
-                    </DeleteButton>
+                      {isActionCooldown && <S.ProgressBar />}
+                    </S.DeleteButton>
                   )}
-                </ActionButtons>
-              </ItemCard>
+                </S.ActionButtons>
+              </S.ItemCard>
             ))}
-            {activeTab === 'location' && !isShelter && groupItemsByNameAndWeight(allLocationItems).map(({ item, count }) => (
-              <ItemCard
+            {activeTab === 'location' && !isShelter && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+              <S.ItemCard
                 key={item._id}
                 theme={theme}
                 isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
               >
-                <ItemInfo theme={theme} onClick={() => openModal(item)}>
-                  <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
-                  <ItemDetail theme={theme}>{item.description}</ItemDetail>
-                </ItemInfo>
-                <ActionButtons>
-                  {item.owner === 'Магазин "Всё на свете"' ? (
-                    <BuyButton
-                      disabled={isActionCooldown}
-                    >
-                      Купить
-                      {isActionCooldown && <ProgressBar />}
-                    </BuyButton>
-                  ) : (
-                    <PickupButton
-                      onClick={() => handlePickupItem(item._id)}
-                      disabled={isActionCooldown}
-                    >
-                      Подобрать
-                      {isActionCooldown && <ProgressBar />}
-                    </PickupButton>
-                  )}
-                </ActionButtons>
-              </ItemCard>
-            ))}
-            {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
-              <ItemCard
-                key={item._id}
-                theme={theme}
-                isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-              >
-                <ItemInfo theme={theme} onClick={() => openModal(item)}>
-                  <ItemTitle theme={theme}>{item.name} <ItemCount theme={theme}>x{count}</ItemCount></ItemTitle>
-                  <ItemDetail theme={theme}>{item.description}</ItemDetail>
-                </ItemInfo>
-                <ActionButtons>
-                  <PickupButton
+                <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
+                  <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
+                  <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                </S.ItemInfo>
+                <S.ActionButtons>
+                  <S.PickupButton
                     onClick={() => handlePickupItem(item._id)}
                     disabled={isActionCooldown}
                   >
                     Подобрать
-                    {isActionCooldown && <ProgressBar />}
-                  </PickupButton>
-                </ActionButtons>
-              </ItemCard>
+                    {isActionCooldown && <S.ProgressBar />}
+                  </S.PickupButton>
+                </S.ActionButtons>
+              </S.ItemCard>
+            ))}
+            {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+              <S.ItemCard
+                key={item._id}
+                theme={theme}
+                isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+              >
+                <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
+                  <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
+                  <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                </S.ItemInfo>
+                <S.ActionButtons>
+                  <S.PickupButton
+                    onClick={() => handlePickupItem(item._id)}
+                    disabled={isActionCooldown}
+                  >
+                    Подобрать
+                    {isActionCooldown && <S.ProgressBar />}
+                  </S.PickupButton>
+                </S.ActionButtons>
+              </S.ItemCard>
             ))}
             {activeTab === 'personal' && personalItems.length === 0 && (
               <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
                 У вас пока нет предметов
               </div>
             )}
-            {activeTab === 'location' && !isShelter && allLocationItems.length === 0 && (
+            {activeTab === 'location' && !isShelter && locationItems.length === 0 && (
               <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
                 На этой локации нет предметов
               </div>
@@ -850,68 +412,68 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                 На этой локации нет предметов
               </div>
             )}
-          </ItemList>
+          </S.ItemList>
         )}
-      </ContentContainer>
-      <Modal
+      </S.ContentContainer>
+      <S.Modal
         isOpen={!!selectedItem || !!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
         theme={theme}
         onClick={closeModal}
         isConfirm={!!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
       >
         {selectedItem && (
-          <ModalContent theme={theme}>
-            <ItemTitle theme={theme}>{selectedItem.name}</ItemTitle>
-            <ItemDetail theme={theme}>Описание: {selectedItem.description}</ItemDetail>
-            <ItemDetail theme={theme}>Редкость: {selectedItem.rarity}</ItemDetail>
-            <ItemDetail theme={theme}>Вес: {selectedItem.weight}</ItemDetail>
-            <ItemDetail theme={theme}>Стоимость: {selectedItem.cost}</ItemDetail>
-            <ItemDetail theme={theme}>Эффект: {selectedItem.effect}</ItemDetail>
-          </ModalContent>
+          <S.ModalContent theme={theme}>
+            <S.ItemTitle theme={theme}>{selectedItem.name}</S.ItemTitle>
+            <S.ItemDetail theme={theme}>Описание: {selectedItem.description}</S.ItemDetail>
+            <S.ItemDetail theme={theme}>Редкость: {selectedItem.rarity}</S.ItemDetail>
+            <S.ItemDetail theme={theme}>Вес: {selectedItem.weight}</S.ItemDetail>
+            <S.ItemDetail theme={theme}>Стоимость: {selectedItem.cost}</S.ItemDetail>
+            <S.ItemDetail theme={theme}>Эффект: {selectedItem.effect}</S.ItemDetail>
+          </S.ModalContent>
         )}
         {confirmDelete && (
-          <ConfirmModalContent theme={theme}>
-            <ConfirmText>Вы уверены, что хотите сломать этот предмет?</ConfirmText>
-            <ConfirmButtons>
-              <ConfirmButton type="yes" onClick={() => confirmDeleteItem(true)} disabled={isActionCooldown}>
+          <S.ConfirmModalContent theme={theme}>
+            <S.ConfirmText>Вы уверены, что хотите сломать этот предмет?</S.ConfirmText>
+            <S.ConfirmButtons>
+              <S.ConfirmButton type="yes" onClick={() => confirmDeleteItem(true)} disabled={isActionCooldown}>
                 Да
-              </ConfirmButton>
-              <ConfirmButton type="no" onClick={() => confirmDeleteItem(false)} disabled={isActionCooldown}>
+              </S.ConfirmButton>
+              <S.ConfirmButton type="no" onClick={() => confirmDeleteItem(false)} disabled={isActionCooldown}>
                 Нет
-              </ConfirmButton>
-            </ConfirmButtons>
-          </ConfirmModalContent>
+              </S.ConfirmButton>
+            </S.ConfirmButtons>
+          </S.ConfirmModalContent>
         )}
         {actionQuantity.itemName && actionQuantity.weight && (
-          <QuantityModalContent theme={theme}>
-            <ConfirmText>
+          <S.QuantityModalContent theme={theme}>
+            <S.ConfirmText>
               {actionQuantity.action === 'move' ? 'Выложить' : 'Сломать'} {actionQuantity.itemName}
-            </ConfirmText>
-            <QuantityText theme={theme}>
+            </S.ConfirmText>
+            <S.QuantityText theme={theme}>
               Количество: {actionQuantity.count}
-            </QuantityText>
-            <QuantitySlider
+            </S.QuantityText>
+            <S.QuantitySlider
               min="1"
               max={actionQuantity.maxCount}
               value={actionQuantity.count}
               onChange={(e) => setActionQuantity(prev => ({ ...prev, count: parseInt(e.target.value) }))}
             />
-            <ConfirmButtons>
-              <ConfirmButton type="yes" onClick={confirmActionQuantity} disabled={isActionCooldown}>
+            <S.ConfirmButtons>
+              <S.ConfirmButton type="yes" onClick={confirmActionQuantity} disabled={isActionCooldown}>
                 Подтвердить
-              </ConfirmButton>
-              <ConfirmButton
+              </S.ConfirmButton>
+              <S.ConfirmButton
                 type="no"
                 onClick={() => setActionQuantity({ itemName: null, weight: null, count: 1, action: null })}
                 disabled={isActionCooldown}
               >
                 Отмена
-              </ConfirmButton>
-            </ConfirmButtons>
-          </QuantityModalContent>
+              </S.ConfirmButton>
+            </S.ConfirmButtons>
+          </S.QuantityModalContent>
         )}
-      </Modal>
-    </InventoryContainer>
+      </S.Modal>
+    </S.InventoryContainer>
   );
 }
 

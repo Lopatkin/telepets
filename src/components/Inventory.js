@@ -135,7 +135,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       setTimeout(() => setError(null), 3000);
     });
 
-    
+
     return () => {
       socket.off('items', handleItemsUpdate);
       socket.off('inventoryLimit', handleLimitUpdate);
@@ -143,7 +143,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems]);
 
   // Добавляем обработчик покупки
   const handleBuyItem = (item) => {

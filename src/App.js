@@ -107,9 +107,9 @@ function App() {
         socketRef.current.on('userUpdate', (updatedUser) => {
           console.log('Received userUpdate from server:', updatedUser);
           setUser(prevUser => {
-            const newUser = { 
-              ...prevUser, 
-              ...updatedUser, 
+            const newUser = {
+              ...prevUser,
+              ...updatedUser,
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true)
             };
             console.log('Updated user state after userUpdate:', newUser);
@@ -181,7 +181,7 @@ function App() {
         console.log('Socket disconnected on unmount');
       }
     };
-  }, []);
+  }, [user?.userId]);
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);

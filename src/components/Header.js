@@ -149,31 +149,25 @@ function Header({ user, room, theme, socket }) {
   useEffect(() => {
     if (!socket || !user?.userId) return;
 
-    console.log('Header.js: Setting up socket listeners with socket ID:', socket.id); // Добавляем лог
-
     const handleCreditsUpdate = (newCredits) => {
-      console.log('Header.js: Credits updated via socket:', newCredits);
-      if (typeof newCredits === 'number') {
-        setCredits(newCredits);
-      } else {
-        console.error('Header.js: Received invalid credits value:', newCredits);
-      }
+      console.log('Credits updated via socket:', newCredits);
+      setCredits(newCredits);
     };
 
     socket.on('creditsUpdate', handleCreditsUpdate);
 
     socket.emit('getCredits', ({ success, credits }) => {
-      console.log('Header.js: Initial credits received:', credits);
-      if (success && typeof credits === 'number') {
+      if (success) {
+        console.log('Initial credits received:', credits);
         setCredits(credits);
       } else {
-        console.error('Header.js: Failed to fetch initial credits');
+        console.error('Failed to fetch initial credits');
       }
     });
 
     return () => {
       socket.off('creditsUpdate', handleCreditsUpdate);
-      console.log('Header.js: Unsubscribed from creditsUpdate');
+      console.log('Unsubscribed from creditsUpdate');
     };
   }, [socket, user]);
 

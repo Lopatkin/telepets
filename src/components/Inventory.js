@@ -106,6 +106,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     console.log('Inventory props:', { userId, currentRoom, user });
   }, [userId, currentRoom, user]);
 
+  // Обновляем useEffect, добавляя shopStaticItems в зависимости
   useEffect(() => {
     if (!socket || !userId) return;
 

@@ -81,6 +81,15 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     setShelterAnimals(animals);
   }, []);
 
+  const handleCreditsUpdate = useCallback((newCredits) => {
+    console.log('Inventory.js: Received creditsUpdate:', newCredits);
+    if (typeof newCredits === 'number') {
+      setCredits(newCredits);
+    } else {
+      console.error('Inventory.js: Invalid credits value:', newCredits);
+    }
+  }, []);
+
   const shopStaticItems = useMemo(() => [
     {
       _id: 'shop_collar',
@@ -106,15 +115,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     if (!socket || !userId) return;
 
     console.log('Inventory.js: Setting up socket listeners for userId:', userId);
-
-    const handleCreditsUpdate = useCallback((newCredits) => {
-      console.log('Inventory.js: Received creditsUpdate:', newCredits);
-      if (typeof newCredits === 'number') {
-        setCredits(newCredits);
-      } else {
-        console.error('Inventory.js: Invalid credits value:', newCredits);
-      }
-    }, []);
 
     socket.on('items', handleItemsUpdate);
     socket.on('inventoryLimit', handleLimitUpdate);
@@ -143,7 +143,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       socket.off('error');
       socket.off('creditsUpdate', handleCreditsUpdate);
     };
-  }, [socket, userId, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals]);
+  }, [socket, userId, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, handleCreditsUpdate]);
 
   useEffect(() => {
     if (!socket || !userId) return;

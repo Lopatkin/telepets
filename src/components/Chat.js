@@ -31,6 +31,7 @@ import volonterZhannaImage from '../images/volonter_Zhanna.jpg';
 import lovec1Image from '../images/lovec_1.jpg'; // Добавляем аватарки ловцов
 import lovec2Image from '../images/lovec_2.jpg';
 import povodokIcon from '../images/povodok.png'; // Импорт иконки
+import prodavecSvetaImage from '../images/prodavec_Sveta.jpg'; // Аватарка продавщицы Светы
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -371,6 +372,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         }
         return updatedUsers;
       });
+    } else if (room === 'Магазин "Всё на свете"') {
+      const prodavecSveta = { userId: 'npc_prodavec_sveta', firstName: 'Продавщица Света', photoUrl: prodavecSvetaImage, isHuman: true };
+      setUsers(prevUsers => {
+        const updatedUsers = [...prevUsers];
+        if (!prevUsers.some(user => user.userId === 'npc_prodavec_sveta')) updatedUsers.unshift(prodavecSveta);
+        return updatedUsers;
+      });
     } else {
       setUsers(prevUsers => prevUsers.filter(user => ![
         'npc_belochka', 'npc_fox', 'npc_ezhik', 'npc_security', 'npc_guard',
@@ -439,6 +447,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           { userId: 'npc_babushka_zina', firstName: 'Бабушка Зина', photoUrl: babushka3Image, isHuman: true },
           ...updatedUsers
         ];
+      } else if (room === 'Магазин "Всё на свете"') {
+        updatedUsers = [{ userId: 'npc_prodavec_sveta', firstName: 'Продавщица Света', photoUrl: prodavecSvetaImage, isHuman: true }, ...updatedUsers];
       } else if (room === 'Приют для животных "Кошкин дом"') {
         if (isIraKatyaTime()) {
           updatedUsers = [

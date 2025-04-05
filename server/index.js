@@ -465,6 +465,7 @@ io.on('connection', (socket) => {
     }
     try {
       const user = await User.findOne({ userId: socket.userData.userId });
+      console.log('Server: Sending credits for user', socket.userData.userId, ':', user.credits); // Логируем
       if (callback) callback({ success: true, credits: user ? user.credits : 0 });
     } catch (err) {
       console.error('Error fetching credits:', err.message);

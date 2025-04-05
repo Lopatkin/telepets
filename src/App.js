@@ -58,6 +58,7 @@ function App() {
     setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
   };
 
+  // Инициализация сокета (без зависимостей от user)
   useEffect(() => {
     socket.on('connect', () => {
       console.log('Socket connected:', socket.id);
@@ -102,42 +103,6 @@ function App() {
       }
     });
 
-    socket.on('userUpdate', (updatedUser) => {
-      console.log('Received userUpdate from server:', updatedUser);
-      setUser(prevUser => {
-        const newUser = { 
-          ...prevUser, 
-          ...updatedUser, 
-          homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true)
-        };
-        console.log('Updated user state after userUpdate:', newUser);
-        return newUser;
-      });
-      if (updatedUser.isRegistered !== undefined) {
-        setIsRegistered(updatedUser.isRegistered);
-      }
-      if (updatedUser.isHuman) {
-        socket.emit('getPets', { userId: updatedUser.userId });
-      }
-    });
-
-    socket.on('takeAnimalHomeSuccess', ({ animalId, owner, animal }) => {
-      if (owner === user?.userId) {
-        setPets(prevPets => [...prevPets, animal]);
-      }
-    });
-
-    socket.on('petsList', (petsData) => {
-      setPets(petsData.map(pet => ({
-        userId: pet.userId,
-        name: pet.name,
-        animalType: pet.animalType,
-        photoUrl: pet.photoUrl,
-        onLeash: pet.onLeash,
-        owner: pet.owner
-      })));
-    });
-
     socket.on('disconnect', (reason) => {
       console.log('Socket disconnected:', reason);
       setIsAuthenticated(false);
@@ -174,6 +139,55 @@ function App() {
       console.log('Socket disconnected on unmount');
     };
   }, []);
+
+  // Обработчики, зависящие от user
+  useEffect(() => {
+    const handleUserUpdate = (updatedUser) => {
+      console.log('Received userUpdate from server:', updatedUser);
+      setUser(prevUser => {
+        const newUser = { 
+          ...prevUser, 
+          ...updatedUser, 
+          homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true)
+        };
+        console.log('Updated user state after userUpdate:', newUser);
+        return newUser;
+      });
+      if (updatedUser.isRegistered !== undefined) {
+        setIsRegistered(updatedUser.isRegistered);
+      }
+      if (updatedUser.isHuman) {
+        socket.emit('getPets', { userId: updatedUser.userId });
+      }
+    };
+
+    const handleTakeAnimalHomeSuccess = ({ animalId, owner, animal }) => {
+      if (owner === user?.userId) {
+        setPets(prevPets => [...prevPets, animal]);
+      }
+    };
+
+    const handlePetsList = (petsData) => {
+      setPets(petsData.map(pet => ({
+        userId: pet.userId,
+        name: pet.name,
+        animalType: pet.animalType,
+        photoUrl: pet.photoUrl,
+        onLeash: pet.onLeash,
+        owner: pet.owner
+      })));
+    };
+
+    socket.on('userUpdate', handleUserUpdate);
+    socket.on('takeAnimalHomeSuccess', handleTakeAnimalHomeSuccess);
+    socket.on('petsList', handlePetsList);
+
+    return () => {
+      socket.off('userUpdate', handleUserUpdate);
+      socket.off('takeAnimalHomeSuccess', handleTakeAnimalHomeSuccess);
+      socket.off('petsList', handlePetsList);
+    };
+  }, [user?.userId]); // Зависимость от user?.userId
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);
@@ -217,11 +231,6 @@ function App() {
       socket.emit('joinRoom', { room, lastTimestamp: null });
     }
   };
-
-  // Добавляем useEffect для handleRoomSelect с правильными зависимостями
-  useEffect(() => {
-    // Этот useEffect пустой, так как handleRoomSelect вызывается вручную
-  }, [currentRoom, isAuthenticated, user?.userId]);
 
   useEffect(() => {
     if (activeTab !== 'chat' && currentRoom && socket.connected) {

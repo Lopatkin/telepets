@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Добавляем импорт useMemo
 import * as S from './InventoryStyles'; // Импорт всех стилей
 
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
@@ -80,8 +80,8 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     setShelterAnimals(animals);
   }, []);
 
-  // Определяем предметы магазина
-  const shopStaticItems = [
+  // Переносим shopStaticItems в useMemo
+  const shopStaticItems = useMemo(() => [
     {
       _id: 'shop_collar',
       name: 'Ошейник',
@@ -100,13 +100,13 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       cost: 200,
       effect: 'Вы чувствуете власть над кем-то. Приятно.',
     },
-  ];
+  ], []); // Пустой массив зависимостей, так как данные статичны
 
   useEffect(() => {
     console.log('Inventory props:', { userId, currentRoom, user });
   }, [userId, currentRoom, user]);
 
-  // Обновляем useEffect, добавляя shopStaticItems в зависимости
+  // Убираем shopStaticItems из зависимостей useEffect, так как он теперь стабилен
   useEffect(() => {
     if (!socket || !userId) return;
 
@@ -142,7 +142,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user]);
 
   // Добавляем обработчик покупки
   const handleBuyItem = (item) => {

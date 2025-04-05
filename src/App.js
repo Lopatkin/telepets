@@ -11,6 +11,17 @@ import Inventory from './components/Inventory';
 import { ClipLoader } from 'react-spinners';
 import Registration from './components/Registration';
 
+// Создаём сокет вне компонента, чтобы он был глобальным
+const socket = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com', {
+  cors: {
+    origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
+    methods: ["GET", "POST"]
+  },
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
+
 const AppContainer = styled.div`
   height: 100vh;
   display: flex;
@@ -36,7 +47,6 @@ function App() {
   const [currentRoom, setCurrentRoom] = useState(null);
   const [theme, setTheme] = useState('telegram');
   const [telegramTheme, setTelegramTheme] = useState('light');
-  const socketRef = useRef(null);
   const joinedRoomsRef = useRef(new Set());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [personalItems, setPersonalItems] = useState([]);
@@ -49,49 +59,26 @@ function App() {
   };
 
   useEffect(() => {
-    const initializeSocket = () => {
-      if (socketRef.current) return;
+    // Инициализация сокета
+    socket.on('connect', () => {
+      console.log('Socket connected:', socket.id);
 
-      socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com', {
-        cors: {
-          origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
-          methods: ["GET", "POST"]
-        },
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000
-      });
-
-      socketRef.current.on('connect', () => {
-        console.log('Socket connected:', socketRef.current.id);
-
-        if (window.Telegram?.WebApp) {
-          window.Telegram.WebApp.ready();
-          const telegramData = window.Telegram.WebApp.initDataUnsafe;
-          if (telegramData?.user?.id) {
-            const initialUserData = {
-              userId: telegramData.user.id.toString(),
-              firstName: telegramData.user.first_name || 'User',
-              username: telegramData.user.username || '',
-              lastName: telegramData.user.last_name || '',
-              photoUrl: telegramData.user.photo_url || '',
-              owner: telegramData.isHuman === false ? null : undefined
-            };
-            const lastRoom = JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации';
-            console.log('Загружена последняя комната из localStorage:', lastRoom);
-            socketRef.current.emit('auth', { ...initialUserData });
-            setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
-          } else {
-            const testUser = {
-              userId: 'test123',
-              firstName: 'Test User',
-              isHuman: true
-            };
-            const lastRoom = 'Полигон утилизации';
-            console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
-            socketRef.current.emit('auth', { ...testUser });
-            setTelegramTheme('light');
-          }
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.ready();
+        const telegramData = window.Telegram.WebApp.initDataUnsafe;
+        if (telegramData?.user?.id) {
+          const initialUserData = {
+            userId: telegramData.user.id.toString(),
+            firstName: telegramData.user.first_name || 'User',
+            username: telegramData.user.username || '',
+            lastName: telegramData.user.last_name || '',
+            photoUrl: telegramData.user.photo_url || '',
+            owner: telegramData.isHuman === false ? null : undefined
+          };
+          const lastRoom = JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации';
+          console.log('Загружена последняя комната из localStorage:', lastRoom);
+          socket.emit('auth', { ...initialUserData });
+          setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
         } else {
           const testUser = {
             userId: 'test123',
@@ -100,94 +87,101 @@ function App() {
           };
           const lastRoom = 'Полигон утилизации';
           console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
-          socketRef.current.emit('auth', { ...testUser });
+          socket.emit('auth', { ...testUser });
           setTelegramTheme('light');
         }
-
-        socketRef.current.on('userUpdate', (updatedUser) => {
-          console.log('Received userUpdate from server:', updatedUser);
-          setUser(prevUser => {
-            const newUser = { 
-              ...prevUser, 
-              ...updatedUser, 
-              homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true)
-            };
-            console.log('Updated user state after userUpdate:', newUser);
-            return newUser;
-          });
-          if (updatedUser.isRegistered !== undefined) {
-            setIsRegistered(updatedUser.isRegistered);
-          }
-          if (updatedUser.isHuman) {
-            socketRef.current.emit('getPets', { userId: updatedUser.userId });
-          }
-        });
-
-        socketRef.current.on('takeAnimalHomeSuccess', ({ animalId, owner, animal }) => {
-          if (owner === user?.userId) {
-            setPets(prevPets => [...prevPets, animal]);
-          }
-        });
-
-        socketRef.current.on('petsList', (petsData) => {
-          setPets(petsData.map(pet => ({
-            userId: pet.userId,
-            name: pet.name,
-            animalType: pet.animalType,
-            photoUrl: pet.photoUrl,
-            onLeash: pet.onLeash,
-            owner: pet.owner
-          })));
-        });
-      });
-
-      socketRef.current.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason);
-        setIsAuthenticated(false);
-      });
-
-      socketRef.current.on('connect_error', (error) => {
-        console.error('Connection error:', error.message);
-      });
-
-      socketRef.current.on('authSuccess', ({ defaultRoom, isRegistered }) => {
-        console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
-        setIsAuthenticated(true);
-        setIsRegistered(isRegistered);
-        if (isRegistered) {
-          setCurrentRoom(defaultRoom);
-          joinedRoomsRef.current.add(defaultRoom);
-          socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
-        }
-      });
-
-      socketRef.current.on('forceRoomChange', ({ newRoom }) => {
-        console.log('Перемещение в новую комнату:', newRoom);
-        setCurrentRoom(newRoom);
-        joinedRoomsRef.current.add(newRoom);
-        socketRef.current.emit('joinRoom', { room: newRoom, lastTimestamp: null });
-      });
-
-      socketRef.current.on('error', ({ message }) => {
-        console.error('Server error:', message);
-      });
-    };
-
-    initializeSocket();
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        console.log('Socket disconnected on unmount');
+      } else {
+        const testUser = {
+          userId: 'test123',
+          firstName: 'Test User',
+          isHuman: true
+        };
+        const lastRoom = 'Полигон утилизации';
+        console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
+        socket.emit('auth', { ...testUser });
+        setTelegramTheme('light');
       }
+    });
+
+    socket.on('userUpdate', (updatedUser) => {
+      console.log('Received userUpdate from server:', updatedUser);
+      setUser(prevUser => {
+        const newUser = { 
+          ...prevUser, 
+          ...updatedUser, 
+          homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true)
+        };
+        console.log('Updated user state after userUpdate:', newUser);
+        return newUser;
+      });
+      if (updatedUser.isRegistered !== undefined) {
+        setIsRegistered(updatedUser.isRegistered);
+      }
+      if (updatedUser.isHuman) {
+        socket.emit('getPets', { userId: updatedUser.userId });
+      }
+    });
+
+    socket.on('takeAnimalHomeSuccess', ({ animalId, owner, animal }) => {
+      if (owner === user?.userId) {
+        setPets(prevPets => [...prevPets, animal]);
+      }
+    });
+
+    socket.on('petsList', (petsData) => {
+      setPets(petsData.map(pet => ({
+        userId: pet.userId,
+        name: pet.name,
+        animalType: pet.animalType,
+        photoUrl: pet.photoUrl,
+        onLeash: pet.onLeash,
+        owner: pet.owner
+      })));
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      setIsAuthenticated(false);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error.message);
+    });
+
+    socket.on('authSuccess', ({ defaultRoom, isRegistered }) => {
+      console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
+      setIsAuthenticated(true);
+      setIsRegistered(isRegistered);
+      if (isRegistered) {
+        setCurrentRoom(defaultRoom);
+        joinedRoomsRef.current.add(defaultRoom);
+        socket.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
+      }
+    });
+
+    socket.on('forceRoomChange', ({ newRoom }) => {
+      console.log('Перемещение в новую комнату:', newRoom);
+      setCurrentRoom(newRoom);
+      joinedRoomsRef.current.add(newRoom);
+      socket.emit('joinRoom', { room: newRoom, lastTimestamp: null });
+    });
+
+    socket.on('error', ({ message }) => {
+      console.error('Server error:', message);
+    });
+
+    // Cleanup только при размонтировании всего приложения
+    return () => {
+      socket.disconnect();
+      console.log('Socket disconnected on unmount');
     };
-  }, [user?.userId]);
+  }, []); // Зависимости пустые, так как сокет глобальный
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);
     setCurrentRoom(defaultRoom);
     joinedRoomsRef.current.add(defaultRoom);
-    socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
+    socket.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
   };
 
   useEffect(() => {
@@ -196,13 +190,13 @@ function App() {
   }, []);
 
   const handleRoomSelect = (room) => {
-    if (!room || !socketRef.current || room === currentRoom || !isAuthenticated) {
+    if (!room || !socket.connected || room === currentRoom || !isAuthenticated) {
       console.log('Cannot join room: conditions not met');
       return;
     }
 
-    if (currentRoom && socketRef.current) {
-      socketRef.current.emit('leaveRoom', currentRoom);
+    if (currentRoom && socket.connected) {
+      socket.emit('leaveRoom', currentRoom);
     }
 
     setCurrentRoom(room);
@@ -218,22 +212,16 @@ function App() {
 
     if (!joinedRoomsRef.current.has(room)) {
       console.log(`Emitting joinRoom for new room: ${room}`);
-      socketRef.current.emit('joinRoom', { room, lastTimestamp: null });
+      socket.emit('joinRoom', { room, lastTimestamp: null });
       joinedRoomsRef.current.add(room);
     } else {
       console.log(`Rejoining room: ${room}`);
-      socketRef.current.emit('joinRoom', { room, lastTimestamp: null });
+      socket.emit('joinRoom', { room, lastTimestamp: null });
     }
   };
 
-  // Исправленный useEffect для handleRoomSelect
   useEffect(() => {
-    // Этот useEffect не должен автоматически вызывать handleRoomSelect
-    // Он предназначен для обработки внешних вызовов handleRoomSelect, поэтому оставляем его пустым
-  }, [currentRoom, isAuthenticated, user?.userId]); // Добавлены все зависимости
-
-  useEffect(() => {
-    if (activeTab !== 'chat' && currentRoom && socketRef.current) {
+    if (activeTab !== 'chat' && currentRoom && socket.connected) {
       console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
     }
   }, [activeTab, currentRoom, user?.userId]);
@@ -256,7 +244,7 @@ function App() {
       <Registration
         user={user}
         theme={theme === 'telegram' ? telegramTheme : theme}
-        socket={socketRef.current}
+        socket={socket}
         onRegistrationComplete={handleRegistrationComplete}
       />
     );
@@ -268,24 +256,24 @@ function App() {
 
   return (
     <AppContainer>
-      <Header user={user} room={currentRoom} theme={appliedTheme} socket={socketRef.current} />
+      <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
       <Content>
         {activeTab === 'chat' && (
           <Chat
             userId={user?.userId}
             room={currentRoom}
             theme={appliedTheme}
-            socket={socketRef.current}
+            socket={socket}
             joinedRoomsRef={joinedRoomsRef}
             user={user}
           />
         )}
-        {activeTab === 'actions' && socketRef.current && (
+        {activeTab === 'actions' && socket.connected && (
           <Actions
             theme={appliedTheme}
             currentRoom={currentRoom}
             userId={user?.userId}
-            socket={socketRef.current}
+            socket={socket}
             personalItems={personalItems}
             pets={pets}
             isModalOpen={isActionModalOpen}
@@ -293,12 +281,12 @@ function App() {
             user={user}
           />
         )}
-        {activeTab === 'housing' && socketRef.current && (
+        {activeTab === 'housing' && socket.connected && (
           <Inventory
             userId={user?.userId}
             currentRoom={currentRoom}
             theme={appliedTheme}
-            socket={socketRef.current}
+            socket={socket}
             onItemsUpdate={handleItemsUpdate}
             user={user}
           />

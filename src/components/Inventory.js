@@ -108,28 +108,18 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   }, [userId, currentRoom, user]);
 
   useEffect(() => {
-    if (!socket || !userId) {
-      console.log('Inventory.js: No socket or userId, skipping setup');
-      return;
-    }
+    if (!socket || !userId) return;
 
     console.log('Inventory.js: Setting up socket listeners for userId:', userId);
 
-    socket.emit('getItems', { owner: userOwnerKey });
-    socket.emit('getItems', { owner: locationOwnerKey });
-    socket.emit('getInventoryLimit', { owner: userOwnerKey });
-    socket.emit('getInventoryLimit', { owner: locationOwnerKey });
-    socket.emit('getCredits'); // Запрашиваем кредиты
-
-    if (isShelter) {
-      socket.emit('getShelterAnimals');
-    }
-
-    if (currentRoom === 'Магазин "Всё на свете"' && user?.isHuman) {
-      setShopItems(shopStaticItems);
-    } else {
-      setShopItems([]);
-    }
+    const handleCreditsUpdate = (newCredits) => {
+      console.log('Inventory.js: Received creditsUpdate:', newCredits);
+      if (typeof newCredits === 'number') {
+        setCredits(newCredits);
+      } else {
+        console.error('Inventory.js: Invalid credits value:', newCredits);
+      }
+    };
 
     socket.on('items', handleItemsUpdate);
     socket.on('inventoryLimit', handleLimitUpdate);
@@ -139,23 +129,16 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       setError(message);
       setTimeout(() => setError(null), 3000);
     });
-    socket.on('creditsUpdate', (newCredits) => {
-      console.log('Inventory.js: Received creditsUpdate:', newCredits);
-      if (typeof newCredits === 'number') {
-        setCredits(newCredits);
-      } else {
-        console.error('Inventory.js: Invalid credits value received:', newCredits);
-      }
-    });
-    // Исправляем обработчик для getCredits, так как это callback, а не событие
-    socket.emit('getCredits', ({ success, credits }) => {
-      console.log('Inventory.js: Received getCredits response:', { success, credits });
-      if (success && typeof credits === 'number') {
-        setCredits(credits);
-      } else {
-        console.error('Inventory.js: Failed to fetch credits:', { success, credits });
-      }
-    });
+    socket.on('creditsUpdate', handleCreditsUpdate);
+
+    socket.emit('getItems', { owner: userOwnerKey });
+    socket.emit('getItems', { owner: locationOwnerKey });
+    socket.emit('getInventoryLimit', { owner: userOwnerKey });
+    socket.emit('getInventoryLimit', { owner: locationOwnerKey });
+
+    if (isShelter) {
+      socket.emit('getShelterAnimals');
+    }
 
     return () => {
       socket.off('items', handleItemsUpdate);
@@ -163,9 +146,26 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       socket.off('itemAction', handleItemAction);
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
-      socket.off('creditsUpdate');
+      socket.off('creditsUpdate', handleCreditsUpdate);
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems]);
+  }, [socket, userId, userOwnerKey, locationOwnerKey, isShelter]); // Уменьшили зависимости
+
+  useEffect(() => {
+    if (!socket || !userId) return;
+
+    socket.emit('getCredits', ({ success, credits }) => {
+      console.log('Inventory.js: Received getCredits response:', { success, credits });
+      if (success && typeof credits === 'number') {
+        setCredits(credits);
+      }
+    });
+
+    if (currentRoom === 'Магазин "Всё на свете"' && user?.isHuman) {
+      setShopItems(shopStaticItems);
+    } else {
+      setShopItems([]);
+    }
+  }, [socket, userId, currentRoom, user, shopStaticItems]); // Отдельный эффект для getCredits и shopItems
 
   const handleBuyItem = (item) => {
     if (isActionCooldown) return;

@@ -809,8 +809,8 @@ io.on('connection', (socket) => {
         return;
       }
 
-      console.log('Server: User credits:', user.credits, 'Item cost:', item.cost); // Логируем
-      if (parseInt(user.credits) < item.cost) {
+      console.log('Server: User credits:', user.credits, 'Item cost:', item.cost);
+      if (user.credits < item.cost) {
         if (callback) callback({ success: false, message: 'Недостаточно кредитов' });
         return;
       }
@@ -842,8 +842,8 @@ io.on('connection', (socket) => {
       itemCache.set(owner, [...ownerItems, newItem]);
 
       const updatedLimit = await InventoryLimit.findOne({ owner });
-      socket.emit('inventoryLimit', updatedLimit);
-      socket.emit('creditsUpdate', updatedUser.credits);
+      io.to(owner).emit('inventoryLimit', updatedLimit); // Обновляем всем клиентам
+      io.to(owner).emit('creditsUpdate', updatedUser.credits); // Обновляем всем клиентам
 
       const currentRoom = userCurrentRoom.get(socket.userData.userId);
       if (currentRoom) {

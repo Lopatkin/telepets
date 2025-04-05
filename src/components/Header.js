@@ -150,30 +150,28 @@ function Header({ user, room, theme, socket }) {
     if (!socket || !user?.userId) return;
 
     const handleCreditsUpdate = (newCredits) => {
+      console.log('Header.js: Credits updated via socket:', newCredits); // Логируем
       if (typeof newCredits === 'number') {
-        console.log('Credits updated via socket:', newCredits);
         setCredits(newCredits);
       } else {
-        console.error('Received invalid credits value:', newCredits);
+        console.error('Header.js: Received invalid credits value:', newCredits);
       }
     };
 
     socket.on('creditsUpdate', handleCreditsUpdate);
 
-    // Начальные кредиты уже приходят через creditsUpdate в auth, поэтому getCredits необязателен
-    // Но оставим его как запасной вариант, если creditsUpdate не сработает
     socket.emit('getCredits', ({ success, credits }) => {
-      if (success) {
-        console.log('Initial credits received:', credits);
+      console.log('Header.js: Initial credits received:', credits);
+      if (success && typeof credits === 'number') {
         setCredits(credits);
       } else {
-        console.error('Failed to fetch initial credits');
+        console.error('Header.js: Failed to fetch initial credits');
       }
     });
 
     return () => {
       socket.off('creditsUpdate', handleCreditsUpdate);
-      console.log('Unsubscribed from creditsUpdate');
+      console.log('Header.js: Unsubscribed from creditsUpdate');
     };
   }, [socket, user]);
 

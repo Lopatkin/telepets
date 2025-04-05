@@ -38,15 +38,14 @@ function App() {
   const [telegramTheme, setTelegramTheme] = useState('light');
   const socketRef = useRef(null);
   const joinedRoomsRef = useRef(new Set());
-  const [socket, setSocket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [personalItems, setPersonalItems] = useState([]);
-  const [pets, setPets] = useState([]); // Новое состояние для питомцев
+  const [pets, setPets] = useState([]);
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
   const closeActionModal = () => {
-    console.log('Closing action modal'); // Отладка
+    console.log('Closing action modal');
     setIsActionModalOpen(false);
   };
 
@@ -70,7 +69,6 @@ function App() {
 
       socketRef.current.on('connect', () => {
         console.log('Socket connected:', socketRef.current.id);
-        setSocket(socketRef.current);
 
         if (window.Telegram?.WebApp) {
           window.Telegram.WebApp.ready();
@@ -82,21 +80,20 @@ function App() {
               username: telegramData.user.username || '',
               lastName: telegramData.user.last_name || '',
               photoUrl: telegramData.user.photo_url || '',
-              owner: telegramData.isHuman === false ? null : undefined // Добавляем owner для животных
+              owner: telegramData.isHuman === false ? null : undefined
             };
-            // Загружаем последнюю комнату из localStorage, по умолчанию "Полигон утилизации"
             const lastRoom = JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации';
-            console.log('Загружена последняя комната из localStorage:', lastRoom); // Для отладки
+            console.log('Загружена последняя комната из localStorage:', lastRoom);
             socketRef.current.emit('auth', { ...initialUserData });
             setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
           } else {
             const testUser = {
               userId: 'test123',
               firstName: 'Test User',
-              isHuman: false // Предполагаем, что тестовый пользователь — человек
+              isHuman: true // Исправлено с false на true для тестового пользователя
             };
             const lastRoom = 'Полигон утилизации';
-            console.log('Используется дефолтная комната для тестового пользователя:', lastRoom); // Для отладки
+            console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
             socketRef.current.emit('auth', { ...testUser });
             setTelegramTheme('light');
           }
@@ -104,10 +101,10 @@ function App() {
           const testUser = {
             userId: 'test123',
             firstName: 'Test User',
-            isHuman: false // Предполагаем, что тестовый пользователь — человек
+            isHuman: true // Исправлено с false на true для тестового пользователя
           };
           const lastRoom = 'Полигон утилизации';
-          console.log('Используется дефолтная комната для тестового пользователя:', lastRoom); // Для отладки
+          console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
           socketRef.current.emit('auth', { ...testUser });
           setTelegramTheme('light');
         }
@@ -118,7 +115,7 @@ function App() {
             const newUser = { 
               ...prevUser, 
               ...updatedUser, 
-              homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true) // Значение по умолчанию
+              homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true)
             };
             console.log('Updated user state after userUpdate:', newUser);
             return newUser;
@@ -126,20 +123,17 @@ function App() {
           if (updatedUser.isRegistered !== undefined) {
             setIsRegistered(updatedUser.isRegistered);
           }
-          // Запрашиваем питомцев для человека
           if (updatedUser.isHuman) {
             socketRef.current.emit('getPets', { userId: updatedUser.userId });
           }
         });
 
-        // Обработка добавления нового питомца
         socketRef.current.on('takeAnimalHomeSuccess', ({ animalId, owner, animal }) => {
           if (owner === user?.userId) {
             setPets(prevPets => [...prevPets, animal]);
           }
         });
 
-        // Новый обработчик для получения списка питомцев
         socketRef.current.on('petsList', (petsData) => {
           setPets(petsData.map(pet => ({
             userId: pet.userId,
@@ -150,13 +144,10 @@ function App() {
             owner: pet.owner
           })));
         });
-
-
       });
 
       socketRef.current.on('disconnect', (reason) => {
         console.log('Socket disconnected:', reason);
-        setSocket(null);
         setIsAuthenticated(false);
       });
 
@@ -175,23 +166,6 @@ function App() {
         }
       });
 
-      socketRef.current.on('userUpdate', (updatedUser) => {
-        console.log('Received userUpdate from server:', updatedUser);
-        setUser(prevUser => {
-          if (!prevUser) {
-            // Если user ещё не инициализирован, используем полный объект
-            return updatedUser;
-          }
-          // Обновляем только те поля, которые пришли в updatedUser
-          const newUser = { ...prevUser, ...updatedUser };
-          console.log('Updated user state after userUpdate:', newUser);
-          return newUser;
-        });
-        if (updatedUser.isRegistered !== undefined) {
-          setIsRegistered(updatedUser.isRegistered);
-        }
-      });
-
       socketRef.current.on('forceRoomChange', ({ newRoom }) => {
         console.log('Перемещение в новую комнату:', newRoom);
         setCurrentRoom(newRoom);
@@ -202,24 +176,23 @@ function App() {
       socketRef.current.on('error', ({ message }) => {
         console.error('Server error:', message);
       });
-
-      return () => {
-        if (socketRef.current) {
-          socketRef.current.disconnect();
-          console.log('Socket disconnected on unmount');
-        }
-      };
     };
 
     initializeSocket();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        console.log('Socket disconnected on unmount');
+      }
+    };
+  }, []); // Убрана зависимость [user]
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);
     setCurrentRoom(defaultRoom);
     joinedRoomsRef.current.add(defaultRoom);
-    socket.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
+    socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
   };
 
   useEffect(() => {
@@ -228,13 +201,13 @@ function App() {
   }, []);
 
   const handleRoomSelect = (room) => {
-    if (!room || !socket || room === currentRoom || !isAuthenticated) {
+    if (!room || !socketRef.current || room === currentRoom || !isAuthenticated) {
       console.log('Cannot join room: conditions not met');
       return;
     }
 
-    if (currentRoom && socket) {
-      socket.emit('leaveRoom', currentRoom);
+    if (currentRoom && socketRef.current) {
+      socketRef.current.emit('leaveRoom', currentRoom);
     }
 
     setCurrentRoom(room);
@@ -250,19 +223,19 @@ function App() {
 
     if (!joinedRoomsRef.current.has(room)) {
       console.log(`Emitting joinRoom for new room: ${room}`);
-      socket.emit('joinRoom', { room, lastTimestamp: null });
+      socketRef.current.emit('joinRoom', { room, lastTimestamp: null });
       joinedRoomsRef.current.add(room);
     } else {
       console.log(`Rejoining room: ${room}`);
-      socket.emit('joinRoom', { room, lastTimestamp: null });
+      socketRef.current.emit('joinRoom', { room, lastTimestamp: null });
     }
   };
 
   useEffect(() => {
-    if (activeTab !== 'chat' && currentRoom && socket) {
+    if (activeTab !== 'chat' && currentRoom && socketRef.current) {
       console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
     }
-  }, [activeTab, currentRoom, socket]);
+  }, [activeTab, currentRoom]);
 
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
@@ -282,7 +255,7 @@ function App() {
       <Registration
         user={user}
         theme={theme === 'telegram' ? telegramTheme : theme}
-        socket={socket}
+        socket={socketRef.current}
         onRegistrationComplete={handleRegistrationComplete}
       />
     );
@@ -294,41 +267,39 @@ function App() {
 
   return (
     <AppContainer>
-      <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
+      <Header user={user} room={currentRoom} theme={appliedTheme} socket={socketRef.current} />
       <Content>
         {activeTab === 'chat' && (
           <Chat
             userId={user?.userId}
             room={currentRoom}
             theme={appliedTheme}
-            socket={socket}
+            socket={socketRef.current}
             joinedRoomsRef={joinedRoomsRef}
             user={user}
           />
         )}
-        {activeTab === 'actions' && socket && (
+        {activeTab === 'actions' && socketRef.current && (
           <Actions
             theme={appliedTheme}
             currentRoom={currentRoom}
             userId={user?.userId}
-            socket={socket}
+            socket={socketRef.current}
             personalItems={personalItems}
-            pets={pets} // Передаём питомцев
+            pets={pets}
             isModalOpen={isActionModalOpen}
             setIsModalOpen={setIsActionModalOpen}
-            user={user} // Добавляем пропс user
+            user={user}
           />
         )}
-        {activeTab === 'housing' && socket && (
+        {activeTab === 'housing' && socketRef.current && (
           <Inventory
             userId={user?.userId}
             currentRoom={currentRoom}
             theme={appliedTheme}
-            socket={socket}
+            socket={socketRef.current}
             onItemsUpdate={handleItemsUpdate}
-            closeActionModal={closeActionModal}
-            setIsModalOpen={setIsActionModalOpen}
-            user={user} // Добавляем user
+            user={user}
           />
         )}
         {activeTab === 'map' && !isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline && (
@@ -337,7 +308,7 @@ function App() {
             onRoomSelect={handleRoomSelect}
             theme={appliedTheme}
             currentRoom={currentRoom}
-            user={user} // Уже передаётся
+            user={user}
           />
         )}
         {activeTab === 'profile' && (

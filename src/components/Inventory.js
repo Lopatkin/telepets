@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 
+const BuyButton = styled(ActionButton)`
+  background: #FFA500; /* Оранжевый цвет для отличия */
+  color: white;
+`;
+
 const SubTabs = styled.div`
   display: flex;
   border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
@@ -477,6 +482,31 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     setShelterAnimals(animals);
   }, []);
 
+  const shopItems = currentRoom === 'Магазин "Всё на свете"' ? [
+    {
+      _id: 'static_collar',
+      name: 'Ошейник',
+      description: 'С ним вы сможете взять питомца из приюта.',
+      rarity: 'Обычный',
+      weight: 0.5,
+      cost: 250,
+      effect: 'Вы чувствуете, что вам это пригодится.',
+      owner: 'Магазин "Всё на свете"',
+    },
+    {
+      _id: 'static_leash',
+      name: 'Поводок',
+      description: 'Животное будет следовать за вами везде.',
+      rarity: 'Обычный',
+      weight: 0.5,
+      cost: 200,
+      effect: 'Вы чувствуете власть над кем-то. Приятно.',
+      owner: 'Магазин "Всё на свете"',
+    },
+  ] : [];
+
+  const allLocationItems = [...locationItems, ...shopItems];
+
   // Временное логирование для отладки
   useEffect(() => {
     console.log('Inventory props:', { userId, currentRoom, user });
@@ -754,7 +784,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                 </ActionButtons>
               </ItemCard>
             ))}
-            {activeTab === 'location' && !isShelter && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+            {activeTab === 'location' && !isShelter && groupItemsByNameAndWeight(allLocationItems).map(({ item, count }) => (
               <ItemCard
                 key={item._id}
                 theme={theme}
@@ -765,13 +795,22 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                   <ItemDetail theme={theme}>{item.description}</ItemDetail>
                 </ItemInfo>
                 <ActionButtons>
-                  <PickupButton
-                    onClick={() => handlePickupItem(item._id)}
-                    disabled={isActionCooldown}
-                  >
-                    Подобрать
-                    {isActionCooldown && <ProgressBar />}
-                  </PickupButton>
+                  {item.owner === 'Магазин "Всё на свете"' ? (
+                    <BuyButton
+                      disabled={isActionCooldown}
+                    >
+                      Купить
+                      {isActionCooldown && <ProgressBar />}
+                    </BuyButton>
+                  ) : (
+                    <PickupButton
+                      onClick={() => handlePickupItem(item._id)}
+                      disabled={isActionCooldown}
+                    >
+                      Подобрать
+                      {isActionCooldown && <ProgressBar />}
+                    </PickupButton>
+                  )}
                 </ActionButtons>
               </ItemCard>
             ))}
@@ -801,7 +840,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                 У вас пока нет предметов
               </div>
             )}
-            {activeTab === 'location' && !isShelter && locationItems.length === 0 && (
+            {activeTab === 'location' && !isShelter && allLocationItems.length === 0 && (
               <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
                 На этой локации нет предметов
               </div>

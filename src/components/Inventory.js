@@ -335,6 +335,24 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     setActionQuantity({ itemName: null, weight: null, count: 1, action: null });
   };
 
+  // В функции Inventory перед return добавить новую функцию для обработки нажатия "Посмотреть"
+  const handleViewPassport = (item) => {
+    socket.emit('getAnimalInfo', { animalId: item.animalId }, (response) => {
+      if (response.success) {
+        setSelectedItem({
+          ...item,
+          animalName: response.animal.name,
+          animalType: response.animal.animalType,
+          lastRoom: response.animal.lastRoom,
+          onLeash: response.animal.onLeash,
+        });
+      } else {
+        setError(response.message || 'Ошибка при получении данных животного');
+        setTimeout(() => setError(null), 3000);
+      }
+    });
+  };
+
   const openModal = (item) => {
     setSelectedItem(item);
   };
@@ -433,7 +451,15 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                 }
               >
                 <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
-                {item.description === 'Кошка' || item.description === 'Собака' ? (
+                {item.name === 'Паспорт животного' ? (
+                  <>
+                    <S.ItemDetail theme={theme}>Описание: {item.description}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Вес: {item.weight}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Стоимость: {item.cost}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Эффект: {item.effect}</S.ItemDetail>
+                  </>
+                ) : item.description === 'Кошка' || item.description === 'Собака' ? (
                   <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
                 ) : (
                   <>
@@ -445,23 +471,35 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                   </>
                 )}
                 <S.ActionButtons>
-                  {locationOwnerKey && (
-                    <S.MoveButton
-                      onClick={() => handleMoveItem(item.name, item.weight, count)}
+                  {item.name === 'Паспорт животного' ? (
+                    <S.PickupButton
+                      onClick={() => handleViewPassport(item)}
                       disabled={isActionCooldown}
                     >
-                      Выложить
+                      Посмотреть
                       {isActionCooldown && <S.ProgressBar />}
-                    </S.MoveButton>
-                  )}
-                  {item.name !== 'Мусор' && (
-                    <S.DeleteButton
-                      onClick={() => handleDeleteItem(item.name, item.weight, count)}
-                      disabled={isActionCooldown}
-                    >
-                      Сломать
-                      {isActionCooldown && <S.ProgressBar />}
-                    </S.DeleteButton>
+                    </S.PickupButton>
+                  ) : (
+                    <>
+                      {locationOwnerKey && (
+                        <S.MoveButton
+                          onClick={() => handleMoveItem(item.name, item.weight, count)}
+                          disabled={isActionCooldown}
+                        >
+                          Выложить
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.MoveButton>
+                      )}
+                      {item.name !== 'Мусор' && (
+                        <S.DeleteButton
+                          onClick={() => handleDeleteItem(item.name, item.weight, count)}
+                          disabled={isActionCooldown}
+                        >
+                          Сломать
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.DeleteButton>
+                      )}
+                    </>
                   )}
                 </S.ActionButtons>
               </S.ItemCard>
@@ -571,14 +609,35 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         isConfirm={!!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
       >
         {selectedItem && (
-          <S.ModalContent theme={theme}>
-            <S.ItemTitle theme={theme}>{selectedItem.name}</S.ItemTitle>
-            <S.ItemDetail theme={theme}>Описание: {selectedItem.description}</S.ItemDetail>
-            <S.ItemDetail theme={theme}>Редкость: {selectedItem.rarity}</S.ItemDetail>
-            <S.ItemDetail theme={theme}>Вес: {selectedItem.weight}</S.ItemDetail>
-            <S.ItemDetail theme={theme}>Стоимость: {selectedItem.cost}</S.ItemDetail>
-            <S.ItemDetail theme={theme}>Эффект: {selectedItem.effect}</S.ItemDetail>
-          </S.ModalContent>
+          selectedItem.name === 'Паспорт животного' ? (
+            <S.ModalContent theme={theme}>
+              <S.ItemTitle theme={theme}>Паспорт животного</S.ItemTitle>
+              <S.ItemDetail theme={theme}>Имя: {selectedItem.animalName || 'Неизвестно'}</S.ItemDetail>
+              <S.ItemDetail theme={theme}>Тип: {selectedItem.animalType || 'Неизвестно'}</S.ItemDetail>
+              <S.ItemDetail theme={theme}>Локация: {selectedItem.lastRoom || 'Неизвестно'}</S.ItemDetail>
+              <S.ActionButtons>
+                <S.PickupButton
+                  onClick={() => {
+                    socket.emit('toggleLeash', { animalId: selectedItem.animalId, onLeash: !selectedItem.onLeash });
+                    setSelectedItem(null);
+                  }}
+                  disabled={isActionCooldown}
+                >
+                  {selectedItem.onLeash ? 'Отвязать поводок' : 'Привязать поводок'}
+                  {isActionCooldown && <S.ProgressBar />}
+                </S.PickupButton>
+              </S.ActionButtons>
+            </S.ModalContent>
+          ) : (
+            <S.ModalContent theme={theme}>
+              <S.ItemTitle theme={theme}>{selectedItem.name}</S.ItemTitle>
+              <S.ItemDetail theme={theme}>Описание: {selectedItem.description}</S.ItemDetail>
+              <S.ItemDetail theme={theme}>Редкость: {selectedItem.rarity}</S.ItemDetail>
+              <S.ItemDetail theme={theme}>Вес: {selectedItem.weight}</S.ItemDetail>
+              <S.ItemDetail theme={theme}>Стоимость: {selectedItem.cost}</S.ItemDetail>
+              <S.ItemDetail theme={theme}>Эффект: {selectedItem.effect}</S.ItemDetail>
+            </S.ModalContent>
+          )
         )}
         {confirmDelete && (
           <S.ConfirmModalContent theme={theme}>

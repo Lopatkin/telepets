@@ -903,6 +903,57 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('getAnimalInfo', async ({ animalId }, callback) => {
+    try {
+      const animal = await User.findOne({ userId: animalId });
+      if (!animal || animal.isHuman) {
+        return callback({ success: false, message: 'Животное не найдено' });
+      }
+      callback({
+        success: true,
+        animal: {
+          name: animal.name,
+          animalType: animal.animalType,
+          lastRoom: animal.lastRoom,
+          onLeash: animal.onLeash,
+        },
+      });
+    } catch (err) {
+      console.error('Error fetching animal info:', err.message, err.stack);
+      callback({ success: false, message: 'Ошибка сервера' });
+    }
+  });
+
+  socket.on('toggleLeash', async ({ animalId, onLeash }) => {
+    try {
+      const animal = await User.findOne({ userId: animalId });
+      if (!animal || animal.isHuman) {
+        socket.emit('error', { message: 'Животное не найдено' });
+        return;
+      }
+      if (animal.owner !== socket.userData.userId) {
+        socket.emit('error', { message: 'Вы не являетесь владельцем этого животного' });
+        return;
+      }
+
+      await User.updateOne(
+        { userId: animalId },
+        { onLeash }
+      );
+
+      console.log(`Animal ${animalId} leash status updated to ${onLeash}`);
+
+      // Уведомляем клиента животного, если он онлайн
+      const animalSocket = activeSockets.get(animalId);
+      if (animalSocket) {
+        animalSocket.emit('leashStatus', { onLeash });
+      }
+    } catch (err) {
+      console.error('Error toggling leash:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка сервера' });
+    }
+  });
+
   socket.on('getInventoryLimit', async ({ owner }) => {
     try {
       const limit = await InventoryLimit.findOne({ owner });

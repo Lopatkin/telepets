@@ -151,8 +151,10 @@ function App() {
             owner: pet.owner
           })));
         });
+      });
 
-
+      socketRef.current.on('leashStatus', ({ onLeash }) => {
+        setUser((prev) => ({ ...prev, onLeash }));
       });
 
       socketRef.current.on('disconnect', (reason) => {
@@ -206,6 +208,7 @@ function App() {
 
       return () => {
         if (socketRef.current) {
+          socketRef.current.off('leashStatus');
           socketRef.current.disconnect();
           console.log('Socket disconnected on unmount');
         }

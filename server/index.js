@@ -585,6 +585,64 @@ io.on('connection', (socket) => {
       console.error(`Error updating lastRoom for user ${socket.userData.userId}:`, error);
     }
 
+
+    // Проверка и перемещение животных на привязи
+    if (user.isHuman) {
+      const animalsOnLeash = await User.find({
+        owner: socket.userData.userId,
+        onLeash: true,
+        isHuman: false
+      });
+      for (const animal of animalsOnLeash) {
+        const animalSocket = activeSockets.get(animal.userId);
+        if (animalSocket) {
+          const currentAnimalRoom = userCurrentRoom.get(animal.userId);
+          if (currentAnimalRoom !== room) {
+            // Удаляем животное из старой комнаты
+            if (currentAnimalRoom && roomUsers[currentAnimalRoom]) {
+              roomUsers[currentAnimalRoom].forEach(u => {
+                if (u.userId === animal.userId) {
+                  roomUsers[currentAnimalRoom].delete(u);
+                }
+              });
+              io.to(currentAnimalRoom).emit('roomUsers', Array.from(roomUsers[currentAnimalRoom]));
+            }
+
+            // Обновляем комнату животного
+            userCurrentRoom.set(animal.userId, room);
+            animalSocket.leave(currentAnimalRoom || '');
+            animalSocket.join(room);
+
+            // Добавляем животное в новую комнату
+            if (!roomUsers[room]) roomUsers[room] = new Set();
+            roomUsers[room].add({
+              userId: animal.userId,
+              firstName: animal.firstName || '',
+              username: animal.username || '',
+              lastName: animal.lastName || '',
+              photoUrl: animal.photoUrl || '',
+              name: animal.name || '',
+              isHuman: false,
+              onLeash: true,
+              owner: socket.userData.userId,
+              homeless: animal.homeless
+            });
+            io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
+
+            // Отправляем животному команду на перемещение
+            animalSocket.emit('forceRoomChange', { newRoom: room });
+
+            // Отправляем историю сообщений для новой комнаты
+            const messages = await Message.find({ room }).sort({ timestamp: 1 }).limit(100);
+            animalSocket.emit('messageHistory', messages);
+
+            console.log(`Animal ${animal.userId} moved to room ${room} with owner ${socket.userData.userId}`);
+          }
+        }
+      }
+    }
+
+
     const userOwnerKey = `user_${socket.userData.userId}`;
     const animalItems = await Item.find({ owner: userOwnerKey, playerID: { $exists: true } });
     if (animalItems.length > 0) {

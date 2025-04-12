@@ -118,35 +118,39 @@ const isLovecDachnyTime = () => {
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  socket.on('spendCredits', async ({ amount, purpose }, callback) => {
+  socket.on('spendCredits', async ({ amount, purpose }, callback = () => { }) => {
     if (!socket.userData || !socket.userData.userId) {
-      if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
+      callback({ success: false, message: 'Пользователь не аутентифицирован' });
       return;
     }
 
     try {
-      const userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
+      const userCredits = await UserCredits.findOneAndUpdate(
+        { userId: socket.userData.userId },
+        { $inc: { credits: -amount } },
+        { new: true }
+      );
+
       if (!userCredits) {
-        if (callback) callback({ success: false, message: 'Не найден счет пользователя' });
+        callback({ success: false, message: 'Не найден счет пользователя' });
         return;
       }
 
-      if (userCredits.credits < amount) {
-        if (callback) callback({ success: false, message: 'Недостаточно кредитов' });
+      if (userCredits.credits < 0) {
+        // Откатываем изменение, если кредитов недостаточно
+        await UserCredits.updateOne(
+          { userId: socket.userData.userId },
+          { $inc: { credits: amount } }
+        );
+        callback({ success: false, message: 'Недостаточно кредитов' });
         return;
       }
-
-      userCredits.credits -= amount;
-      await userCredits.save();
-
-      // Логируем транзакцию (можно добавить отдельную модель для истории транзакций)
-      console.log(`User ${socket.userData.userId} spent ${amount} credits for: ${purpose}`);
 
       socket.emit('creditsUpdate', userCredits.credits);
-      if (callback) callback({ success: true, newBalance: userCredits.credits });
+      callback({ success: true, newBalance: userCredits.credits });
     } catch (err) {
       console.error('Error spending credits:', err.message, err.stack);
-      if (callback) callback({ success: false, message: 'Ошибка при списании кредитов' });
+      callback({ success: false, message: 'Ошибка при списании кредитов' });
     }
   });
 
@@ -507,24 +511,29 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('getCredits', async (callback) => {
+  socket.on('getCredits', async (data, callback = () => { }) => {
     if (!socket.userData || !socket.userData.userId) {
-      if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
+      callback({ success: false, message: 'Пользователь не аутентифицирован' });
       return;
     }
+
     try {
       const userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
-      if (callback) callback({ success: true, credits: userCredits ? userCredits.credits : 0 });
+      callback({
+        success: true,
+        credits: userCredits ? userCredits.credits : 0
+      });
     } catch (err) {
       console.error('Error fetching credits:', err.message);
-      if (callback) callback({ success: false, message: 'Ошибка при получении кредитов' });
+      callback({ success: false, message: 'Ошибка при получении кредитов' });
     }
   });
 
-  socket.on('joinRoom', async ({ room, lastTimestamp }) => {
+  socket.on('joinRoom', async ({ room, lastTimestamp }, callback = () => { }) => {
     if (typeof room !== 'string') {
       console.error('Invalid room type:', room);
       socket.emit('error', { message: 'Некорректное название комнаты' });
+      callback({ success: false, message: 'Некорректное название комнаты' });
       return;
     }
 
@@ -655,7 +664,8 @@ io.on('connection', (socket) => {
     const JOIN_COOLDOWN = 1000;
 
     if (isRejoining && (now - lastJoinTime < JOIN_COOLDOWN)) {
-      console.log(`User ${socket.userData.userId} attempted to rejoin room: ${room} too quickly — skipping`);
+      console.log(`User ${socket.userData.userId} attempted to rejoin room: ${room} too quickly - sending current room data`);
+      callback({ success: false, message: 'Повторное присоединение слишком быстро' });
       return;
     }
 
@@ -711,6 +721,7 @@ io.on('connection', (socket) => {
       console.error('Error fetching messages:', err.message, err.stack);
       socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
     }
+    callback({ success: true });
   });
 
   socket.on('leaveRoom', (roomToLeave) => {

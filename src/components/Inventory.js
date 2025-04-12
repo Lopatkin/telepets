@@ -150,47 +150,59 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     if (isActionCooldown) return;
 
     try {
-      // Проверяем баланс пользователя
-      const response = await new Promise((resolve) => {
+      setIsActionCooldown(true);
+
+      // Проверяем баланс пользователя с помощью Promise
+      const creditsResponse = await new Promise((resolve) => {
         socket.emit('getCredits', {}, resolve);
       });
 
-      if (!response.success) {
+      if (!creditsResponse?.success) {
         setError('Не удалось проверить баланс');
+        setIsActionCooldown(false);
         return;
       }
 
-      if (response.credits < item.cost) {
+      if (creditsResponse.credits < item.cost) {
         setError('Недостаточно кредитов');
+        setIsActionCooldown(false);
         return;
       }
-
-      setIsActionCooldown(true);
 
       // Создаем предмет и списываем кредиты
-      socket.emit('addItem', {
-        owner: userOwnerKey,
-        item: {
-          name: item.name,
-          description: item.description,
-          rarity: item.rarity,
-          weight: item.weight,
-          cost: item.cost,
-          effect: item.effect,
-        },
-      }, (addItemResponse) => {
-        if (addItemResponse && addItemResponse.success) {
-          // После успешного добавления предмета списываем кредиты
-          socket.emit('spendCredits', {
-            amount: item.cost,
-            purpose: `Покупка: ${item.name}`
-          });
-        } else {
-          setError(addItemResponse?.message || 'Ошибка при покупке');
-        }
-        setIsActionCooldown(false);
+      const addItemResponse = await new Promise((resolve) => {
+        socket.emit('addItem', {
+          owner: userOwnerKey,
+          item: {
+            name: item.name,
+            description: item.description,
+            rarity: item.rarity,
+            weight: item.weight,
+            cost: item.cost,
+            effect: item.effect,
+          },
+        }, resolve);
       });
 
+      if (!addItemResponse?.success) {
+        setError(addItemResponse?.message || 'Ошибка при покупке');
+        setIsActionCooldown(false);
+        return;
+      }
+
+      // После успешного добавления предмета списываем кредиты
+      const spendResponse = await new Promise((resolve) => {
+        socket.emit('spendCredits', {
+          amount: item.cost,
+          purpose: `Покупка: ${item.name}`
+        }, resolve);
+      });
+
+      if (!spendResponse?.success) {
+        setError(spendResponse?.message || 'Ошибка при списании кредитов');
+      }
+
+      setIsActionCooldown(false);
     } catch (err) {
       console.error('Ошибка при покупке:', err);
       setError('Ошибка при покупке');

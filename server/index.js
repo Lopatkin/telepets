@@ -1130,20 +1130,88 @@ io.on('connection', (socket) => {
 
       // Формируем userOwnerKey для владельца (человека)
       const userOwnerKey = `user_${socket.userData.userId}`;
+      const animalOwnerKey = `user_${animalId}`;
 
-      // Обновляем данные животного: устанавливаем owner и onLeash
+      // Проверка наличия "Ошейника" и "Поводка"
+      const collar = await Item.findOne({ owner: userOwnerKey, name: 'Ошейник' });
+      const leash = await Item.findOne({ owner: userOwnerKey, name: 'Поводок' });
+      if (!collar || !leash) {
+        socket.emit('error', { message: 'Чтобы забрать питомца из приюта, вам нужен ошейник и поводок.' });
+        return;
+      }
+
+      // Удаляем "Ошейник" из инвентаря человека
+      await Item.deleteOne({ _id: collar._id });
+      await InventoryLimit.updateOne(
+        { owner: userOwnerKey },
+        { $inc: { currentWeight: -collar.weight } }
+      );
+
+      // Обновляем кэш предметов для человека
+      const humanItems = itemCache.get(userOwnerKey) || [];
+      itemCache.set(userOwnerKey, humanItems.filter(i => i._id.toString() !== collar._id.toString()));
+
+      // Добавляем "Ошейник" в инвентарь животного
+      const newCollar = new Item({
+        owner: animalOwnerKey,
+        name: 'Ошейник',
+        description: 'У вас есть хозяин.',
+        rarity: 'Обычный',
+        weight: 0.5,
+        cost: 250,
+        effect: 'Вы не бездомное животное, а любимый питомец.',
+      });
+      await newCollar.save();
+      await InventoryLimit.updateOne(
+        { owner: animalOwnerKey },
+        { $inc: { currentWeight: newCollar.weight } }
+      );
+
+      // Инициализируем лимиты инвентаря для животного, если их нет
+      let animalLimit = await InventoryLimit.findOne({ owner: animalOwnerKey });
+      if (!animalLimit) {
+        animalLimit = await InventoryLimit.create({
+          owner: animalOwnerKey,
+          maxWeight: 5, // Лимит для животного, можно настроить
+        });
+      }
+
+      // Обновляем кэш предметов для животного
+      const animalItems = itemCache.get(animalOwnerKey) || [];
+      itemCache.set(animalOwnerKey, [...animalItems, newCollar]);
+
+      // Обновляем данные животного
       await User.updateOne(
         { userId: animalId },
         {
           owner: socket.userData.userId,
           onLeash: true,
-          homeless: false // Животное больше не бездомное
+          homeless: false,
+          residence: humanUser.residence || 'Не указано', // Копируем residence человека
         }
       );
 
+      // Создаём предмет "Паспорт" для человека
+      const passport = new Item({
+        owner: userOwnerKey,
+        name: 'Паспорт животного',
+        description: `Ваш питомец - ${animalName}`,
+        rarity: 'Обычный',
+        weight: 0.1,
+        cost: 100,
+        effect: 'Вы чувствуете ответственность за кого-то.',
+      });
+      await passport.save();
+      await InventoryLimit.updateOne(
+        { owner: userOwnerKey },
+        { $inc: { currentWeight: passport.weight } }
+      );
+
+      // Обновляем кэш предметов для человека (добавляем паспорт)
+      itemCache.set(userOwnerKey, [...itemCache.get(userOwnerKey), passport]);
+
       // Убираем некорректное добавление животного как предмета в инвентарь
-      // Вместо этого обновляем данные животного и уведомляем клиента
-      const updatedAnimal = await User.findOne({ userId: animalId });
+
 
       // Обновляем список животных в приюте
       const shelterAnimals = await User.find({
@@ -1151,7 +1219,7 @@ io.on('connection', (socket) => {
         homeless: true,
         onLeash: false,
         isHuman: false,
-        owner: null
+        owner: null,
       }).select('userId name photoUrl lastActivity isHuman animalType owner');
 
       const now = new Date();
@@ -1167,7 +1235,25 @@ io.on('connection', (socket) => {
 
       io.to('Приют для животных "Кошкин дом"').emit('shelterAnimals', animalsWithStatus);
 
-      // Отправляем полные данные о питомце
+      // Вместо этого обновляем данные животного и уведомляем клиента
+      const updatedAnimal = await User.findOne({ userId: animalId });
+
+      // Отправляем обновлённые предметы и лимиты человеку
+      const updatedHumanItems = await Item.find({ owner: userOwnerKey });
+      const updatedHumanLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
+      socket.emit('items', { owner: userOwnerKey, items: updatedHumanItems });
+      socket.emit('inventoryLimit', updatedHumanLimit);
+
+      // Отправляем обновлённые предметы и лимиты животному
+      const updatedAnimalItems = await Item.find({ owner: animalOwnerKey });
+      const updatedAnimalLimit = await InventoryLimit.findOne({ owner: animalOwnerKey });
+      const animalSocket = activeSockets.get(animalId);
+      if (animalSocket) {
+        animalSocket.emit('items', { owner: animalOwnerKey, items: updatedAnimalItems });
+        animalSocket.emit('inventoryLimit', updatedAnimalLimit);
+      }
+
+      // Отправляем событие успеха
       socket.emit('takeAnimalHomeSuccess', {
         animalId,
         owner: socket.userData.userId,
@@ -1178,12 +1264,12 @@ io.on('connection', (socket) => {
           photoUrl: updatedAnimal.photoUrl,
           onLeash: updatedAnimal.onLeash,
           owner: updatedAnimal.owner,
-          homeless: updatedAnimal.homeless // Добавляем homeless
-        }
+          homeless: updatedAnimal.homeless,
+          residence: updatedAnimal.residence,
+        },
       });
 
       // Уведомляем животное, если оно онлайн
-      const animalSocket = activeSockets.get(animalId);
       if (animalSocket) {
         animalSocket.emit('userUpdate', {
           userId: animalId,
@@ -1194,7 +1280,8 @@ io.on('connection', (socket) => {
           onLeash: true,
           owner: socket.userData.userId,
           ownerOnline: true,
-          homeless: false // Обновляем homeless для животного
+          homeless: false,
+          residence: humanUser.residence || 'Не указано',
         });
       }
 

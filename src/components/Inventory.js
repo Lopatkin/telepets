@@ -210,13 +210,26 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     }
   };
 
-  const handleTakeHome = (animalId) => {
+  const handleTakeHome = (animalId, animalName) => {
     if (!socket || !userId) {
       console.error('Socket or userId not available');
+      setError('Ошибка: пользователь не аутентифицирован');
+      setTimeout(() => setError(null), 3000);
       return;
     }
-    socket.emit('takeAnimalHome', { animalId });
-    console.log(`Sent takeAnimalHome request for animal ID: ${animalId}`);
+
+    // Проверка наличия "Ошейника" и "Поводка"
+    const hasCollar = personalItems.some(item => item.name === 'Ошейник');
+    const hasLeash = personalItems.some(item => item.name === 'Поводок');
+
+    if (!hasCollar || !hasLeash) {
+      setError('Чтобы забрать питомца из приюта, вам нужен ошейник и поводок.');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+
+    socket.emit('takeAnimalHome', { animalId, animalName });
+    console.log(`Sent takeAnimalHome request for animal ID: ${animalId}, Name: ${animalName}`);
   };
 
   const handleMoveItem = (itemName, weight, maxCount) => {
@@ -393,7 +406,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                 <S.Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
                 <S.AnimalName theme={theme}>{animal.name}</S.AnimalName>
                 {!animal.owner && user?.isHuman && (
-                  <S.TakeHomeButton onClick={() => handleTakeHome(animal.userId)}>
+                  <S.TakeHomeButton onClick={() => handleTakeHome(animal.userId, animal.name)}>
                     Забрать домой
                   </S.TakeHomeButton>
                 )}

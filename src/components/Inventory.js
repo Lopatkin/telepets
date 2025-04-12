@@ -17,7 +17,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   const [selectedItem, setSelectedItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [actionQuantity, setActionQuantity] = useState({ itemName: null, weight: null, count: 1, action: null });
-  const [credits, setCredits] = useState(0); // Новое состояние для кредитов
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
@@ -107,6 +106,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     console.log('Inventory props:', { userId, currentRoom, user });
   }, [userId, currentRoom, user]);
 
+  // Убираем shopStaticItems из зависимостей useEffect, так как он теперь стабилен
   useEffect(() => {
     if (!socket || !userId) return;
 
@@ -114,16 +114,12 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     socket.emit('getItems', { owner: locationOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
-    socket.emit('getCredits', ({ success, credits }) => {
-      if (success) {
-        setCredits(credits);
-      }
-    });
 
     if (isShelter) {
       socket.emit('getShelterAnimals');
     }
 
+    // Добавляем предметы магазина для "Магазин 'Всё на свете'" только для людей
     if (currentRoom === 'Магазин "Всё на свете"' && user?.isHuman) {
       setShopItems(shopStaticItems);
     } else {
@@ -134,35 +130,27 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
     socket.on('shelterAnimals', handleShelterAnimals);
-    socket.on('creditsUpdate', (newCredits) => {
-      setCredits(newCredits);
-    });
     socket.on('error', ({ message }) => {
       setError(message);
       setTimeout(() => setError(null), 3000);
     });
+
 
     return () => {
       socket.off('items', handleItemsUpdate);
       socket.off('inventoryLimit', handleLimitUpdate);
       socket.off('itemAction', handleItemAction);
       socket.off('shelterAnimals', handleShelterAnimals);
-      socket.off('creditsUpdate');
       socket.off('error');
     };
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems]);
 
+  // Добавляем обработчик покупки
   const handleBuyItem = (item) => {
     if (isActionCooldown) return;
 
-    if (credits < item.cost) {
-      setError('Недостаточно кредитов для покупки');
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-
     setIsActionCooldown(true);
-    socket.emit('buyItem', {
+    socket.emit('addItem', {
       owner: userOwnerKey,
       item: {
         name: item.name,
@@ -172,17 +160,12 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         cost: item.cost,
         effect: item.effect,
       },
-    }, (response) => {
-      if (response && response.success) {
-        setTimeout(() => {
-          setIsActionCooldown(false);
-        }, 1000);
-      } else {
-        setError(response?.message || 'Ошибка при покупке');
-        setTimeout(() => setError(null), 3000);
-        setIsActionCooldown(false);
-      }
     });
+
+    // После покупки убираем предмет из списка магазина (имитация, пока не обновим сервер)
+    setTimeout(() => {
+      setIsActionCooldown(false);
+    }, 1000);
   };
 
   const handleTakeHome = (animalId) => {
@@ -442,7 +425,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                     <S.ActionButtons>
                       <S.PickupButton
                         onClick={() => handleBuyItem(item)}
-                        disabled={isActionCooldown || credits < item.cost}
+                        disabled={isActionCooldown}
                       >
                         Купить за {item.cost} кредитов
                         {isActionCooldown && <S.ProgressBar />}

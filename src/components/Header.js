@@ -179,7 +179,6 @@ function Header({ user, room, theme, socket }) {
     e.stopPropagation();
     setShowProgress(prev => !prev);
   };
-  
 
   useEffect(() => {
     const handleClickOutside = (event) => {

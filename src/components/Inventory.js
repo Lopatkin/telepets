@@ -146,26 +146,56 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems]);
 
   // Добавляем обработчик покупки
-  const handleBuyItem = (item) => {
+  const handleBuyItem = async (item) => {
     if (isActionCooldown) return;
 
-    setIsActionCooldown(true);
-    socket.emit('addItem', {
-      owner: userOwnerKey,
-      item: {
-        name: item.name,
-        description: item.description,
-        rarity: item.rarity,
-        weight: item.weight,
-        cost: item.cost,
-        effect: item.effect,
-      },
-    });
+    try {
+      // Проверяем баланс пользователя
+      const response = await new Promise((resolve) => {
+        socket.emit('getCredits', {}, resolve);
+      });
 
-    // После покупки убираем предмет из списка магазина (имитация, пока не обновим сервер)
-    setTimeout(() => {
+      if (!response.success) {
+        setError('Не удалось проверить баланс');
+        return;
+      }
+
+      if (response.credits < item.cost) {
+        setError('Недостаточно кредитов');
+        return;
+      }
+
+      setIsActionCooldown(true);
+
+      // Создаем предмет и списываем кредиты
+      socket.emit('addItem', {
+        owner: userOwnerKey,
+        item: {
+          name: item.name,
+          description: item.description,
+          rarity: item.rarity,
+          weight: item.weight,
+          cost: item.cost,
+          effect: item.effect,
+        },
+      }, (addItemResponse) => {
+        if (addItemResponse && addItemResponse.success) {
+          // После успешного добавления предмета списываем кредиты
+          socket.emit('spendCredits', {
+            amount: item.cost,
+            purpose: `Покупка: ${item.name}`
+          });
+        } else {
+          setError(addItemResponse?.message || 'Ошибка при покупке');
+        }
+        setIsActionCooldown(false);
+      });
+
+    } catch (err) {
+      console.error('Ошибка при покупке:', err);
+      setError('Ошибка при покупке');
       setIsActionCooldown(false);
-    }, 1000);
+    }
   };
 
   const handleTakeHome = (animalId) => {

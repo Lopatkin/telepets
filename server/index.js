@@ -118,6 +118,38 @@ const isLovecDachnyTime = () => {
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
+  socket.on('spendCredits', async ({ amount, purpose }, callback) => {
+    if (!socket.userData || !socket.userData.userId) {
+      if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
+      return;
+    }
+
+    try {
+      const userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
+      if (!userCredits) {
+        if (callback) callback({ success: false, message: 'Не найден счет пользователя' });
+        return;
+      }
+
+      if (userCredits.credits < amount) {
+        if (callback) callback({ success: false, message: 'Недостаточно кредитов' });
+        return;
+      }
+
+      userCredits.credits -= amount;
+      await userCredits.save();
+
+      // Логируем транзакцию (можно добавить отдельную модель для истории транзакций)
+      console.log(`User ${socket.userData.userId} spent ${amount} credits for: ${purpose}`);
+
+      socket.emit('creditsUpdate', userCredits.credits);
+      if (callback) callback({ success: true, newBalance: userCredits.credits });
+    } catch (err) {
+      console.error('Error spending credits:', err.message, err.stack);
+      if (callback) callback({ success: false, message: 'Ошибка при списании кредитов' });
+    }
+  });
+
   socket.on('getPets', async ({ userId }) => {
     try {
       const pets = await User.find({ owner: userId, isHuman: false }).select('userId name animalType photoUrl onLeash owner');
@@ -865,7 +897,7 @@ io.on('connection', (socket) => {
 
       io.to(owner).emit('items', { owner, items: itemCache.get(owner) });
 
-      if (callback) callback({ success: true });
+      if (callback) callback({ success: true, item: newItem });
       if (item._id) itemLocks.delete(item._id);
     } catch (err) {
       console.error('Error adding item:', err.message, err.stack);

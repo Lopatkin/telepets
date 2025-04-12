@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
   residence: String,
   animalType: String,
   name: String,
-  credits: { type: Number, default: 0 },
+  credits: { type: Number, default: 0, min: 0 }, // Переносим кредиты сюда
   lastRoom: { type: String, default: 'Полигон утилизации' },
   homeless: { type: Boolean, default: true },
   onLeash: { type: Boolean, default: false },
@@ -77,12 +77,6 @@ const inventoryLimitSchema = new mongoose.Schema({
 });
 const InventoryLimit = mongoose.model('InventoryLimit', inventoryLimitSchema);
 
-const userCreditsSchema = new mongoose.Schema({
-  userId: { type: String, unique: true },
-  credits: { type: Number, default: 0, min: 0 }
-});
-const UserCredits = mongoose.model('UserCredits', userCreditsSchema);
-
 // Хранилища
 const roomUsers = {};
 const userCurrentRoom = new Map();
@@ -118,39 +112,37 @@ const isLovecDachnyTime = () => {
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
+  // Списание кредитов
   socket.on('spendCredits', async ({ amount, purpose }, callback = () => { }) => {
-    if (!socket.userData || !socket.userData.userId) {
-      callback({ success: false, message: 'Пользователь не аутентифицирован' });
-      return;
-    }
-
     try {
-      const userCredits = await UserCredits.findOneAndUpdate(
-        { userId: socket.userData.userId },
+      const user = await User.findOneAndUpdate(
+        {
+          userId: socket.userData.userId,
+          credits: { $gte: amount } // Проверка достаточности средств
+        },
         { $inc: { credits: -amount } },
         { new: true }
       );
 
-      if (!userCredits) {
-        callback({ success: false, message: 'Не найден счет пользователя' });
-        return;
+      if (!user) {
+        return callback({
+          success: false,
+          message: 'Недостаточно кредитов или пользователь не найден'
+        });
       }
 
-      if (userCredits.credits < 0) {
-        // Откатываем изменение, если кредитов недостаточно
-        await UserCredits.updateOne(
-          { userId: socket.userData.userId },
-          { $inc: { credits: amount } }
-        );
-        callback({ success: false, message: 'Недостаточно кредитов' });
-        return;
-      }
+      socket.emit('userUpdate', { // Обновляем данные пользователя
+        userId: user.userId,
+        credits: user.credits
+      });
 
-      socket.emit('creditsUpdate', userCredits.credits);
-      callback({ success: true, newBalance: userCredits.credits });
+      callback({
+        success: true,
+        newBalance: user.credits
+      });
     } catch (err) {
-      console.error('Error spending credits:', err.message, err.stack);
-      callback({ success: false, message: 'Ошибка при списании кредитов' });
+      console.error('Ошибка при списании кредитов:', err);
+      callback({ success: false, message: 'Ошибка сервера' });
     }
   });
 
@@ -277,16 +269,16 @@ io.on('connection', (socket) => {
     const userOwnerKey = `user_${socket.userData.userId}`;
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
 
-    let userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
-    if (!userCredits) {
-      userCredits = await UserCredits.create({
-        userId: socket.userData.userId,
-        credits: 0
-      });
-    }
+    // let userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
+    // if (!userCredits) {
+    //   userCredits = await UserCredits.create({
+    //     userId: socket.userData.userId,
+    //     credits: 0
+    //   });
+    // }
 
-    socket.emit('creditsUpdate', userCredits.credits);
-    console.log('Sent initial credits to client:', userCredits.credits);
+    // socket.emit('creditsUpdate', userCredits.credits);
+    // console.log('Sent initial credits to client:', userCredits.credits);
 
     const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
     if (!userLimit) {
@@ -518,10 +510,10 @@ io.on('connection', (socket) => {
     }
 
     try {
-      const userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
+      const user = await User.findOne({ userId: socket.userData.userId });
       callback({
         success: true,
-        credits: userCredits ? userCredits.credits : 0
+        credits: user?.credits || 0
       });
     } catch (err) {
       console.error('Error fetching credits:', err.message);
@@ -1233,11 +1225,16 @@ io.on('connection', (socket) => {
         { $inc: { currentWeight: -totalWeight } }
       );
 
-      const userCredits = await UserCredits.findOneAndUpdate(
+      const user = await User.findOneAndUpdate(
         { userId: socket.userData.userId },
         { $inc: { credits: creditsEarned } },
-        { new: true, upsert: true }
+        { new: true }
       );
+
+      socket.emit('userUpdate', {
+        userId: user.userId,
+        credits: user.credits
+      });
 
       const updatedItems = await Item.find({ owner });
       itemCache.set(owner, updatedItems);
@@ -1249,8 +1246,8 @@ io.on('connection', (socket) => {
       const updatedLimit = await InventoryLimit.findOne({ owner });
       io.to(owner).emit('inventoryLimit', updatedLimit);
 
-      socket.emit('creditsUpdate', userCredits.credits);
-      console.log('Sent creditsUpdate to client:', userCredits.credits);
+      // socket.emit('creditsUpdate', userCredits.credits);
+      // console.log('Sent creditsUpdate to client:', userCredits.credits);
 
       if (callback) callback({ success: true, message: `Мусор утилизирован. Получено ${creditsEarned} кредитов.` });
     } catch (err) {

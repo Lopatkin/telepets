@@ -1144,6 +1144,7 @@ io.on('connection', (socket) => {
       session = await mongoose.startSession();
       session.startTransaction();
 
+      let passport; // Объявляем passport в области видимости обработчика
       try {
         // Удаляем "Ошейник" из инвентаря человека
         await Item.deleteOne({ _id: collar._id }, { session });
@@ -1194,7 +1195,7 @@ io.on('connection', (socket) => {
         );
 
         // Создаём предмет "Паспорт" для человека
-        const passport = new Item({
+        passport = new Item({
           owner: userOwnerKey,
           name: 'Паспорт животного',
           description: `Ваш питомец - ${animalName || 'Без имени'}`,
@@ -1226,7 +1227,9 @@ io.on('connection', (socket) => {
       // Обновляем кэш предметов для человека
       let humanItems = itemCache.get(userOwnerKey) || [];
       humanItems = humanItems.filter(i => i._id.toString() !== collar._id.toString());
-      humanItems.push(passport);
+      if (passport) {
+        humanItems.push(passport);
+      }
       itemCache.set(userOwnerKey, humanItems);
 
       // Обновляем кэш предметов для животного

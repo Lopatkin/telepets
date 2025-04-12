@@ -149,27 +149,37 @@ function Header({ user, room, theme, socket }) {
   useEffect(() => {
     if (!socket || !user?.userId) return;
 
+    const handleUserUpdate = (updatedUser) => {
+      if (updatedUser.credits !== undefined) {
+        console.log('Updating credits from userUpdate:', updatedUser.credits);
+        setCredits(updatedUser.credits);
+      }
+    };
+
     const handleCreditsUpdate = (newCredits) => {
-      console.log('Credits updated via socket:', newCredits);
+      console.log('Credits updated via creditsUpdate:', newCredits);
       setCredits(newCredits);
     };
 
+    // Подписываемся на оба события
+    socket.on('userUpdate', handleUserUpdate);
     socket.on('creditsUpdate', handleCreditsUpdate);
 
-    socket.emit('getCredits', ({ success, credits }) => {
-      if (success) {
-        console.log('Initial credits received:', credits);
-        setCredits(credits);
-      } else {
-        console.error('Failed to fetch initial credits');
+    // Запрашиваем начальные кредиты
+    socket.emit('getCredits', {}, (response) => {
+      if (response?.success) {
+        console.log('Initial credits received:', response.credits);
+        setCredits(response.credits);
       }
     });
 
     return () => {
+      socket.off('userUpdate', handleUserUpdate);
       socket.off('creditsUpdate', handleCreditsUpdate);
-      console.log('Unsubscribed from creditsUpdate');
     };
-  }, [socket, user]);
+    // }, [socket, user]);
+  }, [socket, user?.userId]);
+
 
   const averageValue = Math.round(
     (progressValues.health + progressValues.mood + progressValues.fullness) / 3

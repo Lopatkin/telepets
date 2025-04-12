@@ -124,6 +124,15 @@ io.on('connection', (socket) => {
         { new: true }
       );
 
+      if (user) {
+        // Отправляем полное обновление пользователя
+        socket.emit('userUpdate', {
+          userId: user.userId,
+          credits: user.credits
+          // ... другие поля при необходимости
+        });
+      }
+
       if (!user) {
         return callback({
           success: false,
@@ -262,7 +271,8 @@ io.on('connection', (socket) => {
       onLeash: user.onLeash,
       owner: user.owner, // Добавляем owner в userUpdate
       ownerOnline, // Добавляем флаг ownerOnline
-      homeless: user.homeless // Добавляем homeless в userUpdate
+      homeless: user.homeless, // Добавляем homeless в userUpdate
+      credits: user.credits || 0 // Добавляем текущие кредиты
     });
     console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 
@@ -1231,10 +1241,12 @@ io.on('connection', (socket) => {
         { new: true }
       );
 
-      socket.emit('userUpdate', {
-        userId: user.userId,
-        credits: user.credits
-      });
+      if (user) {
+        socket.emit('userUpdate', {
+          userId: user.userId,
+          credits: user.credits
+        });
+      }
 
       const updatedItems = await Item.find({ owner });
       itemCache.set(owner, updatedItems);

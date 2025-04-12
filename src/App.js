@@ -115,9 +115,10 @@ function App() {
         socketRef.current.on('userUpdate', (updatedUser) => {
           console.log('Received userUpdate from server:', updatedUser);
           setUser(prevUser => {
-            const newUser = { 
-              ...prevUser, 
-              ...updatedUser, 
+            const newUser = {
+              ...prevUser,
+              ...updatedUser,
+              credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true) // Значение по умолчанию
             };
             console.log('Updated user state after userUpdate:', newUser);

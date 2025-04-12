@@ -1103,7 +1103,8 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('takeAnimalHome', async ({ animalId }) => {
+  socket.on('takeAnimalHome', async ({ animalId, animalName }) => {
+    let session;
     try {
       if (!socket.userData || !socket.userData.userId) {
         socket.emit('error', { message: 'Пользователь не аутентифицирован' });
@@ -1128,7 +1129,6 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Формируем userOwnerKey для владельца (человека)
       const userOwnerKey = `user_${socket.userData.userId}`;
       const animalOwnerKey = `user_${animalId}`;
 
@@ -1140,78 +1140,99 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Удаляем "Ошейник" из инвентаря человека
-      await Item.deleteOne({ _id: collar._id });
-      await InventoryLimit.updateOne(
-        { owner: userOwnerKey },
-        { $inc: { currentWeight: -collar.weight } }
-      );
+      // Начинаем транзакцию
+      session = await mongoose.startSession();
+      session.startTransaction();
 
-      // Обновляем кэш предметов для человека
-      const humanItems = itemCache.get(userOwnerKey) || [];
-      itemCache.set(userOwnerKey, humanItems.filter(i => i._id.toString() !== collar._id.toString()));
+      try {
+        // Удаляем "Ошейник" из инвентаря человека
+        await Item.deleteOne({ _id: collar._id }, { session });
+        await InventoryLimit.updateOne(
+          { owner: userOwnerKey },
+          { $inc: { currentWeight: -collar.weight } },
+          { session }
+        );
 
-      // Добавляем "Ошейник" в инвентарь животного
-      const newCollar = new Item({
-        owner: animalOwnerKey,
-        name: 'Ошейник',
-        description: 'У вас есть хозяин.',
-        rarity: 'Обычный',
-        weight: 0.5,
-        cost: 250,
-        effect: 'Вы не бездомное животное, а любимый питомец.',
-      });
-      await newCollar.save();
-      await InventoryLimit.updateOne(
-        { owner: animalOwnerKey },
-        { $inc: { currentWeight: newCollar.weight } }
-      );
-
-      // Инициализируем лимиты инвентаря для животного, если их нет
-      let animalLimit = await InventoryLimit.findOne({ owner: animalOwnerKey });
-      if (!animalLimit) {
-        animalLimit = await InventoryLimit.create({
+        // Добавляем "Ошейник" в инвентарь животного
+        const newCollar = new Item({
           owner: animalOwnerKey,
-          maxWeight: 5, // Лимит для животного, можно настроить
+          name: 'Ошейник',
+          description: 'С ним вы можете взять себе питомца из приюта.',
+          rarity: 'Обычный',
+          weight: 0.5,
+          cost: 250,
+          effect: 'Вы всегда знаете где находится ваш питомец.',
         });
+        await newCollar.save({ session });
+
+        // Инициализируем лимиты инвентаря для животного, если их нет
+        let animalLimit = await InventoryLimit.findOne({ owner: animalOwnerKey }, null, { session });
+        if (!animalLimit) {
+          animalLimit = new InventoryLimit({
+            owner: animalOwnerKey,
+            maxWeight: 10,
+          });
+          await animalLimit.save({ session });
+        }
+
+        await InventoryLimit.updateOne(
+          { owner: animalOwnerKey },
+          { $inc: { currentWeight: newCollar.weight } },
+          { session }
+        );
+
+        // Обновляем данные животного
+        await User.updateOne(
+          { userId: animalId },
+          {
+            owner: socket.userData.userId,
+            onLeash: true,
+            homeless: false,
+            residence: humanUser.residence || 'Не указано',
+          },
+          { session }
+        );
+
+        // Создаём предмет "Паспорт" для человека
+        const passport = new Item({
+          owner: userOwnerKey,
+          name: 'Паспорт животного',
+          description: `Ваш питомец - ${animalName || 'Без имени'}`,
+          rarity: 'Обычный',
+          weight: 0.1,
+          cost: 100,
+          effect: 'Вы чувствуете ответственность за кого-то.',
+        });
+        await passport.save({ session });
+
+        await InventoryLimit.updateOne(
+          { owner: userOwnerKey },
+          { $inc: { currentWeight: passport.weight } },
+          { session }
+        );
+
+        // Подтверждаем транзакцию
+        await session.commitTransaction();
+        console.log(`Successfully committed transaction for animal ${animalId}`);
+      } catch (err) {
+        await session.abortTransaction();
+        console.error('Transaction aborted due to error:', err.message, err.stack);
+        socket.emit('error', { message: 'Ошибка при обработке предметов и данных животного' });
+        return;
+      } finally {
+        session.endSession();
       }
 
+      // Обновляем кэш предметов для человека
+      let humanItems = itemCache.get(userOwnerKey) || [];
+      humanItems = humanItems.filter(i => i._id.toString() !== collar._id.toString());
+      humanItems.push(passport);
+      itemCache.set(userOwnerKey, humanItems);
+
       // Обновляем кэш предметов для животного
-      const animalItems = itemCache.get(animalOwnerKey) || [];
-      itemCache.set(animalOwnerKey, [...animalItems, newCollar]);
-
-      // Обновляем данные животного
-      await User.updateOne(
-        { userId: animalId },
-        {
-          owner: socket.userData.userId,
-          onLeash: true,
-          homeless: false,
-          residence: humanUser.residence || 'Не указано', // Копируем residence человека
-        }
-      );
-
-      // Создаём предмет "Паспорт" для человека
-      const passport = new Item({
-        owner: userOwnerKey,
-        name: 'Паспорт животного',
-        description: `Ваш питомец - ${animalName}`,
-        rarity: 'Обычный',
-        weight: 0.1,
-        cost: 100,
-        effect: 'Вы чувствуете ответственность за кого-то.',
-      });
-      await passport.save();
-      await InventoryLimit.updateOne(
-        { owner: userOwnerKey },
-        { $inc: { currentWeight: passport.weight } }
-      );
-
-      // Обновляем кэш предметов для человека (добавляем паспорт)
-      itemCache.set(userOwnerKey, [...itemCache.get(userOwnerKey), passport]);
-
-      // Убираем некорректное добавление животного как предмета в инвентарь
-
+      let animalItems = itemCache.get(animalOwnerKey) || [];
+      animalItems.push(newCollar);
+      itemCache.set(animalOwnerKey, animalItems);
 
       // Обновляем список животных в приюте
       const shelterAnimals = await User.find({
@@ -1230,13 +1251,17 @@ io.on('connection', (socket) => {
         isOnline: (now - new Date(animal.lastActivity || 0)) < 5 * 60 * 1000,
         animalType: animal.animalType,
         owner: animal.owner,
-        homeless: animal.homeless // Добавляем homeless
+        homeless: animal.homeless,
       }));
 
       io.to('Приют для животных "Кошкин дом"').emit('shelterAnimals', animalsWithStatus);
 
-      // Вместо этого обновляем данные животного и уведомляем клиента
+      // Получаем обновлённые данные животного
       const updatedAnimal = await User.findOne({ userId: animalId });
+      if (!updatedAnimal) {
+        socket.emit('error', { message: 'Ошибка: данные животного не найдены после обновления' });
+        return;
+      }
 
       // Отправляем обновлённые предметы и лимиты человеку
       const updatedHumanItems = await Item.find({ owner: userOwnerKey });
@@ -1281,11 +1306,11 @@ io.on('connection', (socket) => {
           owner: socket.userData.userId,
           ownerOnline: true,
           homeless: false,
-          residence: humanUser.residence || 'Не указано',
+          residence: updatedAnimal.residence || 'Не указано',
         });
       }
 
-      console.log(`User ${socket.userData.userId} took animal ${animalId} home`);
+      console.log(`User ${socket.userData.userId} successfully took animal ${animalId} home`);
     } catch (err) {
       console.error('Error in takeAnimalHome:', err.message, err.stack);
       socket.emit('error', { message: 'Ошибка при попытке забрать животное домой' });

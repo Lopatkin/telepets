@@ -36,6 +36,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   };
 
   const handleItemsUpdate = useCallback((data) => {
+    console.log('Received items update:', { owner, items }); // Добавляем логирование
     const { owner, items } = data;
     const updatedItems = items.map(item => ({
       ...item,

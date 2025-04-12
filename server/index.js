@@ -896,13 +896,7 @@ io.on('connection', (socket) => {
 
   socket.on('getItems', async ({ owner }) => {
     try {
-      if (itemCache.has(owner)) {
-        socket.emit('items', { owner, items: itemCache.get(owner) });
-        return;
-      }
-
       const items = await Item.find({ owner });
-      itemCache.set(owner, items);
       socket.emit('items', { owner, items });
     } catch (err) {
       console.error('Error fetching items:', err.message, err.stack);

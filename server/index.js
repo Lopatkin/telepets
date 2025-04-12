@@ -276,8 +276,6 @@ io.on('connection', (socket) => {
     });
     console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 
-
-
     const userOwnerKey = `user_${socket.userData.userId}`;
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
 
@@ -407,14 +405,6 @@ io.on('connection', (socket) => {
 
     io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
     console.log(`User ${socket.userData.userId} auto-joined room: ${defaultRoom}`);
-
-    //тут вопросы
-    if (user && user.onLeash && user.owner && ownerOnline) {
-      const ownerRoom = userCurrentRoom.get(user.owner);
-      if (ownerRoom) {
-        socket.emit('forceRoomChange', { newRoom: ownerRoom });
-      }
-    }
 
     try {
       const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
@@ -595,8 +585,6 @@ io.on('connection', (socket) => {
       console.error(`Error updating lastRoom for user ${socket.userData.userId}:`, error);
     }
 
-
-
     const userOwnerKey = `user_${socket.userData.userId}`;
     const animalItems = await Item.find({ owner: userOwnerKey, playerID: { $exists: true } });
     if (animalItems.length > 0) {
@@ -650,14 +638,6 @@ io.on('connection', (socket) => {
         });
       } catch (error) {
         console.error(`Error updating lastRoom for animals:`, error);
-      }
-    }
-
-    //тут вопросы
-    if (user && user.onLeash && user.owner) {
-      const ownerSocket = activeSockets.get(user.owner);
-      if (ownerSocket) {
-        ownerSocket.emit('ownerRoomUpdate', { newRoom: room });
       }
     }
 

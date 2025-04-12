@@ -279,6 +279,17 @@ io.on('connection', (socket) => {
     const userOwnerKey = `user_${socket.userData.userId}`;
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
 
+    // let userCredits = await UserCredits.findOne({ userId: socket.userData.userId });
+    // if (!userCredits) {
+    //   userCredits = await UserCredits.create({
+    //     userId: socket.userData.userId,
+    //     credits: 0
+    //   });
+    // }
+
+    // socket.emit('creditsUpdate', userCredits.credits);
+    // console.log('Sent initial credits to client:', userCredits.credits);
+
     const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
     if (!userLimit) {
       await InventoryLimit.create({
@@ -531,17 +542,16 @@ io.on('connection', (socket) => {
     if (!socket.userData || !socket.userData.userId) {
       console.error('User not authenticated for room join:', socket.id);
       socket.emit('error', { message: 'Пользователь не аутентифицирован' });
-      callback({ success: false, message: 'Пользователь не аутентифицирован' });
       return;
     }
 
     const user = await User.findOne({ userId: socket.userData.userId });
     if (!user) {
       socket.emit('error', { message: 'Пользователь не найден в базе' });
-      callback({ success: false, message: 'Пользователь не найден в базе' });
       return;
     }
 
+    // Проверка владельца для животного с onLeash: true
     // Проверка владельца для животного с onLeash: true
     let ownerOnline = false;
     if (user && user.onLeash && user.owner) {
@@ -568,95 +578,13 @@ io.on('connection', (socket) => {
     try {
       await User.updateOne(
         { userId: socket.userData.userId },
-        { lastRoom: room, lastActivity: new Date() }
+        { lastRoom: room }
       );
       console.log(`Updated lastRoom for user ${socket.userData.userId} to ${room}`);
     } catch (error) {
       console.error(`Error updating lastRoom for user ${socket.userData.userId}:`, error);
-      callback({ success: false, message: 'Ошибка при обновлении комнаты' });
-      return;
     }
 
-    // Проверяем, есть ли питомцы с onLeash: true
-    if (user.isHuman) {
-      try {
-        const pets = await User.find({
-          owner: socket.userData.userId,
-          onLeash: true,
-          isHuman: false,
-        });
-
-        for (const pet of pets) {
-          const petId = pet.userId;
-          const petCurrentRoom = userCurrentRoom.get(petId);
-
-          // Покидаем текущую комнату питомца, если она есть
-          if (petCurrentRoom && petCurrentRoom !== room) {
-            const petSocket = activeSockets.get(petId);
-            if (petSocket) {
-              petSocket.leave(petCurrentRoom);
-            }
-            userCurrentRoom.delete(petId);
-            if (roomUsers[petCurrentRoom]) {
-              roomUsers[petCurrentRoom].forEach(u => {
-                if (u.userId === petId) {
-                  roomUsers[petCurrentRoom].delete(u);
-                }
-              });
-              io.to(petCurrentRoom).emit('roomUsers', Array.from(roomUsers[petCurrentRoom]));
-            }
-            console.log(`Pet ${petId} left room: ${petCurrentRoom}`);
-          }
-
-          // Перемещаем питомца в новую комнату
-          userCurrentRoom.set(petId, room);
-          await User.updateOne(
-            { userId: petId },
-            { lastRoom: room, lastActivity: new Date() }
-          );
-          console.log(`Pet ${petId} moved to room: ${room}`);
-
-          // Обновляем roomUsers для питомца
-          if (!roomUsers[room]) roomUsers[room] = new Set();
-          roomUsers[room].forEach(u => {
-            if (u.userId === petId) {
-              roomUsers[room].delete(u);
-            }
-          });
-          roomUsers[room].add({
-            userId: petId,
-            firstName: pet.firstName || '',
-            username: pet.username || '',
-            lastName: pet.lastName || '',
-            photoUrl: pet.photoUrl || '',
-            name: pet.name || '',
-            isHuman: false,
-            onLeash: true,
-            owner: socket.userData.userId,
-            homeless: pet.homeless || false
-          });
-          io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
-
-          // Уведомляем питомца, если он онлайн
-          const petSocket = activeSockets.get(petId);
-          if (petSocket) {
-            petSocket.join(room);
-            petSocket.emit('forceRoomChange', { newRoom: room });
-            try {
-              const petMessages = await Message.find({ room }).sort({ timestamp: 1 }).limit(100);
-              petSocket.emit('messageHistory', petMessages);
-            } catch (err) {
-              console.error(`Error sending message history to pet ${petId}:`, err.message);
-            }
-            console.log(`Notified pet ${petId} about room change to: ${room}`);
-          }
-        }
-      } catch (err) {
-        console.error('Error handling pets in joinRoom:', err.message, err.stack);
-      }
-    }
-
-    // Существующая логика для животных с playerID
     const userOwnerKey = `user_${socket.userData.userId}`;
     const animalItems = await Item.find({ owner: userOwnerKey, playerID: { $exists: true } });
     if (animalItems.length > 0) {
@@ -713,7 +641,6 @@ io.on('connection', (socket) => {
       }
     }
 
-    // Покидаем старые комнаты
     Object.keys(roomUsers).forEach(currentRoom => {
       if (currentRoom !== room) {
         roomUsers[currentRoom].forEach(user => {
@@ -740,13 +667,6 @@ io.on('connection', (socket) => {
 
     if (isRejoining && (now - lastJoinTime < JOIN_COOLDOWN)) {
       console.log(`User ${socket.userData.userId} attempted to rejoin room: ${room} too quickly - sending current room data`);
-      socket.emit('forceRoomChange', { newRoom: room });
-      try {
-        const messages = await Message.find({ room }).sort({ timestamp: 1 }).limit(100);
-        socket.emit('messageHistory', messages);
-      } catch (err) {
-        console.error('Error fetching messages for rejoin:', err.message);
-      }
       callback({ success: false, message: 'Повторное присоединение слишком быстро' });
       return;
     }
@@ -1456,6 +1376,9 @@ io.on('connection', (socket) => {
       const updatedLimit = await InventoryLimit.findOne({ owner });
       io.to(owner).emit('inventoryLimit', updatedLimit);
 
+      // socket.emit('creditsUpdate', userCredits.credits);
+      // console.log('Sent creditsUpdate to client:', userCredits.credits);
+
       if (callback) callback({ success: true, message: `Мусор утилизирован. Получено ${creditsEarned} кредитов.` });
     } catch (err) {
       console.error('Error utilizing trash:', err.message, err.stack);
@@ -1502,8 +1425,8 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('disconnect', async () => {
-    console.log('User disconnected:', socket.id);
+  socket.on('disconnect', (reason) => {
+    console.log('User disconnected:', socket.id, 'Reason:', reason);
 
     if (socket.userData && socket.userData.userId) {
       if (activeSockets.get(socket.userData.userId) === socket) {

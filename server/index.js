@@ -1307,6 +1307,7 @@ io.on('connection', (socket) => {
           weight: 0.1,
           cost: 100,
           effect: 'Вы чувствуете ответственность за кого-то.',
+          animalId, // Добавляем поле с ID животного
         });
         await passport.save({ session });
 

@@ -55,6 +55,23 @@ function App() {
   };
 
   useEffect(() => {
+    if (!socket || !user) return;
+
+    // Добавляем обработчик для перемещения животного вслед за хозяином
+    socket.on('ownerRoomUpdate', ({ newRoom }) => {
+      if (!user.isHuman && user.onLeash && user.ownerOnline) {
+        setCurrentRoom(newRoom);
+        joinedRoomsRef.current.add(newRoom);
+        socket.emit('joinRoom', { room: newRoom, lastTimestamp: null });
+      }
+    });
+
+    return () => {
+      socket.off('ownerRoomUpdate');
+    };
+  }, [socket, user]);
+
+  useEffect(() => {
     const initializeSocket = () => {
       if (socketRef.current) return;
 

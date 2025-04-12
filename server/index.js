@@ -276,6 +276,14 @@ io.on('connection', (socket) => {
     });
     console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 
+    //тут вопросы
+    if (user && user.onLeash && user.owner && ownerOnline) {
+      const ownerRoom = userCurrentRoom.get(user.owner);
+      if (ownerRoom) {
+        socket.emit('forceRoomChange', { newRoom: ownerRoom });
+      }
+    }
+
     const userOwnerKey = `user_${socket.userData.userId}`;
     const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
 
@@ -583,6 +591,14 @@ io.on('connection', (socket) => {
       console.log(`Updated lastRoom for user ${socket.userData.userId} to ${room}`);
     } catch (error) {
       console.error(`Error updating lastRoom for user ${socket.userData.userId}:`, error);
+    }
+
+    //тут вопросы
+    if (user && user.onLeash && user.owner) {
+      const ownerSocket = activeSockets.get(user.owner);
+      if (ownerSocket) {
+        ownerSocket.emit('ownerRoomUpdate', { newRoom: room });
+      }
     }
 
     const userOwnerKey = `user_${socket.userData.userId}`;

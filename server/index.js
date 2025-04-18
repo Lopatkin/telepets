@@ -3,7 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 
-const { rooms } = require('../../src/components/constants/rooms');
+const { rooms } = require('../src/components/constants/rooms');
 
 const app = express();
 const server = http.createServer(app);

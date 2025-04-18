@@ -345,24 +345,7 @@ io.on('connection', (socket) => {
       'Магазин "Всё на свете"',
     ];
 
-    const staticRooms = [
-      'Автобусная остановка',
-      'Бар "У бобра" (18+)',
-      'Бизнес центр "Альбион"',
-      'Вокзал',
-      'ЖК Сфера',
-      'Завод',
-      'Кофейня "Ляля-Фа"',
-      'Лес',
-      'Мастерская',
-      'Парк',
-      'Полигон утилизации',
-      'Приют для животных "Кошкин дом"',
-      'Район Дачный',
-      'Магазин "Всё на свете"',
-    ];
-
-    for (const room of staticRooms) {
+    for (const room of rooms) {
       const roomLimit = await InventoryLimit.findOne({ owner: room });
       if (!roomLimit) {
         await InventoryLimit.create({

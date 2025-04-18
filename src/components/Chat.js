@@ -392,6 +392,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   useEffect(() => {
     if (!socket || !room) return;
 
+    // Очищаем кэш при смене комнаты
+    messageCacheRef.current = { [room]: [] };
+
+    // Запрашиваем историю для новой комнаты
+    socket.emit('joinRoom', { room, lastTimestamp: null });
+
     const cachedMessages = messageCacheRef.current[room] || [];
     if (cachedMessages.length > 0 && messages.length === 0) {
       setMessages(cachedMessages);
@@ -407,11 +413,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     });
 
     socket.on('message', (msg) => {
-      setMessages(prev => {
-        const updated = [...prev, msg];
-        messageCacheRef.current[room] = updated;
-        return updated;
-      });
+      if (msg.room === room) { // Фильтруем только сообщения для текущей комнаты
+        setMessages(prev => {
+          const updated = [...prev, msg];
+          messageCacheRef.current[room] = updated;
+          return updated;
+        });
+      }
     });
 
     socket.on('roomUsers', (roomUsers) => {

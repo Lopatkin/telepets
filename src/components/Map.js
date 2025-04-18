@@ -117,7 +117,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
   const mapContainerRef = useRef(null); // Ссылка на контейнер карты
   const mapImageRef = useRef(null); // Ссылка на изображение
 
-  const sortedRooms = rooms.sort();
+  const sortedRooms = [...rooms].sort();
 
   const myHomeRoom = `myhome_${userId}`;
 

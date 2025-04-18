@@ -444,7 +444,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   // Обработка завершения анимации проявления
   const handleFadeInEnd = () => {
     console.log('Chat.js: Fade in completed, transition finished');
-/Delete Transition State
+// /Delete Transition State
     setTransitionState(null);
     setPendingRoom(null);
   };

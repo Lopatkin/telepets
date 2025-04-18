@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import Professions from './Professions';
-import Streets from './Streets';
+import Professions from './constants/Professions';
+import Streets from './constants/Streets';
 import regpic from '../images/regpic.jpg';
 
 const RegistrationContainer = styled.div`

@@ -3,6 +3,8 @@ const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 
+const { rooms } = require('..src/components/constants/rooms');
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -327,23 +329,6 @@ io.on('connection', (socket) => {
         maxWeight: 1000
       });
     }
-
-    const rooms = [
-      'Автобусная остановка',
-      'Бар "У бобра" (18+)',
-      'Бизнес центр "Альбион"',
-      'Вокзал',
-      'ЖК Сфера',
-      'Завод',
-      'Кофейня "Ляля-Фа"',
-      'Лес',
-      'Мастерская',
-      'Парк',
-      'Полигон утилизации',
-      'Приют для животных "Кошкин дом"',
-      'Район Дачный',
-      'Магазин "Всё на свете"',
-    ];
 
     for (const room of rooms) {
       const roomLimit = await InventoryLimit.findOne({ owner: room });

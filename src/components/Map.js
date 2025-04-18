@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import foggyCityMap from '../images/foggy_city_map.jpg'; // Импортируем изображение
+import { rooms } from './constants/rooms';
 
 const MapContainer = styled.div`
   height: 100%;
@@ -44,20 +45,20 @@ const RoomList = styled.ul`
 const RoomItem = styled.li`
   padding: 10px;
   margin: 5px;
-  background: ${props => props.isCurrent 
-    ? '#007AFF' 
+  background: ${props => props.isCurrent
+    ? '#007AFF'
     : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
-  color: ${props => props.isCurrent 
-    ? 'white' 
+  color: ${props => props.isCurrent
+    ? 'white'
     : (props.theme === 'dark' ? '#ccc' : '#333')};
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.2s;
 
   &:hover {
-    background: ${props => props.isCurrent 
-      ? '#005BBB' 
-      : (props.theme === 'dark' ? '#444' : '#e0e0e0')};
+    background: ${props => props.isCurrent
+    ? '#005BBB'
+    : (props.theme === 'dark' ? '#444' : '#e0e0e0')};
   }
 `;
 
@@ -116,22 +117,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
   const mapContainerRef = useRef(null); // Ссылка на контейнер карты
   const mapImageRef = useRef(null); // Ссылка на изображение
 
-  const rooms = [
-    'Автобусная остановка',
-    'Бар "У бобра" (18+)',
-    'Бизнес центр "Альбион"',
-    'Вокзал',
-    'ЖК Сфера',
-    'Завод',
-    'Кофейня "Ляля-Фа"',
-    'Лес',
-    'Мастерская',
-    'Парк',
-    'Полигон утилизации',
-    'Приют для животных "Кошкин дом"',
-    'Район Дачный',
-    'Магазин "Всё на свете"',
-  ].sort(); // Сортировка по алфавиту
+  const sortedRooms = rooms.sort();
 
   const myHomeRoom = `myhome_${userId}`;
 
@@ -331,11 +317,11 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
 
       {activeSubTab === 'locations' && (
         <RoomList>
-          {rooms.map(room => (
-            <RoomItem 
-              key={room} 
-              onClick={() => onRoomSelect(room)} 
-              theme={theme} 
+          {sortedRooms.map(room => (
+            <RoomItem
+              key={room}
+              onClick={() => onRoomSelect(room)}
+              theme={theme}
               isCurrent={room === currentRoom}
             >
               <RoomName>{room}</RoomName>
@@ -366,8 +352,8 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
         </MapImageContainer>
       )}
 
-      <HomeButton 
-        onClick={() => onRoomSelect(myHomeRoom)} 
+      <HomeButton
+        onClick={() => onRoomSelect(myHomeRoom)}
         theme={theme}
         disabled={user?.homeless === true} // Отключаем кнопку, если homeless === true
       >

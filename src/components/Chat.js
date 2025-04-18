@@ -35,13 +35,13 @@ import prodavecSvetaImage from '../images/prodavec_Sveta.jpg';
 
 // Анимация затемнения
 const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 1; }
+  to { opacity: 0; }
 `;
 
 const fadeOut = keyframes`
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 `;
 
 const ChatContainer = styled.div`
@@ -257,15 +257,15 @@ const PovodokIcon = styled.img`
 `;
 
 const Overlay = styled.div`
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: black;
-  z-index: 100;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 1); // Полностью чёрный для отладки
+  z-index: 1000; // Увеличиваем z-index
   pointer-events: none;
-  opacity: ${props => props.opacity};
+  opacity: ${props => props.transition === 'fadeOut' ? 1 : 0};
   animation: ${props => props.transition === 'fadeOut' ? fadeOut : fadeIn} 3s ease-in-out forwards;
 `;
 
@@ -282,6 +282,11 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const messageCacheRef = useRef({});
 
   const currentUserPhotoUrl = user?.photoUrl || '';
+
+  // Отладка: логируем проп room
+  useEffect(() => {
+    console.log('Chat.js: Prop room changed to:', room);
+  }, [room]);
 
   // Проверка времени для появления бабушек (6:00–7:00)
   const isBabushkaTime = () => {
@@ -337,6 +342,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   // Обновление списка пользователей при смене комнаты
   useEffect(() => {
+    console.log('Chat.js: Updating users for room:', currentRoom);
     if (currentRoom === 'Парк') {
       const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false };
       const lovecPark = { userId: 'npc_lovec_park', firstName: 'Ловец животных', photoUrl: lovec1Image, isHuman: true };
@@ -412,8 +418,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   // Обработка смены комнаты
   useEffect(() => {
-    if (room !== currentRoom && !transitionState) {
-      // Начинаем переход: затемнение
+    console.log('Chat.js: Checking room transition. Prop room:', room, 'Current room:', currentRoom, 'Transition state:', transitionState);
+    if (room !== currentRoom && !transitionState && room) {
+      console.log('Chat.js: Initiating room transition to:', room);
       setPendingRoom(room);
       setTransitionState('fadeOut');
     }
@@ -421,14 +428,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   // Обработка завершения анимации затемнения
   const handleFadeOutEnd = () => {
+    console.log('Chat.js: Fade out completed, switching to room:', pendingRoom);
     if (transitionState === 'fadeOut' && pendingRoom) {
-      // Завершено затемнение, меняем комнату
       setCurrentRoom(pendingRoom);
       setMessages([]); // Очищаем сообщения
-      messageCacheRef.current[pendingRoom] = []; // Очищаем кэш для новой комнаты
-      setTransitionState('fadeIn'); // Начинаем проявление
-      // Запрашиваем данные для новой комнаты
+      messageCacheRef.current[pendingRoom] = []; // Очищаем кэш
+      setTransitionState('fadeIn');
       if (socket && pendingRoom) {
+        console.log('Chat.js: Emitting joinRoom for:', pendingRoom);
         socket.emit('joinRoom', { room: pendingRoom, lastTimestamp: null });
       }
     }
@@ -436,7 +443,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   // Обработка завершения анимации проявления
   const handleFadeInEnd = () => {
-    setTransitionState(null); // Завершаем переход
+    console.log('Chat.js: Fade in completed, transition finished');
+/Delete Transition State
+    setTransitionState(null);
     setPendingRoom(null);
   };
 
@@ -444,7 +453,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   useEffect(() => {
     if (!socket || !currentRoom) return;
 
-    // Очищаем кэш при смене комнаты
+    console.log('Chat.js: Setting up socket listeners for room:', currentRoom);
     if (!messageCacheRef.current[currentRoom]) {
       messageCacheRef.current[currentRoom] = [];
     }
@@ -455,6 +464,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     }
 
     socket.on('messageHistory', (history) => {
+      console.log('Chat.js: Received message history for:', currentRoom, history);
       setMessages(prev => {
         const cached = messageCacheRef.current[currentRoom] || [];
         const newMessages = [...cached, ...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
@@ -465,6 +475,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
     socket.on('message', (msg) => {
       if (msg.room === currentRoom) {
+        console.log('Chat.js: Received new message:', msg);
         setMessages(prev => {
           const updated = [...prev, msg];
           messageCacheRef.current[currentRoom] = updated;
@@ -474,6 +485,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     });
 
     socket.on('roomUsers', (roomUsers) => {
+      console.log('Chat.js: Received room users:', roomUsers);
       let updatedUsers = roomUsers.map(roomUser => {
         if (roomUser.userId === userId) {
           return { ...roomUser, photoUrl: currentUserPhotoUrl };
@@ -522,11 +534,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           ];
         }
       }
-      console.log('Updated users in room:', updatedUsers);
+      console.log('Chat.js: Updated users in room:', updatedUsers);
       setUsers(updatedUsers);
     });
 
     if (!messageCacheRef.current[currentRoom]?.length) {
+      console.log('Chat.js: Requesting initial joinRoom for:', currentRoom);
       socket.emit('joinRoom', { room: currentRoom, lastTimestamp: null });
     }
 
@@ -569,7 +582,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         photoUrl: currentUserPhotoUrl || '',
         animalText: animalText || undefined
       };
-      console.log('Sending message:', newMessage);
+      console.log('Chat.js: Sending message:', newMessage);
       socket.emit('sendMessage', newMessage);
       setMessage('');
     }
@@ -590,7 +603,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   };
 
   const getAvatar = (msg) => {
-    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
+    console.log('Chat.js: Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
 
     if (msg.userId === userId) {
@@ -673,10 +686,10 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
           placeholder={currentRoom ? "Напишите сообщение..." : "Выберите комнату на вкладке Карта"}
-          disabled={!currentRoom}
+          disabled={!currentRoom || transitionState} // Блокируем ввод во время перехода
           theme={theme}
         />
-        <SendIcon onClick={sendMessage} disabled={!currentRoom} />
+        <SendIcon onClick={sendMessage} disabled={!currentRoom || transitionState} />
       </InputContainer>
       {showUserList && currentRoom && (
         <UserListModal ref={modalRef} onClick={handleModalClick} theme={theme}>
@@ -693,7 +706,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       {transitionState && (
         <Overlay
           transition={transitionState}
-          opacity={transitionState === 'fadeOut' ? 0 : 1}
           onAnimationEnd={transitionState === 'fadeOut' ? handleFadeOutEnd : handleFadeInEnd}
         />
       )}

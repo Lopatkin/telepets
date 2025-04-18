@@ -1,380 +1,704 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
-import foggyCityMap from '../images/foggy_city_map.jpg'; // Импортируем изображение
+import React, { useState, useEffect, useRef } from 'react';
+import styled, { keyframes } from 'styled-components';
+import { FaUsers, FaPaperPlane } from 'react-icons/fa';
+import { catSounds, dogSounds } from './animalSounds';
+import busStationImage from '../images/bus_station.jpg';
+import myRoomImage from '../images/my_room.jpg';
+import trainStationImage from '../images/train_station.jpg';
+import zhkSferaImage from '../images/zhk_sfera.jpg';
+import factoryImage from '../images/factory.jpg';
+import forestImage from '../images/forest.jpg';
+import parkImage from '../images/park.jpg';
+import villageImage from '../images/village.jpg';
+import npcBelochkaImage from '../images/npc_belochka.jpg';
+import npcFoxImage from '../images/npc_fox.jpg';
+import npcEzhikImage from '../images/npc_ezhik.jpg';
+import npcSecurityImage from '../images/npc_security.jpg';
+import npcGuardImage from '../images/npc_guard.jpg';
+import barImage from '../images/bar.jpg';
+import cafeImage from '../images/cafe.jpg';
+import priyutImage from '../images/priyut.jpg';
+import albionImage from '../images/albion.jpg';
+import karnavalImage from '../images/univermag.jpg';
+import poligonImage from '../images/poligon.jpg';
+import workshopImage from '../images/workshop.jpg';
+import babushka1Image from '../images/babushka_1.jpg';
+import babushka2Image from '../images/babushka_2.jpg';
+import babushka3Image from '../images/babushka_3.jpg';
+import volonterIraImage from '../images/volonter_Ira.jpg';
+import volonterKatyaImage from '../images/volonter_Katya.jpg';
+import volonterZhannaImage from '../images/volonter_Zhanna.jpg';
+import lovec1Image from '../images/lovec_1.jpg';
+import lovec2Image from '../images/lovec_2.jpg';
+import povodokIcon from '../images/povodok.png';
+import prodavecSvetaImage from '../images/prodavec_Sveta.jpg';
 
-const MapContainer = styled.div`
+// Анимация затемнения
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const fadeOut = keyframes`
+  from { opacity: 1; }
+  to { opacity: 0; }
+`;
+
+const ChatContainer = styled.div`
   height: 100%;
-  background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#fff'};
   display: flex;
   flex-direction: column;
-  padding: 0px;
-  box-sizing: border-box;
   position: relative;
 `;
 
-const Tabs = styled.div`
-  display: flex;
-  border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  margin-bottom: 10px;
-`;
-
-const Tab = styled.button`
-  flex: 1;
-  padding: 10px;
-  background: ${props => props.active ? '#007AFF' : 'transparent'};
-  color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#333')};
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.2s;
-
-  &:hover {
-    background: ${props => props.active ? '#005BBB' : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
-  }
-`;
-
-const RoomList = styled.ul`
-  list-style: none;
-  padding: 5px;
-  margin: 0 0 10px 0;
+const MessagesContainer = styled.div`
   flex: 1;
   overflow-y: auto;
-`;
-
-const RoomItem = styled.li`
   padding: 10px;
-  margin: 5px;
-  background: ${props => props.isCurrent 
-    ? '#007AFF' 
-    : (props.theme === 'dark' ? '#333' : '#f0f0f0')};
-  color: ${props => props.isCurrent 
-    ? 'white' 
-    : (props.theme === 'dark' ? '#ccc' : '#333')};
+  display: flex;
+  flex-direction: column;
+  background: ${props => {
+    if (props.room === 'Автобусная остановка') {
+      return `url(${busStationImage}) no-repeat center center fixed`;
+    } else if (props.room && props.room.startsWith('myhome_')) {
+      return `url(${myRoomImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Вокзал') {
+      return `url(${trainStationImage}) no-repeat center center fixed`;
+    } else if (props.room === 'ЖК Сфера') {
+      return `url(${zhkSferaImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Завод') {
+      return `url(${factoryImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Лес') {
+      return `url(${forestImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Парк') {
+      return `url(${parkImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Район Дачный') {
+      return `url(${villageImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Бар "У бобра" (18+)') {
+      return `url(${barImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Кофейня "Ляля-Фа"') {
+      return `url(${cafeImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Приют для животных "Кошкин дом"') {
+      return `url(${priyutImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Бизнес центр "Альбион"') {
+      return `url(${albionImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Магазин "Всё на свете"') {
+      return `url(${karnavalImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Полигон утилизации') {
+      return `url(${poligonImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Мастерская') {
+      return `url(${workshopImage}) no-repeat center center fixed`;
+    } else {
+      return props.theme === 'dark' ? '#1A1A1A' : '#fff';
+    }
+  }};
+  background-size: cover;
+`;
+
+const Message = styled.div`
+  margin: 5px 0;
+  padding: 8px;
   border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  &:hover {
-    background: ${props => props.isCurrent 
-      ? '#005BBB' 
-      : (props.theme === 'dark' ? '#444' : '#e0e0e0')};
-  }
-`;
-
-const MapImageContainer = styled.div`
-  flex: 1;
-  overflow: hidden; /* Скрываем части изображения, выходящие за пределы контейнера */
+  background: ${props => props.theme === 'dark'
+    ? '#444'
+    : (props.isOwn ? '#DCF8C6' : '#ECECEC')};
+  align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
+  max-width: 70%;
+  display: flex;
+  flex-direction: column;
   position: relative;
-  cursor: grab; /* Курсор для указания возможности перетаскивания */
-  user-select: none; /* Запрещаем выделение текста или изображения */
-  -webkit-user-select: none; /* Для Safari */
-  -ms-user-select: none; /* Для IE/Edge */
-  touch-action: none; /* Отключаем стандартное поведение прокрутки на сенсорных устройствах */
+  z-index: 2;
 `;
 
-const MapImage = styled.img`
+const MessageHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+`;
+
+const Avatar = styled.img`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 8px;
+  object-fit: cover;
+`;
+
+const DefaultAvatar = styled.div`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #007AFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  margin-right: 8px;
+`;
+
+const MessageName = styled.div`
+  font-size: 12px;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+`;
+
+const MessageContent = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+`;
+
+const MessageText = styled.span`
+  font-size: 14px;
+  word-break: break-word;
+  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
+`;
+
+const Timestamp = styled.span`
+  font-size: 10px;
+  color: ${props => props.theme === 'dark' ? '#999' : '#999'};
+  margin-left: 8px;
+  white-space: nowrap;
+`;
+
+const InputContainer = styled.div`
+  position: sticky;
+  bottom: 0;
+  background: ${props => props.theme === 'dark' ? '#333' : '#fff'};
+  padding: 10px;
+  border-top: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ddd'};
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
+`;
+
+const UsersButton = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+`;
+
+const UsersIcon = styled(FaUsers)`
+  font-size: 24px;
+  color: #007AFF;
+`;
+
+const UserCount = styled.span`
   position: absolute;
-  top: ${props => props.top}px;
-  left: ${props => props.left}px;
-  width: ${props => props.scale}%; /* Масштаб в процентах от исходного размера */
-  height: auto; /* Сохраняем пропорции */
-  transform-origin: top left; /* Точка масштабирования */
-`;
-
-const HomeButton = styled.button`
-  padding: 15px;
+  top: -5px;
+  right: -5px;
   background: #007AFF;
   color: white;
-  border: none;
+  font-size: 12px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const Input = styled.input`
+  flex: 1;
+  padding: 8px;
+  border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ddd'};
   border-radius: 4px;
-  cursor: pointer;
-  font-size: 18px;
+  background: ${props => props.theme === 'dark' ? '#444' : '#fff'};
+  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
+`;
+
+const SendIcon = styled(FaPaperPlane)`
+  font-size: 24px;
+  color: #007AFF;
+  cursor: ${props => (props.disabled ? 'not-allowed' : 'pointer')};
+  padding: 8px;
+`;
+
+const UserListModal = styled.div`
+  position: absolute;
+  bottom: 60px;
+  left: 10px;
+  width: 200px;
+  background: ${props => props.theme === 'dark' ? '#333' : '#fff'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ddd'};
+  border-radius: 4px;
+  padding: 10px;
+  max-height: 200px;
+  overflow-y: auto;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: background 0.2s;
+  z-index: 20;
+`;
+
+const ModalTitle = styled.div`
+  font-size: 14px;
+  font-weight: bold;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  margin-bottom: 8px;
+`;
+
+const UserItem = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+`;
+
+const UserName = styled.span`
+  font-size: 14px;
+  color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
+  margin-left: 5px;
+`;
+
+const PovodokIcon = styled.img`
+  width: 16px;
+  height: 16px;
+`;
+
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  position: sticky;
-  bottom: 10px;
-  margin-top: 10px;
-
-  &:hover {
-    background: #005BBB;
-  }
+  height: 100%;
+  background: black;
+  z-index: 100;
+  pointer-events: none;
+  opacity: ${props => props.opacity};
+  animation: ${props => props.transition === 'fadeOut' ? fadeOut : fadeIn} 3s ease-in-out forwards;
 `;
 
-const RoomName = styled.span`
-  font-size: 16px;
-`;
+function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
+  const [messages, setMessages] = useState([]);
+  const [message, setMessage] = useState('');
+  const [users, setUsers] = useState([]);
+  const [showUserList, setShowUserList] = useState(false);
+  const [transitionState, setTransitionState] = useState(null); // 'fadeOut', 'fadeIn', null
+  const [pendingRoom, setPendingRoom] = useState(null); // Комната, в которую переходим
+  const [currentRoom, setCurrentRoom] = useState(room); // Текущая комната для рендера
+  const messagesEndRef = useRef(null);
+  const modalRef = useRef(null);
+  const messageCacheRef = useRef({});
 
-function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
-  const [activeSubTab, setActiveSubTab] = useState('locations'); // Состояние для переключения подвкладок
-  const [isDragging, setIsDragging] = useState(false); // Флаг перетаскивания
-  const [position, setPosition] = useState({ top: 0, left: 0 }); // Позиция изображения
-  const [startPos, setStartPos] = useState({ x: 0, y: 0 }); // Начальная позиция курсора
-  const [scale, setScale] = useState(100); // Масштаб в процентах (100% = исходный размер)
-  const [initialDistance, setInitialDistance] = useState(null); // Начальное расстояние между пальцами
-  const [isImageLoaded, setIsImageLoaded] = useState(false); // Флаг загрузки изображения
-  const mapContainerRef = useRef(null); // Ссылка на контейнер карты
-  const mapImageRef = useRef(null); // Ссылка на изображение
+  const currentUserPhotoUrl = user?.photoUrl || '';
 
-  const rooms = [
-    'Автобусная остановка',
-    'Бар "У бобра" (18+)',
-    'Бизнес центр "Альбион"',
-    'Вокзал',
-    'ЖК Сфера',
-    'Завод',
-    'Кофейня "Ляля-Фа"',
-    'Лес',
-    'Мастерская',
-    'Парк',
-    'Полигон утилизации',
-    'Приют для животных "Кошкин дом"',
-    'Район Дачный',
-    'Магазин "Всё на свете"',
-  ].sort(); // Сортировка по алфавиту
+  // Проверка времени для появления бабушек (6:00–7:00)
+  const isBabushkaTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    return hours === 6 && minutes >= 0 && minutes <= 59;
+  };
 
-  const myHomeRoom = `myhome_${userId}`;
+  // Проверка времени для волонтёров Иры и Кати (8:03–20:05)
+  const isIraKatyaTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const startMinutes = 8 * 60 + 3;
+    const endMinutes = 20 * 60 + 5;
+    return totalMinutes >= startMinutes && totalMinutes <= endMinutes;
+  };
 
-  // Устанавливаем начальный масштаб после загрузки изображения
+  // Проверка времени для волонтёра Жанны (19:53–8:12 следующего дня)
+  const isZhannaTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const startMinutes = 19 * 60 + 53;
+    const endMinutes = 8 * 60 + 12;
+    return totalMinutes >= startMinutes || totalMinutes <= endMinutes;
+  };
+
+  // Проверка времени для Ловца животных в Парке (8:00–23:00, чётные часы)
+  const isLovecParkTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const startMinutes = 8 * 60;
+    const endMinutes = 23 * 60;
+    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
+  };
+
+  // Проверка времени для Ловца животных в Районе Дачном (7:00–22:00, нечётные часы)
+  const isLovecDachnyTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const totalMinutes = hours * 60 + minutes;
+    const startMinutes = 7 * 60;
+    const endMinutes = 22 * 60;
+    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
+  };
+
+  // Обновление списка пользователей при смене комнаты
   useEffect(() => {
-    const container = mapContainerRef.current;
-    const img = mapImageRef.current;
-
-    if (container && img && activeSubTab === 'map' && isImageLoaded) {
-      const containerHeight = container.offsetHeight;
-      const imgHeight = img.naturalHeight;
-
-      // Устанавливаем масштаб так, чтобы высота карты равнялась 100% высоты контейнера
-      let initialScale = (containerHeight / imgHeight) * 100;
-
-      // Устанавливаем минимальный масштаб, чтобы карта не была слишком маленькой
-      initialScale = Math.max(initialScale, 100); // Минимум 50%
-
-      console.log('containerHeight:', containerHeight, 'imgHeight:', imgHeight);
-      console.log('initialScale:', initialScale);
-
-      setScale(initialScale);
-      setPosition({
-        left: 0, // Слева, так как ширина может превышать контейнер
-        top: 0,  // Сверху, высота может превышать контейнер
+    if (currentRoom === 'Парк') {
+      const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false };
+      const lovecPark = { userId: 'npc_lovec_park', firstName: 'Ловец животных', photoUrl: lovec1Image, isHuman: true };
+      setUsers(prevUsers => {
+        const updatedUsers = [...prevUsers];
+        if (!prevUsers.some(user => user.userId === 'npc_belochka')) updatedUsers.unshift(belochka);
+        if (isLovecParkTime() && !prevUsers.some(user => user.userId === 'npc_lovec_park')) updatedUsers.unshift(lovecPark);
+        return updatedUsers;
       });
-    }
-  }, [activeSubTab, isImageLoaded]); // Зависимость только от загрузки и вкладки
-
-  // Обработчик загрузки изображения
-  const handleImageLoad = () => {
-    setIsImageLoaded(true);
-  };
-
-  // Вычисление расстояния между двумя точками касания
-  const getDistance = (touch1, touch2) => {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
-
-  // Начало перетаскивания (мышь)
-  const handleMouseDown = (e) => {
-    e.preventDefault(); // Предотвращаем стандартное поведение
-    setIsDragging(true);
-    setStartPos({
-      x: e.clientX - position.left,
-      y: e.clientY - position.top,
-    });
-  };
-
-  // Ограничение перемещения
-  const restrictPosition = useCallback((newLeft, newTop, img) => {
-    if (!img) return; // Проверка на null
-    const container = mapContainerRef.current;
-    const maxLeft = 0; // Левая граница
-    const maxTop = 0; // Верхняя граница
-    const minLeft = container.offsetWidth - (img.offsetWidth * (scale / 100)); // Правая граница с учетом масштаба
-    const minTop = container.offsetHeight - (img.offsetHeight * (scale / 100)); // Нижняя граница с учетом масштаба
-
-    setPosition({
-      left: Math.min(maxLeft, Math.max(minLeft, newLeft)),
-      top: Math.min(maxTop, Math.max(minTop, newTop)),
-    });
-  }, [scale]); // Зависимость от scale
-
-  // Начало перетаскивания или масштабирования (сенсорный экран)
-  const handleTouchStart = useCallback((e) => {
-    e.preventDefault(); // Предотвращаем стандартное поведение
-    if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      setIsDragging(true);
-      setStartPos({
-        x: touch.clientX - position.left,
-        y: touch.clientY - position.top,
+    } else if (currentRoom === 'Лес') {
+      const fox = { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage, isHuman: false };
+      const ezhik = { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage, isHuman: false };
+      setUsers(prevUsers => {
+        const updatedUsers = [...prevUsers];
+        if (!prevUsers.some(user => user.userId === 'npc_fox')) updatedUsers.unshift(fox);
+        if (!prevUsers.some(user => user.userId === 'npc_ezhik')) updatedUsers.unshift(ezhik);
+        return updatedUsers;
       });
-    } else if (e.touches.length === 2) {
-      setIsDragging(false);
-      const distance = getDistance(e.touches[0], e.touches[1]);
-      setInitialDistance(distance);
+    } else if (currentRoom === 'Район Дачный') {
+      const security = { userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage, isHuman: true };
+      const lovecDachny = { userId: 'npc_lovec_dachny', firstName: 'Ловец животных', photoUrl: lovec2Image, isHuman: true };
+      setUsers(prevUsers => {
+        const updatedUsers = [...prevUsers];
+        if (!prevUsers.some(user => user.userId === 'npc_security')) updatedUsers.unshift(security);
+        if (isLovecDachnyTime() && !prevUsers.some(user => user.userId === 'npc_lovec_dachny')) updatedUsers.unshift(lovecDachny);
+        return updatedUsers;
+      });
+    } else if (currentRoom === 'Завод') {
+      const guard = { userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage, isHuman: true };
+      setUsers(prevUsers => !prevUsers.some(user => user.userId === 'npc_guard') ? [guard, ...prevUsers] : prevUsers);
+    } else if (currentRoom === 'Автобусная остановка' && isBabushkaTime()) {
+      const babushkaGalya = { userId: 'npc_babushka_galya', firstName: 'Бабушка Галя', photoUrl: babushka1Image, isHuman: true };
+      const babushkaVera = { userId: 'npc_babushka_vera', firstName: 'Бабушка Вера', photoUrl: babushka2Image, isHuman: true };
+      const babushkaZina = { userId: 'npc_babushka_zina', firstName: 'Бабушка Зина', photoUrl: babushka3Image, isHuman: true };
+      setUsers(prevUsers => {
+        const updatedUsers = [...prevUsers];
+        if (!prevUsers.some(user => user.userId === 'npc_babushka_galya')) updatedUsers.unshift(babushkaGalya);
+        if (!prevUsers.some(user => user.userId === 'npc_babushka_vera')) updatedUsers.unshift(babushkaVera);
+        if (!prevUsers.some(user => user.userId === 'npc_babushka_zina')) updatedUsers.unshift(babushkaZina);
+        return updatedUsers;
+      });
+    } else if (currentRoom === 'Приют для животных "Кошкин дом"') {
+      const volonterIra = { userId: 'npc_volonter_ira', firstName: 'Волонтёр Ира', photoUrl: volonterIraImage, isHuman: true };
+      const volonterKatya = { userId: 'npc_volonter_katya', firstName: 'Волонтёр Катя', photoUrl: volonterKatyaImage, isHuman: true };
+      const volonterZhanna = { userId: 'npc_volonter_zhanna', firstName: 'Волонтёр Жанна', photoUrl: volonterZhannaImage, isHuman: true };
+      setUsers(prevUsers => {
+        const updatedUsers = [...prevUsers];
+        if (isIraKatyaTime()) {
+          if (!prevUsers.some(user => user.userId === 'npc_volonter_ira')) updatedUsers.unshift(volonterIra);
+          if (!prevUsers.some(user => user.userId === 'npc_volonter_katya')) updatedUsers.unshift(volonterKatya);
+        }
+        if (isZhannaTime()) {
+          if (!prevUsers.some(user => user.userId === 'npc_volonter_zhanna')) updatedUsers.unshift(volonterZhanna);
+        }
+        return updatedUsers;
+      });
+    } else if (currentRoom === 'Магазин "Всё на свете"') {
+      const prodavecSveta = { userId: 'npc_prodavec_sveta', firstName: 'Продавщица Света', photoUrl: prodavecSvetaImage, isHuman: true };
+      setUsers(prevUsers => {
+        const updatedUsers = [...prevUsers];
+        if (!prevUsers.some(user => user.userId === 'npc_prodavec_sveta')) updatedUsers.unshift(prodavecSveta);
+        return updatedUsers;
+      });
+    } else {
+      setUsers(prevUsers => prevUsers.filter(user => ![
+        'npc_belochka', 'npc_fox', 'npc_ezhik', 'npc_security', 'npc_guard',
+        'npc_babushka_galya', 'npc_babushka_vera', 'npc_babushka_zina',
+        'npc_volonter_ira', 'npc_volonter_katya', 'npc_volonter_zhanna',
+        'npc_lovec_park', 'npc_lovec_dachny'
+      ].includes(user.userId)));
     }
-  }, [position]); // Зависимость только от position
+  }, [currentRoom]);
 
-  // Перемещение изображения (мышь)
-  const handleMouseMove = (e) => {
-    if (!isDragging) return;
-
-    const newLeft = e.clientX - startPos.x;
-    const newTop = e.clientY - startPos.y;
-
-    restrictPosition(newLeft, newTop, mapImageRef.current);
-  };
-
-  // Перемещение или масштабирование (сенсорный экран)
-  const handleTouchMove = useCallback((e) => {
-    e.preventDefault(); // Предотвращаем прокрутку страницы
-    if (e.touches.length === 1 && isDragging) {
-      const touch = e.touches[0];
-      const newLeft = touch.clientX - startPos.x;
-      const newTop = touch.clientY - startPos.y;
-
-      restrictPosition(newLeft, newTop, mapImageRef.current);
-    } else if (e.touches.length === 2 && initialDistance !== null) {
-      const newDistance = getDistance(e.touches[0], e.touches[1]);
-      const scaleFactor = newDistance / initialDistance;
-      const newScale = Math.min(Math.max(scale * scaleFactor, 100), 500); // Ограничиваем масштаб от 50% до 500%
-
-      const img = mapImageRef.current;
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const centerX = (touch1.clientX + touch2.clientX) / 2;
-      const centerY = (touch1.clientY + touch2.clientY) / 2;
-
-      const imgRect = img.getBoundingClientRect();
-      const dx = centerX - (imgRect.left + imgRect.width / 2);
-      const dy = centerY - (imgRect.top + imgRect.height / 2);
-
-      const newLeft = position.left - (dx * (newScale / scale - 1));
-      const newTop = position.top - (dy * (newScale / scale - 1));
-
-      setScale(newScale);
-      restrictPosition(newLeft, newTop, img);
-      setInitialDistance(newDistance); // Обновляем начальное расстояние
-    }
-  }, [isDragging, startPos, scale, position, initialDistance, restrictPosition]); // Зависимости
-
-  // Масштабирование колесом мыши
-  const handleWheel = (e) => {
-    e.preventDefault(); // Предотвращаем стандартную прокрутку страницы
-    const img = mapImageRef.current;
-    if (!img) return; // Проверка на null
-
-    const container = mapContainerRef.current;
-    const scaleFactor = e.deltaY < 0 ? 1.1 : 0.9; // Увеличиваем на 10% или уменьшаем на 10%
-    const newScale = Math.min(Math.max(scale * scaleFactor, 100), 500); // Ограничиваем масштаб от 50% до 500%
-
-    const imgRect = img.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    const mouseX = e.clientX - containerRect.left;
-    const mouseY = e.clientY - containerRect.top;
-
-    const dx = mouseX - (position.left + (imgRect.width / 2) * (scale / 100));
-    const dy = mouseY - (position.top + (imgRect.height / 2) * (scale / 100));
-
-    const newLeft = position.left - (dx * (newScale / scale - 1));
-    const newTop = position.top - (dy * (newScale / scale - 1));
-
-    setScale(newScale);
-    restrictPosition(newLeft, newTop, img);
-  };
-
-  // Завершение перетаскивания (мышь)
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  // Завершение перетаскивания или масштабирования (сенсорный экран)
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(false);
-    setInitialDistance(null); // Сбрасываем расстояние для масштабирования
-  }, []); // Нет зависимостей для handleTouchEnd
-
-  // Регистрация обработчиков с { passive: false }
+  // Обработка смены комнаты
   useEffect(() => {
-    const container = mapContainerRef.current;
-    if (container) {
-      container.addEventListener('touchstart', handleTouchStart, { passive: false });
-      container.addEventListener('touchmove', handleTouchMove, { passive: false });
-      container.addEventListener('touchend', handleTouchEnd, { passive: false });
+    if (room !== currentRoom && !transitionState) {
+      // Начинаем переход: затемнение
+      setPendingRoom(room);
+      setTransitionState('fadeOut');
+    }
+  }, [room, currentRoom, transitionState]);
 
-      return () => {
-        container.removeEventListener('touchstart', handleTouchStart);
-        container.removeEventListener('touchmove', handleTouchMove);
-        container.removeEventListener('touchend', handleTouchEnd);
+  // Обработка завершения анимации затемнения
+  const handleFadeOutEnd = () => {
+    if (transitionState === 'fadeOut' && pendingRoom) {
+      // Завершено затемнение, меняем комнату
+      setCurrentRoom(pendingRoom);
+      setMessages([]); // Очищаем сообщения
+      messageCacheRef.current[pendingRoom] = []; // Очищаем кэш для новой комнаты
+      setTransitionState('fadeIn'); // Начинаем проявление
+      // Запрашиваем данные для новой комнаты
+      if (socket && pendingRoom) {
+        socket.emit('joinRoom', { room: pendingRoom, lastTimestamp: null });
+      }
+    }
+  };
+
+  // Обработка завершения анимации проявления
+  const handleFadeInEnd = () => {
+    setTransitionState(null); // Завершаем переход
+    setPendingRoom(null);
+  };
+
+  // Основная логика сокетов
+  useEffect(() => {
+    if (!socket || !currentRoom) return;
+
+    // Очищаем кэш при смене комнаты
+    if (!messageCacheRef.current[currentRoom]) {
+      messageCacheRef.current[currentRoom] = [];
+    }
+
+    const cachedMessages = messageCacheRef.current[currentRoom] || [];
+    if (cachedMessages.length > 0 && messages.length === 0) {
+      setMessages(cachedMessages);
+    }
+
+    socket.on('messageHistory', (history) => {
+      setMessages(prev => {
+        const cached = messageCacheRef.current[currentRoom] || [];
+        const newMessages = [...cached, ...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        messageCacheRef.current[currentRoom] = newMessages;
+        return newMessages;
+      });
+    });
+
+    socket.on('message', (msg) => {
+      if (msg.room === currentRoom) {
+        setMessages(prev => {
+          const updated = [...prev, msg];
+          messageCacheRef.current[currentRoom] = updated;
+          return updated;
+        });
+      }
+    });
+
+    socket.on('roomUsers', (roomUsers) => {
+      let updatedUsers = roomUsers.map(roomUser => {
+        if (roomUser.userId === userId) {
+          return { ...roomUser, photoUrl: currentUserPhotoUrl };
+        }
+        return roomUser;
+      });
+      if (currentRoom === 'Парк') {
+        updatedUsers = [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false }, ...updatedUsers];
+        if (isLovecParkTime()) {
+          updatedUsers = [{ userId: 'npc_lovec_park', firstName: 'Ловец животных', photoUrl: lovec1Image, isHuman: true }, ...updatedUsers];
+        }
+      } else if (currentRoom === 'Лес') {
+        updatedUsers = [
+          { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage, isHuman: false },
+          { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage, isHuman: false },
+          ...updatedUsers
+        ];
+      } else if (currentRoom === 'Район Дачный') {
+        updatedUsers = [{ userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage, isHuman: true }, ...updatedUsers];
+        if (isLovecDachnyTime()) {
+          updatedUsers = [{ userId: 'npc_lovec_dachny', firstName: 'Ловец животных', photoUrl: lovec2Image, isHuman: true }, ...updatedUsers];
+        }
+      } else if (currentRoom === 'Завод') {
+        updatedUsers = [{ userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage, isHuman: true }, ...updatedUsers];
+      } else if (currentRoom === 'Автобусная остановка' && isBabushkaTime()) {
+        updatedUsers = [
+          { userId: 'npc_babushka_galya', firstName: 'Бабушка Галя', photoUrl: babushka1Image, isHuman: true },
+          { userId: 'npc_babushka_vera', firstName: 'Бабушка Вера', photoUrl: babushka2Image, isHuman: true },
+          { userId: 'npc_babushka_zina', firstName: 'Бабушка Зина', photoUrl: babushka3Image, isHuman: true },
+          ...updatedUsers
+        ];
+      } else if (currentRoom === 'Магазин "Всё на свете"') {
+        updatedUsers = [{ userId: 'npc_prodavec_sveta', firstName: 'Продавщица Света', photoUrl: prodavecSvetaImage, isHuman: true }, ...updatedUsers];
+      } else if (currentRoom === 'Приют для животных "Кошкин дом"') {
+        if (isIraKatyaTime()) {
+          updatedUsers = [
+            { userId: 'npc_volonter_ira', firstName: 'Волонтёр Ира', photoUrl: volonterIraImage, isHuman: true },
+            { userId: 'npc_volonter_katya', firstName: 'Волонтёр Катя', photoUrl: volonterKatyaImage, isHuman: true },
+            ...updatedUsers
+          ];
+        }
+        if (isZhannaTime()) {
+          updatedUsers = [
+            { userId: 'npc_volonter_zhanna', firstName: 'Волонтёр Жанна', photoUrl: volonterZhannaImage, isHuman: true },
+            ...updatedUsers
+          ];
+        }
+      }
+      console.log('Updated users in room:', updatedUsers);
+      setUsers(updatedUsers);
+    });
+
+    if (!messageCacheRef.current[currentRoom]?.length) {
+      socket.emit('joinRoom', { room: currentRoom, lastTimestamp: null });
+    }
+
+    return () => {
+      socket.off('messageHistory');
+      socket.off('message');
+      socket.off('roomUsers');
+    };
+  }, [socket, userId, currentRoom, messages, currentUserPhotoUrl]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const sendMessage = () => {
+    if (message.trim() && currentRoom && socket) {
+      let animalText = '';
+      if (!user.isHuman) {
+        const sounds = user.animalType === 'Кошка' ? catSounds : dogSounds;
+        const parts = message.match(/[^\s,.!?;:]+[,.!?;:]*/g) || message.split(/\s+/);
+        animalText = parts
+          .map((part, index) => {
+            const wordMatch = part.match(/^([^\s,.!?;:]+)([,.!?;:]*)$/);
+            if (wordMatch) {
+              const [, word, punctuation] = wordMatch;
+              const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+              const isUpperCase = word.charAt(0) === word.charAt(0).toUpperCase();
+              const transformedSound = isUpperCase ? randomSound.charAt(0).toUpperCase() + randomSound.slice(1) : randomSound;
+              return transformedSound + punctuation;
+            }
+            return part;
+          })
+          .join(' ');
+      }
+
+      const newMessage = {
+        text: message,
+        room: currentRoom,
+        timestamp: new Date().toISOString(),
+        photoUrl: currentUserPhotoUrl || '',
+        animalText: animalText || undefined
       };
+      console.log('Sending message:', newMessage);
+      socket.emit('sendMessage', newMessage);
+      setMessage('');
     }
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]); // Зависимости для обработчиков
+  };
+
+  const getAuthorName = (msg) => {
+    if (msg.userId === userId) return '';
+
+    if (msg.isHuman === false && msg.name) {
+      return msg.name;
+    }
+
+    const parts = [];
+    if (msg.firstName) parts.push(msg.firstName);
+    if (msg.username) parts.push(`@${msg.username}`);
+    if (msg.lastName) parts.push(msg.lastName);
+    return parts.length > 0 ? parts.join(' ') : `User ${msg.userId}`;
+  };
+
+  const getAvatar = (msg) => {
+    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
+    const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
+
+    if (msg.userId === userId) {
+      return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (
+        <Avatar src={currentUserPhotoUrl} alt="Avatar" />
+      ) : (
+        <DefaultAvatar>{initial}</DefaultAvatar>
+      );
+    }
+
+    return msg.photoUrl && msg.photoUrl.trim() ? (
+      <Avatar src={msg.photoUrl} alt="Avatar" />
+    ) : (
+      <DefaultAvatar>{initial}</DefaultAvatar>
+    );
+  };
+
+  const getUserDisplayName = (user) => {
+    if (user.isHuman === false && user.name) {
+      return user.name;
+    }
+    return user.firstName || `User ${user.userId}`;
+  };
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else {
+      return `${date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+  };
+
+  const toggleUserList = (e) => {
+    e.stopPropagation();
+    setShowUserList(prev => !prev);
+  };
+
+  const handleModalClick = (e) => {
+    e.stopPropagation();
+    setShowUserList(false);
+  };
+
+  const getDisplayText = (msg) => {
+    if (!msg.isHuman && user.isHuman) {
+      return msg.animalText || msg.text;
+    }
+    return msg.text;
+  };
 
   return (
-    <MapContainer theme={theme}>
-      <Tabs>
-        <Tab
-          active={activeSubTab === 'locations'}
-          onClick={() => setActiveSubTab('locations')}
+    <ChatContainer>
+      <MessagesContainer room={currentRoom} theme={theme}>
+        {messages.map((msg, index) => (
+          <Message key={index} isOwn={msg.userId === userId} theme={theme}>
+            {msg.userId !== userId && (
+              <MessageHeader>
+                {getAvatar(msg)}
+                <MessageName theme={theme}>{getAuthorName(msg)}</MessageName>
+              </MessageHeader>
+            )}
+            <MessageContent>
+              <MessageText theme={theme} isOwn={msg.userId === userId}>{getDisplayText(msg)}</MessageText>
+              <Timestamp theme={theme}>{formatTimestamp(msg.timestamp)}</Timestamp>
+            </MessageContent>
+          </Message>
+        ))}
+        <div ref={messagesEndRef} />
+      </MessagesContainer>
+      <InputContainer theme={theme}>
+        <UsersButton onClick={toggleUserList}>
+          <UsersIcon />
+          <UserCount>{users.length}</UserCount>
+        </UsersButton>
+        <Input
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+          placeholder={currentRoom ? "Напишите сообщение..." : "Выберите комнату на вкладке Карта"}
+          disabled={!currentRoom}
           theme={theme}
-        >
-          Локации
-        </Tab>
-        <Tab
-          active={activeSubTab === 'map'}
-          onClick={() => setActiveSubTab('map')}
-          theme={theme}
-        >
-          Карта
-        </Tab>
-      </Tabs>
-
-      {activeSubTab === 'locations' && (
-        <RoomList>
-          {rooms.map(room => (
-            <RoomItem 
-              key={room} 
-              onClick={() => onRoomSelect(room)} 
-              theme={theme} 
-              isCurrent={room === currentRoom}
-            >
-              <RoomName>{room}</RoomName>
-            </RoomItem>
+        />
+        <SendIcon onClick={sendMessage} disabled={!currentRoom} />
+      </InputContainer>
+      {showUserList && currentRoom && (
+        <UserListModal ref={modalRef} onClick={handleModalClick} theme={theme}>
+          <ModalTitle theme={theme}>Онлайн</ModalTitle>
+          {users.map((user, index) => (
+            <UserItem key={index}>
+              {getAvatar(user)}
+              {user.onLeash && !user.isHuman && <PovodokIcon src={povodokIcon} alt="Поводок" />}
+              <UserName theme={theme}>{getUserDisplayName(user)}</UserName>
+            </UserItem>
           ))}
-        </RoomList>
+        </UserListModal>
       )}
-
-      {activeSubTab === 'map' && (
-        <MapImageContainer
-          ref={mapContainerRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onWheel={handleWheel}
-        >
-          <MapImage
-            ref={mapImageRef}
-            src={foggyCityMap}
-            alt="Foggy City Map"
-            top={position.top}
-            left={position.left}
-            scale={scale}
-            draggable={false}
-            onLoad={handleImageLoad} // Добавляем обработчик загрузки
-          />
-        </MapImageContainer>
+      {transitionState && (
+        <Overlay
+          transition={transitionState}
+          opacity={transitionState === 'fadeOut' ? 0 : 1}
+          onAnimationEnd={transitionState === 'fadeOut' ? handleFadeOutEnd : handleFadeInEnd}
+        />
       )}
-
-      <HomeButton 
-        onClick={() => onRoomSelect(myHomeRoom)} 
-        theme={theme}
-        disabled={user?.homeless === true} // Отключаем кнопку, если homeless === true
-      >
-        Домой
-      </HomeButton>
-    </MapContainer>
+    </ChatContainer>
   );
 }
 
-export default Map;
+export default Chat;

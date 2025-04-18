@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Добавляем импорт useMemo
-import * as S from './InventoryStyles'; // Импорт всех стилей
+import * as S from '../styles/InventoryStyles'; // Импорт всех стилей
 
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);

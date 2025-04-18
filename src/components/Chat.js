@@ -36,7 +36,7 @@ import {
   UserItem,
   UserName,
   PovodokIcon
-} from './ChatStyles';
+} from '../styles/ChatStyles';
 
 function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const [messages, setMessages] = useState([]);

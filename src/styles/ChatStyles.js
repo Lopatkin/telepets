@@ -15,7 +15,6 @@ import albionImage from '../images/albion.jpg';
 import karnavalImage from '../images/univermag.jpg';
 import poligonImage from '../images/poligon.jpg';
 import workshopImage from '../images/workshop.jpg';
-import povodokIcon from '../images/povodok.png';
 
 export const ChatContainer = styled.div`
   height: 100%;

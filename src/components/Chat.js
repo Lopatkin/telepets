@@ -14,6 +14,7 @@ import volonterZhannaImage from '../images/volonter_Zhanna.jpg';
 import lovec1Image from '../images/lovec_1.jpg';
 import lovec2Image from '../images/lovec_2.jpg';
 import prodavecSvetaImage from '../images/prodavec_Sveta.jpg';
+import PovodokIcon from '../images/povodok.png'; // Импорт иконки
 import {
   ChatContainer,
   MessagesContainer,
@@ -34,8 +35,7 @@ import {
   UserListModal,
   ModalTitle,
   UserItem,
-  UserName,
-  PovodokIcon
+  UserName
 } from '../styles/ChatStyles';
 
 function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {

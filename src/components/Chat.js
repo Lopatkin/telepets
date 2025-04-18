@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
-import { catSounds, dogSounds } from './animalSounds'; // Импорт массивов
+import { catSounds, dogSounds } from './animalSounds';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
 import trainStationImage from '../images/train_station.jpg';
@@ -22,16 +22,27 @@ import albionImage from '../images/albion.jpg';
 import karnavalImage from '../images/univermag.jpg';
 import poligonImage from '../images/poligon.jpg';
 import workshopImage from '../images/workshop.jpg';
-import babushka1Image from '../images/babushka_1.jpg'; // Добавляем аватарки
+import babushka1Image from '../images/babushka_1.jpg';
 import babushka2Image from '../images/babushka_2.jpg';
 import babushka3Image from '../images/babushka_3.jpg';
-import volonterIraImage from '../images/volonter_Ira.jpg'; // Добавляем аватарки волонтёров
+import volonterIraImage from '../images/volonter_Ira.jpg';
 import volonterKatyaImage from '../images/volonter_Katya.jpg';
 import volonterZhannaImage from '../images/volonter_Zhanna.jpg';
-import lovec1Image from '../images/lovec_1.jpg'; // Добавляем аватарки ловцов
+import lovec1Image from '../images/lovec_1.jpg';
 import lovec2Image from '../images/lovec_2.jpg';
-import povodokIcon from '../images/povodok.png'; // Импорт иконки
-import prodavecSvetaImage from '../images/prodavec_Sveta.jpg'; // Аватарка продавщицы Светы
+import povodokIcon from '../images/povodok.png';
+import prodavecSvetaImage from '../images/prodavec_Sveta.jpg';
+
+// Анимация затемнения
+const fadeIn = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+const fadeOut = keyframes`
+  from { opacity: 1; }
+  to { opacity: 0; }
+`;
 
 const ChatContainer = styled.div`
   height: 100%;
@@ -237,13 +248,25 @@ const UserItem = styled.div`
 const UserName = styled.span`
   font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
-  margin-left: 5px; // Добавляем отступ перед иконкой
+  margin-left: 5px;
 `;
 
 const PovodokIcon = styled.img`
   width: 16px;
   height: 16px;
-  // margin-left: 5px;
+`;
+
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  z-index: 100;
+  pointer-events: none;
+  opacity: ${props => props.opacity};
+  animation: ${props => props.transition === 'fadeOut' ? fadeOut : fadeIn} 3s ease-in-out forwards;
 `;
 
 function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
@@ -251,6 +274,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
+  const [transitionState, setTransitionState] = useState(null); // 'fadeOut', 'fadeIn', null
+  const [pendingRoom, setPendingRoom] = useState(null); // Комната, в которую переходим
+  const [currentRoom, setCurrentRoom] = useState(room); // Текущая комната для рендера
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
   const messageCacheRef = useRef({});
@@ -271,8 +297,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 8 * 60 + 3; // 8:03
-    const endMinutes = 20 * 60 + 5;  // 20:05
+    const startMinutes = 8 * 60 + 3;
+    const endMinutes = 20 * 60 + 5;
     return totalMinutes >= startMinutes && totalMinutes <= endMinutes;
   };
 
@@ -282,8 +308,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 19 * 60 + 53; // 19:53
-    const endMinutes = 8 * 60 + 12;    // 8:12
+    const startMinutes = 19 * 60 + 53;
+    const endMinutes = 8 * 60 + 12;
     return totalMinutes >= startMinutes || totalMinutes <= endMinutes;
   };
 
@@ -293,13 +319,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 8 * 60;   // 8:00
-    const endMinutes = 23 * 60;    // 23:00
-    // const startMinutes = 1 * 60;   // 8:00
-    // const endMinutes = 9 * 60;    // 23:00
-
+    const startMinutes = 8 * 60;
+    const endMinutes = 23 * 60;
     return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
-    // return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
   };
 
   // Проверка времени для Ловца животных в Районе Дачном (7:00–22:00, нечётные часы)
@@ -308,15 +330,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 7 * 60;   // 7:00
-    const endMinutes = 22 * 60;    // 22:00
+    const startMinutes = 7 * 60;
+    const endMinutes = 22 * 60;
     return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
   };
 
-  // const isLovecDachnyTime = () => true;
-
+  // Обновление списка пользователей при смене комнаты
   useEffect(() => {
-    if (room === 'Парк') {
+    if (currentRoom === 'Парк') {
       const belochka = { userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false };
       const lovecPark = { userId: 'npc_lovec_park', firstName: 'Ловец животных', photoUrl: lovec1Image, isHuman: true };
       setUsers(prevUsers => {
@@ -325,7 +346,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         if (isLovecParkTime() && !prevUsers.some(user => user.userId === 'npc_lovec_park')) updatedUsers.unshift(lovecPark);
         return updatedUsers;
       });
-    } else if (room === 'Лес') {
+    } else if (currentRoom === 'Лес') {
       const fox = { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage, isHuman: false };
       const ezhik = { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage, isHuman: false };
       setUsers(prevUsers => {
@@ -334,7 +355,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         if (!prevUsers.some(user => user.userId === 'npc_ezhik')) updatedUsers.unshift(ezhik);
         return updatedUsers;
       });
-    } else if (room === 'Район Дачный') {
+    } else if (currentRoom === 'Район Дачный') {
       const security = { userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage, isHuman: true };
       const lovecDachny = { userId: 'npc_lovec_dachny', firstName: 'Ловец животных', photoUrl: lovec2Image, isHuman: true };
       setUsers(prevUsers => {
@@ -343,10 +364,10 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         if (isLovecDachnyTime() && !prevUsers.some(user => user.userId === 'npc_lovec_dachny')) updatedUsers.unshift(lovecDachny);
         return updatedUsers;
       });
-    } else if (room === 'Завод') {
+    } else if (currentRoom === 'Завод') {
       const guard = { userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage, isHuman: true };
       setUsers(prevUsers => !prevUsers.some(user => user.userId === 'npc_guard') ? [guard, ...prevUsers] : prevUsers);
-    } else if (room === 'Автобусная остановка' && isBabushkaTime()) {
+    } else if (currentRoom === 'Автобусная остановка' && isBabushkaTime()) {
       const babushkaGalya = { userId: 'npc_babushka_galya', firstName: 'Бабушка Галя', photoUrl: babushka1Image, isHuman: true };
       const babushkaVera = { userId: 'npc_babushka_vera', firstName: 'Бабушка Вера', photoUrl: babushka2Image, isHuman: true };
       const babushkaZina = { userId: 'npc_babushka_zina', firstName: 'Бабушка Зина', photoUrl: babushka3Image, isHuman: true };
@@ -357,7 +378,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         if (!prevUsers.some(user => user.userId === 'npc_babushka_zina')) updatedUsers.unshift(babushkaZina);
         return updatedUsers;
       });
-    } else if (room === 'Приют для животных "Кошкин дом"') {
+    } else if (currentRoom === 'Приют для животных "Кошкин дом"') {
       const volonterIra = { userId: 'npc_volonter_ira', firstName: 'Волонтёр Ира', photoUrl: volonterIraImage, isHuman: true };
       const volonterKatya = { userId: 'npc_volonter_katya', firstName: 'Волонтёр Катя', photoUrl: volonterKatyaImage, isHuman: true };
       const volonterZhanna = { userId: 'npc_volonter_zhanna', firstName: 'Волонтёр Жанна', photoUrl: volonterZhannaImage, isHuman: true };
@@ -372,7 +393,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         }
         return updatedUsers;
       });
-    } else if (room === 'Магазин "Всё на свете"') {
+    } else if (currentRoom === 'Магазин "Всё на свете"') {
       const prodavecSveta = { userId: 'npc_prodavec_sveta', firstName: 'Продавщица Света', photoUrl: prodavecSvetaImage, isHuman: true };
       setUsers(prevUsers => {
         const updatedUsers = [...prevUsers];
@@ -387,36 +408,66 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         'npc_lovec_park', 'npc_lovec_dachny'
       ].includes(user.userId)));
     }
-  }, [room]);
+  }, [currentRoom]);
 
+  // Обработка смены комнаты
   useEffect(() => {
-    if (!socket || !room) return;
+    if (room !== currentRoom && !transitionState) {
+      // Начинаем переход: затемнение
+      setPendingRoom(room);
+      setTransitionState('fadeOut');
+    }
+  }, [room, currentRoom, transitionState]);
+
+  // Обработка завершения анимации затемнения
+  const handleFadeOutEnd = () => {
+    if (transitionState === 'fadeOut' && pendingRoom) {
+      // Завершено затемнение, меняем комнату
+      setCurrentRoom(pendingRoom);
+      setMessages([]); // Очищаем сообщения
+      messageCacheRef.current[pendingRoom] = []; // Очищаем кэш для новой комнаты
+      setTransitionState('fadeIn'); // Начинаем проявление
+      // Запрашиваем данные для новой комнаты
+      if (socket && pendingRoom) {
+        socket.emit('joinRoom', { room: pendingRoom, lastTimestamp: null });
+      }
+    }
+  };
+
+  // Обработка завершения анимации проявления
+  const handleFadeInEnd = () => {
+    setTransitionState(null); // Завершаем переход
+    setPendingRoom(null);
+  };
+
+  // Основная логика сокетов
+  useEffect(() => {
+    if (!socket || !currentRoom) return;
 
     // Очищаем кэш при смене комнаты
-    messageCacheRef.current = { [room]: [] };
+    if (!messageCacheRef.current[currentRoom]) {
+      messageCacheRef.current[currentRoom] = [];
+    }
 
-    // Запрашиваем историю для новой комнаты
-    socket.emit('joinRoom', { room, lastTimestamp: null });
-
-    const cachedMessages = messageCacheRef.current[room] || [];
+    const cachedMessages = messageCacheRef.current[currentRoom] || [];
     if (cachedMessages.length > 0 && messages.length === 0) {
       setMessages(cachedMessages);
     }
 
     socket.on('messageHistory', (history) => {
       setMessages(prev => {
-        const cached = messageCacheRef.current[room] || [];
+        const cached = messageCacheRef.current[currentRoom] || [];
         const newMessages = [...cached, ...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        messageCacheRef.current[room] = newMessages;
+        messageCacheRef.current[currentRoom] = newMessages;
         return newMessages;
       });
     });
 
     socket.on('message', (msg) => {
-      if (msg.room === room) { // Фильтруем только сообщения для текущей комнаты
+      if (msg.room === currentRoom) {
         setMessages(prev => {
           const updated = [...prev, msg];
-          messageCacheRef.current[room] = updated;
+          messageCacheRef.current[currentRoom] = updated;
           return updated;
         });
       }
@@ -429,35 +480,34 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         }
         return roomUser;
       });
-      // Логика добавления NPC остаётся прежней
-      if (room === 'Парк') {
+      if (currentRoom === 'Парк') {
         updatedUsers = [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false }, ...updatedUsers];
         if (isLovecParkTime()) {
           updatedUsers = [{ userId: 'npc_lovec_park', firstName: 'Ловец животных', photoUrl: lovec1Image, isHuman: true }, ...updatedUsers];
         }
-      } else if (room === 'Лес') {
+      } else if (currentRoom === 'Лес') {
         updatedUsers = [
           { userId: 'npc_fox', firstName: 'Лисичка', photoUrl: npcFoxImage, isHuman: false },
           { userId: 'npc_ezhik', firstName: 'Ёжик', photoUrl: npcEzhikImage, isHuman: false },
           ...updatedUsers
         ];
-      } else if (room === 'Район Дачный') {
+      } else if (currentRoom === 'Район Дачный') {
         updatedUsers = [{ userId: 'npc_security', firstName: 'Охранник', photoUrl: npcSecurityImage, isHuman: true }, ...updatedUsers];
         if (isLovecDachnyTime()) {
           updatedUsers = [{ userId: 'npc_lovec_dachny', firstName: 'Ловец животных', photoUrl: lovec2Image, isHuman: true }, ...updatedUsers];
         }
-      } else if (room === 'Завод') {
+      } else if (currentRoom === 'Завод') {
         updatedUsers = [{ userId: 'npc_guard', firstName: 'Сторож', photoUrl: npcGuardImage, isHuman: true }, ...updatedUsers];
-      } else if (room === 'Автобусная остановка' && isBabushkaTime()) {
+      } else if (currentRoom === 'Автобусная остановка' && isBabushkaTime()) {
         updatedUsers = [
           { userId: 'npc_babushka_galya', firstName: 'Бабушка Галя', photoUrl: babushka1Image, isHuman: true },
           { userId: 'npc_babushka_vera', firstName: 'Бабушка Вера', photoUrl: babushka2Image, isHuman: true },
           { userId: 'npc_babushka_zina', firstName: 'Бабушка Зина', photoUrl: babushka3Image, isHuman: true },
           ...updatedUsers
         ];
-      } else if (room === 'Магазин "Всё на свете"') {
+      } else if (currentRoom === 'Магазин "Всё на свете"') {
         updatedUsers = [{ userId: 'npc_prodavec_sveta', firstName: 'Продавщица Света', photoUrl: prodavecSvetaImage, isHuman: true }, ...updatedUsers];
-      } else if (room === 'Приют для животных "Кошкин дом"') {
+      } else if (currentRoom === 'Приют для животных "Кошкин дом"') {
         if (isIraKatyaTime()) {
           updatedUsers = [
             { userId: 'npc_volonter_ira', firstName: 'Волонтёр Ира', photoUrl: volonterIraImage, isHuman: true },
@@ -476,8 +526,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       setUsers(updatedUsers);
     });
 
-    if (!messageCacheRef.current[room]?.length) {
-      socket.emit('joinRoom', { room, lastTimestamp: null });
+    if (!messageCacheRef.current[currentRoom]?.length) {
+      socket.emit('joinRoom', { room: currentRoom, lastTimestamp: null });
     }
 
     return () => {
@@ -485,15 +535,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       socket.off('message');
       socket.off('roomUsers');
     };
-  }, [socket, userId, room, messages, currentUserPhotoUrl]);
-
+  }, [socket, userId, currentRoom, messages, currentUserPhotoUrl]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const sendMessage = () => {
-    if (message.trim() && room && socket) {
+    if (message.trim() && currentRoom && socket) {
       let animalText = '';
       if (!user.isHuman) {
         const sounds = user.animalType === 'Кошка' ? catSounds : dogSounds;
@@ -515,7 +564,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
       const newMessage = {
         text: message,
-        room,
+        room: currentRoom,
         timestamp: new Date().toISOString(),
         photoUrl: currentUserPhotoUrl || '',
         animalText: animalText || undefined
@@ -597,7 +646,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   return (
     <ChatContainer>
-      <MessagesContainer room={room} theme={theme}>
+      <MessagesContainer room={currentRoom} theme={theme}>
         {messages.map((msg, index) => (
           <Message key={index} isOwn={msg.userId === userId} theme={theme}>
             {msg.userId !== userId && (
@@ -623,13 +672,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-          placeholder={room ? "Напишите сообщение..." : "Выберите комнату на вкладке Карта"}
-          disabled={!room}
+          placeholder={currentRoom ? "Напишите сообщение..." : "Выберите комнату на вкладке Карта"}
+          disabled={!currentRoom}
           theme={theme}
         />
-        <SendIcon onClick={sendMessage} disabled={!room} />
+        <SendIcon onClick={sendMessage} disabled={!currentRoom} />
       </InputContainer>
-      {showUserList && room && (
+      {showUserList && currentRoom && (
         <UserListModal ref={modalRef} onClick={handleModalClick} theme={theme}>
           <ModalTitle theme={theme}>Онлайн</ModalTitle>
           {users.map((user, index) => (
@@ -640,6 +689,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
             </UserItem>
           ))}
         </UserListModal>
+      )}
+      {transitionState && (
+        <Overlay
+          transition={transitionState}
+          opacity={transitionState === 'fadeOut' ? 0 : 1}
+          onAnimationEnd={transitionState === 'fadeOut' ? handleFadeOutEnd : handleFadeInEnd}
+        />
       )}
     </ChatContainer>
   );

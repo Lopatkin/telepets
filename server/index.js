@@ -730,7 +730,7 @@ io.on('connection', (socket) => {
     io.to(room).emit('roomUsers', Array.from(roomUsers[room]));
 
     try {
-      const query = {};
+      const query = { room };
       // if (room.startsWith('myhome_')) {
       //   query.room = room;
       //   query.userId = socket.userData.userId;

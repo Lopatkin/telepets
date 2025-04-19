@@ -223,14 +223,14 @@ export const UserName = styled.span`
   margin-left: 5px;
 `;
 
-export const PovodokIcon = styled.img`
-  width: 16px;
-  height: 16px;
-`;
-
-// export const LeashIcon = styled.img`
+// export const PovodokIcon = styled.img`
 //   width: 16px;
 //   height: 16px;
-//   margin-left: 5px;
-//   vertical-align: middle;
 // `;
+
+export const LeashIcon = styled.img`
+  width: 16px;
+  height: 16px;
+  margin-left: 5px;
+  vertical-align: middle;
+`;

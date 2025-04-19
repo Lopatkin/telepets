@@ -731,12 +731,12 @@ io.on('connection', (socket) => {
 
     try {
       const query = {};
-      if (room.startsWith('myhome_')) {
-        query.room = room;
-        query.userId = socket.userData.userId;
-      } else {
-        query.room = room;
-      }
+      // if (room.startsWith('myhome_')) {
+      //   query.room = room;
+      //   query.userId = socket.userData.userId;
+      // } else {
+      //   query.room = room;
+      // }
 
       if (lastTimestamp) {
         query.timestamp = { $gt: new Date(lastTimestamp) };

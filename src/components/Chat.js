@@ -180,9 +180,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     if (!socket || !room) return;
 
     // Очищаем кэш при смене комнаты
-    if (!messageCacheRef.current[room]) {
-      messageCacheRef.current[room] = [];
-    }
+    messageCacheRef.current = { [room]: [] };
+
     // Запрашиваем историю для новой комнаты
     socket.emit('joinRoom', { room, lastTimestamp: null });
 

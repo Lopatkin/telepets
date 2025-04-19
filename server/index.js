@@ -67,7 +67,8 @@ const itemSchema = new mongoose.Schema({
   weight: { type: Number },
   cost: { type: Number },
   effect: { type: String },
-  playerID: { type: String, required: false }
+  playerID: { type: String, required: false },
+  animalId: { type: String, required: false } // Новое поле для ID животного
 }, { timestamps: true });
 
 const Item = mongoose.model('Item', itemSchema);
@@ -1275,7 +1276,7 @@ io.on('connection', (socket) => {
           weight: 0.1,
           cost: 100,
           effect: 'Вы чувствуете ответственность за кого-то.',
-          playerID: animalId,
+          animalId, // Добавляем поле с ID животного
         });
         await passport.save({ session });
 

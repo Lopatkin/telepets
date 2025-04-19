@@ -420,7 +420,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           {users.map((user, index) => (
             <UserItem key={index}>
               {getAvatar(user)}
-              {user.onLeash && !user.isHuman && <img src={PovodokIcon} alt="Поводок" className="leash-icon" />}
+              {user.onLeash && !user.isHuman && <img src={PovodokIcon} alt="Поводок" />}
               <UserName theme={theme}>{getUserDisplayName(user)}</UserName>
             </UserItem>
           ))}

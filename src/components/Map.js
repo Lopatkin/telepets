@@ -360,12 +360,12 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
 
       <HomeButton
         onClick={() => {
-          if (!(user?.homeless === true && user?.type === 'animal')) {
+          if (!(user?.homeless === true && user?.isHuman === false)) {
             onRoomSelect(myHomeRoom);
           }
         }}
         theme={theme}
-        disabled={user?.homeless === true && user?.type === 'animal'}
+        disabled={user?.homeless === true && user?.isHuman === false}
         user={user} // Передаем user для использования в стилях
       >
         Домой

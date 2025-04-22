@@ -85,13 +85,13 @@ const MapImage = styled.img`
 const HomeButton = styled.button`
 padding: 15px;
 background: ${({ disabled, user }) =>
-    disabled && user?.type === 'animal' ? '#cccccc' : '#007AFF'};
+    disabled && user?.isHuman === false ? '#cccccc' : '#007AFF'};
 color: ${({ disabled, user }) =>
-    disabled && user?.type === 'animal' ? '#666666' : 'white'};
+    disabled && user?.isHuman === false ? '#666666' : 'white'};
 border: none;
 border-radius: 4px;
 cursor: ${({ disabled, user }) =>
-    disabled && user?.type === 'animal' ? 'not-allowed' : 'pointer'};
+    disabled && user?.isHuman === false ? 'not-allowed' : 'pointer'};
 font-size: 18px;
 box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 transition: background 0.2s;
@@ -100,11 +100,11 @@ position: sticky;
 bottom: 10px;
 margin-top: 10px;
 opacity: ${({ disabled, user }) =>
-    disabled && user?.type === 'animal' ? 0.6 : 1};
+    disabled && user?.isHuman === false ? 0.6 : 1};
 
 &:hover {
   background: ${({ disabled, user }) =>
-    disabled && user?.type === 'animal' ? '#cccccc' : '#005BBB'};
+    disabled && user?.isHuman === false ? '#cccccc' : '#005BBB'};
 }
 `;
 

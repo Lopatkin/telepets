@@ -83,23 +83,29 @@ const MapImage = styled.img`
 `;
 
 const HomeButton = styled.button`
-  padding: 15px;
-  background: #007AFF;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 18px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: background 0.2s;
-  width: 100%;
-  position: sticky;
-  bottom: 10px;
-  margin-top: 10px;
+padding: 15px;
+background: ${({ disabled, user }) =>
+    disabled && user?.type === 'animal' ? '#cccccc' : '#007AFF'};
+color: ${({ disabled, user }) =>
+    disabled && user?.type === 'animal' ? '#666666' : 'white'};
+border: none;
+border-radius: 4px;
+cursor: ${({ disabled, user }) =>
+    disabled && user?.type === 'animal' ? 'not-allowed' : 'pointer'};
+font-size: 18px;
+box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+transition: background 0.2s;
+width: 100%;
+position: sticky;
+bottom: 10px;
+margin-top: 10px;
+opacity: ${({ disabled, user }) =>
+    disabled && user?.type === 'animal' ? 0.6 : 1};
 
-  &:hover {
-    background: #005BBB;
-  }
+&:hover {
+  background: ${({ disabled, user }) =>
+    disabled && user?.type === 'animal' ? '#cccccc' : '#005BBB'};
+}
 `;
 
 const RoomName = styled.span`
@@ -353,9 +359,14 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
       )}
 
       <HomeButton
-        onClick={() => onRoomSelect(myHomeRoom)}
+        onClick={() => {
+          if (!(user?.homeless === true && user?.type === 'animal')) {
+            onRoomSelect(myHomeRoom);
+          }
+        }}
         theme={theme}
-        disabled={user?.homeless === true} // Отключаем кнопку, если homeless === true
+        disabled={user?.homeless === true && user?.type === 'animal'}
+        user={user} // Передаем user для использования в стилях
       >
         Домой
       </HomeButton>

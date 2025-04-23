@@ -382,7 +382,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
           animalType: response.animal.animalType,
           lastRoom: response.animal.lastRoom,
           onLeash: response.animal.onLeash,
+          freeRoam: response.animal.freeRoam || false // Добавляем freeRoam
         });
+        setFreeRoam(response.animal.freeRoam || false); // Устанавливаем начальное значение freeRoam
       } else {
         setError(response.message || 'Ошибка при получении данных животного');
         setTimeout(() => setError(null), 3000);
@@ -648,8 +650,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         {/* // Обновляем модальное окно для "Паспорт животного" */}
         {selectedItem && selectedItem.name === 'Паспорт животного' && (
           <S.ModalContent theme={theme}>
-            <S.ItemTitle theme={theme}>
-              Паспорт животного
+            <S.ItemTitle theme={theme}>Паспорт животного</S.ItemTitle>
+            <S.ItemDetail theme={theme}>
+              Имя: {selectedItem.animalName || 'Неизвестно'}
               <S.RenameIcon
                 as={FaEdit}
                 onClick={() => {
@@ -658,8 +661,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                 }}
                 theme={theme}
               />
-            </S.ItemTitle>
-            <S.ItemDetail theme={theme}>Имя: {selectedItem.animalName || 'Неизвестно'}</S.ItemDetail>
+            </S.ItemDetail>
             <S.ItemDetail theme={theme}>
               Тип: {selectedItem.animalType || 'Неизвестно'}
             </S.ItemDetail>
@@ -690,15 +692,16 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
           </S.ModalContent>
         )}
 
-  {/* // Модальное окно для переименования */}
+        {/* // Модальное окно для переименования */}
         {renameModalOpen && (
-          <S.Modal isOpen={true} theme={theme} onClick={() => setRenameModalOpen(false)}>
-            <S.RenameModalContent theme={theme}>
+          <S.Modal isOpen={true} theme={theme}>
+            <S.RenameModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
               <S.ItemTitle theme={theme}>Переименовать животное</S.ItemTitle>
               <S.RenameInput
                 type="text"
                 value={newAnimalName}
                 onChange={(e) => setNewAnimalName(e.target.value)}
+                onClick={(e) => e.stopPropagation()} // Предотвращаем закрытие при клике на поле
                 placeholder="Введите новое имя"
                 theme={theme}
               />

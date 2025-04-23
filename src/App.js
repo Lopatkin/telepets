@@ -119,7 +119,7 @@ function App() {
               ...prevUser,
               ...updatedUser,
               credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
-              homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true), // Значение по умолчанию
+              homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
               freeRoam: updatedUser.freeRoam ?? false // Добавляем freeRoam
             };
             console.log('Updated user state after userUpdate:', newUser);
@@ -128,7 +128,6 @@ function App() {
           if (updatedUser.isRegistered !== undefined) {
             setIsRegistered(updatedUser.isRegistered);
           }
-          // Запрашиваем питомцев для человека
           if (updatedUser.isHuman) {
             socketRef.current.emit('getPets', { userId: updatedUser.userId });
           }
@@ -179,23 +178,6 @@ function App() {
         }
       });
 
-      socketRef.current.on('userUpdate', (updatedUser) => {
-        console.log('Received userUpdate from server:', updatedUser);
-        setUser(prevUser => {
-          if (!prevUser) {
-            // Если user ещё не инициализирован, используем полный объект
-            return updatedUser;
-          }
-          // Обновляем только те поля, которые пришли в updatedUser
-          const newUser = { ...prevUser, ...updatedUser };
-          console.log('Updated user state after userUpdate:', newUser);
-          return newUser;
-        });
-        if (updatedUser.isRegistered !== undefined) {
-          setIsRegistered(updatedUser.isRegistered);
-        }
-      });
-
       socketRef.current.on('forceRoomChange', ({ newRoom }) => {
         console.log('Перемещение в новую комнату:', newRoom);
         setCurrentRoom(newRoom);
@@ -209,6 +191,7 @@ function App() {
 
       return () => {
         if (socketRef.current) {
+          socketRef.current.off('userUpdate'); // Добавляем снятие userUpdate
           socketRef.current.off('leashStatus');
           socketRef.current.disconnect();
           console.log('Socket disconnected on unmount');
@@ -296,7 +279,11 @@ function App() {
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
   const isAnimalAtHome = user && !user.isHuman && currentRoom && currentRoom.startsWith('myhome_');
   const isAnimalOnLeashWithOwnerOnline = user && !user.isHuman && user.onLeash && user.ownerOnline;
-  const canAccessMap = user && (!user.isHuman ? (user.freeRoam || (!isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline)) : true);
+  const canAccessMap = user && (
+    user.isHuman || // Люди всегда имеют доступ
+    user.freeRoam || // Животные с freeRoam имеют доступ
+    (!isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline) // Животные не дома и не на поводке с владельцем онлайн
+  );
 
   return (
     <AppContainer>

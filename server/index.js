@@ -995,6 +995,7 @@ io.on('connection', (socket) => {
           animalType: animal.animalType,
           lastRoom: animal.lastRoom,
           onLeash: animal.onLeash,
+          freeRoam: animal.freeRoam // Добавляем freeRoam в ответ
         },
       });
     } catch (err) {

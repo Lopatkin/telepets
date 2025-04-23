@@ -209,6 +209,17 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       }
     });
 
+    // Добавляем обработчик системных сообщений
+    socket.on('systemMessage', (msg) => {
+      if (msg.room === room) {
+        setMessages(prev => {
+          const updated = [...prev, msg];
+          messageCacheRef.current[room] = updated;
+          return updated;
+        });
+      }
+    });
+
     socket.on('roomUsers', (roomUsers) => {
       let updatedUsers = roomUsers.map(roomUser => {
         if (roomUser.userId === userId) {
@@ -270,6 +281,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     return () => {
       socket.off('messageHistory');
       socket.off('message');
+      socket.off('systemMessage');
       socket.off('roomUsers');
     };
   }, [socket, userId, room, messages, currentUserPhotoUrl]);
@@ -385,17 +397,31 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     <ChatContainer>
       <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
-          <Message key={index} isOwn={msg.userId === userId} theme={theme}>
-            {msg.userId !== userId && (
-              <MessageHeader>
-                {getAvatar(msg)}
-                <MessageName theme={theme}>{getAuthorName(msg)}</MessageName>
-              </MessageHeader>
+          <Message
+            key={index}
+            isOwn={msg.userId === userId}
+            theme={theme}
+            isSystem={msg.isSystem} // Добавляем проп для системных сообщений
+          >
+            {msg.isSystem ? (
+              <MessageContent>
+                <MessageText theme={theme} isSystem={true}>{msg.text}</MessageText>
+                <Timestamp theme={theme}>{formatTimestamp(msg.timestamp)}</Timestamp>
+              </MessageContent>
+            ) : (
+              <>
+                {msg.userId !== userId && (
+                  <MessageHeader>
+                    {getAvatar(msg)}
+                    <MessageName theme={theme}>{getAuthorName(msg)}</MessageName>
+                  </MessageHeader>
+                )}
+                <MessageContent>
+                  <MessageText theme={theme} isOwn={msg.userId === userId}>{getDisplayText(msg)}</MessageText>
+                  <Timestamp theme={theme}>{formatTimestamp(msg.timestamp)}</Timestamp>
+                </MessageContent>
+              </>
             )}
-            <MessageContent>
-              <MessageText theme={theme} isOwn={msg.userId === userId}>{getDisplayText(msg)}</MessageText>
-              <Timestamp theme={theme}>{formatTimestamp(msg.timestamp)}</Timestamp>
-            </MessageContent>
           </Message>
         ))}
         <div ref={messagesEndRef} />

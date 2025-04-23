@@ -68,19 +68,21 @@ export const MessagesContainer = styled.div`
 `;
 
 export const Message = styled.div`
-  margin: 5px 0;
-  padding: 8px;
-  border-radius: 4px;
-  background: ${props => props.theme === 'dark'
-    ? '#444'
-    : (props.isOwn ? '#DCF8C6' : '#ECECEC')};
-  align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
-  max-width: 70%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  z-index: 2;
-`;
+    margin: 5px 0;
+    padding: 8px;
+    border-radius: 4px;
+    background: ${props => props.isSystem
+    ? (props.theme === 'dark' ? '#4a4a4a' : '#e0e0e0')
+    : (props.theme === 'dark' ? '#444' : (props.isOwn ? '#DCF8C6' : '#ECECEC'))
+  };
+    align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
+    max-width: 70%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 2;
+    font-style: ${props => props.isSystem ? 'italic' : 'normal'};
+  `;
 
 export const MessageHeader = styled.div`
   display: flex;
@@ -119,11 +121,15 @@ export const MessageContent = styled.div`
   justify-content: space-between;
   align-items: baseline;
 `;
-
+// Обновляем стиль MessageText для системных сообщений
 export const MessageText = styled.span`
-  font-size: 14px;
-  word-break: break-word;
-  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
+font-size: 14px;
+word-break: break-word;
+color: ${props => props.isSystem
+    ? (props.theme === 'dark' ? '#cccccc' : '#666666')
+    : (props.theme === 'dark' ? '#fff' : '#000')
+  };
+padding: ${props => props.isSystem ? '0' : '0'};
 `;
 
 export const Timestamp = styled.span`

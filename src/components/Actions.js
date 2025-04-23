@@ -351,60 +351,57 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
 
       setNotification({ show: true, message: `Нажмите "СТАРТ" для создания: ${selectedCraftItem}` });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-    }
-
-    if (selectedAction.title === 'Попросить еды') {
+    } else if (selectedAction.title === 'Попросить еды') {
       if (!user.owner) {
         setNotification({ show: true, message: 'У вас нет владельца!' });
         setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         return;
       }
-      socket.emit('sendMessage', {
-        text: `${user.name} просит еды!`,
+      socket.emit('sendSystemMessage', {
+        text: `${user.name} хочет есть`,
         room: currentRoom,
-        timestamp: new Date().toISOString(),
-        photoUrl: user.photoUrl || '',
-        animalText: user.animalType === 'Кошка' ? 'Мяу мяу!' : 'Гав гав!'
+        timestamp: new Date().toISOString()
       }, () => {
         setSelectedAction(null);
         setNotification({ show: true, message: 'Запрос еды отправлен хозяину!' });
         setTimeout(() => setNotification({ show: false, message: '' }), 2000);
       });
-    } else if (selectedAction.title === 'Погавкать' || selectedAction.title === 'Помяукать') {
-      socket.emit('sendMessage', {
-        text: selectedAction.title === 'Погавкать' ? `${user.name} громко гавкает!` : `${user.name} мяукает!`,
+    } else if (selectedAction.title === 'Помяукать') {
+      socket.emit('sendSystemMessage', {
+        text: `${user.name} мяукает`,
         room: currentRoom,
-        timestamp: new Date().toISOString(),
-        photoUrl: user.photoUrl || '',
-        animalText: selectedAction.title === 'Погавкать' ? 'Гав гав!' : 'Мяу мяу!'
+        timestamp: new Date().toISOString()
       }, () => {
         setSelectedAction(null);
-        setNotification({ show: true, message: selectedAction.title === 'Погавкать' ? 'Вы погавкали!' : 'Вы помяукали!' });
+        setNotification({ show: true, message: 'Вы помяукали!' });
         setTimeout(() => setNotification({ show: false, message: '' }), 2000);
       });
     } else if (selectedAction.title === 'Поспать') {
-      setSelectedAction(null);
-      setNotification({ show: true, message: 'Вы уютно заснули!' });
-      setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+      socket.emit('sendSystemMessage', {
+        text: `${user.name} лёг спать`,
+        room: currentRoom,
+        timestamp: new Date().toISOString()
+      }, () => {
+        setSelectedAction(null);
+        setNotification({ show: true, message: 'Вы уютно заснули!' });
+        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+      });
     } else if (selectedAction.title === 'Попросить поиграть') {
       if (!user.owner) {
         setNotification({ show: true, message: 'У вас нет владельца!' });
         setTimeout(() => setNotification({ show: false, message: '' }), 2000);
         return;
       }
-      socket.emit('sendMessage', {
-        text: `${user.name} хочет поиграть!`,
+      socket.emit('sendSystemMessage', {
+        text: `${user.name} хочет поиграть с вами`,
         room: currentRoom,
-        timestamp: new Date().toISOString(),
-        photoUrl: user.photoUrl || '',
-        animalText: user.animalType === 'Кошка' ? 'Мяу мяу!' : 'Гав гав!'
+        timestamp: new Date().toISOString()
       }, () => {
         setSelectedAction(null);
         setNotification({ show: true, message: 'Запрос на игру отправлен хозяину!' });
         setTimeout(() => setNotification({ show: false, message: '' }), 2000);
       });
     }
-
   };
 
   const handleStartClick = () => {

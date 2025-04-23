@@ -115,6 +115,32 @@ const isLovecDachnyTime = () => {
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
+  // Добавляем обработчик sendSystemMessage в io.on('connection')
+  socket.on('sendSystemMessage', async (message) => {
+    if (!socket.userData || !message || !message.room || !message.text) {
+      console.error('Invalid system message data:', message);
+      socket.emit('error', { message: 'Некорректные данные системного сообщения' });
+      return;
+    }
+
+    try {
+      const newMessage = new Message({
+        userId: null, // Системные сообщения не привязаны к пользователю
+        text: message.text,
+        room: message.room,
+        timestamp: message.timestamp || new Date().toISOString(),
+        isSystem: true // Помечаем как системное сообщение
+      });
+      await newMessage.save();
+
+      console.log('System message saved:', { text: newMessage.text });
+      io.to(message.room).emit('systemMessage', newMessage);
+    } catch (err) {
+      console.error('Error saving system message:', err.message, err.stack);
+      socket.emit('error', { message: 'Ошибка при сохранении системного сообщения' });
+    }
+  });
+
   // Списание кредитов
   socket.on('spendCredits', async ({ amount, purpose }, callback = () => { }) => {
     try {

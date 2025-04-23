@@ -122,7 +122,8 @@ function App() {
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
               freeRoam: updatedUser.freeRoam ?? false // Добавляем freeRoam
             };
-            console.log('Updated user state after userUpdate:', newUser);
+            console.log('Updated user state after userUpdate:', newUser); // Отладка
+            console.log('freeRoam value after update:', newUser.freeRoam); // Отладка
             return newUser;
           });
           if (updatedUser.isRegistered !== undefined) {
@@ -277,6 +278,7 @@ function App() {
   }
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
+  // Обновляем логику canAccessMap
   const isAnimalAtHome = user && !user.isHuman && currentRoom && currentRoom.startsWith('myhome_');
   const isAnimalOnLeashWithOwnerOnline = user && !user.isHuman && user.onLeash && user.ownerOnline;
   const canAccessMap = user && (
@@ -284,6 +286,15 @@ function App() {
     user.freeRoam || // Животные с freeRoam имеют доступ
     (!isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline) // Животные не дома и не на поводке с владельцем онлайн
   );
+  console.log('canAccessMap:', canAccessMap, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline); // Отладка
+
+  // Добавляем useEffect для проверки activeTab после изменения user.freeRoam
+  useEffect(() => {
+    if (user?.freeRoam && activeTab !== 'map' && !user.isHuman) {
+      console.log('freeRoam enabled, switching to map tab'); // Отладка
+      setActiveTab('map'); // Переключаем на вкладку "Карта" при включении freeRoam
+    }
+  }, [user?.freeRoam, activeTab, user?.isHuman]);
 
   return (
     <AppContainer>

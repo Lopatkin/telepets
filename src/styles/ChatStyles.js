@@ -70,12 +70,12 @@ export const MessagesContainer = styled.div`
 export const Message = styled.div`
     margin: 5px 0;
     padding: 8px;
-    border-radius: 4px;
-    background: ${props => props.isSystem
-    ? (props.theme === 'dark' ? '#4a4a4a' : '#e0e0e0')
-    : (props.theme === 'dark' ? '#444' : (props.isOwn ? '#DCF8C6' : '#ECECEC'))
-  };
-    align-self: ${props => props.isOwn ? 'flex-end' : 'flex-start'};
+    border-radius: ${props => props.isSystem ? '12px' : '4px'}; // Закруглённые углы для системных сообщений
+    background: ${props => props.isSystem 
+      ? (props.theme === 'dark' ? '#4a4a4a' : '#e0e0e0') 
+      : (props.theme === 'dark' ? '#444' : (props.isOwn ? '#DCF8C6' : '#ECECEC'))
+    };
+    align-self: ${props => props.isSystem ? 'center' : (props.isOwn ? 'flex-end' : 'flex-start')}; // Центрирование системных сообщений
     max-width: 70%;
     display: flex;
     flex-direction: column;

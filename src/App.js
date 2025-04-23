@@ -119,7 +119,8 @@ function App() {
               ...prevUser,
               ...updatedUser,
               credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
-              homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true) // Значение по умолчанию
+              homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true), // Значение по умолчанию
+              freeRoam: updatedUser.freeRoam ?? false // Добавляем freeRoam
             };
             console.log('Updated user state after userUpdate:', newUser);
             return newUser;
@@ -295,6 +296,7 @@ function App() {
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
   const isAnimalAtHome = user && !user.isHuman && currentRoom && currentRoom.startsWith('myhome_');
   const isAnimalOnLeashWithOwnerOnline = user && !user.isHuman && user.onLeash && user.ownerOnline;
+  const canAccessMap = user && (!user.isHuman ? (user.freeRoam || (!isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline)) : true);
 
   return (
     <AppContainer>
@@ -335,7 +337,7 @@ function App() {
             user={user} // Добавляем user
           />
         )}
-        {activeTab === 'map' && !isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline && (
+        {activeTab === 'map' && canAccessMap && (
           <Map
             userId={user?.userId}
             onRoomSelect={handleRoomSelect}

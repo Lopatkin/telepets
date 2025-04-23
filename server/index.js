@@ -38,7 +38,8 @@ const userSchema = new mongoose.Schema({
   homeless: { type: Boolean, default: true },
   onLeash: { type: Boolean, default: false },
   lastActivity: { type: Date, default: Date.now },
-  owner: { type: String, default: null } // Добавляем поле owner для животных
+  owner: { type: String, default: null }, // Добавляем поле owner для животных
+  freeRoam: { type: Boolean, default: false }, // Новое поле для свободного выгула
 });
 const User = mongoose.model('User', userSchema);
 
@@ -115,6 +116,88 @@ const isLovecDachnyTime = () => {
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
+
+  socket.on('renameAnimal', async ({ animalId, newName }, callback) => {
+    try {
+      if (!socket.userData || !socket.userData.userId) {
+        return callback({ success: false, message: 'Пользователь не аутентифицирован' });
+      }
+  
+      const animal = await User.findOne({ userId: animalId, isHuman: false });
+      if (!animal) {
+        return callback({ success: false, message: 'Животное не найдено' });
+      }
+      if (animal.owner !== socket.userData.userId) {
+        return callback({ success: false, message: 'Вы не являетесь владельцем этого животного' });
+      }
+  
+      const trimmedName = newName.trim();
+      if (!trimmedName) {
+        return callback({ success: false, message: 'Имя не может быть пустым' });
+      }
+  
+      // Обновляем имя животного
+      await User.updateOne(
+        { userId: animalId },
+        { name: trimmedName }
+      );
+  
+      // Обновляем описание паспорта животного
+      await Item.updateOne(
+        { animalId, name: 'Паспорт животного', owner: `user_${socket.userData.userId}` },
+        { description: `Ваш питомец - ${trimmedName}` }
+      );
+  
+      // Уведомляем клиента животного, если он онлайн
+      const animalSocket = activeSockets.get(animalId);
+      if (animalSocket) {
+        animalSocket.emit('userUpdate', {
+          userId: animalId,
+          name: trimmedName
+        });
+      }
+  
+      callback({ success: true });
+    } catch (err) {
+      console.error('Error renaming animal:', err.message, err.stack);
+      callback({ success: false, message: 'Ошибка сервера' });
+    }
+  });
+  
+  socket.on('setFreeRoam', async ({ animalId, freeRoam }, callback) => {
+    try {
+      if (!socket.userData || !socket.userData.userId) {
+        return callback({ success: false, message: 'Пользователь не аутентифицирован' });
+      }
+  
+      const animal = await User.findOne({ userId: animalId, isHuman: false });
+      if (!animal) {
+        return callback({ success: false, message: 'Животное не найдено' });
+      }
+      if (animal.owner !== socket.userData.userId) {
+        return callback({ success: false, message: 'Вы не являетесь владельцем этого животного' });
+      }
+  
+      await User.updateOne(
+        { userId: animalId },
+        { freeRoam }
+      );
+  
+      // Уведомляем клиента животного, если он онлайн
+      const animalSocket = activeSockets.get(animalId);
+      if (animalSocket) {
+        animalSocket.emit('userUpdate', {
+          userId: animalId,
+          freeRoam
+        });
+      }
+  
+      callback({ success: true });
+    } catch (err) {
+      console.error('Error setting free roam:', err.message, err.stack);
+      callback({ success: false, message: 'Ошибка сервера' });
+    }
+  });
 
   // Добавляем обработчик sendSystemMessage в io.on('connection')
   socket.on('sendSystemMessage', async (message) => {

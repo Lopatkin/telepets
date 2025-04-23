@@ -1,5 +1,49 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Добавляем импорт useMemo
 import * as S from '../styles/InventoryStyles'; // Импорт всех стилей
+import { FaEdit } from 'react-icons/fa'; // Добавляем иконку редактирования
+
+// Добавляем стили для новых элементов
+S.RenameIcon = styled.div`
+  cursor: pointer;
+  margin-left: 10px;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#007AFF'};
+  font-size: 18px;
+  display: inline-block;
+  vertical-align: middle;
+`;
+
+S.RenameModalContent = styled.div`
+  background: ${props => props.theme === 'dark' ? '#333' : '#fff'};
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+`;
+
+S.RenameInput = styled.input`
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ccc'};
+  border-radius: 4px;
+  font-size: 16px;
+  background: ${props => props.theme === 'dark' ? '#222' : '#fff'};
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+`;
+
+S.FreeRoamCheckbox = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  input {
+    margin-right: 10px;
+  }
+  label {
+    color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+    font-size: 16px;
+  }
+`;
 
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
@@ -17,10 +61,43 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   const [selectedItem, setSelectedItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [actionQuantity, setActionQuantity] = useState({ itemName: null, weight: null, count: 1, action: null });
+  const [renameModalOpen, setRenameModalOpen] = useState(false); // Состояние для модального окна переименования
+  const [newAnimalName, setNewAnimalName] = useState(''); // Состояние для нового имени животного
+  const [freeRoam, setFreeRoam] = useState(false); // Состояние для чекбокса "Свободный выгул"
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
+
+  // Функция для обработки переименования животного
+  const handleRenameAnimal = (animalId, newName) => {
+    socket.emit('renameAnimal', { animalId, newName }, (response) => {
+      if (response.success) {
+        setSelectedItem(prev => ({
+          ...prev,
+          animalName: newName,
+          description: `Ваш питомец - ${newName}`
+        }));
+        setRenameModalOpen(false);
+        setNewAnimalName('');
+      } else {
+        setError(response.message || 'Ошибка при переименовании животного');
+        setTimeout(() => setError(null), 3000);
+      }
+    });
+  };
+
+  // Функция для обработки изменения "Свободного выгула"
+  const handleFreeRoamChange = (animalId, checked) => {
+    socket.emit('setFreeRoam', { animalId, freeRoam: checked }, (response) => {
+      if (!response.success) {
+        setError(response.message || 'Ошибка при изменении статуса выгула');
+        setTimeout(() => setError(null), 3000);
+      }
+    });
+    setFreeRoam(checked);
+  };
+
   // В функции groupItemsByNameAndWeight используем animalId для "Паспорта животного"
   const groupItemsByNameAndWeight = (items) => {
     const grouped = items.reduce((acc, item) => {
@@ -611,37 +688,83 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         onClick={closeModal}
         isConfirm={!!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
       >
-        {selectedItem && (
-          selectedItem.name === 'Паспорт животного' ? (
-            <S.ModalContent theme={theme}>
-              <S.ItemTitle theme={theme}>Паспорт животного</S.ItemTitle>
-              <S.ItemDetail theme={theme}>Имя: {selectedItem.animalName || 'Неизвестно'}</S.ItemDetail>
-              <S.ItemDetail theme={theme}>Тип: {selectedItem.animalType || 'Неизвестно'}</S.ItemDetail>
-              <S.ItemDetail theme={theme}>Локация: {selectedItem.lastRoom || 'Неизвестно'}</S.ItemDetail>
-              <S.ActionButtons>
-                <S.PickupButton
-                  onClick={() => {
-                    socket.emit('toggleLeash', { animalId: selectedItem.animalId, onLeash: !selectedItem.onLeash });
-                    setSelectedItem(null);
-                  }}
+        {/* // Обновляем модальное окно для "Паспорт животного" */}
+        {selectedItem && selectedItem.name === 'Паспорт животного' && (
+          <S.ModalContent theme={theme}>
+            <S.ItemTitle theme={theme}>
+              Паспорт животного
+              <S.RenameIcon
+                as={FaEdit}
+                onClick={() => {
+                  setNewAnimalName(selectedItem.animalName || '');
+                  setRenameModalOpen(true);
+                }}
+                theme={theme}
+              />
+            </S.ItemTitle>
+            <S.ItemDetail theme={theme}>Имя: {selectedItem.animalName || 'Неизвестно'}</S.ItemDetail>
+            <S.ItemDetail theme={theme}>
+              Тип: {selectedItem.animalType || 'Неизвестно'}
+            </S.ItemDetail>
+            <S.ItemDetail theme={theme}>
+              Локация: {selectedItem.lastRoom?.startsWith('myhome_') ? 'Дома' : selectedItem.lastRoom || 'Неизвестно'}
+            </S.ItemDetail>
+            <S.FreeRoamCheckbox theme={theme}>
+              <input
+                type="checkbox"
+                checked={freeRoam}
+                onChange={(e) => handleFreeRoamChange(selectedItem.animalId, e.target.checked)}
+                disabled={isActionCooldown}
+              />
+              <label>Свободный выгул</label>
+            </S.FreeRoamCheckbox>
+            <S.ActionButtons>
+              <S.PickupButton
+                onClick={() => {
+                  socket.emit('toggleLeash', { animalId: selectedItem.animalId, onLeash: !selectedItem.onLeash });
+                  setSelectedItem(null);
+                }}
+                disabled={isActionCooldown}
+              >
+                {selectedItem.onLeash ? 'Отвязать поводок' : 'Привязать поводок'}
+                {isActionCooldown && <S.ProgressBar />}
+              </S.PickupButton>
+            </S.ActionButtons>
+          </S.ModalContent>
+        )}
+
+  {/* // Модальное окно для переименования */}
+        {renameModalOpen && (
+          <S.Modal isOpen={true} theme={theme} onClick={() => setRenameModalOpen(false)}>
+            <S.RenameModalContent theme={theme}>
+              <S.ItemTitle theme={theme}>Переименовать животное</S.ItemTitle>
+              <S.RenameInput
+                type="text"
+                value={newAnimalName}
+                onChange={(e) => setNewAnimalName(e.target.value)}
+                placeholder="Введите новое имя"
+                theme={theme}
+              />
+              <S.ConfirmButtons>
+                <S.ConfirmButton
+                  type="yes"
+                  onClick={() => handleRenameAnimal(selectedItem.animalId, newAnimalName)}
+                  disabled={isActionCooldown || !newAnimalName.trim()}
+                >
+                  Сохранить
+                </S.ConfirmButton>
+                <S.ConfirmButton
+                  type="no"
+                  onClick={() => setRenameModalOpen(false)}
                   disabled={isActionCooldown}
                 >
-                  {selectedItem.onLeash ? 'Отвязать поводок' : 'Привязать поводок'}
-                  {isActionCooldown && <S.ProgressBar />}
-                </S.PickupButton>
-              </S.ActionButtons>
-            </S.ModalContent>
-          ) : (
-            <S.ModalContent theme={theme}>
-              <S.ItemTitle theme={theme}>{selectedItem.name}</S.ItemTitle>
-              <S.ItemDetail theme={theme}>Описание: {selectedItem.description}</S.ItemDetail>
-              <S.ItemDetail theme={theme}>Редкость: {selectedItem.rarity}</S.ItemDetail>
-              <S.ItemDetail theme={theme}>Вес: {selectedItem.weight}</S.ItemDetail>
-              <S.ItemDetail theme={theme}>Стоимость: {selectedItem.cost}</S.ItemDetail>
-              <S.ItemDetail theme={theme}>Эффект: {selectedItem.effect}</S.ItemDetail>
-            </S.ModalContent>
-          )
+                  Отмена
+                </S.ConfirmButton>
+              </S.ConfirmButtons>
+            </S.RenameModalContent>
+          </S.Modal>
         )}
+
         {confirmDelete && (
           <S.ConfirmModalContent theme={theme}>
             <S.ConfirmText>Вы уверены, что хотите сломать этот предмет?</S.ConfirmText>

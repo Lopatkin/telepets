@@ -55,7 +55,8 @@ const messageSchema = new mongoose.Schema({
   animalType: String,
   room: String,
   timestamp: { type: Date, default: Date.now },
-  animalText: String
+  animalText: String,
+  isSystem: { type: Boolean, default: false } // Добавляем поле для системных сообщений
 });
 const Message = mongoose.model('Message', messageSchema);
 

@@ -125,7 +125,9 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
 
   const sortedRooms = [...rooms].sort();
 
-  const myHomeRoom = `myhome_${userId}`;
+  const homeRoom = user?.isHuman === false && user?.homeless === false && user?.owner
+    ? `myhome_${user.owner}` // Для животных с хозяином: комната хозяина
+    : `myhome_${userId}`; // Для людей или животных без хозяина: своя комната
 
   // Устанавливаем начальный масштаб после загрузки изображения
   useEffect(() => {
@@ -361,12 +363,12 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
       <HomeButton
         onClick={() => {
           if (!(user?.homeless === true && user?.isHuman === false)) {
-            onRoomSelect(myHomeRoom);
+            onRoomSelect(homeRoom); // Используем homeRoom вместо myHomeRoom
           }
         }}
         theme={theme}
         disabled={user?.homeless === true && user?.isHuman === false}
-        user={user} // Передаем user для использования в стилях
+        user={user}
       >
         Домой
       </HomeButton>

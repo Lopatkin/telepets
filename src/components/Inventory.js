@@ -21,10 +21,13 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
-
+  // В функции groupItemsByNameAndWeight используем animalId для "Паспорта животного"
   const groupItemsByNameAndWeight = (items) => {
     const grouped = items.reduce((acc, item) => {
-      const key = `${item.name}_${item.weight}`;
+      // Для "Паспорта животного" используем animalId, если оно есть, иначе стандартный ключ
+      const key = item.name === 'Паспорт животного' && item.animalId
+        ? `${item.name}_${item.weight}_${item.animalId}`
+        : `${item.name}_${item.weight}`;
       if (!acc[key]) {
         acc[key] = { item, count: 0, ids: [] };
       }

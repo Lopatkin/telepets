@@ -2,49 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Д�
 import * as S from '../styles/InventoryStyles'; // Импорт всех стилей
 import { FaEdit } from 'react-icons/fa'; // Добавляем иконку редактирования
 
-// Добавляем стили для новых элементов
-S.RenameIcon = styled.div`
-  cursor: pointer;
-  margin-left: 10px;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#007AFF'};
-  font-size: 18px;
-  display: inline-block;
-  vertical-align: middle;
-`;
-
-S.RenameModalContent = styled.div`
-  background: ${props => props.theme === 'dark' ? '#333' : '#fff'};
-  padding: 20px;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 400px;
-  text-align: center;
-`;
-
-S.RenameInput = styled.input`
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ccc'};
-  border-radius: 4px;
-  font-size: 16px;
-  background: ${props => props.theme === 'dark' ? '#222' : '#fff'};
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-`;
-
-S.FreeRoamCheckbox = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-  input {
-    margin-right: 10px;
-  }
-  label {
-    color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-    font-size: 16px;
-  }
-`;
-
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
   const [activeTab, setActiveTab] = useState('personal');

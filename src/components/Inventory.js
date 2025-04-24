@@ -56,6 +56,8 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
               freeRoam: infoResponse.animal.freeRoam || false
             }));
             setFreeRoam(infoResponse.animal.freeRoam || false);
+            setError(`Свободный выгул ${checked ? 'включён' : 'выключён'}`);
+            setTimeout(() => setError(null), 3000);
           } else {
             setError(infoResponse.message || 'Ошибка при получении данных животного');
             setTimeout(() => setError(null), 3000);

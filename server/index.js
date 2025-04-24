@@ -394,7 +394,8 @@ io.on('connection', (socket) => {
       owner: user.owner, // Добавляем owner в userUpdate
       ownerOnline, // Добавляем флаг ownerOnline
       homeless: user.homeless, // Добавляем homeless в userUpdate
-      credits: user.credits || 0 // Добавляем текущие кредиты
+      credits: user.credits || 0, // Добавляем текущие кредиты
+      freeRoam: user.freeRoam || false // Добавляем freeRoam
     });
     console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 

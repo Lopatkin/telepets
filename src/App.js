@@ -289,12 +289,12 @@ function App() {
   console.log('canAccessMap:', canAccessMap, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline); // Отладка
 
   // Добавляем useEffect для проверки activeTab после изменения user.freeRoam
-  useEffect(() => {
-    if (user?.freeRoam && activeTab !== 'map' && !user.isHuman) {
-      console.log('freeRoam enabled, switching to map tab'); // Отладка
-      setActiveTab('map'); // Переключаем на вкладку "Карта" при включении freeRoam
-    }
-  }, [user?.freeRoam, activeTab, user?.isHuman]);
+  // useEffect(() => {
+  //   if (user?.freeRoam && activeTab !== 'map' && !user.isHuman) {
+  //     console.log('freeRoam enabled, switching to map tab'); // Отладка
+  //     setActiveTab('map'); // Переключаем на вкладку "Карта" при включении freeRoam
+  //   }
+  // }, [user?.freeRoam, activeTab, user?.isHuman]);
 
   return (
     <AppContainer>

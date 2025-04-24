@@ -87,6 +87,22 @@ const forestActions = [
     modalDescription: 'Вы ходите по лесу и ищете палку. Палка - полезный и многофункциональный предмет, может пригодиться в самых разных жизненных ситуациях.',
     buttonText: 'Подобрать',
   },
+  {
+    id: 16,
+    title: 'Найти ягоды',
+    description: 'Вкусные и свежие',
+    modalTitle: 'Найти ягоды',
+    modalDescription: 'Вы ходите по лесу и ищете ягоды. Ежевика, брусника, черника, земляника. Съешьте сами или продайте.',
+    buttonText: 'Найти',
+  },
+  {
+    id: 17,
+    title: 'Найти грибы',
+    description: 'Выбирайте только съедобные',
+    modalTitle: 'Найти грибы',
+    modalDescription: 'Вы ходите по лесу и ищете грибы. Белый гриб, подберёзович, лисички, опята. Съешьте сами или продайте.',
+    buttonText: 'Найти',
+  },
 ];
 
 const disposalActions = [
@@ -156,9 +172,9 @@ const animalActions = (animalType) => [
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
-  const [isCooldown, setIsCooldown] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [progress, setProgress] = useState(100);
+  const [isCooldown, setIsCooldown] = useState({ findStick: false, findBerries: false, findMushrooms: false });
+  const [timeLeft, setTimeLeft] = useState({ findStick: 0, findBerries: 0, findMushrooms: 0 });
+  const [progress, setProgress] = useState({ findStick: 100, findBerries: 100, findMushrooms: 100 });
   const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
   const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 });
   const [checkboxes, setCheckboxes] = useState({
@@ -170,59 +186,78 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [craftingProgress, setCraftingProgress] = useState(0);
 
   const COOLDOWN_DURATION = 10 * 1000;
-  const COOLDOWN_KEY = `findStickCooldown_${userId}`;
+  const COOLDOWN_KEYS = {
+    findStick: `findStickCooldown_${userId}`,
+    findBerries: `findBerriesCooldown_${userId}`,
+    findMushrooms: `findMushroomsCooldown_${userId}`,
+  };
 
   // Восстановление состояния таймера при монтировании компонента
   useEffect(() => {
-    const savedCooldown = localStorage.getItem(COOLDOWN_KEY);
-    if (savedCooldown) {
-      const { startTime } = JSON.parse(savedCooldown);
-      const elapsed = Date.now() - startTime;
-      const remaining = COOLDOWN_DURATION - elapsed;
-
-      if (remaining > 0) {
-        setIsCooldown(true);
-        setTimeLeft(Math.ceil(remaining / 1000));
-        setProgress((remaining / COOLDOWN_DURATION) * 100);
-      } else {
-        localStorage.removeItem(COOLDOWN_KEY);
-        setIsCooldown(false);
-        setTimeLeft(0);
-        setProgress(100);
-      }
-    }
-  }, [COOLDOWN_DURATION, COOLDOWN_KEY]);
-
-  // Таймер обратного отсчёта
-  useEffect(() => {
-    let timer;
-    if (isCooldown && timeLeft > 0) {
-      timer = setInterval(() => {
-        const elapsed = Date.now() - JSON.parse(localStorage.getItem(COOLDOWN_KEY)).startTime;
+    Object.keys(COOLDOWN_KEYS).forEach((key) => {
+      const savedCooldown = localStorage.getItem(COOLDOWN_KEYS[key]);
+      if (savedCooldown) {
+        const { startTime } = JSON.parse(savedCooldown);
+        const elapsed = Date.now() - startTime;
         const remaining = COOLDOWN_DURATION - elapsed;
 
-        if (remaining <= 0) {
-          setIsCooldown(false);
-          setTimeLeft(0);
-          setProgress(0);
-          localStorage.removeItem(COOLDOWN_KEY);
-          clearInterval(timer);
+        if (remaining > 0) {
+          setIsCooldown((prev) => ({ ...prev, [key]: true }));
+          setTimeLeft((prev) => ({ ...prev, [key]: Math.ceil(remaining / 1000) }));
+          setProgress((prev) => ({ ...prev, [key]: (remaining / COOLDOWN_DURATION) * 100 }));
         } else {
-          setTimeLeft(Math.ceil(remaining / 1000));
-          setProgress((remaining / COOLDOWN_DURATION) * 100);
+          localStorage.removeItem(COOLDOWN_KEYS[key]);
+          setIsCooldown((prev) => ({ ...prev, [key]: false }));
+          setTimeLeft((prev) => ({ ...prev, [key]: 0 }));
+          setProgress((prev) => ({ ...prev, [key]: 100 }));
         }
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isCooldown, COOLDOWN_DURATION, COOLDOWN_KEY, timeLeft]);
+      }
+    });
+  }, [COOLDOWN_DURATION, COOLDOWN_KEYS]);
+
+  // Таймер обратного отсчёта для каждого действия
+  useEffect(() => {
+    const timers = Object.keys(COOLDOWN_KEYS).map((key) =>
+      setInterval(() => {
+        if (isCooldown[key] && timeLeft[key] > 0) {
+          const savedCooldown = localStorage.getItem(COOLDOWN_KEYS[key]);
+          if (!savedCooldown) return;
+
+          const { startTime } = JSON.parse(savedCooldown);
+          const elapsed = Date.now() - startTime;
+          const remaining = COOLDOWN_DURATION - elapsed;
+
+          if (remaining <= 0) {
+            setIsCooldown((prev) => ({ ...prev, [key]: false }));
+            setTimeLeft((prev) => ({ ...prev, [key]: 0 }));
+            setProgress((prev) => ({ ...prev, [key]: 0 }));
+            localStorage.removeItem(COOLDOWN_KEYS[key]);
+          } else {
+            setTimeLeft((prev) => ({ ...prev, [key]: Math.ceil(remaining / 1000) }));
+            setProgress((prev) => ({ ...prev, [key]: (remaining / COOLDOWN_DURATION) * 100 }));
+          }
+        }
+      }, 1000)
+    );
+
+    return () => timers.forEach((timer) => clearInterval(timer));
+  }, [isCooldown, timeLeft, COOLDOWN_DURATION, COOLDOWN_KEYS]);
 
   const handleActionClick = (action) => {
-    if (isCooldown && action.title === 'Найти палку') {
+    const actionKey = {
+      'Найти палку': 'findStick',
+      'Найти ягоды': 'findBerries',
+      'Найти грибы': 'findMushrooms',
+    }[action.title];
+
+    if (actionKey && isCooldown[actionKey]) {
       setNotification({ show: true, message: 'Действие недоступно, подождите' });
       setTimeout(() => setNotification({ show: false, message: '' }), 2000);
       return;
     }
+
     setSelectedAction(action);
+
     if (action.title === 'Столярная мастерская') {
       setSelectedCraftItem(action.craftableItems[0].name);
       setSliderValues({ sticks: 0, boards: 0 });
@@ -307,6 +342,58 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
           setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
           setProgress(100);
           localStorage.setItem(COOLDOWN_KEY, JSON.stringify({ startTime: Date.now() }));
+        } else {
+          setSelectedAction(null);
+          setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
+          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        }
+      });
+    } else if (selectedAction.title === 'Найти ягоды') {
+      const newItem = {
+        name: 'Лесные ягоды',
+        description: 'Вкусные и свежие',
+        rarity: 'Обычный',
+        weight: 0.1,
+        cost: 10,
+        effect: 'Слегка утоляют голод и повышают настроение',
+      };
+      socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
+        if (response && response.success) {
+          setSelectedAction(null);
+          setNotification({ show: true, message: 'Вы нашли лесные ягоды!' });
+          setTimeout(() => {
+            setNotification({ show: false, message: '' });
+          }, 2000);
+          setIsCooldown((prev) => ({ ...prev, findBerries: true }));
+          setTimeLeft((prev) => ({ ...prev, findBerries: Math.floor(COOLDOWN_DURATION / 1000) }));
+          setProgress((prev) => ({ ...prev, findBerries: 100 }));
+          localStorage.setItem(COOLDOWN_KEYS.findBerries, JSON.stringify({ startTime: Date.now() }));
+        } else {
+          setSelectedAction(null);
+          setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
+          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        }
+      });
+    } else if (selectedAction.title === 'Найти грибы') {
+      const newItem = {
+        name: 'Лесные грибы',
+        description: 'Вкусные и полезные, если не ядовитые',
+        rarity: 'Обычный',
+        weight: 0.3,
+        cost: 10,
+        effect: 'Слегка утоляют голод и повышают настроение, если правильно приготовить',
+      };
+      socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
+        if (response && response.success) {
+          setSelectedAction(null);
+          setNotification({ show: true, message: 'Вы нашли лесные грибы!' });
+          setTimeout(() => {
+            setNotification({ show: false, message: '' });
+          }, 2000);
+          setIsCooldown((prev) => ({ ...prev, findMushrooms: true }));
+          setTimeLeft((prev) => ({ ...prev, findMushrooms: Math.floor(COOLDOWN_DURATION / 1000) }));
+          setProgress((prev) => ({ ...prev, findMushrooms: 100 }));
+          localStorage.setItem(COOLDOWN_KEYS.findMushrooms, JSON.stringify({ startTime: Date.now() }));
         } else {
           setSelectedAction(null);
           setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
@@ -618,27 +705,34 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       <ContentContainer>
         <ActionGrid>
           {availableActions.length > 0 ? (
-            availableActions.map((action) => (
-              <ActionCard
-                key={action.id}
-                theme={theme}
-                onClick={() => handleActionClick(action)}
-                disabled={isCooldown && action.title === 'Найти палку'}
-              >
-                <div>
-                  <ActionTitle theme={theme}>{action.title}</ActionTitle>
-                  <ActionDescription theme={theme}>{action.description}</ActionDescription>
-                </div>
-                {isCooldown && action.title === 'Найти палку' && (
-                  <>
-                    <ProgressBar progress={progress} />
-                    <TimerDisplay theme={theme}>
-                      Осталось: {timeLeft} сек
-                    </TimerDisplay>
-                  </>
-                )}
-              </ActionCard>
-            ))
+            availableActions.map((action) => {
+              const actionKey = {
+                'Найти палку': 'findStick',
+                'Найти ягоды': 'findBerries',
+                'Найти грибы': 'findMushrooms',
+              }[action.title] || null;
+              return (
+                <ActionCard
+                  key={action.id}
+                  theme={theme}
+                  onClick={() => handleActionClick(action)}
+                  disabled={actionKey && isCooldown[actionKey]}
+                >
+                  <div>
+                    <ActionTitle theme={theme}>{action.title}</ActionTitle>
+                    <ActionDescription theme={theme}>{action.description}</ActionDescription>
+                  </div>
+                  {actionKey && isCooldown[actionKey] && (
+                    <>
+                      <ProgressBar progress={progress[actionKey]} />
+                      <TimerDisplay theme={theme}>
+                        Осталось: {timeLeft[actionKey]} сек
+                      </TimerDisplay>
+                    </>
+                  )}
+                </ActionCard>
+              );
+            })
           ) : (
             <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
               Действия недоступны в этой комнате

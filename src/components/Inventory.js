@@ -726,7 +726,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                   onClick={() => handleRenameAnimal(selectedItem.animalId, newAnimalName)}
                   disabled={isActionCooldown || !newAnimalName.trim()}
                 >
-                  Сохранить
+                  ОК
                 </S.ConfirmButton>
                 <S.ConfirmButton
                   type="no"

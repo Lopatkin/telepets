@@ -15,6 +15,7 @@ import albionImage from '../images/albion.jpg';
 import karnavalImage from '../images/univermag.jpg';
 import poligonImage from '../images/poligon.jpg';
 import workshopImage from '../images/workshop.jpg';
+import podmostImage from '../images/podmost.jpg';
 
 export const ChatContainer = styled.div`
   height: 100%;
@@ -60,6 +61,8 @@ export const MessagesContainer = styled.div`
       return `url(${poligonImage}) no-repeat center center fixed`;
     } else if (props.room === 'Мастерская') {
       return `url(${workshopImage}) no-repeat center center fixed`;
+    } else if (props.room === 'Под мостом') {
+      return `url(${podmostImage}) no-repeat center center fixed`;
     } else {
       return props.theme === 'dark' ? '#1A1A1A' : '#fff';
     }

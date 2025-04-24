@@ -40,7 +40,7 @@ const TabButton = styled.button`
   }
 `;
 
-function Footer({ activeTab, setActiveTab, theme, user, currentRoom, isAnimalAtHome, isAnimalInPocketWithOwnerOnline }) {
+function Footer({ activeTab, setActiveTab, theme, user, currentRoom, isAnimalAtHome, isAnimalOnLeashWithOwnerOnline }) {
   const isAnimalInShelter = !user?.isHuman && currentRoom === 'Приют для животных "Кошкин дом"';
   const isMapDisabled = isAnimalInShelter || (isAnimalAtHome && !user?.freeRoam) || isAnimalOnLeashWithOwnerOnline;
   console.log('isMapDisabled:', isMapDisabled, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalInShelter:', isAnimalInShelter, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline); // Отладка
@@ -55,7 +55,7 @@ function Footer({ activeTab, setActiveTab, theme, user, currentRoom, isAnimalAtH
         alert('Вы находитесь дома у хозяина и не можете самостоятельно перемещаться.');
         return;
       }
-      if (isAnimalInPocketWithOwnerOnline) {
+      if (isAnimalOnLeashWithOwnerOnline) {
         alert('Вы привязаны к хозяину и не можете перемещаться, пока он онлайн.');
         return;
       }

@@ -129,11 +129,11 @@ const animalActions = (animalType) => [
   },
   {
     id: 13,
-    title: animalType === 'Собака' ? 'Сидеть и орать' : 'Сидеть и орать',
-    description: animalType === 'Собака' ? 'Вы хотите привлечь внимание' : 'Вы хотите привлечь внимание',
-    modalTitle: animalType === 'Собака' ? 'Поорать' : 'Поорать',
-    modalDescription: animalType === 'Собака' ? 'Вы громко гавкаете, чтобы привлечь внимание хозяина.' : 'Вы громко мяукаете, чтобы хозяин обратил на вас внимание.',
-    buttonText: animalType === 'Собака' ? 'ГАВ!' : 'МЯУ!'
+    title: animalType === 'Собака' ? 'Погавкать' : 'Помяукать',
+    description: animalType === 'Собака' ? 'Громко гавкнуть' : 'Мяукнуть, чтобы привлечь внимание',
+    modalTitle: animalType === 'Собака' ? 'Погавкать' : 'Помяукать',
+    modalDescription: animalType === 'Собака' ? 'Вы громко гавкаете, чтобы привлечь внимание хозяина.' : 'Вы мяукаете, чтобы хозяин обратил на вас внимание.',
+    buttonText: animalType === 'Собака' ? 'Гав!' : 'Мяу!'
   },
   {
     id: 14,
@@ -368,7 +368,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       });
     } else if (selectedAction.title === 'Помяукать') {
       socket.emit('sendSystemMessage', {
-        text: `${user.name} сидит и орёт`,
+        text: `${user.name} мяукает`,
         room: currentRoom,
         timestamp: new Date().toISOString()
       }, () => {

@@ -338,10 +338,10 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
           setTimeout(() => {
             setNotification({ show: false, message: '' });
           }, 2000);
-          setIsCooldown(true);
-          setTimeLeft(Math.floor(COOLDOWN_DURATION / 1000));
-          setProgress(100);
-          localStorage.setItem(COOLDOWN_KEY, JSON.stringify({ startTime: Date.now() }));
+          setIsCooldown((prev) => ({ ...prev, findStick: true }));
+          setTimeLeft((prev) => ({ ...prev, findStick: Math.floor(COOLDOWN_DURATION / 1000) }));
+          setProgress((prev) => ({ ...prev, findStick: 100 }));
+          localStorage.setItem(COOLDOWN_KEYS.findStick, JSON.stringify({ startTime: Date.now() }));
         } else {
           setSelectedAction(null);
           setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });

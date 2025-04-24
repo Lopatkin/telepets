@@ -186,11 +186,11 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [craftingProgress, setCraftingProgress] = useState(0);
 
   const COOLDOWN_DURATION = 10 * 1000;
-  const COOLDOWN_KEYS = {
+  const COOLDOWN_KEYS = useMemo(() => ({
     findStick: `findStickCooldown_${userId}`,
     findBerries: `findBerriesCooldown_${userId}`,
     findMushrooms: `findMushroomsCooldown_${userId}`,
-  };
+  }), [userId]);
 
   // Восстановление состояния таймера при монтировании компонента
   useEffect(() => {

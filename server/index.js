@@ -660,7 +660,8 @@ io.on('connection', (socket) => {
       onLeash: user.onLeash,
       owner: user.owner, // Добавляем owner в userUpdate
       ownerOnline, // Добавляем флаг ownerOnline
-      homeless: user.homeless // Добавляем homeless
+      homeless: user.homeless, // Добавляем homeless
+      freeRoam: user.freeRoam || false // Добавляем freeRoam
     });
 
     // Обновление lastRoom в базе данных

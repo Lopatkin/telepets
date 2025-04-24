@@ -769,7 +769,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
             />
             <S.ConfirmButtons>
               <S.ConfirmButton type="yes" onClick={confirmActionQuantity} disabled={isActionCooldown}>
-                Подтвердить
+                ОК
               </S.ConfirmButton>
               <S.ConfirmButton
                 type="no"

@@ -67,6 +67,7 @@ export const MessagesContainer = styled.div`
       return props.theme === 'dark' ? '#1A1A1A' : '#fff';
     }
   }};
+  
   background-size: cover;
 `;
 

@@ -42,7 +42,8 @@ const TabButton = styled.button`
 
 function Footer({ activeTab, setActiveTab, theme, user, currentRoom, isAnimalAtHome, isAnimalInPocketWithOwnerOnline }) {
   const isAnimalInShelter = !user?.isHuman && currentRoom === 'Приют для животных "Кошкин дом"';
-  const isMapDisabled = isAnimalInShelter || isAnimalAtHome || isAnimalInPocketWithOwnerOnline;
+  const isMapDisabled = isAnimalInShelter || (isAnimalAtHome && !user?.freeRoam) || isAnimalOnLeashWithOwnerOnline;
+  console.log('isMapDisabled:', isMapDisabled, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalInShelter:', isAnimalInShelter, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline); // Отладка
 
   const handleTabClick = (tab) => {
     if (tab === 'map') {
@@ -50,7 +51,7 @@ function Footer({ activeTab, setActiveTab, theme, user, currentRoom, isAnimalAtH
         alert('Извините, но из приюта бездомному животному без хозяина просто так не сбежать.');
         return;
       }
-      if (isAnimalAtHome) {
+      if (isAnimalAtHome && !user?.freeRoam) {
         alert('Вы находитесь дома у хозяина и не можете самостоятельно перемещаться.');
         return;
       }

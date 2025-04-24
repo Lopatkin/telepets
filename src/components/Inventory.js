@@ -47,12 +47,25 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   // Функция для обработки изменения "Свободного выгула"
   const handleFreeRoamChange = (animalId, checked) => {
     socket.emit('setFreeRoam', { animalId, freeRoam: checked }, (response) => {
-      if (!response.success) {
+      if (response.success) {
+        // Обновляем selectedItem после успешного ответа
+        socket.emit('getAnimalInfo', { animalId }, (infoResponse) => {
+          if (infoResponse.success) {
+            setSelectedItem(prev => ({
+              ...prev,
+              freeRoam: infoResponse.animal.freeRoam || false
+            }));
+            setFreeRoam(infoResponse.animal.freeRoam || false);
+          } else {
+            setError(infoResponse.message || 'Ошибка при получении данных животного');
+            setTimeout(() => setError(null), 3000);
+          }
+        });
+      } else {
         setError(response.message || 'Ошибка при изменении статуса выгула');
         setTimeout(() => setError(null), 3000);
       }
     });
-    setFreeRoam(checked);
   };
 
   // В функции groupItemsByNameAndWeight используем animalId для "Паспорта животного"

@@ -185,6 +185,7 @@ io.on('connection', (socket) => {
 
       // Уведомляем клиента животного, если он онлайн
       const animalSocket = activeSockets.get(animalId);
+      console.log('Animal socket exists for setFreeRoam:', !!animalSocket, 'animalId:', animalId); // Отладка
       if (animalSocket) {
         animalSocket.emit('userUpdate', {
           userId: animalId,

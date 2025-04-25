@@ -112,6 +112,20 @@ const RoomName = styled.span`
   font-size: 16px;
 `;
 
+// Добавляем оверлей для затемнения
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  pointer-events: none; /* Оверлей не должен блокировать взаимодействие */
+  opacity: ${props => props.isFading === 'fadeIn' ? 1 : props.isFading === 'fadeOut' ? 0 : props.isFading ? 1 : 0};
+  transition: opacity 3s ease-in-out; /* Плавная анимация за 3 секунды */
+  z-index: 1000; /* Высокий z-index, чтобы быть поверх всего */
+`;
+
 function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
   const [activeSubTab, setActiveSubTab] = useState('locations'); // Состояние для переключения подвкладок
   const [isDragging, setIsDragging] = useState(false); // Флаг перетаскивания
@@ -120,6 +134,9 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
   const [scale, setScale] = useState(100); // Масштаб в процентах (100% = исходный размер)
   const [initialDistance, setInitialDistance] = useState(null); // Начальное расстояние между пальцами
   const [isImageLoaded, setIsImageLoaded] = useState(false); // Флаг загрузки изображения
+  const [isTransitioning, setIsTransitioning] = useState(false); // Флаг перехода
+  const [fadeType, setFadeType] = useState(null); // Тип анимации: fadeIn, fadeOut или null
+  const [selectedRoom, setSelectedRoom] = useState(null); // Выбранная локация
   const mapContainerRef = useRef(null); // Ссылка на контейнер карты
   const mapImageRef = useRef(null); // Ссылка на изображение
 
@@ -304,8 +321,37 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
     }
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]); // Зависимости для обработчиков
 
+  // Обработчик выбора локации
+  const handleRoomSelect = (room) => {
+    if (isTransitioning || room === currentRoom) return; // Не выполняем, если уже идёт переход или выбрана текущая комната
+
+    setIsTransitioning(true);
+    setFadeType('fadeIn'); // Начинаем анимацию затемнения
+    setSelectedRoom(room); // Сохраняем выбранную локацию
+
+    // Задержка для завершения анимации затемнения (3 секунды)
+    setTimeout(() => {
+      onRoomSelect(room); // Выполняем переход
+      setFadeType('fadeOut'); // Начинаем анимацию осветления
+      // Завершаем переход после анимации осветления
+      setTimeout(() => {
+        setIsTransitioning(false);
+        setFadeType(null);
+        setSelectedRoom(null);
+      }, 3000); // Длительность анимации осветления
+    }, 3000); // Длительность анимации затемнения
+  };
+
+  // Обеспечиваем 100% затемнение при открытии новой локации
+  useEffect(() => {
+    if (currentRoom && selectedRoom && currentRoom === selectedRoom) {
+      setFadeType('fadeOut'); // Запускаем осветление после перехода
+    }
+  }, [currentRoom, selectedRoom]);
+
   return (
     <MapContainer theme={theme}>
+      <Overlay isFading={fadeType} />
       <Tabs>
         <Tab
           active={activeSubTab === 'locations'}
@@ -363,7 +409,7 @@ function Map({ userId, onRoomSelect, theme, currentRoom, user }) {
       <HomeButton
         onClick={() => {
           if (!(user?.homeless === true && user?.isHuman === false)) {
-            onRoomSelect(homeRoom); // Используем homeRoom вместо myHomeRoom
+            handleRoomSelect(homeRoom); // Используем handleRoomSelect вместо onRoomSelect
           }
         }}
         theme={theme}

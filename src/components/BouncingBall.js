@@ -70,7 +70,7 @@ function BouncingBall({ room, containerRef }) {
     });
 
     // Создаем стены и пол
-    const ground = Bodies.rectangle(width / 2, height, width, 20, {
+    const ground = Bodies.rectangle(width / 2, height, excess, 20, {
       isStatic: true,
     });
     const leftWall = Bodies.rectangle(0, height / 2, 20, height, {
@@ -79,9 +79,13 @@ function BouncingBall({ room, containerRef }) {
     const rightWall = Bodies.rectangle(width, height / 2, 20, height, {
       isStatic: true,
     });
+    // Добавляем верхнюю стенку
+    const ceiling = Bodies.rectangle(width / 2, 0, width, 20, {
+      isStatic: true,
+    });
 
     // Добавляем объекты в мир
-    World.add(engine.world, [ball, ground, leftWall, rightWall]);
+    World.add(engine.world, [ball, ground, leftWall, rightWall, ceiling]);
 
     // Создаем мышь и ограничение для взаимодействия
     const mouse = Mouse.create(container);

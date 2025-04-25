@@ -40,6 +40,7 @@ export const FadeOverlay = styled.div`
   pointer-events: none;
   opacity: ${props => (props.isFading ? (props.fadeType === 'out' ? 0 : 1) : 0)};
   animation: ${props => props.isFading ? (props.fadeType === 'out' ? fadeOut : fadeIn) : 'none'} 3s forwards;
+  border: 2px solid red; /* Временный бордер для отладки */
 `;
 
 export const ChatContainer = styled.div`
@@ -92,25 +93,26 @@ export const MessagesContainer = styled.div`
       return props.theme === 'dark' ? '#1A1A1A' : '#fff';
     }
   }};
+  
   background-size: cover;
 `;
 
 export const Message = styled.div`
-  margin: 5px 0;
-  padding: 8px;
-  border-radius: ${props => props.isSystem ? '12 Моё сообщениеpx' : '4px'};
-  background: ${props => props.isSystem 
-    ? (props.theme === 'dark' ? '#4a4a4a' : '#e0e0e0') 
-    : (props.theme === 'dark' ? '#444' : (props.isOwn ? '#DCF8C6' : '#ECECEC'))
-  };
-  align-self: ${props => props.isSystem ? 'center' : (props.isOwn ? 'flex-end' : 'flex-start')};
-  max-width: 70%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  z-index: 2;
-  font-style: ${props => props.isSystem ? 'italic' : 'normal'};
-`;
+    margin: 5px 0;
+    padding: 8px;
+    border-radius: ${props => props.isSystem ? '12px' : '4px'}; // Закруглённые углы для системных сообщений
+    background: ${props => props.isSystem 
+      ? (props.theme === 'dark' ? '#4a4a4a' : '#e0e0e0') 
+      : (props.theme === 'dark' ? '#444' : (props.isOwn ? '#DCF8C6' : '#ECECEC'))
+    };
+    align-self: ${props => props.isSystem ? 'center' : (props.isOwn ? 'flex-end' : 'flex-start')}; // Центрирование системных сообщений
+    max-width: 70%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 2;
+    font-style: ${props => props.isSystem ? 'italic' : 'normal'};
+  `;
 
 export const MessageHeader = styled.div`
   display: flex;
@@ -149,15 +151,15 @@ export const MessageContent = styled.div`
   justify-content: space-between;
   align-items: baseline;
 `;
-
+// Обновляем стиль MessageText для системных сообщений
 export const MessageText = styled.span`
-  font-size: 14px;
-  word-break: break-word;
-  color: ${props => props.isSystem
+font-size: 14px;
+word-break: break-word;
+color: ${props => props.isSystem
     ? (props.theme === 'dark' ? '#cccccc' : '#666666')
     : (props.theme === 'dark' ? '#fff' : '#000')
   };
-  padding: ${props => props.isSystem ? '0' : '0'};
+padding: ${props => props.isSystem ? '0' : '0'};
 `;
 
 export const Timestamp = styled.span`
@@ -256,6 +258,11 @@ export const UserName = styled.span`
   color: ${props => props.theme === 'dark' ? '#fff' : '#333'};
   margin-left: 5px;
 `;
+
+// export const PovodokIcon = styled.img`
+//   width: 16px;
+//   height: 16px;
+// `;
 
 export const LeashIcon = styled.img`
   width: 16px;

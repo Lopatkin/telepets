@@ -11,6 +11,7 @@ const BallContainer = styled.div`
   pointer-events: none;
   z-index: 5;
   overflow: hidden; /* Предотвращаем влияние на прокрутку */
+  contain: strict; /* Ограничиваем влияние на родительский контейнер */
 `;
 
 const Ball = styled.div`

@@ -30,6 +30,8 @@ export const MessagesContainer = styled.div`
   padding: 10px;
   display: flex;
   flex-direction: column;
+  min-height: 0; /* Гарантирует, что контейнер не выходит за пределы родителя */
+  height: 100%; /* Устанавливаем явную высоту для корректной прокрутки */
   
   background: ${props => {
     if (props.room === 'Автобусная остановка') {
@@ -76,10 +78,10 @@ export const Message = styled.div`
     margin: 5px 0;
     padding: 8px;
     border-radius: ${props => props.isSystem ? '12px' : '4px'}; // Закруглённые углы для системных сообщений
-    background: ${props => props.isSystem 
-      ? (props.theme === 'dark' ? '#4a4a4a' : '#e0e0e0') 
-      : (props.theme === 'dark' ? '#444' : (props.isOwn ? '#DCF8C6' : '#ECECEC'))
-    };
+    background: ${props => props.isSystem
+    ? (props.theme === 'dark' ? '#4a4a4a' : '#e0e0e0')
+    : (props.theme === 'dark' ? '#444' : (props.isOwn ? '#DCF8C6' : '#ECECEC'))
+  };
     align-self: ${props => props.isSystem ? 'center' : (props.isOwn ? 'flex-end' : 'flex-start')}; // Центрирование системных сообщений
     max-width: 70%;
     display: flex;

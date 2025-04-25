@@ -470,7 +470,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
             )}
           </Message>
         ))}
-          <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} />
       </MessagesContainer>
       {/* <BouncingBall room={room} /> */}
       <InputContainer theme={theme}>

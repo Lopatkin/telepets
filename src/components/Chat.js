@@ -220,13 +220,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     console.log('[DEBUG] Current room:', room, 'Previous room:', prevRoomRef.current);
 
     // Проверяем, произошла ли смена комнаты
-    if (prevRoomRef.current !== room && prevRoomRef.current) {
+    if (prevRoomRef.current && prevRoomRef.current !== room) {
       console.log(`[DEBUG] Switching room from ${prevRoomRef.current} to ${room}`);
       setIsFading(true);
       setFadeType('out');
       console.log('[DEBUG] Starting fade-out animation');
 
-      // Запускаем анимацию затемнения (3 секунды)
+      // Запускаем анимацию затемнения (2 секунды)
       const fadeOutTimer = setTimeout(() => {
         console.log('[DEBUG] Fade-out completed, clearing messages and joining new room');
         // Очищаем кэш и сообщения перед переходом
@@ -238,26 +238,28 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         setFadeType('in');
         console.log('[DEBUG] Starting fade-in animation');
 
-        // Завершаем анимацию через 3 секунды
+        // Завершаем анимацию через 2 секунды
         const fadeInTimer = setTimeout(() => {
           console.log('[DEBUG] Fade-in completed, animation finished');
           setIsFading(false);
           setFadeType(null);
-        }, 3000);
+        }, 2000);
 
         return () => clearTimeout(fadeInTimer);
-      }, 3000);
+      }, 2000);
+
+      // Обновляем prevRoomRef после начала анимации
+      prevRoomRef.current = room;
 
       return () => clearTimeout(fadeOutTimer);
-    } else if (!prevRoomRef.current) {
-      console.log('[DEBUG] Initial room load:', room);
-      // Для первой загрузки комнаты просто присоединяемся без анимации
-      messageCacheRef.current = { [room]: [] };
-      socket.emit('joinRoom', { room, lastTimestamp: null });
+    } else {
+      console.log('[DEBUG] No room switch or initial load:', room);
+      // Для первой загрузки или если комната не сменилась
+      if (!messageCacheRef.current[room]?.length) {
+        messageCacheRef.current = { [room]: [] };
+        socket.emit('joinRoom', { room, lastTimestamp: null });
+      }
     }
-
-    // Обновляем prevRoomRef после обработки
-    prevRoomRef.current = room;
 
     // Остальная логика useEffect (история сообщений, пользователи и т.д.)
     const cachedMessages = messageCacheRef.current[room] || [];

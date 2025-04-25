@@ -212,7 +212,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   }, [room]);
 
   useEffect(() => {
-    if (!socket || !room) return;
+    if (!socket || !room) {
+      console.log('[DEBUG] Socket or room is not defined:', { socket, room });
+      return;
+    }
+
+    console.log('[DEBUG] Current room:', room, 'Previous room:', prevRoomRef.current);
 
     // Проверяем, произошла ли смена комнаты
     if (prevRoomRef.current !== room && prevRoomRef.current) {
@@ -243,17 +248,18 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         return () => clearTimeout(fadeInTimer);
       }, 3000);
 
-      prevRoomRef.current = room;
-
       return () => clearTimeout(fadeOutTimer);
+    } else if (!prevRoomRef.current) {
+      console.log('[DEBUG] Initial room load:', room);
+      // Для первой загрузки комнаты просто присоединяемся без анимации
+      messageCacheRef.current = { [room]: [] };
+      socket.emit('joinRoom', { room, lastTimestamp: null });
     }
 
-    // Очищаем кэш при смене комнаты
-    messageCacheRef.current = { [room]: [] };
+    // Обновляем prevRoomRef после обработки
+    prevRoomRef.current = room;
 
-    // Запрашиваем историю для новой комнаты
-    socket.emit('joinRoom', { room, lastTimestamp: null });
-
+    // Остальная логика useEffect (история сообщений, пользователи и т.д.)
     const cachedMessages = messageCacheRef.current[room] || [];
     if (cachedMessages.length > 0 && messages.length === 0) {
       setMessages(cachedMessages);
@@ -365,7 +371,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       socket.off('systemMessage');
       socket.off('roomUsers');
     };
-  }, [socket, userId, room, messages, currentUserPhotoUrl]);
+  }, [socket, userId, room, currentUserPhotoUrl]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

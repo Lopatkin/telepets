@@ -30,17 +30,17 @@ const fadeIn = keyframes`
 `;
 
 export const FadeOverlay = styled.div`
-  position: absolute;
+  position: fixed; /* Изменено на fixed для покрытия всего экрана */
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   background: black;
-  z-index: 100;
+  z-index: 1000; /* Увеличен z-index */
   pointer-events: none;
   opacity: ${props => (props.isFading ? (props.fadeType === 'out' ? 0 : 1) : 0)};
-  animation: ${props => props.isFading ? (props.fadeType === 'out' ? fadeOut : fadeIn) : 'none'} 3s forwards;
-  border: 2px solid red; /* Временный бордер для отладки */
+  animation: ${props => (props.isFading ? (props.fadeType === 'out' ? fadeOut : fadeIn) : 'none')} 3s forwards;
+  transition: opacity 0.5s ease; /* Добавлен переход для плавности */
 `;
 
 export const ChatContainer = styled.div`

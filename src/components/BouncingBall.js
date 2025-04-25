@@ -9,8 +9,16 @@ const BallContainer = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; // Позволяет кликам на мячике не блокировать другие элементы
+  pointer-events: none; // Отключаем взаимодействие с контейнером
   z-index: 5; // Помещаем мячик над сообщениями, но ниже модальных окон
+`;
+
+// Стили для канваса
+const BallCanvas = styled.canvas`
+  pointer-events: auto; // Включаем взаимодействие только с канвасом
+  position: absolute;
+  top: 0;
+  left: 0;
 `;
 
 // Компонент мячика
@@ -166,7 +174,7 @@ const BouncingBall = ({ room }) => {
 
   return (
     <BallContainer>
-      <canvas ref={canvasRef} style={{ pointerEvents: 'auto' }} />
+      <BallCanvas ref={canvasRef} />
     </BallContainer>
   );
 };

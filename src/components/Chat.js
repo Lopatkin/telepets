@@ -51,7 +51,7 @@ import {
   LeashIcon
 } from '../styles/ChatStyles';
 
-function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
+function Chat({ userId, room, theme, socket, joinedRoomsRef, user, messagesContainerRef }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);

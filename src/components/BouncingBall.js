@@ -1,149 +1,150 @@
-// BouncingBall.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+import Matter from 'matter-js';
 import styled from 'styled-components';
+
+const BallContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+`;
 
 const Ball = styled.div`
   position: absolute;
   width: 30px;
   height: 30px;
+  background: radial-gradient(circle at 30% 30%, #ff6666, #cc0000);
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff5e62, #ff9966);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
   cursor: pointer;
-  z-index: 1;
-  user-select: none;
-  touch-action: none;
 `;
 
-const BouncingBall = ({ room }) => {
-  const [position, setPosition] = useState({ x: 50, y: -30 });
-  const [velocity, setVelocity] = useState({ x: 0, y: 0 });
+function BouncingBall({ room, containerRef }) {
   const ballRef = useRef(null);
-  const animationRef = useRef(null);
-  const lastTimeRef = useRef(0);
-  const containerRef = useRef(null);
-  const inputContainerHeight = 60; // Высота блока с полем ввода
-
-  // Проверяем, домашняя ли это локация
-  const isHomeRoom = room && room.startsWith('myhome_');
+  const engineRef = useRef(null);
+  const runnerRef = useRef(null);
 
   useEffect(() => {
-    if (!isHomeRoom) return;
+    // Проверяем, что это домашняя локация
+    if (!room || !room.startsWith('myhome_') || !containerRef.current) return;
 
-    const container = document.querySelector('.messages-container');
-    if (!container) return;
+    // Инициализация Matter.js
+    const Engine = Matter.Engine;
+    const Render = Matter.Render;
+    const World = Matter.World;
+    const Bodies = Matter.Bodies;
+    const Mouse = Matter.Mouse;
+    const MouseConstraint = Matter.MouseConstraint;
 
-    containerRef.current = container;
+    // Создаем физический движок
+    const engine = Engine.create();
+    engineRef.current = engine;
 
-    // Начальная позиция мяча (случайная по горизонтали)
-    const startX = Math.random() * (container.clientWidth - 30);
-    setPosition({ x: startX, y: -30 });
-    setVelocity({ x: 0, y: 0 });
+    // Получаем размеры контейнера сообщений
+    const container = containerRef.current;
+    const { width, height } = container.getBoundingClientRect();
 
-    const handleClick = (e) => {
-      if (e.target === ballRef.current) {
-        // При клике задаем случайную скорость для отскока
-        const newVelocity = {
-          x: (Math.random() - 0.5) * 10,
-          y: -Math.random() * 15 - 5
-        };
-        setVelocity(newVelocity);
-        e.stopPropagation();
+    // Создаем рендер
+    const render = Render.create({
+      element: container,
+      engine: engine,
+      options: {
+        width,
+        height,
+        wireframes: false,
+        background: 'transparent',
+      },
+    });
+
+    // Создаем мяч
+    const ball = Bodies.circle(width / 2, 50, 15, {
+      restitution: 0.8, // Упругость (отскок)
+      friction: 0.1, // Трение
+      density: 0.01, // Плотность
+      render: {
+        visible: false, // Скрываем встроенный рендер, используем DOM
+      },
+    });
+
+    // Создаем стены и пол
+    const ground = Bodies.rectangle(width / 2, height, width, 20, {
+      isStatic: true,
+    });
+    const leftWall = Bodies.rectangle(0, height / 2, 20, height, {
+      isStatic: true,
+    });
+    const rightWall = Bodies.rectangle(width, height / 2, 20, height, {
+      isStatic: true,
+    });
+
+    // Добавляем объекты в мир
+    World.add(engine.world, [ball, ground, leftWall, rightWall]);
+
+    // Создаем мышь и ограничение для взаимодействия
+    const mouse = Mouse.create(container);
+    const mouseConstraint = MouseConstraint.create(engine, {
+      mouse: mouse,
+      constraint: {
+        stiffness: 0.2,
+        render: {
+          visible: false,
+        },
+      },
+    });
+    World.add(engine.world, mouseConstraint);
+
+    // Запускаем движок
+    const runner = Engine.run(engine);
+    runnerRef.current = runner;
+
+    // Синхронизация положения DOM-элемента мяча с физическим телом
+    const ballElement = ballRef.current;
+    Matter.Events.on(engine, 'afterUpdate', () => {
+      if (ballElement) {
+        ballElement.style.left = `${ball.position.x - 15}px`; // 15 - половина ширины мяча
+        ballElement.style.top = `${ball.position.y - 15}px`;
       }
-    };
+    });
 
-    container.addEventListener('click', handleClick);
-
-    return () => {
-      container.removeEventListener('click', handleClick);
-      cancelAnimationFrame(animationRef.current);
-    };
-  }, [isHomeRoom, room]);
-
-  useEffect(() => {
-    if (!isHomeRoom || !containerRef.current) return;
-
-    const gravity = 0.5;
-    const friction = 0.99;
-    const bounce = 0.7;
-
-    const updateBallPosition = (timestamp) => {
-      if (!lastTimeRef.current) {
-        lastTimeRef.current = timestamp;
-      }
-      
-      const deltaTime = (timestamp - lastTimeRef.current) / 16; // Нормализуем время
-      lastTimeRef.current = timestamp;
-
-      setPosition(prevPos => {
-        setVelocity(prevVel => {
-          let newVelX = prevVel.x * friction;
-          let newVelY = prevVel.y + gravity;
-
-          // Проверка столкновения с границами контейнера
-          const container = containerRef.current;
-          if (!container) return { x: newVelX, y: newVelY };
-
-          const containerWidth = container.clientWidth;
-          const containerHeight = container.clientHeight - inputContainerHeight;
-
-          let newPosX = prevPos.x + newVelX * deltaTime;
-          let newPosY = prevPos.y + newVelY * deltaTime;
-
-          // Столкновение с правой границей
-          if (newPosX + 30 > containerWidth) {
-            newPosX = containerWidth - 30;
-            newVelX = -newVelX * bounce;
-          }
-          // Столкновение с левой границей
-          else if (newPosX < 0) {
-            newPosX = 0;
-            newVelX = -newVelX * bounce;
-          }
-
-          // Столкновение с нижней границей
-          if (newPosY + 30 > containerHeight) {
-            newPosY = containerHeight - 30;
-            newVelY = -newVelY * bounce;
-            
-            // Добавляем небольшое трение при ударе о нижнюю границу
-            newVelX *= 0.9;
-          }
-          // Столкновение с верхней границей
-          else if (newPosY < 0) {
-            newPosY = 0;
-            newVelY = -newVelY * bounce;
-          }
-
-          return { x: newVelX, y: newVelY };
-        });
-
-        return { x: prevPos.x + velocity.x * deltaTime, y: prevPos.y + velocity.y * deltaTime };
+    // Обработка клика по мячу
+    const handleBallClick = () => {
+      // Применяем случайную силу для отскока
+      const forceMagnitude = 0.02;
+      const angle = Math.random() * 2 * Math.PI;
+      Matter.Body.applyForce(ball, ball.position, {
+        x: forceMagnitude * Math.cos(angle),
+        y: forceMagnitude * Math.sin(angle),
       });
-
-      animationRef.current = requestAnimationFrame(updateBallPosition);
     };
 
-    animationRef.current = requestAnimationFrame(updateBallPosition);
+    if (ballElement) {
+      ballElement.addEventListener('click', handleBallClick);
+    }
 
+    // Очистка при размонтировании
     return () => {
-      cancelAnimationFrame(animationRef.current);
+      if (ballElement) {
+        ballElement.removeEventListener('click', handleBallClick);
+      }
+      Render.stop(render);
+      World.clear(engine.world);
+      Engine.clear(engine);
+      runner.enabled = false;
+      render.canvas.remove();
     };
-  }, [isHomeRoom, velocity.x, velocity.y]);
+  }, [room, containerRef]);
 
-  if (!isHomeRoom) return null;
+  // Рендерим только в домашней локации
+  if (!room || !room.startsWith('myhome_')) return null;
 
   return (
-    <Ball
-      ref={ballRef}
-      style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        transform: `rotate(${position.x * 2}deg)`,
-        display: position.y < -100 ? 'none' : 'block'
-      }}
-    />
+    <BallContainer>
+      <Ball ref={ballRef} />
+    </BallContainer>
   );
-};
+}
 
 export default BouncingBall;

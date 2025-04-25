@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// import BouncingBall from './BouncingBall';
+import BouncingBall from './BouncingBall';
 
 import { catSounds, dogSounds } from './constants/animalSounds';
 import npcBelochkaImage from '../images/npc_belochka.jpg';
@@ -59,6 +59,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
   const messageCacheRef = useRef({});
+
+  const messagesContainerRef = useRef(null);
 
   const currentUserPhotoUrl = user?.photoUrl || '';
 
@@ -441,7 +443,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   return (
     <ChatContainer>
-      <MessagesContainer room={room} theme={theme}>
+      <MessagesContainer ref={messagesContainerRef} room={room} theme={theme}>
         {messages.map((msg, index) => (
           <Message
             key={index}
@@ -471,6 +473,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           </Message>
         ))}
         <div ref={messagesEndRef} />
+        <BouncingBall room={room} containerRef={messagesContainerRef} />
       </MessagesContainer>
       {/* <BouncingBall room={room} /> */}
       <InputContainer theme={theme}>

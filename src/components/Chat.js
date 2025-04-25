@@ -58,7 +58,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const [showUserList, setShowUserList] = useState(false);
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
-  const messagesContainerRef = useRef(null); // Реф для MessagesContainer
   const messageCacheRef = useRef({});
 
   const currentUserPhotoUrl = user?.photoUrl || '';
@@ -442,7 +441,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   return (
     <ChatContainer>
-      <MessagesContainer ref={messagesContainerRef} room={room} theme={theme}>
+      <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
           <Message
             key={index}
@@ -472,8 +471,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           </Message>
         ))}
         <div ref={messagesEndRef} />
-        <BouncingBall room={room} containerRef={messagesContainerRef} />
       </MessagesContainer>
+      <BouncingBall room={room} />
       <InputContainer theme={theme}>
         <UsersButton onClick={toggleUserList}>
           <UsersIcon />

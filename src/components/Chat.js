@@ -58,6 +58,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const [showUserList, setShowUserList] = useState(false);
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
+  const messagesContainerRef = useRef(null); // Реф для MessagesContainer
   const messageCacheRef = useRef({});
 
   const currentUserPhotoUrl = user?.photoUrl || '';

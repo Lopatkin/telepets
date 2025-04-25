@@ -10,11 +10,11 @@ const BallContainer = styled.div`
   width: 100%;
   height: 100%;
   pointer-events: none; // Позволяет кликам на мячике не блокировать другие элементы
-  z-index: 5; // Помещаем мячик над сообщениями, но ниже модальных окон
+  z-index: 5; // Помещаем мячик над сообщениями
 `;
 
 // Компонент мячика
-const BouncingBall = ({ room }) => {
+const BouncingBall = ({ room, containerRef }) => {
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
   const ballRef = useRef(null);
@@ -23,7 +23,7 @@ const BouncingBall = ({ room }) => {
   const isHomeRoom = room && room.startsWith('myhome_');
 
   useEffect(() => {
-    if (!isHomeRoom || !canvasRef.current) return;
+    if (!isHomeRoom || !canvasRef.current || !containerRef.current) return;
 
     // Инициализация физического движка
     const Engine = Matter.Engine;
@@ -40,13 +40,16 @@ const BouncingBall = ({ room }) => {
     // Настраиваем гравитацию
     engine.world.gravity.y = 1; // Стандартная гравитация вниз
 
+    // Получаем размеры контейнера сообщений
+    const { width, height } = containerRef.current.getBoundingClientRect();
+
     // Создаем рендер
     const render = Render.create({
       canvas: canvasRef.current,
       engine: engine,
       options: {
-        width: window.innerWidth,
-        height: window.innerHeight,
+        width: width,
+        height: height,
         wireframes: false,
         background: 'transparent',
       },
@@ -54,32 +57,32 @@ const BouncingBall = ({ room }) => {
 
     // Создаем пол (невидимый, только для физики)
     const floor = Bodies.rectangle(
-      window.innerWidth / 2,
-      window.innerHeight + 500,
-      window.innerWidth,
-      100,
+      width / 2,
+      height - 10, // Пол чуть выше нижней границы
+      width,
+      20,
       { isStatic: true }
     );
 
     // Создаем стены
     const leftWall = Bodies.rectangle(
       -50,
-      window.innerHeight / 2,
+      height / 2,
       100,
-      window.innerHeight,
+      height,
       { isStatic: true }
     );
     const rightWall = Bodies.rectangle(
-      window.innerWidth + 50,
-      window.innerHeight / 2,
+      width + 50,
+      height / 2,
       100,
-      window.innerHeight,
+      height,
       { isStatic: true }
     );
 
     // Создаем мячик
     const ball = Bodies.circle(
-      window.innerWidth / 2, // Начальная позиция по центру
+      width / 2, // Начальная позиция по центру
       -50, // Начинаем выше экрана
       20, // Радиус мячика
       {
@@ -135,19 +138,22 @@ const BouncingBall = ({ room }) => {
 
     // Обработка изменения размеров окна
     const handleResize = () => {
-      render.canvas.width = window.innerWidth;
-      render.canvas.height = window.innerHeight;
+      const { width: newWidth, height: newHeight } = containerRef.current.getBoundingClientRect();
+      render.canvas.width = newWidth;
+      render.canvas.height = newHeight;
+      render.options.width = newWidth;
+      render.options.height = newHeight;
       Matter.Body.setPosition(floor, {
-        x: window.innerWidth / 2,
-        y: window.innerHeight + 50,
+        x: newWidth / 2,
+        y: newHeight - 10,
       });
       Matter.Body.setPosition(leftWall, {
         x: -50,
-        y: window.innerHeight / 2,
+        y: newHeight / 2,
       });
       Matter.Body.setPosition(rightWall, {
-        x: window.innerWidth + 50,
-        y: window.innerHeight / 2,
+        x: newWidth + 50,
+        y: newHeight / 2,
       });
     };
     window.addEventListener('resize', handleResize);
@@ -160,7 +166,7 @@ const BouncingBall = ({ room }) => {
       World.clear(engine.world, false);
       window.removeEventListener('resize', handleResize);
     };
-  }, [isHomeRoom, room]);
+  }, [isHomeRoom, room, containerRef]);
 
   if (!isHomeRoom) return null;
 

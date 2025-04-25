@@ -471,8 +471,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           </Message>
         ))}
         <div ref={messagesEndRef} />
+        <BouncingBall room={room} containerRef={messagesContainerRef} />
       </MessagesContainer>
-      <BouncingBall room={room} />
       <InputContainer theme={theme}>
         <UsersButton onClick={toggleUserList}>
           <UsersIcon />

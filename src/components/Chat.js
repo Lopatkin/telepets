@@ -15,6 +15,15 @@ import lovec1Image from '../images/lovec_1.jpg';
 import lovec2Image from '../images/lovec_2.jpg';
 import prodavecSvetaImage from '../images/prodavec_Sveta.jpg';
 import PovodokIcon from '../images/povodok.png'; // Импорт иконки
+
+import lostDogImage from '../images/lost_dog_1.jpg';
+import smallDogImage from '../images/small_dog_1.jpg';
+import illDogImage from '../images/ill_dog_1.jpg';
+import limpDogImage from '../images/limp_dog_1.jpg';
+import sadDogImage from '../images/sad_dog_1.jpg';
+import madDog1Image from '../images/mad_dog_1.jpg';
+import madDog2Image from '../images/mad_dog_2.jpg';
+
 import {
   ChatContainer,
   MessagesContainer,
@@ -166,12 +175,34 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         if (!prevUsers.some(user => user.userId === 'npc_prodavec_sveta')) updatedUsers.unshift(prodavecSveta);
         return updatedUsers;
       });
+    } else if (room === 'Под мостом') {
+      // Добавляем новых NPC для локации "Под мостом"
+      const lostDog = { userId: 'npc_lost_dog', firstName: 'Потерявшийся пёс', photoUrl: lostDogImage, isHuman: false };
+      const smallDog = { userId: 'npc_small_dog', firstName: 'Маленький бездомный пёсик', photoUrl: smallDogImage, isHuman: false };
+      const illDog = { userId: 'npc_ill_dog', firstName: 'Больная бездомная собака', photoUrl: illDogImage, isHuman: false };
+      const limpDog = { userId: 'npc_limp_dog', firstName: 'Хромая бездомная собака', photoUrl: limpDogImage, isHuman: false };
+      const sadDog = { userId: 'npc_sad_dog', firstName: 'Грустная бездомная собака', photoUrl: sadDogImage, isHuman: false };
+      const madDog1 = { userId: 'npc_mad_dog_1', firstName: 'Злая бездомная собака', photoUrl: madDog1Image, isHuman: false };
+      const madDog2 = { userId: 'npc_mad_dog_2', firstName: 'Злой бездомный пёс', photoUrl: madDog2Image, isHuman: false };
+      setUsers(prevUsers => {
+        const updatedUsers = [...prevUsers];
+        if (!prevUsers.some(user => user.userId === 'npc_lost_dog')) updatedUsers.unshift(lostDog);
+        if (!prevUsers.some(user => user.userId === 'npc_small_dog')) updatedUsers.unshift(smallDog);
+        if (!prevUsers.some(user => user.userId === 'npc_ill_dog')) updatedUsers.unshift(illDog);
+        if (!prevUsers.some(user => user.userId === 'npc_limp_dog')) updatedUsers.unshift(limpDog);
+        if (!prevUsers.some(user => user.userId === 'npc_sad_dog')) updatedUsers.unshift(sadDog);
+        if (!prevUsers.some(user => user.userId === 'npc_mad_dog_1')) updatedUsers.unshift(madDog1);
+        if (!prevUsers.some(user => user.userId === 'npc_mad_dog_2')) updatedUsers.unshift(madDog2);
+        return updatedUsers;
+      });
     } else {
       setUsers(prevUsers => prevUsers.filter(user => ![
         'npc_belochka', 'npc_fox', 'npc_ezhik', 'npc_security', 'npc_guard',
         'npc_babushka_galya', 'npc_babushka_vera', 'npc_babushka_zina',
         'npc_volonter_ira', 'npc_volonter_katya', 'npc_volonter_zhanna',
-        'npc_lovec_park', 'npc_lovec_dachny'
+        'npc_lovec_park', 'npc_lovec_dachny', 'npc_prodavec_sveta',
+        'npc_lost_dog', 'npc_small_dog', 'npc_ill_dog', 'npc_limp_dog',
+        'npc_sad_dog', 'npc_mad_dog_1', 'npc_mad_dog_2' // Добавляем новые NPC в фильтр
       ].includes(user.userId)));
     }
   }, [room]);
@@ -269,6 +300,18 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
             ...updatedUsers
           ];
         }
+      } else if (room === 'Под мостом') {
+        // Добавляем новых NPC для локации "Под мостом" в обработчике roomUsers
+        updatedUsers = [
+          { userId: 'npc_lost_dog', firstName: 'Потерявшийся пёс', photoUrl: lostDogImage, isHuman: false },
+          { userId: 'npc_small_dog', firstName: 'Маленький бездомный пёсик', photoUrl: smallDogImage, isHuman: false },
+          { userId: 'npc_ill_dog', firstName: 'Больная бездомная собака', photoUrl: illDogImage, isHuman: false },
+          { userId: 'npc_limp_dog', firstName: 'Хромая бездомная собака', photoUrl: limpDogImage, isHuman: false },
+          { userId: 'npc_sad_dog', firstName: 'Грустная бездомная собака', photoUrl: sadDogImage, isHuman: false },
+          { userId: 'npc_mad_dog_1', firstName: 'Злая бездомная собака', photoUrl: madDog1Image, isHuman: false },
+          { userId: 'npc_mad_dog_2', firstName: 'Злой бездомный пёс', photoUrl: madDog2Image, isHuman: false },
+          ...updatedUsers
+        ];
       }
       console.log('Updated users in room:', updatedUsers);
       setUsers(updatedUsers);

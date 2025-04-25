@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-// import BouncingBall from './BouncingBall';
+import BouncingBall from './BouncingBall';
 
 import { catSounds, dogSounds } from './constants/animalSounds';
 import npcBelochkaImage from '../images/npc_belochka.jpg';
@@ -472,7 +472,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         ))}
         <div ref={messagesEndRef} />
       </MessagesContainer>
-      {/* <BouncingBall room={room} /> */}
+      <BouncingBall room={room} />
       <InputContainer theme={theme}>
         <UsersButton onClick={toggleUserList}>
           <UsersIcon />

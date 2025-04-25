@@ -335,7 +335,26 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   }, [socket, userId, room, messages, currentUserPhotoUrl]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const scrollToBottom = () => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    };
+
+    scrollToBottom();
+
+    // Наблюдаем за изменениями размеров контейнера
+    const observer = new ResizeObserver(() => {
+      scrollToBottom();
+    });
+
+    if (messagesContainerRef.current) {
+      observer.observe(messagesContainerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
   }, [messages]);
 
   const sendMessage = () => {

@@ -17,6 +17,31 @@ import poligonImage from '../images/poligon.jpg';
 import workshopImage from '../images/workshop.jpg';
 import podmostImage from '../images/podmost.jpg';
 
+// Анимация для затемнения
+const fadeOut = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`;
+
+// Анимация для проявления
+const fadeIn = keyframes`
+  from { opacity: 1; }
+  to { opacity: 0; }
+`;
+
+export const FadeOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  z-index: 100;
+  pointer-events: none;
+  opacity: ${props => (props.isFading ? (props.fadeType === 'out' ? 0 : 1) : 0)};
+  animation: ${props => props.isFading ? (props.fadeType === 'out' ? fadeOut : fadeIn) : 'none'} 3s forwards;
+`;
+
 export const ChatContainer = styled.div`
   height: 100%;
   display: flex;

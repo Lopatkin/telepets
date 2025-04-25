@@ -45,7 +45,8 @@ import {
   ModalTitle,
   UserItem,
   UserName,
-  LeashIcon
+  LeashIcon,
+  FadeOverlay // Новый компонент для затемнения
 } from '../styles/ChatStyles';
 
 function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
@@ -53,9 +54,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
+  const [isFading, setIsFading] = useState(false); // Состояние для анимации
+  const [fadeType, setFadeType] = useState(null); // Тип анимации: 'out' или 'in'
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
   const messageCacheRef = useRef({});
+  const prevRoomRef = useRef(room); // Для отслеживания предыдущей комнаты
 
   const currentUserPhotoUrl = user?.photoUrl || '';
 
@@ -209,6 +213,36 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   useEffect(() => {
     if (!socket || !room) return;
+
+    // Проверяем, произошла ли смена комнаты
+    if (prevRoomRef.current !== room && prevRoomRef.current) {
+      console.log(`Switching room from ${prevRoomRef.current} to ${room}`);
+      setIsFading(true);
+      setFadeType('out');
+
+      // Запускаем анимацию затемнения (3 секунды)
+      const fadeOutTimer = setTimeout(() => {
+        // Очищаем кэш и сообщения перед переходом
+        messageCacheRef.current = { [room]: [] };
+        setMessages([]);
+        socket.emit('joinRoom', { room, lastTimestamp: null });
+
+        // Переключаем на анимацию проявления
+        setFadeType('in');
+
+        // Завершаем анимацию через 3 секунды
+        const fadeInTimer = setTimeout(() => {
+          setIsFading(false);
+          setFadeType(null);
+        }, 3000);
+
+        return () => clearTimeout(fadeInTimer);
+      }, 3000);
+
+      prevRoomRef.current = room;
+
+      return () => clearTimeout(fadeOutTimer);
+    }
 
     // Очищаем кэш при смене комнаты
     messageCacheRef.current = { [room]: [] };
@@ -438,6 +472,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   return (
     <ChatContainer>
+      <FadeOverlay isFading={isFading} fadeType={fadeType} />
       <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
           <Message

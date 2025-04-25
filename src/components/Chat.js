@@ -441,7 +441,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   return (
     <ChatContainer>
-      <MessagesContainer room={room} theme={theme}>
+      <MessagesContainer room={room} theme={theme} className="messages-container">
         {messages.map((msg, index) => (
           <Message
             key={index}
@@ -470,7 +470,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
             )}
           </Message>
         ))}
-        <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} />
       </MessagesContainer>
       <BouncingBall room={room} />
       <InputContainer theme={theme}>

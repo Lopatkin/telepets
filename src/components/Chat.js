@@ -371,7 +371,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       socket.off('systemMessage');
       socket.off('roomUsers');
     };
-  }, [socket, userId, room, currentUserPhotoUrl]);
+  }, [socket, userId, room, messages, currentUserPhotoUrl]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

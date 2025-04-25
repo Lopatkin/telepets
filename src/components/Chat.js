@@ -442,7 +442,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   return (
     <ChatContainer>
-      <MessagesContainer room={room} theme={theme}>
+      <MessagesContainer ref={messagesContainerRef} room={room} theme={theme}>
         {messages.map((msg, index) => (
           <Message
             key={index}

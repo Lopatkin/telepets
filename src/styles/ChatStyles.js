@@ -32,6 +32,7 @@ export const MessagesContainer = styled.div`
   flex-direction: column;
   min-height: 0; /* Гарантирует, что контейнер не выходит за пределы родителя */
   height: 100%; /* Устанавливаем явную высоту для корректной прокрутки */
+  position: relative; /* Добавляем для корректного позиционирования BouncingBallOverlay */
   
   background: ${props => {
     if (props.room === 'Автобусная остановка') {

@@ -60,7 +60,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const modalRef = useRef(null);
   const messageCacheRef = useRef({});
 
-  const messagesContainerRef = useRef(null);
+  // const messagesContainerRef = useRef(null);
 
   const currentUserPhotoUrl = user?.photoUrl || '';
 

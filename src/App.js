@@ -60,7 +60,8 @@ function App() {
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
-  const bouncingBallContainerRef = useRef(null);
+  // const bouncingBallContainerRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   const closeActionModal = () => {
     console.log('Closing action modal'); // Отладка
@@ -325,6 +326,7 @@ function App() {
             socket={socket}
             joinedRoomsRef={joinedRoomsRef}
             user={user}
+            messagesContainerRef={messagesContainerRef}
           />
         )}
         {activeTab === 'actions' && socket && (
@@ -372,9 +374,9 @@ function App() {
           />
         )}
       </Content>
-      <BouncingBallOverlay ref={bouncingBallContainerRef}>
+      <BouncingBallOverlay ref={messagesContainerRef}>
         {activeTab === 'chat' && currentRoom && (
-          <BouncingBall room={currentRoom} containerRef={bouncingBallContainerRef} />
+          <BouncingBall room={currentRoom} containerRef={messagesContainerRef} />
         )}
       </BouncingBallOverlay>
       <Footer

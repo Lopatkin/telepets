@@ -14,8 +14,7 @@ import volonterZhannaImage from '../images/volonter_Zhanna.jpg';
 import lovec1Image from '../images/lovec_1.jpg';
 import lovec2Image from '../images/lovec_2.jpg';
 import prodavecSvetaImage from '../images/prodavec_Sveta.jpg';
-import PovodokIcon from '../images/povodok.png'; // Импорт иконки
-
+import PovodokIcon from '../images/povodok.png';
 import lostDogImage from '../images/lost_dog_1.jpg';
 import smallDogImage from '../images/small_dog_1.jpg';
 import illDogImage from '../images/ill_dog_1.jpg';
@@ -23,7 +22,6 @@ import limpDogImage from '../images/limp_dog_1.jpg';
 import sadDogImage from '../images/sad_dog_1.jpg';
 import madDog1Image from '../images/mad_dog_1.jpg';
 import madDog2Image from '../images/mad_dog_2.jpg';
-
 import {
   ChatContainer,
   MessagesContainer,
@@ -77,8 +75,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 8 * 60 + 3; // 8:03
-    const endMinutes = 20 * 60 + 5;  // 20:05
+    const startMinutes = 8 * 60 + 3;
+    const endMinutes = 20 * 60 + 5;
     return totalMinutes >= startMinutes && totalMinutes <= endMinutes;
   };
 
@@ -88,8 +86,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 19 * 60 + 53; // 19:53
-    const endMinutes = 8 * 60 + 12;    // 8:12
+    const startMinutes = 19 * 60 + 53;
+    const endMinutes = 8 * 60 + 12;
     return totalMinutes >= startMinutes || totalMinutes <= endMinutes;
   };
 
@@ -99,8 +97,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 8 * 60;   // 8:00
-    const endMinutes = 23 * 60;    // 23:00
+    const startMinutes = 8 * 60;
+    const endMinutes = 23 * 60;
     return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
   };
 
@@ -110,8 +108,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 7 * 60;   // 7:00
-    const endMinutes = 22 * 60;    // 22:00
+    const startMinutes = 7 * 60;
+    const endMinutes = 22 * 60;
     return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
   };
 
@@ -180,7 +178,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         return updatedUsers;
       });
     } else if (room === 'Под мостом') {
-      // Добавляем новых NPC для локации "Под мостом"
       const lostDog = { userId: 'npc_lost_dog', firstName: 'Потерявшийся пёс', photoUrl: lostDogImage, isHuman: false };
       const smallDog = { userId: 'npc_small_dog', firstName: 'Маленький бездомный пёсик', photoUrl: smallDogImage, isHuman: false };
       const illDog = { userId: 'npc_ill_dog', firstName: 'Больная бездомная собака', photoUrl: illDogImage, isHuman: false };
@@ -206,7 +203,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         'npc_volonter_ira', 'npc_volonter_katya', 'npc_volonter_zhanna',
         'npc_lovec_park', 'npc_lovec_dachny', 'npc_prodavec_sveta',
         'npc_lost_dog', 'npc_small_dog', 'npc_ill_dog', 'npc_limp_dog',
-        'npc_sad_dog', 'npc_mad_dog_1', 'npc_mad_dog_2' // Добавляем новые NPC в фильтр
+        'npc_sad_dog', 'npc_mad_dog_1', 'npc_mad_dog_2'
       ].includes(user.userId)));
     }
   }, [room]);
@@ -244,10 +241,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       return () => clearTimeout(fadeOutTimer);
     }
 
-    // Очищаем кэш при смене комнаты
+    // Если это не смена комнаты, а просто загрузка текущей
     messageCacheRef.current = { [room]: [] };
-
-    // Запрашиваем историю для новой комнаты
     socket.emit('joinRoom', { room, lastTimestamp: null });
 
     const cachedMessages = messageCacheRef.current[room] || [];
@@ -265,7 +260,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     });
 
     socket.on('message', (msg) => {
-      if (msg.room === room) { // Фильтруем только сообщения для текущей комнаты
+      if (msg.room === room) {
         setMessages(prev => {
           const updated = [...prev, msg];
           messageCacheRef.current[room] = updated;
@@ -274,7 +269,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       }
     });
 
-    // Добавляем обработчик системных сообщений
     socket.on('systemMessage', (msg) => {
       if (msg.room === room) {
         setMessages(prev => {
@@ -292,7 +286,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         }
         return roomUser;
       });
-      // Логика добавления NPC остаётся прежней
       if (room === 'Парк') {
         updatedUsers = [{ userId: 'npc_belochka', firstName: 'Белочка', photoUrl: npcBelochkaImage, isHuman: false }, ...updatedUsers];
         if (isLovecParkTime()) {
@@ -335,7 +328,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           ];
         }
       } else if (room === 'Под мостом') {
-        // Добавляем новых NPC для локации "Под мостом" в обработчике roomUsers
         updatedUsers = [
           { userId: 'npc_lost_dog', firstName: 'Потерявшийся пёс', photoUrl: lostDogImage, isHuman: false },
           { userId: 'npc_small_dog', firstName: 'Маленький бездомный пёсик', photoUrl: smallDogImage, isHuman: false },
@@ -354,6 +346,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     if (!messageCacheRef.current[room]?.length) {
       socket.emit('joinRoom', { room, lastTimestamp: null });
     }
+
+    prevRoomRef.current = room;
 
     return () => {
       socket.off('messageHistory');
@@ -479,7 +473,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
             key={index}
             isOwn={msg.userId === userId}
             theme={theme}
-            isSystem={msg.isSystem} // Добавляем проп для системных сообщений
+            isSystem={msg.isSystem}
           >
             {msg.isSystem ? (
               <MessageContent>

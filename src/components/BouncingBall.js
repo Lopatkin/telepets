@@ -55,7 +55,7 @@ const BouncingBall = ({ room }) => {
     // Создаем пол (невидимый, только для физики)
     const floor = Bodies.rectangle(
       window.innerWidth / 2,
-      window.innerHeight,
+      window.innerHeight + 50,
       window.innerWidth,
       100,
       { isStatic: true }

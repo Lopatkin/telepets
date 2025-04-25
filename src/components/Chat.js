@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import BouncingBall from '.BouncingBall';
+import BouncingBall from './BouncingBall';
 
 import { catSounds, dogSounds } from './constants/animalSounds';
 import npcBelochkaImage from '../images/npc_belochka.jpg';

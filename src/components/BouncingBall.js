@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Matter from 'matter-js';
 import styled from 'styled-components';
 
@@ -18,12 +18,29 @@ const BouncingBall = ({ room, containerRef }) => {
   const canvasRef = useRef(null);
   const engineRef = useRef(null);
   const ballRef = useRef(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   // Показываем мячик только в домашней локации
   const isHomeRoom = room && room.startsWith('myhome_');
 
+  // Обновляем размеры контейнера
   useEffect(() => {
-    if (!isHomeRoom || !canvasRef.current || !containerRef.current) return;
+    if (!containerRef.current) return;
+
+    const updateDimensions = () => {
+      const { width, height } = containerRef.current.getBoundingClientRect();
+      console.log('Container dimensions:', { width, height }); // Дебаг размеров
+      setDimensions({ width, height });
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, [containerRef]);
+
+  useEffect(() => {
+    if (!isHomeRoom || !canvasRef.current || !containerRef.current || dimensions.width === 0 || dimensions.height === 0) return;
 
     // Инициализация физического движка
     const Engine = Matter.Engine;
@@ -40,16 +57,13 @@ const BouncingBall = ({ room, containerRef }) => {
     // Настраиваем гравитацию
     engine.world.gravity.y = 1; // Стандартная гравитация вниз
 
-    // Получаем размеры контейнера сообщений
-    const { width, height } = containerRef.current.getBoundingClientRect();
-
     // Создаем рендер
     const render = Render.create({
       canvas: canvasRef.current,
       engine: engine,
       options: {
-        width: width,
-        height: height,
+        width: dimensions.width,
+        height: dimensions.height,
         wireframes: false,
         background: 'transparent',
       },
@@ -57,9 +71,9 @@ const BouncingBall = ({ room, containerRef }) => {
 
     // Создаем пол (невидимый, только для физики)
     const floor = Bodies.rectangle(
-      width / 2,
-      height - 10, // Пол чуть выше нижней границы
-      width,
+      dimensions.width / 2,
+      dimensions.height - 10, // Пол чуть выше нижней границы
+      dimensions.width,
       20,
       { isStatic: true }
     );
@@ -67,22 +81,22 @@ const BouncingBall = ({ room, containerRef }) => {
     // Создаем стены
     const leftWall = Bodies.rectangle(
       -50,
-      height / 2,
+      dimensions.height / 2,
       100,
-      height,
+      dimensions.height,
       { isStatic: true }
     );
     const rightWall = Bodies.rectangle(
-      width + 50,
-      height / 2,
+      dimensions.width + 50,
+      dimensions.height / 2,
       100,
-      height,
+      dimensions.height,
       { isStatic: true }
     );
 
     // Создаем мячик
     const ball = Bodies.circle(
-      width / 2, // Начальная позиция по центру
+      dimensions.width / 2, // Начальная позиция по центру
       -50, // Начинаем выше экрана
       20, // Радиус мячика
       {
@@ -139,6 +153,8 @@ const BouncingBall = ({ room, containerRef }) => {
     // Обработка изменения размеров окна
     const handleResize = () => {
       const { width: newWidth, height: newHeight } = containerRef.current.getBoundingClientRect();
+      console.log('Resize dimensions:', { newWidth, newHeight }); // Дебаг при ресайзе
+      setDimensions({ width: newWidth, height: newHeight });
       render.canvas.width = newWidth;
       render.canvas.height = newHeight;
       render.options.width = newWidth;
@@ -166,7 +182,7 @@ const BouncingBall = ({ room, containerRef }) => {
       World.clear(engine.world, false);
       window.removeEventListener('resize', handleResize);
     };
-  }, [isHomeRoom, room, containerRef]);
+  }, [isHomeRoom, room, containerRef, dimensions]);
 
   if (!isHomeRoom) return null;
 

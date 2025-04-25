@@ -70,7 +70,7 @@ function BouncingBall({ room, containerRef }) {
     });
 
     // Создаем стены и пол
-    const ground = Bodies.rectangle(width / 2, height, width, 20, {
+    const ground = Bodies.rectangle(width / 2, height - 50, width, 20, {
       isStatic: true,
     });
     const leftWall = Bodies.rectangle(0, height / 2, 20, height, {

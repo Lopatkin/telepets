@@ -45,8 +45,7 @@ import {
   ModalTitle,
   UserItem,
   UserName,
-  LeashIcon,
-  FadeOverlay // Новый компонент для затемнения
+  LeashIcon
 } from '../styles/ChatStyles';
 
 function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
@@ -54,12 +53,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);
   const [showUserList, setShowUserList] = useState(false);
-  const [isFading, setIsFading] = useState(false); // Состояние для анимации
-  const [fadeType, setFadeType] = useState(null); // Тип анимации: 'out' или 'in'
   const messagesEndRef = useRef(null);
   const modalRef = useRef(null);
   const messageCacheRef = useRef({});
-  const prevRoomRef = useRef(room); // Для отслеживания предыдущей комнаты
 
   const currentUserPhotoUrl = user?.photoUrl || '';
 
@@ -212,56 +208,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   }, [room]);
 
   useEffect(() => {
-    if (!socket || !room) {
-      console.log('[DEBUG] Socket or room is not defined:', { socket, room });
-      return;
-    }
+    if (!socket || !room) return;
 
-    console.log('[DEBUG] Current room:', room, 'Previous room:', prevRoomRef.current);
+    // Очищаем кэш при смене комнаты
+    messageCacheRef.current = { [room]: [] };
 
-    // Проверяем, произошла ли смена комнаты
-    if (prevRoomRef.current && prevRoomRef.current !== room) {
-      console.log(`[DEBUG] Switching room from ${prevRoomRef.current} to ${room}`);
-      setIsFading(true);
-      setFadeType('out');
-      console.log('[DEBUG] Starting fade-out animation');
+    // Запрашиваем историю для новой комнаты
+    socket.emit('joinRoom', { room, lastTimestamp: null });
 
-      // Запускаем анимацию затемнения (2 секунды)
-      const fadeOutTimer = setTimeout(() => {
-        console.log('[DEBUG] Fade-out completed, clearing messages and joining new room');
-        // Очищаем кэш и сообщения перед переходом
-        messageCacheRef.current = { [room]: [] };
-        setMessages([]);
-        socket.emit('joinRoom', { room, lastTimestamp: null });
-
-        // Переключаем на анимацию проявления
-        setFadeType('in');
-        console.log('[DEBUG] Starting fade-in animation');
-
-        // Завершаем анимацию через 2 секунды
-        const fadeInTimer = setTimeout(() => {
-          console.log('[DEBUG] Fade-in completed, animation finished');
-          setIsFading(false);
-          setFadeType(null);
-        }, 2000);
-
-        return () => clearTimeout(fadeInTimer);
-      }, 2000);
-
-      // Обновляем prevRoomRef после начала анимации
-      prevRoomRef.current = room;
-
-      return () => clearTimeout(fadeOutTimer);
-    } else {
-      console.log('[DEBUG] No room switch or initial load:', room);
-      // Для первой загрузки или если комната не сменилась
-      if (!messageCacheRef.current[room]?.length) {
-        messageCacheRef.current = { [room]: [] };
-        socket.emit('joinRoom', { room, lastTimestamp: null });
-      }
-    }
-
-    // Остальная логика useEffect (история сообщений, пользователи и т.д.)
     const cachedMessages = messageCacheRef.current[room] || [];
     if (cachedMessages.length > 0 && messages.length === 0) {
       setMessages(cachedMessages);
@@ -484,7 +438,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
   return (
     <ChatContainer>
-      <FadeOverlay isFading={isFading} fadeType={fadeType} data-testid="fade-overlay" />
       <MessagesContainer room={room} theme={theme}>
         {messages.map((msg, index) => (
           <Message

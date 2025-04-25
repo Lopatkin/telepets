@@ -1,4 +1,4 @@
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import { FaUsers, FaPaperPlane } from 'react-icons/fa';
 import busStationImage from '../images/bus_station.jpg';
 import myRoomImage from '../images/my_room.jpg';
@@ -16,33 +16,6 @@ import karnavalImage from '../images/univermag.jpg';
 import poligonImage from '../images/poligon.jpg';
 import workshopImage from '../images/workshop.jpg';
 import podmostImage from '../images/podmost.jpg';
-
-// Анимация для затемнения
-const fadeOut = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
-
-// Анимация для проявления
-const fadeIn = keyframes`
-  from { opacity: 1; }
-  to { opacity: 0; }
-`;
-
-export const FadeOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: black;
-  z-index: 1000;
-  pointer-events: none;
-  opacity: ${props => (props.isFading ? (props.fadeType === 'out' ? 0 : 1) : 0)};
-  animation: ${props => (props.isFading ? (props.fadeType === 'out' ? fadeOut : fadeIn) : 'none')} 2s forwards; /* Уменьшено до 2s */
-  transition: opacity 0.5s ease;
-  border: 2px solid red; /* Временный бордер для отладки */
-`;
 
 export const ChatContainer = styled.div`
   height: 100%;

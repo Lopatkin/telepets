@@ -335,26 +335,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   }, [socket, userId, room, messages, currentUserPhotoUrl]);
 
   useEffect(() => {
-    const scrollToBottom = () => {
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-      }
-    };
-
-    scrollToBottom();
-
-    // Наблюдаем за изменениями размеров контейнера
-    const observer = new ResizeObserver(() => {
-      scrollToBottom();
-    });
-
-    if (messagesContainerRef.current) {
-      observer.observe(messagesContainerRef.current);
-    }
-
-    return () => {
-      observer.disconnect();
-    };
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const sendMessage = () => {
@@ -494,7 +475,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         <div ref={messagesEndRef} />
         {/* <BouncingBall room={room} containerRef={messagesContainerRef} /> */}
       </MessagesContainer>
-      {/* <BouncingBall room={room} /> */}
       <InputContainer theme={theme}>
         <UsersButton onClick={toggleUserList}>
           <UsersIcon />

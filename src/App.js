@@ -11,10 +11,25 @@ import Inventory from './components/Inventory';
 import { ClipLoader } from 'react-spinners';
 import Registration from './components/Registration';
 
+import BouncingBall from './components/BouncingBall';
+
+// Добавить стиль для BouncingBallOverlay
+const BouncingBallOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+`;
+
 const AppContainer = styled.div`
   height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative; /* Добавляем для позиционирования BouncingBallOverlay */
 `;
 
 const Content = styled.div`
@@ -44,6 +59,8 @@ function App() {
   const [pets, setPets] = useState([]); // Новое состояние для питомцев
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+
+  const bouncingBallContainerRef = useRef(null);
 
   const closeActionModal = () => {
     console.log('Closing action modal'); // Отладка
@@ -355,6 +372,11 @@ function App() {
           />
         )}
       </Content>
+      <BouncingBallOverlay ref={bouncingBallContainerRef}>
+        {activeTab === 'chat' && currentRoom && (
+          <BouncingBall room={currentRoom} containerRef={bouncingBallContainerRef} />
+        )}
+      </BouncingBallOverlay>
       <Footer
         activeTab={activeTab}
         setActiveTab={setActiveTab}

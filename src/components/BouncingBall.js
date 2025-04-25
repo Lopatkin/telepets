@@ -10,8 +10,6 @@ const BallContainer = styled.div`
   height: 100%;
   pointer-events: none;
   z-index: 5;
-  overflow: hidden; /* Предотвращаем влияние на прокрутку */
-  contain: strict; /* Ограничиваем влияние на родительский контейнер */
 `;
 
 const Ball = styled.div`
@@ -35,6 +33,7 @@ function BouncingBall({ room, containerRef }) {
 
     // Инициализация Matter.js
     const Engine = Matter.Engine;
+    const Render = Matter.Render;
     const World = Matter.World;
     const Bodies = Matter.Bodies;
     const Mouse = Matter.Mouse;
@@ -46,13 +45,28 @@ function BouncingBall({ room, containerRef }) {
 
     // Получаем размеры контейнера сообщений
     const container = containerRef.current;
-    let { width, height } = container.getBoundingClientRect();
+    const { width, height } = container.getBoundingClientRect();
+
+    // Создаем рендер
+    const render = Render.create({
+      element: container,
+      engine: engine,
+      options: {
+        width,
+        height,
+        wireframes: false,
+        background: 'transparent',
+      },
+    });
 
     // Создаем мяч
     const ball = Bodies.circle(width / 2, 50, 15, {
       restitution: 0.8, // Упругость (отскок)
       friction: 0.1, // Трение
       density: 0.01, // Плотность
+      render: {
+        visible: false, // Скрываем встроенный рендер, используем DOM
+      },
     });
 
     // Создаем стены и пол
@@ -65,6 +79,7 @@ function BouncingBall({ room, containerRef }) {
     const rightWall = Bodies.rectangle(width, height / 2, 20, height, {
       isStatic: true,
     });
+    // Добавляем верхнюю стенку
     const ceiling = Bodies.rectangle(width / 2, 0, width, 20, {
       isStatic: true,
     });
@@ -78,6 +93,9 @@ function BouncingBall({ room, containerRef }) {
       mouse: mouse,
       constraint: {
         stiffness: 0.2,
+        render: {
+          visible: false,
+        },
       },
     });
     World.add(engine.world, mouseConstraint);
@@ -97,6 +115,7 @@ function BouncingBall({ room, containerRef }) {
 
     // Обработка клика по мячу
     const handleBallClick = () => {
+      // Применяем случайную силу для отскока
       const forceMagnitude = 0.02;
       const angle = Math.random() * 2 * Math.PI;
       Matter.Body.applyForce(ball, ball.position, {
@@ -109,33 +128,16 @@ function BouncingBall({ room, containerRef }) {
       ballElement.addEventListener('click', handleBallClick);
     }
 
-    // Обработка изменения размеров контейнера
-    const resizeObserver = new ResizeObserver(() => {
-      const newSize = container.getBoundingClientRect();
-      width = newSize.width;
-      height = newSize.height;
-
-      // Обновляем позиции стен
-      Matter.Body.setPosition(ground, { x: width / 2, y: height });
-      Matter.Body.setPosition(leftWall, { x: 0, y: height / 2 });
-      Matter.Body.setPosition(rightWall, { x: width, y: height / 2 });
-      Matter.Body.setPosition(ceiling, { x: width / 2, y: 0 });
-      Matter.Body.setVertices(ground, Matter.Bodies.rectangle(width / 2, height, width, 20).vertices);
-      Matter.Body.setVertices(leftWall, Matter.Bodies.rectangle(0, height / 2, 20, height).vertices);
-      Matter.Body.setVertices(rightWall, Matter.Bodies.rectangle(width, height / 2, 20, height).vertices);
-      Matter.Body.setVertices(ceiling, Matter.Bodies.rectangle(width / 2, 0, width, 20).vertices);
-    });
-    resizeObserver.observe(container);
-
     // Очистка при размонтировании
     return () => {
       if (ballElement) {
         ballElement.removeEventListener('click', handleBallClick);
       }
+      Render.stop(render);
       World.clear(engine.world);
       Engine.clear(engine);
       runner.enabled = false;
-      resizeObserver.disconnect();
+      render.canvas.remove();
     };
   }, [room, containerRef]);
 

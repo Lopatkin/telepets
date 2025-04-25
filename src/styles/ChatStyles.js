@@ -30,6 +30,7 @@ export const MessagesContainer = styled.div`
   padding: 10px;
   display: flex;
   flex-direction: column;
+  position: relative; // Добавляем для корректного позиционирования мячика
   background: ${props => {
     if (props.room === 'Автобусная остановка') {
       return `url(${busStationImage}) no-repeat center center fixed`;

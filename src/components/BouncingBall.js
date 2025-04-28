@@ -122,6 +122,7 @@ function BouncingBall({ room, containerRef }) {
       runner.enabled = false;
       render.canvas.remove();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room, containerRef]);
 
   // Рендерим только в домашней локации

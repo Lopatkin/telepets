@@ -143,14 +143,20 @@ function BouncingBall({ room, containerRef }) {
     const handleMouseUp = (event) => {
       event.stopPropagation();
       if (!isDragging.current) {
-        setIsTransparent(prev => !prev); // Переключаем прозрачность только если не было перетаскивания
-        console.log('Mouse up, isTransparent:', !isTransparent); // Логирование для отладки
+        setIsTransparent(prev => {
+          const newValue = !prev;
+          console.log('Mouse up, isTransparent:', newValue); // Логирование для отладки
+          return newValue;
+        });
+      } else {
+        console.log('Mouse up after dragging, no transparency change'); // Логирование для отладки
       }
       isDragging.current = false;
       startPos.current = null;
     };
 
     if (ballElement) {
+      console.log('Adding event listeners to ballElement:', ballElement); // Логирование для отладки
       ballElement.addEventListener('mousedown', handleMouseDown);
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
@@ -159,6 +165,7 @@ function BouncingBall({ room, containerRef }) {
     // Очистка при размонтировании
     return () => {
       if (ballElement) {
+        console.log('Removing event listeners from ballElement:', ballElement); // Логирование для отладки
         ballElement.removeEventListener('mousedown', handleMouseDown);
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);

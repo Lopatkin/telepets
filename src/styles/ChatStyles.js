@@ -32,8 +32,6 @@ export const MessagesContainer = styled.div`
   flex-direction: column;
   min-height: 0; /* Гарантирует, что контейнер не выходит за пределы родителя */
   height: 100%; /* Устанавливаем явную высоту для корректной прокрутки */
-  z-index: 1; /* Устанавливаем низкий z-index, чтобы не перекрывать мяч */
-
   
   background: ${props => {
     if (props.room === 'Автобусная остановка') {

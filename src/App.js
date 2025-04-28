@@ -21,7 +21,7 @@ const BouncingBallOverlay = styled.div`
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 5;
+  z-index: 100; /* Увеличиваем z-index, чтобы мяч был выше всех элементов */
   overflow: hidden;
 `;
 

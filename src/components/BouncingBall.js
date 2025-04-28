@@ -30,6 +30,7 @@ function BouncingBall({ room, containerRef }) {
 
   // Основной эффект для инициализации Matter.js
   useEffect(() => {
+    console.log('BouncingBall: Mounting component'); // Отладка
     // Проверяем, что это домашняя локация и контейнер доступен
     if (!room || !room.startsWith('myhome_') || !containerRef.current) {
       console.log('BouncingBall: Invalid room or container', { room, containerRef: !!containerRef.current });
@@ -112,11 +113,10 @@ function BouncingBall({ room, containerRef }) {
     runnerRef.current = runner;
 
     // Синхронизация положения DOM-элемента мяча с физическим телом
-    const ballElement = ballRef.current;
     Matter.Events.on(engine, 'afterUpdate', () => {
-      if (ballElement && ballBodyRef.current) {
-        ballElement.style.left = `${ballBodyRef.current.position.x - 15}px`; // 15 - половина ширины мяча
-        ballElement.style.top = `${ballBodyRef.current.position.y - 15}px`;
+      if (ballRef.current && ballBodyRef.current) {
+        ballRef.current.style.left = `${ballBodyRef.current.position.x - 15}px`; // 15 - половина ширины мяча
+        ballRef.current.style.top = `${ballBodyRef.current.position.y - 15}px`;
       }
     });
 
@@ -134,6 +134,7 @@ function BouncingBall({ room, containerRef }) {
   // Отдельный эффект для добавления слушателя клика
   useEffect(() => {
     const ballElement = ballRef.current;
+    console.log('BouncingBall: Checking ball element for click listener', { ballElement: !!ballElement }); // Отладка
     if (!ballElement) {
       console.warn('BouncingBall: Ball element not found');
       return;
@@ -162,7 +163,7 @@ function BouncingBall({ room, containerRef }) {
       console.log('BouncingBall: Removing click listener from ball');
       ballElement.removeEventListener('click', handleBallClick);
     };
-  }, []);
+  }, [ballRef.current]); // Зависимость от ballRef.current
 
   // Рендерим только в домашней локации
   if (!room || !room.startsWith('myhome_')) {
@@ -170,6 +171,7 @@ function BouncingBall({ room, containerRef }) {
     return null;
   }
 
+  console.log('BouncingBall: Rendering component'); // Отладка
   return (
     <BallContainer>
       <Ball ref={ballRef} />

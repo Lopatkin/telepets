@@ -8,7 +8,7 @@ const BallContainer = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none;
+  pointer-events: none; /* Контейнер не блокирует события */
   z-index: 5;
 `;
 
@@ -18,7 +18,7 @@ const Ball = styled.div`
   height: 30px;
   background: radial-gradient(circle at 30% 30%, #ff6666, #cc0000);
   border-radius: 50%;
-  pointer-events: auto;
+  pointer-events: auto; /* Мяч принимает события */
   cursor: pointer;
 `;
 
@@ -28,7 +28,7 @@ function BouncingBall({ room, containerRef }) {
   const runnerRef = useRef(null);
 
   useEffect(() => {
-    // Проверяем, что это домашняя локация
+    // Проверяем, что это домашняя локация и контейнер доступен
     if (!room || !room.startsWith('myhome_') || !containerRef.current) return;
 
     // Инициализация Matter.js
@@ -79,7 +79,6 @@ function BouncingBall({ room, containerRef }) {
     const rightWall = Bodies.rectangle(width, height / 2, 20, height, {
       isStatic: true,
     });
-    // Добавляем верхнюю стенку
     const ceiling = Bodies.rectangle(width / 2, 0, width, 20, {
       isStatic: true,
     });
@@ -115,9 +114,9 @@ function BouncingBall({ room, containerRef }) {
 
     // Обработка клика по мячу
     const handleBallClick = () => {
+      console.log('Ball clicked!'); // Отладка: проверяем, срабатывает ли клик
       // Применяем силу в случайном направлении вверх (углы от 90 до 270 градусов)
       const forceMagnitude = 0.02; // Небольшая сила для умеренной скорости
-      // Генерируем угол в диапазоне [π/2, 3π/2] (90–270 градусов)
       const angle = Math.PI / 2 + Math.random() * Math.PI; // От π/2 до 3π/2
       Matter.Body.applyForce(ball, ball.position, {
         x: forceMagnitude * Math.cos(angle),
@@ -125,12 +124,17 @@ function BouncingBall({ room, containerRef }) {
       });
     };
 
+    // Добавляем обработчик клика
     if (ballElement) {
+      console.log('Adding click listener to ball'); // Отладка
       ballElement.addEventListener('click', handleBallClick);
+    } else {
+      console.warn('Ball element not found'); // Отладка
     }
 
     // Очистка при размонтировании
     return () => {
+      console.log('Cleaning up BouncingBall'); // Отладка
       if (ballElement) {
         ballElement.removeEventListener('click', handleBallClick);
       }

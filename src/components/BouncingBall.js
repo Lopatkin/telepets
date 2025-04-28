@@ -73,7 +73,7 @@ function BouncingBall({ room, containerRef }) {
     const ground = Bodies.rectangle(width / 2, height - 100, width, 20, {
       isStatic: true,
     });
-    const leftWall = Bodies.rectangle(0, height / 2, 20, height, {
+    const leftWall = Bodies.rectangle(0, height / 2, 20, height,room: {
       isStatic: true,
     });
     const rightWall = Bodies.rectangle(width, height / 2, 20, height, {
@@ -115,9 +115,10 @@ function BouncingBall({ room, containerRef }) {
 
     // Обработка клика по мячу
     const handleBallClick = () => {
-      // Применяем случайную силу для отскока
-      const forceMagnitude = 0.02;
-      const angle = Math.random() * 2 * Math.PI;
+      // Применяем силу в случайном направлении вверх (углы от 90 до 270 градусов)
+      const forceMagnitude = 0.02; // Небольшая сила для умеренной скорости
+      // Генерируем угол в диапазоне [π/2, 3π/2] (90–270 градусов)
+      const angle = Math.PI / 2 + Math.random() * Math.PI; // От π/2 до 3π/2
       Matter.Body.applyForce(ball, ball.position, {
         x: forceMagnitude * Math.cos(angle),
         y: forceMagnitude * Math.sin(angle),

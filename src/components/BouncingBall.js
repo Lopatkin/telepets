@@ -20,17 +20,12 @@ const Ball = styled.div`
   border-radius: 50%;
   pointer-events: auto;
   cursor: pointer;
-  opacity: ${props => (props.isTransparent ? 0.5 : 1)}; // Условная прозрачность
-  transition: opacity 0.2s ease; // Плавный переход для прозрачности
 `;
 
 function BouncingBall({ room, containerRef }) {
   const ballRef = useRef(null);
   const engineRef = useRef(null);
   const runnerRef = useRef(null);
-  const [isTransparent, setIsTransparent] = React.useState(false); // Состояние для прозрачности
-  const isDragging = useRef(false); // Флаг для отслеживания перетаскивания
-  const startPos = useRef(null); // Начальная позиция мыши
 
   useEffect(() => {
     // Проверяем, что это домашняя локация
@@ -84,6 +79,7 @@ function BouncingBall({ room, containerRef }) {
     const rightWall = Bodies.rectangle(width, height / 2, 20, height, {
       isStatic: true,
     });
+    // Добавляем верхнюю стенку
     const ceiling = Bodies.rectangle(width / 2, 0, width, 20, {
       isStatic: true,
     });
@@ -117,58 +113,25 @@ function BouncingBall({ room, containerRef }) {
       }
     });
 
-    // Обработка начала нажатия
-    const handleMouseDown = (event) => {
-      event.stopPropagation();
-      isDragging.current = false;
-      startPos.current = { x: event.clientX, y: event.clientY };
-      console.log('Mouse down, startPos:', startPos.current); // Логирование для отладки
-    };
-
-    // Обработка движения мыши
-    const handleMouseMove = (event) => {
-      if (startPos.current) {
-        const dx = event.clientX - startPos.current.x;
-        const dy = event.clientY - startPos.current.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        // Считаем перетаскиванием, если мышь переместилась более чем на 5 пикселей
-        if (distance > 5) {
-          isDragging.current = true;
-          console.log('Dragging detected, distance:', distance); // Логирование для отладки
-        }
-      }
-    };
-
-    // Обработка отпускания мыши
-    const handleMouseUp = (event) => {
-      event.stopPropagation();
-      if (!isDragging.current) {
-        setIsTransparent(prev => {
-          const newValue = !prev;
-          console.log('Mouse up, isTransparent:', newValue); // Логирование для отладки
-          return newValue;
-        });
-      } else {
-        console.log('Mouse up after dragging, no transparency change'); // Логирование для отладки
-      }
-      isDragging.current = false;
-      startPos.current = null;
+    // Обработка клика по мячу
+    const handleBallClick = () => {
+      // Применяем случайную силу для отскока
+      const forceMagnitude = 0.02;
+      const angle = Math.random() * 2 * Math.PI;
+      Matter.Body.applyForce(ball, ball.position, {
+        x: forceMagnitude * Math.cos(angle),
+        y: forceMagnitude * Math.sin(angle),
+      });
     };
 
     if (ballElement) {
-      console.log('Adding event listeners to ballElement:', ballElement); // Логирование для отладки
-      ballElement.addEventListener('mousedown', handleMouseDown);
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      ballElement.addEventListener('click', handleBallClick);
     }
 
     // Очистка при размонтировании
     return () => {
       if (ballElement) {
-        console.log('Removing event listeners from ballElement:', ballElement); // Логирование для отладки
-        ballElement.removeEventListener('mousedown', handleMouseDown);
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        ballElement.removeEventListener('click', handleBallClick);
       }
       Render.stop(render);
       World.clear(engine.world);
@@ -176,7 +139,6 @@ function BouncingBall({ room, containerRef }) {
       runner.enabled = false;
       render.canvas.remove();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room, containerRef]);
 
   // Рендерим только в домашней локации
@@ -184,7 +146,7 @@ function BouncingBall({ room, containerRef }) {
 
   return (
     <BallContainer>
-      <Ball ref={ballRef} isTransparent={isTransparent} />
+      <Ball ref={ballRef} />
     </BallContainer>
   );
 }

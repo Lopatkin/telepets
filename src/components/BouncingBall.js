@@ -2,6 +2,17 @@ import React, { useEffect, useRef } from 'react';
 import Matter from 'matter-js';
 import styled from 'styled-components';
 
+// Добавляем стиль BallContainer
+const BallContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+`;
+
 // Обновляем стиль Ball, добавляя начальную прозрачность
 const Ball = styled.div`
   position: absolute;

@@ -9,7 +9,8 @@ const BallContainer = styled.div`
   width: 100%;
   height: 100%;
   pointer-events: none; /* Контейнер не блокирует события */
-  z-index: 10; /* Увеличиваем z-index для видимости */
+  z-index: 30; /* Увеличиваем z-index выше UserListModal */
+  background: rgba(0, 255, 0, 0.1); /* Временный фон для отладки */
 `;
 
 const Ball = styled.div`
@@ -20,7 +21,7 @@ const Ball = styled.div`
   border-radius: 50%;
   pointer-events: auto; /* Мяч принимает события */
   cursor: pointer;
-  border: 2px solid blue; /* Временный бордер для отладки видимости */
+  border: 2px solid blue; /* Временный бордер для отладки */
 `;
 
 function BouncingBall({ room, containerRef }) {
@@ -33,23 +34,29 @@ function BouncingBall({ room, containerRef }) {
   const handleBallClick = (event) => {
     console.log('BouncingBall: Ball clicked!', { eventType: event.type, target: event.target.className }); // Улучшенная отладка
     if (ballBodyRef.current) {
-      // Применяем силу в случайном направлении вверх (углы от 90 до 270 градусов)
-      const forceMagnitude = 0.02; // Небольшая сила для умеренной скорости
-      const angle = Math.PI / 2 + Math.random() * Math.PI; // От π/2 до 3π/2
+      const forceMagnitude = 0.02;
+      const angle = Math.PI / 2 + Math.random() * Math.PI;
       Matter.Body.applyForce(ballBodyRef.current, ballBodyRef.current.position, {
         x: forceMagnitude * Math.cos(angle),
         y: forceMagnitude * Math.sin(angle),
       });
-      console.log('BouncingBall: Force applied', { angle, x: forceMagnitude * Math.cos(angle), y: forceMagnitude * Math.sin(angle) }); // Отладка силы
+      console.log('BouncingBall: Force applied', { angle, x: forceMagnitude * Math.cos(angle), y: forceMagnitude * Math.sin(angle) });
     } else {
       console.warn('BouncingBall: Ball body not found');
     }
   };
 
-  // Основной эффект для инициализации Matter.js
+  // Отладка событий мыши
+  const handleMouseDown = (event) => {
+    console.log('BouncingBall: Mouse down', { eventType: event.type, target: event.target.className });
+  };
+
+  const handleMouseUp = (event) => {
+    console.log('BouncingBall: Mouse up', { eventType: event.type, target: event.target.className });
+  };
+
   useEffect(() => {
-    console.log('BouncingBall: Mounting component'); // Отладка
-    // Проверяем, что это домашняя локация и контейнер доступен
+    console.log('BouncingBall: Mounting component');
     if (!room || !room.startsWith('myhome_') || !containerRef.current) {
       console.log('BouncingBall: Invalid room or container', { room, containerRef: !!containerRef.current });
       return;
@@ -57,24 +64,20 @@ function BouncingBall({ room, containerRef }) {
 
     console.log('BouncingBall: Initializing Matter.js');
 
-    // Инициализация Matter.js
     const Engine = Matter.Engine;
     const Render = Matter.Render;
     const World = Matter.World;
     const Bodies = Matter.Bodies;
     const Mouse = Matter.Mouse;
     const MouseConstraint = Matter.MouseConstraint;
-    const Runner = Matter.Runner; // Добавляем Runner
+    const Runner = Matter.Runner;
 
-    // Создаем физический движок
     const engine = Engine.create();
     engineRef.current = engine;
 
-    // Получаем размеры контейнера сообщений
     const container = containerRef.current;
     const { width, height } = container.getBoundingClientRect();
 
-    // Создаем рендер
     const render = Render.create({
       element: container,
       engine: engine,
@@ -86,81 +89,68 @@ function BouncingBall({ room, containerRef }) {
       },
     });
 
-    // Создаем мяч
     const ball = Bodies.circle(width / 2, 50, 15, {
-      restitution: 0.8, // Упругость (отскок)
-      friction: 0.1, // Трение
-      density: 0.01, // Плотность
+      restitution: 0.8,
+      friction: 0.1,
+      density: 0.01,
       render: {
-        visible: false, // Скрываем встроенный рендер, используем DOM
+        visible: false,
       },
     });
-    ballBodyRef.current = ball; // Сохраняем тело мяча
+    ballBodyRef.current = ball;
 
-    // Создаем стены и пол
-    const ground = Bodies.rectangle(width / 2, height - 100, width, 20, {
-      isStatic: true,
-    });
-    const leftWall = Bodies.rectangle(0, height / 2, 20, height, {
-      isStatic: true,
-    });
-    const rightWall = Bodies.rectangle(width, height / 2, 20, height, {
-      isStatic: true,
-    });
-    const ceiling = Bodies.rectangle(width / 2, 0, width, 20, {
-      isStatic: true,
-    });
+    const ground = Bodies.rectangle(width / 2, height - 100, width, 20, { isStatic: true });
+    const leftWall = Bodies.rectangle(0, height / 2, 20, height, { isStatic: true });
+    const rightWall = Bodies.rectangle(width, height / 2, 20, height, { isStatic: true });
+    const ceiling = Bodies.rectangle(width / 2, 0, width, 20, { isStatic: true });
 
-    // Добавляем объекты в мир
     World.add(engine.world, [ball, ground, leftWall, rightWall, ceiling]);
 
-    // Создаем мышь и ограничение для взаимодействия
     const mouse = Mouse.create(container);
     const mouseConstraint = MouseConstraint.create(engine, {
       mouse: mouse,
       constraint: {
         stiffness: 0.2,
-        render: {
-          visible: false,
-        },
+        render: { visible: false },
       },
     });
     World.add(engine.world, mouseConstraint);
 
-    // Запускаем движок с использованием Runner
     const runner = Runner.create();
-    Runner.run(runner, engine); // Используем Runner.run вместо Engine.run
+    Runner.run(runner, engine);
     runnerRef.current = runner;
 
-    // Синхронизация положения DOM-элемента мяча с физическим телом
     Matter.Events.on(engine, 'afterUpdate', () => {
       if (ballRef.current && ballBodyRef.current) {
-        ballRef.current.style.left = `${ballBodyRef.current.position.x - 15}px`; // 15 - половина ширины мяча
+        ballRef.current.style.left = `${ballBodyRef.current.position.x - 15}px`;
         ballRef.current.style.top = `${ballBodyRef.current.position.y - 15}px`;
       }
     });
 
-    // Очистка при размонтировании
     return () => {
       console.log('BouncingBall: Cleaning up Matter.js');
       Render.stop(render);
       World.clear(engine.world);
       Engine.clear(engine);
-      Runner.stop(runner); // Останавливаем Runner
+      Runner.stop(runner);
       render.canvas.remove();
     };
   }, [room, containerRef]);
 
-  // Рендерим только в домашней локации
   if (!room || !room.startsWith('myhome_')) {
     console.log('BouncingBall: Not rendering (not myhome_)');
     return null;
   }
 
-  console.log('BouncingBall: Rendering component'); // Отладка
+  console.log('BouncingBall: Rendering component');
   return (
     <BallContainer>
-      <Ball ref={ballRef} onClick={handleBallClick} />
+      <Ball
+        ref={ballRef}
+        onClick={handleBallClick}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+      />
     </BallContainer>
   );
 }

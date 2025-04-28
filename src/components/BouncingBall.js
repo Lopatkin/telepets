@@ -28,7 +28,6 @@ function BouncingBall({ room, containerRef }) {
   const runnerRef = useRef(null);
   const ballBodyRef = useRef(null); // Для хранения физического тела мяча
 
-  // Основной эффект для инициализации Matter.js
   useEffect(() => {
     console.log('BouncingBall: Mounting component'); // Отладка
     // Проверяем, что это домашняя локация и контейнер доступен
@@ -120,50 +119,51 @@ function BouncingBall({ room, containerRef }) {
       }
     });
 
-    // Очистка при размонтировании
-    return () => {
-      console.log('BouncingBall: Cleaning up Matter.js');
-      Render.stop(render);
-      World.clear(engine.world);
-      Engine.clear(engine);
-      runner.enabled = false;
-      render.canvas.remove();
-    };
-  }, [room, containerRef]);
-
-  // Отдельный эффект для добавления слушателя клика
-  useEffect(() => {
+    // Добавление слушателя клика
     const ballElement = ballRef.current;
     console.log('BouncingBall: Checking ball element for click listener', { ballElement: !!ballElement }); // Отладка
-    if (!ballElement) {
-      console.warn('BouncingBall: Ball element not found');
-      return;
+    if (ballElement) {
+      console.log('BouncingBall: Adding click listener to ball');
+      const handleBallClick = () => {
+        console.log('BouncingBall: Ball clicked!'); // Отладка: проверяем срабатывание клика
+        if (ballBodyRef.current) {
+          // Применяем силу в случайном направлении вверх (углы от 90 до 270 градусов)
+          const forceMagnitude = 0.02; // Небольшая сила для умеренной скорости
+          const angle = Math.PI / 2 + Math.random() * Math.PI; // От π/2 до 3π/2
+          Matter.Body.applyForce(ballBodyRef.current, ballBodyRef.current.position, {
+            x: forceMagnitude * Math.cos(angle),
+            y: forceMagnitude * Math.sin(angle),
+          });
+        } else {
+          console.warn('BouncingBall: Ball body not found');
+        }
+      };
+      ballElement.addEventListener('click', handleBallClick);
+
+      // Очистка слушателя клика
+      return () => {
+        console.log('BouncingBall: Removing click listener from ball');
+        ballElement.removeEventListener('click', handleBallClick);
+        console.log('BouncingBall: Cleaning up Matter.js');
+        Render.stop(render);
+        World.clear(engine.world);
+        Engine.clear(engine);
+        runner.enabled = false;
+        render.canvas.remove();
+      };
+    } else {
+      console.warn('BouncingBall: Ball element not found during initialization');
+      // Очистка Matter.js без слушателя клика
+      return () => {
+        console.log('BouncingBall: Cleaning up Matter.js');
+        Render.stop(render);
+        World.clear(engine.world);
+        Engine.clear(engine);
+        runner.enabled = false;
+        render.canvas.remove();
+      };
     }
-
-    console.log('BouncingBall: Adding click listener to ball');
-
-    const handleBallClick = () => {
-      console.log('BouncingBall: Ball clicked!'); // Отладка: проверяем срабатывание клика
-      if (ballBodyRef.current) {
-        // Применяем силу в случайном направлении вверх (углы от 90 до 270 градусов)
-        const forceMagnitude = 0.02; // Небольшая сила для умеренной скорости
-        const angle = Math.PI / 2 + Math.random() * Math.PI; // От π/2 до 3π/2
-        Matter.Body.applyForce(ballBodyRef.current, ballBodyRef.current.position, {
-          x: forceMagnitude * Math.cos(angle),
-          y: forceMagnitude * Math.sin(angle),
-        });
-      } else {
-        console.warn('BouncingBall: Ball body not found');
-      }
-    };
-
-    ballElement.addEventListener('click', handleBallClick);
-
-    return () => {
-      console.log('BouncingBall: Removing click listener from ball');
-      ballElement.removeEventListener('click', handleBallClick);
-    };
-  }, [ballRef.current]); // Зависимость от ballRef.current
+  }, [room, containerRef]);
 
   // Рендерим только в домашней локации
   if (!room || !room.startsWith('myhome_')) {

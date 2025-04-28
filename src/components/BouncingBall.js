@@ -73,7 +73,7 @@ function BouncingBall({ room, containerRef }) {
     const ground = Bodies.rectangle(width / 2, height - 100, width, 20, {
       isStatic: true,
     });
-    const leftWall = Bodies.rectangle(0, height / 2, 20, height,room: {
+    const leftWall = Bodies.rectangle(0, height / 2, 20, height, {
       isStatic: true,
     });
     const rightWall = Bodies.rectangle(width, height / 2, 20, height, {

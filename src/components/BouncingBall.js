@@ -20,6 +20,7 @@ const Ball = styled.div`
   border-radius: 50%;
   pointer-events: auto; /* Мяч принимает события */
   cursor: pointer;
+  border: 2px solid blue; /* Временный бордер для отладки видимости */
 `;
 
 function BouncingBall({ room, containerRef }) {
@@ -29,8 +30,8 @@ function BouncingBall({ room, containerRef }) {
   const ballBodyRef = useRef(null); // Для хранения физического тела мяча
 
   // Обработчик клика по мячу
-  const handleBallClick = () => {
-    console.log('BouncingBall: Ball clicked!'); // Отладка: проверяем срабатывание клика
+  const handleBallClick = (event) => {
+    console.log('BouncingBall: Ball clicked!', { eventType: event.type, target: event.target.className }); // Улучшенная отладка
     if (ballBodyRef.current) {
       // Применяем силу в случайном направлении вверх (углы от 90 до 270 градусов)
       const forceMagnitude = 0.02; // Небольшая сила для умеренной скорости
@@ -39,6 +40,7 @@ function BouncingBall({ room, containerRef }) {
         x: forceMagnitude * Math.cos(angle),
         y: forceMagnitude * Math.sin(angle),
       });
+      console.log('BouncingBall: Force applied', { angle, x: forceMagnitude * Math.cos(angle), y: forceMagnitude * Math.sin(angle) }); // Отладка силы
     } else {
       console.warn('BouncingBall: Ball body not found');
     }
@@ -62,6 +64,7 @@ function BouncingBall({ room, containerRef }) {
     const Bodies = Matter.Bodies;
     const Mouse = Matter.Mouse;
     const MouseConstraint = Matter.MouseConstraint;
+    const Runner = Matter.Runner; // Добавляем Runner
 
     // Создаем физический движок
     const engine = Engine.create();
@@ -124,8 +127,9 @@ function BouncingBall({ room, containerRef }) {
     });
     World.add(engine.world, mouseConstraint);
 
-    // Запускаем движок
-    const runner = Engine.run(engine);
+    // Запускаем движок с использованием Runner
+    const runner = Runner.create();
+    Runner.run(runner, engine); // Используем Runner.run вместо Engine.run
     runnerRef.current = runner;
 
     // Синхронизация положения DOM-элемента мяча с физическим телом
@@ -142,7 +146,7 @@ function BouncingBall({ room, containerRef }) {
       Render.stop(render);
       World.clear(engine.world);
       Engine.clear(engine);
-      runner.enabled = false;
+      Runner.stop(runner); // Останавливаем Runner
       render.canvas.remove();
     };
   }, [room, containerRef]);

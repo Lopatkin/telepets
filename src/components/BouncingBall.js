@@ -29,8 +29,6 @@ function BouncingBall({ room, containerRef }) {
   const engineRef = useRef(null);
   const runnerRef = useRef(null);
   const [isTransparent, setIsTransparent] = React.useState(false); // Состояние для прозрачности
-  const isDragging = useRef(false); // Флаг для отслеживания перетаскивания
-  const startPos = useRef(null); // Начальная позиция мыши
 
   useEffect(() => {
     // Проверяем, что это домашняя локация
@@ -41,8 +39,6 @@ function BouncingBall({ room, containerRef }) {
     const Render = Matter.Render;
     const World = Matter.World;
     const Bodies = Matter.Bodies;
-    const Mouse = Matter.Mouse;
-    const MouseConstraint = Matter.MouseConstraint;
 
     // Создаем физический движок
     const engine = Engine.create();
@@ -91,19 +87,6 @@ function BouncingBall({ room, containerRef }) {
     // Добавляем объекты в мир
     World.add(engine.world, [ball, ground, leftWall, rightWall, ceiling]);
 
-    // Создаем мышь и ограничение для взаимодействия
-    const mouse = Mouse.create(container);
-    const mouseConstraint = MouseConstraint.create(engine, {
-      mouse: mouse,
-      constraint: {
-        stiffness: 0.2,
-        render: {
-          visible: false,
-        },
-      },
-    });
-    World.add(engine.world, mouseConstraint);
-
     // Запускаем движок
     const runner = Engine.run(engine);
     runnerRef.current = runner;
@@ -117,51 +100,21 @@ function BouncingBall({ room, containerRef }) {
       }
     });
 
-    // Обработка начала нажатия
-    const handleMouseDown = (event) => {
-      event.stopPropagation();
-      isDragging.current = false;
-      startPos.current = { x: event.clientX, y: event.clientY };
-      console.log('Mouse down, startPos:', startPos.current); // Логирование для отладки
-    };
-
-    // Обработка движения мыши
-    const handleMouseMove = (event) => {
-      if (startPos.current) {
-        const dx = event.clientX - startPos.current.x;
-        const dy = event.clientY - startPos.current.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        // Считаем перетаскиванием, если мышь переместилась более чем на 5 пикселей
-        if (distance > 5) {
-          isDragging.current = true;
-          console.log('Dragging detected, distance:', distance); // Логирование для отладки
-        }
-      }
-    };
-
-    // Обработка отпускания мыши
-    const handleMouseUp = (event) => {
-      event.stopPropagation();
-      if (!isDragging.current) {
-        setIsTransparent(prev => !prev); // Переключаем прозрачность только если не было перетаскивания
-        console.log('Mouse up, isTransparent:', !isTransparent); // Логирование для отладки
-      }
-      isDragging.current = false;
-      startPos.current = null;
+    // Обработка клика по мячу
+    const handleBallClick = (event) => {
+      event.stopPropagation(); // Предотвращаем всплытие события
+      setIsTransparent(prev => !prev); // Переключаем прозрачность
+      console.log('Ball clicked, isTransparent:', !isTransparent); // Логирование для отладки
     };
 
     if (ballElement) {
-      ballElement.addEventListener('mousedown', handleMouseDown);
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      ballElement.addEventListener('mousedown', handleBallClick);
     }
 
     // Очистка при размонтировании
     return () => {
       if (ballElement) {
-        ballElement.removeEventListener('mousedown', handleMouseDown);
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        ballElement.removeEventListener('mousedown', handleBallClick);
       }
       Render.stop(render);
       World.clear(engine.world);

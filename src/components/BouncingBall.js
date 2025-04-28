@@ -125,11 +125,10 @@ function BouncingBall({ room, containerRef }) {
     if (ballElement) {
       console.log('BouncingBall: Adding click listener to ball');
       const handleBallClick = () => {
-        console.log('BouncingBall: Ball clicked!'); // Отладка: проверяем срабатывание клика
+        console.log('BouncingBall: Ball clicked!'); // Отладка
         if (ballBodyRef.current) {
-          // Применяем силу в случайном направлении вверх (углы от 90 до 270 градусов)
-          const forceMagnitude = 0.02; // Небольшая сила для умеренной скорости
-          const angle = Math.PI / 2 + Math.random() * Math.PI; // От π/2 до 3π/2
+          const forceMagnitude = 0.02;
+          const angle = Math.PI / 2 + Math.random() * Math.PI;
           Matter.Body.applyForce(ballBodyRef.current, ballBodyRef.current.position, {
             x: forceMagnitude * Math.cos(angle),
             y: forceMagnitude * Math.sin(angle),
@@ -174,7 +173,7 @@ function BouncingBall({ room, containerRef }) {
   console.log('BouncingBall: Rendering component'); // Отладка
   return (
     <BallContainer>
-      <Ball ref={ballRef} />
+      <Ball ref={ballRef} onClick={handleBallClick} />
     </BallContainer>
   );
 }

@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import Matter from 'matter-js';
 import styled from 'styled-components';
 
-// Добавляем стиль BallContainer
 const BallContainer = styled.div`
   position: absolute;
   top: 0;
@@ -13,7 +12,6 @@ const BallContainer = styled.div`
   z-index: 5;
 `;
 
-// Обновляем стиль Ball, добавляя начальную прозрачность
 const Ball = styled.div`
   position: absolute;
   width: 30px;
@@ -22,7 +20,8 @@ const Ball = styled.div`
   border-radius: 50%;
   pointer-events: auto;
   cursor: pointer;
-  opacity: ${props => (props.isTransparent ? 0.5 : 1)}; // Добавляем условную прозрачность
+  opacity: ${props => (props.isTransparent ? 0.5 : 1)}; // Условная прозрачность
+  transition: opacity 0.2s ease; // Добавляем плавный переход для прозрачности
 `;
 
 function BouncingBall({ room, containerRef }) {
@@ -83,7 +82,6 @@ function BouncingBall({ room, containerRef }) {
     const rightWall = Bodies.rectangle(width, height / 2, 20, height, {
       isStatic: true,
     });
-    // Добавляем верхнюю стенку
     const ceiling = Bodies.rectangle(width / 2, 0, width, 20, {
       isStatic: true,
     });
@@ -118,18 +116,20 @@ function BouncingBall({ room, containerRef }) {
     });
 
     // Обработка клика по мячу
-    const handleBallClick = () => {
+    const handleBallClick = (event) => {
+      event.stopPropagation(); // Предотвращаем всплытие события
       setIsTransparent(prev => !prev); // Переключаем прозрачность
     };
 
     if (ballElement) {
-      ballElement.addEventListener('click', handleBallClick);
+      // Используем mousedown вместо click, чтобы избежать конфликта с перетаскиванием
+      ballElement.addEventListener('mousedown', handleBallClick);
     }
 
     // Очистка при размонтировании
     return () => {
       if (ballElement) {
-        ballElement.removeEventListener('click', handleBallClick);
+        ballElement.removeEventListener('mousedown', handleBallClick);
       }
       Render.stop(render);
       World.clear(engine.world);

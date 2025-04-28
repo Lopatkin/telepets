@@ -21,7 +21,7 @@ const Ball = styled.div`
   pointer-events: auto;
   cursor: pointer;
   opacity: ${props => (props.isTransparent ? 0.5 : 1)}; // Условная прозрачность
-  transition: opacity 0.2s ease; // Добавляем плавный переход для прозрачности
+  transition: opacity 0.2s ease; // Плавный переход для прозрачности
 `;
 
 function BouncingBall({ room, containerRef }) {
@@ -39,8 +39,6 @@ function BouncingBall({ room, containerRef }) {
     const Render = Matter.Render;
     const World = Matter.World;
     const Bodies = Matter.Bodies;
-    const Mouse = Matter.Mouse;
-    const MouseConstraint = Matter.MouseConstraint;
 
     // Создаем физический движок
     const engine = Engine.create();
@@ -89,19 +87,6 @@ function BouncingBall({ room, containerRef }) {
     // Добавляем объекты в мир
     World.add(engine.world, [ball, ground, leftWall, rightWall, ceiling]);
 
-    // Создаем мышь и ограничение для взаимодействия
-    const mouse = Mouse.create(container);
-    const mouseConstraint = MouseConstraint.create(engine, {
-      mouse: mouse,
-      constraint: {
-        stiffness: 0.2,
-        render: {
-          visible: false,
-        },
-      },
-    });
-    World.add(engine.world, mouseConstraint);
-
     // Запускаем движок
     const runner = Engine.run(engine);
     runnerRef.current = runner;
@@ -119,10 +104,10 @@ function BouncingBall({ room, containerRef }) {
     const handleBallClick = (event) => {
       event.stopPropagation(); // Предотвращаем всплытие события
       setIsTransparent(prev => !prev); // Переключаем прозрачность
+      console.log('Ball clicked, isTransparent:', !isTransparent); // Логирование для отладки
     };
 
     if (ballElement) {
-      // Используем mousedown вместо click, чтобы избежать конфликта с перетаскиванием
       ballElement.addEventListener('mousedown', handleBallClick);
     }
 

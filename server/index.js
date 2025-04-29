@@ -4,7 +4,7 @@ const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 
 const { rooms } = require('../src/components/constants/rooms');
-const { isLovecParkTime, isLovecDachnyTime } = require('../src/utils/animalCatcherUtils');
+const { isLovecParkTime, isLovecDachnyTime } = require('../src/utils/npcUtils');
 
 const app = express();
 const server = http.createServer(app);

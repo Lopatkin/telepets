@@ -100,10 +100,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       setUsers(updatedUsers);
     });
 
-    // Добавляем NPC при загрузке комнаты
+    // Добавляем NPC при загрузке комнаты и фильтруем старых NPC
     setUsers(prevUsers => {
       const activeNPCs = getActiveNPCs(room);
-      const filteredUsers = prevUsers.filter(user => !Object.keys(npcData).some(room => npcData[room].some(npc => npc.userId === user.userId)));
+      const activeNPCIds = activeNPCs.map(npc => npc.userId);
+      // Фильтруем пользователей, удаляя старых NPC, которые не активны
+      const filteredUsers = prevUsers.filter(user => !prevUsers.some(prevUser => prevUser.userId.startsWith('npc_') && !activeNPCIds.includes(prevUser.userId)));
       return [...activeNPCs, ...filteredUsers];
     });
 

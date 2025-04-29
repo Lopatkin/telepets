@@ -27,6 +27,8 @@ import sadDogImage from '../images/sad_dog_1.jpg';
 import madDog1Image from '../images/mad_dog_1.jpg';
 import madDog2Image from '../images/mad_dog_2.jpg';
 
+import { isLovecParkTime, isLovecDachnyTime } from '../utils/animalCatcherUtils';
+
 import {
   ChatContainer,
   MessagesContainer,
@@ -92,28 +94,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     const startMinutes = 19 * 60 + 53; // 19:53
     const endMinutes = 8 * 60 + 12;    // 8:12
     return totalMinutes >= startMinutes || totalMinutes <= endMinutes;
-  };
-
-  // Проверка времени для Ловца животных в Парке (8:00–23:00, чётные часы)
-  const isLovecParkTime = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 8 * 60;   // 8:00
-    const endMinutes = 23 * 60;    // 23:00
-    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
-  };
-
-  // Проверка времени для Ловца животных в Районе Дачном (7:00–22:00, нечётные часы)
-  const isLovecDachnyTime = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 7 * 60;   // 7:00
-    const endMinutes = 22 * 60;    // 22:00
-    return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
   };
 
   useEffect(() => {

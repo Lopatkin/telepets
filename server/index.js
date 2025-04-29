@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 
 const { rooms } = require('../src/components/constants/rooms');
+const { isLovecParkTime, isLovecDachnyTime } = require('../src/utils/animalCatcherUtils');
 
 const app = express();
 const server = http.createServer(app);
@@ -89,30 +90,6 @@ const activeSockets = new Map();
 const roomJoinTimes = new WeakMap();
 const itemCache = new Map();
 const itemLocks = new Map();
-
-// Функции проверки времени для ловцов
-const isLovecParkTime = () => {
-  const now = new Date();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-  const totalMinutes = hours * 60 + minutes;
-  const startMinutes = 8 * 60; // 8:00
-  const endMinutes = 23 * 60; // 23:00
-  return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 === 0;
-};
-
-// Проверка времени для Ловца животных в Районе Дачном (7:00–22:00, нечётные часы)
-const isLovecDachnyTime = () => {
-  const now = new Date();
-  const hours = now.getHours();
-  const minutes = now.getMinutes();
-  const totalMinutes = hours * 60 + minutes;
-  const startMinutes = 7 * 60;   // 7:00
-  const endMinutes = 22 * 60;    // 22:00
-  return totalMinutes >= startMinutes && totalMinutes <= endMinutes && hours % 2 !== 0;
-};
-
-// const isLovecDachnyTime = () => true;
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);

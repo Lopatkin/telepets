@@ -177,8 +177,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
 
+    // Проверяем кэш для NPC и системных сообщений
+    if (msg.isSystem) {
+      // Для системных сообщений используем дефолтный аватар или пустой
+      return <DefaultAvatar>{initial || 'С'}</DefaultAvatar>;
+    }
+
     // Проверяем кэш для NPC
-    if (msg.userId.startsWith('npc_')) {
+    if (msg.userId && msg.userId.startsWith('npc_')) {
       const cachedPhotoUrl = avatarCacheRef.current.get(msg.userId);
       if (cachedPhotoUrl) {
         console.log(`Using cached avatar for ${msg.userId}: ${cachedPhotoUrl}`);

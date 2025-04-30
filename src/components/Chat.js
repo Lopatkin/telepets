@@ -38,6 +38,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const modalRef = useRef(null);
   const messageCacheRef = useRef({});
   const messagesContainerRef = useRef(null);
+  const avatarCacheRef = useRef(new Map()); // Новый кэш для аватарок
   const currentUserPhotoUrl = user?.photoUrl || '';
 
   useEffect(() => {
@@ -107,7 +108,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
       console.log('Updated users in room:', [...activeNPCs, ...updatedUsers]);
     });
-    
+
     if (!messageCacheRef.current[room]?.length) {
       socket.emit('joinRoom', { room, lastTimestamp: null });
     }
@@ -175,6 +176,24 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const getAvatar = (msg) => {
     console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
+
+    // Проверяем кэш для NPC
+    if (msg.userId.startsWith('npc_')) {
+      const cachedPhotoUrl = avatarCacheRef.current.get(msg.userId);
+      if (cachedPhotoUrl) {
+        console.log(`Using cached avatar for ${msg.userId}: ${cachedPhotoUrl}`);
+        return cachedPhotoUrl.trim() ? (
+          <Avatar src={cachedPhotoUrl} alt="Avatar" />
+        ) : (
+          <DefaultAvatar>{initial}</DefaultAvatar>
+        );
+      }
+      // Сохраняем в кэш, если не найдено
+      if (msg.photoUrl) {
+        avatarCacheRef.current.set(msg.userId, msg.photoUrl);
+        console.log(`Caching avatar for ${msg.userId}: ${msg.photoUrl}`);
+      }
+    }
 
     if (msg.userId === userId) {
       return currentUserPhotoUrl && currentUserPhotoUrl.trim() ? (

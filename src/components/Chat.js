@@ -86,7 +86,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
     socket.on('roomUsers', (roomUsers) => {
       // Получаем активных NPC для текущей комнаты
-      const activeNPCs = getActiveNPCs(room);
+      const activeNPCs = useMemo(() => getActiveNPCs(room), [room]);
       const activeNPCIds = activeNPCs.map(npc => npc.userId);
 
       // Фильтруем пользователей, удаляя старых NPC, которые не активны
@@ -107,7 +107,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
 
       console.log('Updated users in room:', [...activeNPCs, ...updatedUsers]);
     });
-    
+
     if (!messageCacheRef.current[room]?.length) {
       socket.emit('joinRoom', { room, lastTimestamp: null });
     }

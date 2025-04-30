@@ -1,4 +1,4 @@
-const { isLovecParkTime, isLovecDachnyTime } = require('../src/utils/npcUtils');
+const { isLovecParkTime, isLovecDachnyTime } = require('../../src/utils/npcUtils');
 const { updateRoomUsers } = require('../utils/roomUtils');
 
 function registerMessageHandlers({

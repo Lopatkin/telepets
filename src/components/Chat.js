@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { catSounds, dogSounds } from './constants/animalSounds';
 import PovodokIcon from '../images/povodok.png'; // Импорт иконки
 import { getActiveNPCs } from '../utils/npcData'; // Обновляем импорт

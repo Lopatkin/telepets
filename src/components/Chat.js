@@ -85,30 +85,29 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
     });
 
     socket.on('roomUsers', (roomUsers) => {
-      let updatedUsers = roomUsers.map(roomUser => {
+      // Получаем активных NPC для текущей комнаты
+      const activeNPCs = getActiveNPCs(room);
+      const activeNPCIds = activeNPCs.map(npc => npc.userId);
+
+      // Фильтруем пользователей, удаляя старых NPC, которые не активны
+      const filteredUsers = roomUsers.filter(user =>
+        !user.userId.startsWith('npc_') || activeNPCIds.includes(user.userId)
+      );
+
+      // Обновляем пользователей, добавляя активных NPC и текущего пользователя с актуальной photoUrl
+      const updatedUsers = filteredUsers.map(roomUser => {
         if (roomUser.userId === userId) {
           return { ...roomUser, photoUrl: currentUserPhotoUrl };
         }
         return roomUser;
       });
 
-      // Добавляем активных NPC для текущей комнаты
-      const activeNPCs = getActiveNPCs(room);
-      updatedUsers = [...activeNPCs, ...updatedUsers];
+      // Добавляем активных NPC в начало списка
+      setUsers([...activeNPCs, ...updatedUsers.filter(user => !activeNPCIds.includes(user.userId))]);
 
-      console.log('Updated users in room:', updatedUsers);
-      setUsers(updatedUsers);
+      console.log('Updated users in room:', [...activeNPCs, ...updatedUsers]);
     });
-
-    // Добавляем NPC при загрузке комнаты и фильтруем старых NPC
-    setUsers(prevUsers => {
-      const activeNPCs = getActiveNPCs(room);
-      const activeNPCIds = activeNPCs.map(npc => npc.userId);
-      // Фильтруем пользователей, удаляя старых NPC, которые не активны
-      const filteredUsers = prevUsers.filter(user => !prevUsers.some(prevUser => prevUser.userId.startsWith('npc_') && !activeNPCIds.includes(prevUser.userId)));
-      return [...activeNPCs, ...filteredUsers];
-    });
-
+    
     if (!messageCacheRef.current[room]?.length) {
       socket.emit('joinRoom', { room, lastTimestamp: null });
     }

@@ -1,4 +1,4 @@
-const { rooms } = require('../src/components/constants/rooms.js');
+const { rooms } = require('../../src/components/constants/rooms.js');
 
 function registerUserHandlers({
     io,

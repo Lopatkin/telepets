@@ -304,6 +304,7 @@ function registerInventoryHandlers({
                 { new: true }
             );
 
+            
             if (user) {
                 socket.emit('userUpdate', {
                     userId: user.userId,

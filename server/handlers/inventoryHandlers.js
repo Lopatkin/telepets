@@ -1,9 +1,8 @@
-const mongoose = require('mongoose');
-
 function registerInventoryHandlers({
     io,
     socket,
     Item,
+    User,
     InventoryLimit,
     itemCache,
     itemLocks,
@@ -272,91 +271,61 @@ function registerInventoryHandlers({
 
     socket.on('utilizeTrash', async (callback) => {
         if (!socket.userData || !socket.userData.userId) {
-            console.error('User not authenticated for utilizeTrash:', socket.id);
             if (callback) callback({ success: false, message: 'Пользователь не аутентифицирован' });
             return;
         }
 
-        const currentRoom = userCurrentRoom.get(socket.userData.userId);
-        if (currentRoom !== 'Полигон утилизации') {
-            console.error(`User ${socket.userData.userId} attempted to utilize trash outside of Полигон утилизации. Current room: ${currentRoom}`);
-            if (callback) callback({ success: false, message: 'Утилизация мусора возможна только на Полигоне утилизации' });
-            return;
-        }
-
-        let session;
         try {
             const owner = `user_${socket.userData.userId}`;
             const trashItems = await Item.find({ owner, name: 'Мусор' });
 
             if (trashItems.length === 0) {
-                console.log(`No trash items found for user ${socket.userData.userId}`);
                 if (callback) callback({ success: false, message: 'У вас нет мусора для утилизации' });
                 return;
             }
 
-            session = await mongoose.startSession();
-            session.startTransaction();
-
             let totalWeight = 0;
             let totalCredits = 0;
-            const itemIds = trashItems.map(item => item._id);
             for (const item of trashItems) {
                 totalWeight += parseFloat(item.weight) || 0;
                 totalCredits += parseFloat(item.cost) || 0;
+                await Item.deleteOne({ _id: item._id });
             }
 
-            // Удаляем мусор
-            await Item.deleteMany({ _id: { $in: itemIds } }, { session });
+            const creditsEarned = Math.floor(totalCredits);
 
-            // Обновляем вес инвентаря
             await InventoryLimit.updateOne(
                 { owner },
-                { $inc: { currentWeight: -totalWeight } },
-                { session }
+                { $inc: { currentWeight: -totalWeight } }
             );
 
-            // Начисляем кредиты
-            const creditsEarned = Math.floor(totalCredits);
             const user = await User.findOneAndUpdate(
                 { userId: socket.userData.userId },
                 { $inc: { credits: creditsEarned } },
-                { new: true, session }
+                { new: true }
             );
 
-            if (!user) {
-                throw new Error('Пользователь не найден для начисления кредитов');
+            if (user) {
+                socket.emit('userUpdate', {
+                    userId: user.userId,
+                    credits: user.credits
+                });
             }
 
-            await session.commitTransaction();
-            console.log(`Successfully utilized ${trashItems.length} trash items for user ${socket.userData.userId}. Credits earned: ${creditsEarned}`);
-
-            // Обновляем кэш и отправляем события
-            itemCache.set(owner, (itemCache.get(owner) || []).filter(i => !itemIds.includes(i._id.toString())));
             const updatedItems = await Item.find({ owner });
-            const updatedLimit = await InventoryLimit.findOne({ owner });
-
-            socket.emit('userUpdate', {
-                userId: user.userId,
-                credits: user.credits
-            });
+            itemCache.set(owner, updatedItems);
+            console.log('Trash items deleted for:', owner);
+            console.log('Credits earned:', creditsEarned);
+            console.log('Sending updated items:', updatedItems);
             io.to(owner).emit('items', { owner, items: updatedItems });
+
+            const updatedLimit = await InventoryLimit.findOne({ owner });
             io.to(owner).emit('inventoryLimit', updatedLimit);
 
-            if (callback) callback({
-                success: true,
-                message: `Мусор утилизирован. Получено ${creditsEarned} кредитов.`
-            });
+            if (callback) callback({ success: true, message: `Мусор утилизирован. Получено ${creditsEarned} кредитов.` });
         } catch (err) {
-            if (session) {
-                await session.abortTransaction();
-            }
             console.error('Error utilizing trash:', err.message, err.stack);
             if (callback) callback({ success: false, message: 'Ошибка при утилизации мусора' });
-        } finally {
-            if (session) {
-                session.endSession();
-            }
         }
     });
 

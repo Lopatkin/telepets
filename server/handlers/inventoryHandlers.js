@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 function registerInventoryHandlers({
     io,
     socket,

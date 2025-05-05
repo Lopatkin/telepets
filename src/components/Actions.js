@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
   SliderContainer, SliderLabel, Slider, SliderValue, Select, MaterialsText,
@@ -8,173 +8,199 @@ import {
 } from '../styles/ActionsStyles';
 import { FaTimes } from 'react-icons/fa';
 
-const homeActions = [
-  {
-    id: 1,
-    title: 'Поспать',
-    description: 'Вы ложитесь спать',
-    modalTitle: 'Поспать',
-    modalDescription: 'Вы ложитесь спать, чтобы восстановить силы. В час восстанавливается около 10% Здоровья',
-    buttonText: 'Заснуть',
-  },
-  {
-    id: 2,
-    title: 'Поесть',
-    description: 'Время подкрепиться!',
-    modalTitle: 'Поесть',
-    modalDescription: 'Вы чувствуете голод и решаете немного перекусить. За один приём пищи восстанавливается 30% сытости',
-    buttonText: 'Поесть',
-  },
-  {
-    id: 3,
-    title: 'Тренировка',
-    description: 'Поддержание физической формы',
-    modalTitle: 'Тренировка',
-    modalDescription: 'Вы решаете потренироваться, чтобы держать своё тело в тонусе. Восстанавливает здоровье и улучшает настроение, но также пробуждает аппетит',
-    buttonText: 'Потренить',
-  },
-  {
-    id: 4,
-    title: 'Почитать',
-    description: 'Вы читаете книгу',
-    modalTitle: 'Почитать',
-    modalDescription: 'Вы решаете отдохнуть, полежать и почитать книгу. Пусть дела подождут. Повышает настроение',
-    buttonText: 'Почитать',
-  },
-  {
-    id: 5,
-    title: 'Прибраться',
-    description: 'Вы убираетесь в доме',
-    modalTitle: 'Прибраться',
-    modalDescription: 'Вы решаете навести порядок в доме',
-    buttonText: 'Прибраться',
-  },
-];
+// Объединяем действия в единый объект
+const actionsConfig = {
+  home: [
+    {
+      id: 1,
+      title: 'Поспать',
+      description: 'Вы ложитесь спать',
+      modalTitle: 'Поспать',
+      modalDescription: 'Вы ложитесь спать, чтобы восстановить силы. В час восстанавливается около 10% Здоровья',
+      buttonText: 'Заснуть',
+    },
+    {
+      id: 2,
+      title: 'Поесть',
+      description: 'Время подкрепиться!',
+      modalTitle: 'Поесть',
+      modalDescription: 'Вы чувствуете голод и решаете немного перекусить. За один приём пищи восстанавливается 30% сытости',
+      buttonText: 'Поесть',
+    },
+    {
+      id: 3,
+      title: 'Тренировка',
+      description: 'Поддержание физической формы',
+      modalTitle: 'Тренировка',
+      modalDescription: 'Вы решаете потренироваться, чтобы держать своё тело в тонусе. Восстанавливает здоровье и улучшает настроение, но также пробуждает аппетит',
+      buttonText: 'Потренить',
+    },
+    {
+      id: 4,
+      title: 'Почитать',
+      description: 'Вы читаете книгу',
+      modalTitle: 'Почитать',
+      modalDescription: 'Вы решаете отдохнуть, полежать и почитать книгу. Пусть дела подождут. Повышает настроение',
+      buttonText: 'Почитать',
+    },
+    {
+      id: 5,
+      title: 'Прибраться',
+      description: 'Вы убираетесь в доме',
+      modalTitle: 'Прибраться',
+      modalDescription: 'Вы решаете навести порядок в доме',
+      buttonText: 'Прибраться',
+    },
+  ],
+  busStop: [
+    {
+      id: 6,
+      title: 'Присесть',
+      description: 'Присесть на скамейку',
+      modalTitle: 'Присесть',
+      modalDescription: 'Вы садитесь на скамейку в ожидании автобуса.',
+      buttonText: 'Сесть',
+    },
+    {
+      id: 7,
+      title: 'Почитать объявления',
+      description: 'На остановке много расклеенных объявлений.',
+      modalTitle: 'Почитать',
+      modalDescription: 'Пока ждёте транспорт Вы решаете почитать объявления, расклеенные на остановке. Вдруг что-то полезное или интересное?',
+      buttonText: 'Почитать',
+    },
+    {
+      id: 8,
+      title: 'Закурить',
+      description: 'Хоть это и вредно',
+      modalTitle: 'Закурить',
+      modalDescription: 'Как известно, если закурить сигарету, то автобус тут же приедет. Проверите?',
+      buttonText: 'Закурить',
+    },
+  ],
+  forest: [
+    {
+      id: 9,
+      title: 'Найти палку',
+      description: 'Палка - очень полезный предмет',
+      modalTitle: 'Найти палку',
+      modalDescription: 'Вы ходите по лесу и ищете палку. Палка - полезный и многофункциональный предмет, может пригодиться в самых разных жизненных ситуациях.',
+      buttonText: 'Подобрать',
+      cooldownKey: 'findStick',
+    },
+    {
+      id: 16,
+      title: 'Найти ягоды',
+      description: 'Вкусные и свежие',
+      modalTitle: 'Найти ягоды',
+      modalDescription: 'Вы ходите по лесу и ищете ягоды. Ежевика, брусника, черника, земляника. Съешьте сами или продайте.',
+      buttonText: 'Найти',
+      cooldownKey: 'findBerries',
+    },
+    {
+      id: 17,
+      title: 'Найти грибы',
+      description: 'Выбирайте только съедобные',
+      modalTitle: 'Найти грибы',
+      modalDescription: 'Вы ходите по лесу и ищете грибы. Белый гриб, подберёзовик, лисички, опята. Съешьте сами или продайте.',
+      buttonText: 'Найти',
+      cooldownKey: 'findMushrooms',
+    },
+  ],
+  disposal: [
+    {
+      id: 10,
+      title: 'Утилизировать мусор',
+      description: 'Избавьтесь от ненужного хлама',
+      modalTitle: 'Утилизировать мусор',
+      modalDescription: 'Вы сдаёте мусор на переработку. Это очищает ваш инвентарь от предметов с названием "Мусор".',
+      buttonText: 'Утилизировать',
+    },
+  ],
+  workshop: [
+    {
+      id: 11,
+      title: 'Столярная мастерская',
+      description: 'Создавайте деревянные изделия',
+      modalTitle: 'Столярная мастерская',
+      modalDescription: 'Используйте инструменты, чтобы смастерить что-то полезное',
+      buttonText: 'Создать',
+      craftableItems: [
+        { name: 'Доска', materials: { sticks: 2, boards: 0 }, clicksRequired: 4 },
+        { name: 'Стул', materials: { sticks: 4, boards: 1 }, clicksRequired: 10 },
+        { name: 'Стол', materials: { sticks: 4, boards: 2 }, clicksRequired: 12 },
+        { name: 'Шкаф', materials: { sticks: 2, boards: 8 }, clicksRequired: 20 },
+        { name: 'Кровать', materials: { sticks: 4, boards: 6 }, clicksRequired: 20 },
+      ],
+    },
+  ],
+  shelterAnimal: [
+    {
+      id: 18,
+      title: 'Поиграть с другими животными',
+      description: 'Весело провести время в приюте',
+      modalTitle: 'Поиграть',
+      modalDescription: 'Вы бегаете и играете с другими животными в приюте. Это поднимает настроение!',
+      buttonText: 'Играть',
+    },
+    {
+      id: 19,
+      title: 'Поесть из миски',
+      description: 'Поесть корма в приюте',
+      modalTitle: 'Поесть',
+      modalDescription: 'Вы находите миску с кормом и решаете поесть. Это утоляет голод.',
+      buttonText: 'Поесть',
+    },
+  ],
+};
 
-const busStopActions = [
-  {
-    id: 6,
-    title: 'Присесть',
-    description: 'Присесть на скамейку',
-    modalTitle: 'Присесть',
-    modalDescription: 'Вы садитесь на скамейку в ожидании автобуса.',
-    buttonText: 'Сесть',
-  },
-  {
-    id: 7,
-    title: 'Почитать объявления',
-    description: 'На остановке много расклеенных объявлений.',
-    modalTitle: 'Почитать',
-    modalDescription: 'Пока ждёте транспорт Вы решаете почитать объявления, расклеенные на остановке. Вдруг что-то полезное или интересное?',
-    buttonText: 'Почитать',
-  },
-  {
-    id: 8,
-    title: 'Закурить',
-    description: 'Хоть это и вредно',
-    modalTitle: 'Закурить',
-    modalDescription: 'Как известно, если закурить сигарету, то автобус тут же приедет. Проверите?',
-    buttonText: 'Закурить',
-  },
-];
-
-const forestActions = [
-  {
-    id: 9,
-    title: 'Найти палку',
-    description: 'Палка - очень полезный предмет',
-    modalTitle: 'Найти палку',
-    modalDescription: 'Вы ходите по лесу и ищете палку. Палка - полезный и многофункциональный предмет, может пригодиться в самых разных жизненных ситуациях.',
-    buttonText: 'Подобрать',
-  },
-  {
-    id: 16,
-    title: 'Найти ягоды',
-    description: 'Вкусные и свежие',
-    modalTitle: 'Найти ягоды',
-    modalDescription: 'Вы ходите по лесу и ищете ягоды. Ежевика, брусника, черника, земляника. Съешьте сами или продайте.',
-    buttonText: 'Найти',
-  },
-  {
-    id: 17,
-    title: 'Найти грибы',
-    description: 'Выбирайте только съедобные',
-    modalTitle: 'Найти грибы',
-    modalDescription: 'Вы ходите по лесу и ищете грибы. Белый гриб, подберёзовик, лисички, опята. Съешьте сами или продайте.',
-    buttonText: 'Найти',
-  },
-];
-
-const disposalActions = [
-  {
-    id: 10,
-    title: 'Утилизировать мусор',
-    description: 'Избавьтесь от ненужного хлама',
-    modalTitle: 'Утилизировать мусор',
-    modalDescription: 'Вы сдаёте мусор на переработку. Это очищает ваш инвентарь от предметов с названием "Мусор".',
-    buttonText: 'Утилизировать',
-  },
-];
-
-const workshopActions = [
-  {
-    id: 11,
-    title: 'Столярная мастерская',
-    description: 'Создавайте деревянные изделия',
-    modalTitle: 'Столярная мастерская',
-    modalDescription: 'Используйте инструменты, чтобы смастерить что-то полезное',
-    buttonText: 'Создать',
-    craftableItems: [
-      { name: 'Доска', materials: { sticks: 2, boards: 0 }, clicksRequired: 4 },
-      { name: 'Стул', materials: { sticks: 4, boards: 1 }, clicksRequired: 10 },
-      { name: 'Стол', materials: { sticks: 4, boards: 2 }, clicksRequired: 12 },
-      { name: 'Шкаф', materials: { sticks: 2, boards: 8 }, clicksRequired: 20 },
-      { name: 'Кровать', materials: { sticks: 4, boards: 6 }, clicksRequired: 20 },
-    ],
-  },
-];
-
-const animalActions = (animalType) => [
-  {
-    id: 12,
-    title: 'Попросить еды',
-    description: 'Попросить хозяина покормить вас',
-    modalTitle: 'Попросить еды',
-    modalDescription: 'Вы просите хозяина дать вам еды. Это отправит уведомление вашему владельцу.',
-    buttonText: 'Попросить'
-  },
-  {
-    id: 13,
-    title: animalType === 'Собака' ? 'Погавкать' : 'Помяукать',
-    description: animalType === 'Собака' ? 'Громко гавкнуть' : 'Мяукнуть, чтобы привлечь внимание',
-    modalTitle: animalType === 'Собака' ? 'Погавкать' : 'Помяукать',
-    modalDescription: animalType === 'Собака' ? 'Вы громко гавкаете, чтобы привлечь внимание хозяина.' : 'Вы мяукаете, чтобы хозяин обратил на вас внимание.',
-    buttonText: animalType === 'Собака' ? 'Гав!' : 'Мяу!'
-  },
-  {
-    id: 14,
-    title: 'Поспать',
-    description: 'Улечься и поспать',
-    modalTitle: 'Поспать',
-    modalDescription: 'Вы находите уютное место и засыпаете, чтобы восстановить силы.',
-    buttonText: 'Заснуть'
-  },
-  {
-    id: 15,
-    title: 'Попросить поиграть',
-    description: 'Попросить хозяина поиграть с вами',
-    modalTitle: 'Попросить поиграть',
-    modalDescription: 'Вы просите хозяина поиграть с вами. Это отправит уведомление вашему владельцу.',
-    buttonText: 'Попросить'
-  }
-];
+// Функция для получения действий для животных
+const getAnimalActions = (animalType, isShelter) => {
+  const baseActions = [
+    {
+      id: 12,
+      title: 'Попросить еды',
+      description: 'Попросить хозяина покормить вас',
+      modalTitle: 'Попросить еды',
+      modalDescription: 'Вы просите хозяина дать вам еды. Это отправит уведомление вашему владельцу.',
+      buttonText: 'Попросить',
+    },
+    {
+      id: 13,
+      title: animalType === 'Собака' ? 'Погавкать' : 'Помяукать',
+      description: animalType === 'Собака' ? 'Громко гавкнуть' : 'Мяукнуть, чтобы привлечь внимание',
+      modalTitle: animalType === 'Собака' ? 'Погавкать' : 'Помяукать',
+      modalDescription: animalType === 'Собака' ? 'Вы громко гавкаете, чтобы привлечь внимание хозяина.' : 'Вы мяукаете, чтобы хозяин обратил на вас внимание.',
+      buttonText: animalType === 'Собака' ? 'Гав!' : 'Мяу!',
+    },
+    {
+      id: 14,
+      title: 'Поспать',
+      description: 'Улечься и поспать',
+      modalTitle: 'Поспать',
+      modalDescription: 'Вы находите уютное место и засыпаете, чтобы восстановить силы.',
+      buttonText: 'Заснуть',
+    },
+    {
+      id: 15,
+      title: 'Попросить поиграть',
+      description: 'Попросить хозяина поиграть с вами',
+      modalTitle: 'Попросить поиграть',
+      modalDescription: 'Вы просите хозяина поиграть с вами. Это отправит уведомление вашему владельцу.',
+      buttonText: 'Попросить',
+    },
+  ];
+  return isShelter ? [...actionsConfig.shelterAnimal, ...baseActions] : baseActions;
+};
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
-  const [isCooldown, setIsCooldown] = useState({ findStick: false, findBerries: false, findMushrooms: false });
-  const [timeLeft, setTimeLeft] = useState({ findStick: 0, findBerries: 0, findMushrooms: 0 });
-  const [progress, setProgress] = useState({ findStick: 100, findBerries: 100, findMushrooms: 100 });
+  const [cooldowns, setCooldowns] = useState({
+    findStick: { active: false, timeLeft: 0, progress: 100 },
+    findBerries: { active: false, timeLeft: 0, progress: 100 },
+    findMushrooms: { active: false, timeLeft: 0, progress: 100 },
+  });
   const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
   const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 });
   const [checkboxes, setCheckboxes] = useState({
@@ -192,72 +218,71 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     findMushrooms: `findMushroomsCooldown_${userId}`,
   }), [userId]);
 
-  // Восстановление состояния таймера при монтировании компонента
+  // Восстановление состояния кулдаунов
   useEffect(() => {
-    Object.keys(COOLDOWN_KEYS).forEach((key) => {
-      const savedCooldown = localStorage.getItem(COOLDOWN_KEYS[key]);
+    Object.entries(COOLDOWN_KEYS).forEach(([key, storageKey]) => {
+      const savedCooldown = localStorage.getItem(storageKey);
       if (savedCooldown) {
         const { startTime } = JSON.parse(savedCooldown);
         const elapsed = Date.now() - startTime;
         const remaining = COOLDOWN_DURATION - elapsed;
 
         if (remaining > 0) {
-          setIsCooldown((prev) => ({ ...prev, [key]: true }));
-          setTimeLeft((prev) => ({ ...prev, [key]: Math.ceil(remaining / 1000) }));
-          setProgress((prev) => ({ ...prev, [key]: (remaining / COOLDOWN_DURATION) * 100 }));
+          setCooldowns(prev => ({
+            ...prev,
+            [key]: { active: true, timeLeft: Math.ceil(remaining / 1000), progress: (remaining / COOLDOWN_DURATION) * 100 },
+          }));
         } else {
-          localStorage.removeItem(COOLDOWN_KEYS[key]);
-          setIsCooldown((prev) => ({ ...prev, [key]: false }));
-          setTimeLeft((prev) => ({ ...prev, [key]: 0 }));
-          setProgress((prev) => ({ ...prev, [key]: 100 }));
+          localStorage.removeItem(storageKey);
         }
       }
     });
-  }, [COOLDOWN_DURATION, COOLDOWN_KEYS]);
+  }, [COOLDOWN_KEYS, COOLDOWN_DURATION]);
 
-  // Таймер обратного отсчёта для каждого действия
+  // Единый таймер для кулдаунов
   useEffect(() => {
-    const timers = Object.keys(COOLDOWN_KEYS).map((key) =>
-      setInterval(() => {
-        if (isCooldown[key] && timeLeft[key] > 0) {
-          const savedCooldown = localStorage.getItem(COOLDOWN_KEYS[key]);
-          if (!savedCooldown) return;
+    const timer = setInterval(() => {
+      setCooldowns(prev => {
+        const updated = { ...prev };
+        Object.entries(COOLDOWN_KEYS).forEach(([key, storageKey]) => {
+          if (updated[key].active && updated[key].timeLeft > 0) {
+            const savedCooldown = localStorage.getItem(storageKey);
+            if (!savedCooldown) return;
 
-          const { startTime } = JSON.parse(savedCooldown);
-          const elapsed = Date.now() - startTime;
-          const remaining = COOLDOWN_DURATION - elapsed;
+            const { startTime } = JSON.parse(savedCooldown);
+            const elapsed = Date.now() - startTime;
+            const remaining = COOLDOWN_DURATION - elapsed;
 
-          if (remaining <= 0) {
-            setIsCooldown((prev) => ({ ...prev, [key]: false }));
-            setTimeLeft((prev) => ({ ...prev, [key]: 0 }));
-            setProgress((prev) => ({ ...prev, [key]: 0 }));
-            localStorage.removeItem(COOLDOWN_KEYS[key]);
-          } else {
-            setTimeLeft((prev) => ({ ...prev, [key]: Math.ceil(remaining / 1000) }));
-            setProgress((prev) => ({ ...prev, [key]: (remaining / COOLDOWN_DURATION) * 100 }));
+            if (remaining <= 0) {
+              updated[key] = { active: false, timeLeft: 0, progress: 100 };
+              localStorage.removeItem(storageKey);
+            } else {
+              updated[key] = {
+                active: true,
+                timeLeft: Math.ceil(remaining / 1000),
+                progress: (remaining / COOLDOWN_DURATION) * 100,
+              };
+            }
           }
-        }
-      }, 1000)
-    );
+        });
+        return updated;
+      });
+    }, 1000);
 
-    return () => timers.forEach((timer) => clearInterval(timer));
-  }, [isCooldown, timeLeft, COOLDOWN_DURATION, COOLDOWN_KEYS]);
+    return () => clearInterval(timer);
+  }, [COOLDOWN_KEYS, COOLDOWN_DURATION]);
 
-  const handleActionClick = (action) => {
-    const actionKey = {
-      'Найти палку': 'findStick',
-      'Найти ягоды': 'findBerries',
-      'Найти грибы': 'findMushrooms',
-    }[action.title];
+  const showNotification = useCallback((message, duration = 2000) => {
+    setNotification({ show: true, message });
+    setTimeout(() => setNotification({ show: false, message: '' }), duration);
+  }, []);
 
-    if (actionKey && isCooldown[actionKey]) {
-      setNotification({ show: true, message: 'Действие недоступно, подождите' });
-      setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+  const handleActionClick = useCallback((action) => {
+    if (action.cooldownKey && cooldowns[action.cooldownKey].active) {
+      showNotification('Действие недоступно, подождите');
       return;
     }
-
     setSelectedAction(action);
-
     if (action.title === 'Столярная мастерская') {
       setSelectedCraftItem(action.craftableItems[0].name);
       setSliderValues({ sticks: 0, boards: 0 });
@@ -265,31 +290,31 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       setClickCount(0);
       setCraftingProgress(0);
     }
-  };
+  }, [cooldowns, showNotification]);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setSelectedAction(null);
     setClickCount(0);
     setCraftingProgress(0);
-  };
+  }, []);
 
-  const handleCraftItemChange = (e) => {
+  const handleCraftItemChange = useCallback((e) => {
     setSelectedCraftItem(e.target.value);
     setSliderValues({ sticks: 0, boards: 0 });
     setCheckboxes({ prepareMachine: false, measureAndMark: false, secureMaterials: false });
     setClickCount(0);
     setCraftingProgress(0);
-  };
+  }, []);
 
-  const handleSliderChange = (type, value) => {
+  const handleSliderChange = useCallback((type, value) => {
     setSliderValues(prev => ({ ...prev, [type]: parseInt(value, 10) }));
-  };
+  }, []);
 
-  const handleCheckboxChange = (key) => {
+  const handleCheckboxChange = useCallback((key) => {
     setCheckboxes(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  }, []);
 
-  const hasEnoughMaterials = () => {
+  const hasEnoughMaterials = useCallback(() => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return false;
     const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
     const requiredSticks = item.materials.sticks;
@@ -299,9 +324,9 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     const boardCount = personalItems.filter(i => i.name === 'Доска').length;
 
     return stickCount >= requiredSticks && boardCount >= requiredBoards;
-  };
+  }, [selectedAction, selectedCraftItem, personalItems]);
 
-  const canStartCrafting = () => {
+  const canStartCrafting = useCallback(() => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return false;
     const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
     const requiredSticks = item.materials.sticks;
@@ -312,189 +337,142 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     const materialsAvailable = hasEnoughMaterials();
 
     return slidersCorrect && checkboxesChecked && materialsAvailable;
-  };
+  }, [selectedAction, selectedCraftItem, sliderValues, checkboxes, hasEnoughMaterials]);
 
-  const handleButtonClick = () => {
+  const handleButtonClick = useCallback(() => {
     if (!socket) {
       console.error('Socket is not initialized');
-      setNotification({ show: true, message: 'Ошибка соединения' });
-      setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+      showNotification('Ошибка соединения');
       return;
     }
 
-    if (selectedAction.title === 'Найти палку') {
-      const newItem = {
-        name: 'Палка',
-        description: 'Многофункциональная вещь',
-        rarity: 'Обычный',
-        weight: 1,
-        cost: 5,
-        effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
-      };
-      socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
+    const actions = {
+      'Найти палку': {
+        item: {
+          name: 'Палка',
+          description: 'Многофункциональная вещь',
+          rarity: 'Обычный',
+          weight: 1,
+          cost: 5,
+          effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
+        },
+        successMessage: 'Вы нашли палку!',
+        cooldownKey: 'findStick',
+      },
+      'Найти ягоды': {
+        item: {
+          name: 'Лесные ягоды',
+          description: 'Вкусные и свежие',
+          rarity: 'Обычный',
+          weight: 0.1,
+          cost: 10,
+          effect: 'Слегка утоляют голод и повышают настроение',
+        },
+        successMessage: 'Вы нашли лесные ягоды!',
+        cooldownKey: 'findBerries',
+      },
+      'Найти грибы': {
+        item: {
+          name: 'Лесные грибы',
+          description: 'Вкусные и полезные, если не ядовитые',
+          rarity: 'Обычный',
+          weight: 0.3,
+          cost: 10,
+          effect: 'Слегка утоляют голод и повышают настроение, если правильно приготовить',
+        },
+        successMessage: 'Вы нашли лесные грибы!',
+        cooldownKey: 'findMushrooms',
+      },
+      'Утилизировать мусор': {
+        action: 'utilizeTrash',
+        successMessage: 'Мусор утилизирован!',
+      },
+      'Попросить еды': {
+        systemMessage: `${user.name} хочет есть`,
+        successMessage: 'Запрос еды отправлен хозяину!',
+        requiresOwner: true,
+      },
+      'Помяукать': {
+        systemMessage: `${user.name} мяукает`,
+        successMessage: 'Вы помяукали!',
+      },
+      'Погавкать': {
+        systemMessage: `${user.name} гавкает`,
+        successMessage: 'Вы погавкали!',
+      },
+      'Поспать': {
+        systemMessage: `${user.name} лёг спать`,
+        successMessage: 'Вы уютно заснули!',
+      },
+      'Попросить поиграть': {
+        systemMessage: `${user.name} хочет поиграть с вами`,
+        successMessage: 'Запрос на игру отправлен хозяину!',
+        requiresOwner: true,
+      },
+      'Поиграть с другими животными': {
+        systemMessage: `${user.name} играет с другими животными`,
+        successMessage: 'Вы весело поиграли!',
+      },
+      'Поесть из миски': {
+        systemMessage: `${user.name} ест из миски`,
+        successMessage: 'Вы поели!',
+      },
+    };
+
+    const action = actions[selectedAction.title];
+    if (!action) {
+      showNotification('Действие не поддерживается');
+      return;
+    }
+
+    if (action.requiresOwner && !user.owner) {
+      showNotification('У вас нет владельца!');
+      return;
+    }
+
+    if (action.item) {
+      socket.emit('addItem', { owner: `user_${userId}`, item: action.item }, (response) => {
         if (response && response.success) {
           setSelectedAction(null);
-          setNotification({ show: true, message: 'Вы нашли палку!' });
-          setTimeout(() => {
-            setNotification({ show: false, message: '' });
-          }, 2000);
-          setIsCooldown((prev) => ({ ...prev, findStick: true }));
-          setTimeLeft((prev) => ({ ...prev, findStick: Math.floor(COOLDOWN_DURATION / 1000) }));
-          setProgress((prev) => ({ ...prev, findStick: 100 }));
-          localStorage.setItem(COOLDOWN_KEYS.findStick, JSON.stringify({ startTime: Date.now() }));
+          showNotification(action.successMessage);
+          if (action.cooldownKey) {
+            setCooldowns(prev => ({
+              ...prev,
+              [action.cooldownKey]: { active: true, timeLeft: Math.floor(COOLDOWN_DURATION / 1000), progress: 100 },
+            }));
+            localStorage.setItem(COOLDOWN_KEYS[action.cooldownKey], JSON.stringify({ startTime: Date.now() }));
+          }
         } else {
           setSelectedAction(null);
-          setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
-          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          showNotification(response?.message || 'Ошибка при добавлении предмета');
         }
       });
-    } else if (selectedAction.title === 'Найти ягоды') {
-      const newItem = {
-        name: 'Лесные ягоды',
-        description: 'Вкусные и свежие',
-        rarity: 'Обычный',
-        weight: 0.1,
-        cost: 10,
-        effect: 'Слегка утоляют голод и повышают настроение',
-      };
-      socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
-        if (response && response.success) {
-          setSelectedAction(null);
-          setNotification({ show: true, message: 'Вы нашли лесные ягоды!' });
-          setTimeout(() => {
-            setNotification({ show: false, message: '' });
-          }, 2000);
-          setIsCooldown((prev) => ({ ...prev, findBerries: true }));
-          setTimeLeft((prev) => ({ ...prev, findBerries: Math.floor(COOLDOWN_DURATION / 1000) }));
-          setProgress((prev) => ({ ...prev, findBerries: 100 }));
-          localStorage.setItem(COOLDOWN_KEYS.findBerries, JSON.stringify({ startTime: Date.now() }));
-        } else {
-          setSelectedAction(null);
-          setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
-          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-        }
-      });
-    } else if (selectedAction.title === 'Найти грибы') {
-      const newItem = {
-        name: 'Лесные грибы',
-        description: 'Вкусные и полезные, если не ядовитые',
-        rarity: 'Обычный',
-        weight: 0.3,
-        cost: 10,
-        effect: 'Слегка утоляют голод и повышают настроение, если правильно приготовить',
-      };
-      socket.emit('addItem', { owner: `user_${userId}`, item: newItem }, (response) => {
-        if (response && response.success) {
-          setSelectedAction(null);
-          setNotification({ show: true, message: 'Вы нашли лесные грибы!' });
-          setTimeout(() => {
-            setNotification({ show: false, message: '' });
-          }, 2000);
-          setIsCooldown((prev) => ({ ...prev, findMushrooms: true }));
-          setTimeLeft((prev) => ({ ...prev, findMushrooms: Math.floor(COOLDOWN_DURATION / 1000) }));
-          setProgress((prev) => ({ ...prev, findMushrooms: 100 }));
-          localStorage.setItem(COOLDOWN_KEYS.findMushrooms, JSON.stringify({ startTime: Date.now() }));
-        } else {
-          setSelectedAction(null);
-          setNotification({ show: true, message: response?.message || 'Ошибка при добавлении предмета' });
-          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-        }
-      });
-    } else if (selectedAction.title === 'Утилизировать мусор') {
+    } else if (action.action === 'utilizeTrash') {
       socket.emit('utilizeTrash', (response) => {
         if (response && response.success) {
           setSelectedAction(null);
-          setNotification({ show: true, message: response.message });
-          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          showNotification(response.message);
           socket.emit('getItems', { owner: `user_${userId}` });
         } else {
           setSelectedAction(null);
-          setNotification({ show: true, message: response?.message || 'Ошибка при утилизации' });
-          setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+          showNotification(response?.message || 'Ошибка при утилизации');
         }
       });
-    } else if (selectedAction.title === 'Столярная мастерская') {
-      const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
-      const requiredSticks = item.materials.sticks;
-      const requiredBoards = item.materials.boards;
-
-      if (sliderValues.sticks !== requiredSticks || sliderValues.boards !== requiredBoards) {
-        setNotification({ show: true, message: 'Установите правильное количество материалов!' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-        return;
-      }
-
-      if (!checkboxes.prepareMachine || !checkboxes.measureAndMark || !checkboxes.secureMaterials) {
-        setNotification({ show: true, message: 'Необходимо выполнить все шаги подготовки!' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-        return;
-      }
-
-      if (!hasEnoughMaterials()) {
-        setNotification({ show: true, message: 'Недостаточно материалов в инвентаре!' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-        return;
-      }
-
-      setNotification({ show: true, message: `Нажмите "СТАРТ" для создания: ${selectedCraftItem}` });
-      setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-    } else if (selectedAction.title === 'Попросить еды') {
-      if (!user.owner) {
-        setNotification({ show: true, message: 'У вас нет владельца!' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-        return;
-      }
+    } else if (action.systemMessage) {
       socket.emit('sendSystemMessage', {
-        text: `${user.name} хочет есть`,
+        text: action.systemMessage,
         room: currentRoom,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       }, () => {
         setSelectedAction(null);
-        setNotification({ show: true, message: 'Запрос еды отправлен хозяину!' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-      });
-    } else if (selectedAction.title === 'Помяукать') {
-      socket.emit('sendSystemMessage', {
-        text: `${user.name} мяукает`,
-        room: currentRoom,
-        timestamp: new Date().toISOString()
-      }, () => {
-        setSelectedAction(null);
-        setNotification({ show: true, message: 'Вы помяукали!' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-      });
-    } else if (selectedAction.title === 'Поспать') {
-      socket.emit('sendSystemMessage', {
-        text: `${user.name} лёг спать`,
-        room: currentRoom,
-        timestamp: new Date().toISOString()
-      }, () => {
-        setSelectedAction(null);
-        setNotification({ show: true, message: 'Вы уютно заснули!' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-      });
-    } else if (selectedAction.title === 'Попросить поиграть') {
-      if (!user.owner) {
-        setNotification({ show: true, message: 'У вас нет владельца!' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
-        return;
-      }
-      socket.emit('sendSystemMessage', {
-        text: `${user.name} хочет поиграть с вами`,
-        room: currentRoom,
-        timestamp: new Date().toISOString()
-      }, () => {
-        setSelectedAction(null);
-        setNotification({ show: true, message: 'Запрос на игру отправлен хозяину!' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        showNotification(action.successMessage);
       });
     }
-  };
+  }, [socket, selectedAction, user, userId, currentRoom, COOLDOWN_DURATION, COOLDOWN_KEYS, showNotification]);
 
-  const handleStartClick = () => {
+  const handleStartClick = useCallback(() => {
     if (!canStartCrafting()) {
-      setNotification({ show: true, message: 'Не все условия выполнены!' });
-      setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+      showNotification('Не все условия выполнены!');
       return;
     }
 
@@ -507,8 +485,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     setCraftingProgress(newProgress);
 
     if (newClickCount < clicksRequired) {
-      setNotification({ show: true, message: `Осталось нажатий: ${clicksRequired - newClickCount}` });
-      setTimeout(() => setNotification({ show: false, message: '' }), 1000);
+      showNotification(`Осталось нажатий: ${clicksRequired - newClickCount}`, 1000);
       return;
     }
 
@@ -539,95 +516,92 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       });
     }
 
-    setSelectedAction(null);
-    setClickCount(0);
-    setCraftingProgress(0);
-
     socket.emit('addItem', { owner: 'Мастерская', item: craftedItem }, (response) => {
       if (response && response.success) {
-        setNotification({ show: true, message: `Вы успешно создали: ${selectedCraftItem}!` });
-        setTimeout(() => {
-          setNotification({ show: false, message: '' });
-          setSelectedAction(null);
-          setClickCount(0);
-          setCraftingProgress(0);
-        }, 2000);
+        showNotification(`Вы успешно создали: ${selectedCraftItem}!`);
+        setSelectedAction(null);
+        setClickCount(0);
+        setCraftingProgress(0);
       } else {
-        setNotification({ show: true, message: response?.message || 'Ошибка при создании предмета' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 2000);
+        showNotification(response?.message || 'Ошибка при создании предмета');
       }
     });
-  };
+  }, [canStartCrafting, selectedAction, selectedCraftItem, clickCount, socket, userId, showNotification]);
 
-  const getItemDescription = (name) => {
-    switch (name) {
-      case 'Доска': return 'Материал для изготовления';
-      case 'Стул': return 'Предмет мебели';
-      case 'Стол': return 'Предмет мебели';
-      case 'Шкаф': return 'Предмет мебели';
-      case 'Кровать': return 'Предмет мебели';
-      default: return '';
+  const getItemDescription = useCallback((name) => {
+    const descriptions = {
+      'Доска': 'Материал для изготовления',
+      'Стул': 'Предмет мебели',
+      'Стол': 'Предмет мебели',
+      'Шкаф': 'Предмет мебели',
+      'Кровать': 'Предмет мебели',
+    };
+    return descriptions[name] || '';
+  }, []);
+
+  const getItemWeight = useCallback((name) => {
+    const weights = {
+      'Доска': 2,
+      'Стул': 6,
+      'Стол': 8,
+      'Шкаф': 18,
+      'Кровать': 16,
+    };
+    return weights[name] || 0;
+  }, []);
+
+  const getItemCost = useCallback((name) => {
+    const costs = {
+      'Доска': 15,
+      'Стул': 53,
+      'Стол': 75,
+      'Шкаф': 195,
+      'Кровать': 165,
+    };
+    return costs[name] || 0;
+  }, []);
+
+  const getItemEffect = useCallback((name) => {
+    const effects = {
+      'Доска': 'Начало чего-то грандиозного. Или не очень. Но точно полезного!',
+      'Стул': 'На нём можно сидеть.',
+      'Стол': 'На нём можно есть.',
+      'Шкаф': 'В него можно повесить одежду',
+      'Кровать': 'На ней можно спать.',
+    };
+    return effects[name] || '';
+  }, []);
+
+  // Определяем доступные действия
+  const availableActions = useMemo(() => {
+    if (!user || !currentRoom) return [];
+    if (user.isHuman) {
+      if (currentRoom.startsWith(`myhome_${userId}`)) return actionsConfig.home;
+      if (currentRoom === 'Автобусная остановка') return actionsConfig.busStop;
+      if (currentRoom === 'Лес') return actionsConfig.forest;
+      if (currentRoom === 'Полигон утилизации') return actionsConfig.disposal;
+      if (currentRoom === 'Мастерская') return actionsConfig.workshop;
+    } else {
+      if (currentRoom === 'Приют для животных "Кошкин дом"') {
+        return getAnimalActions(user.animalType, true);
+      }
+      if (currentRoom.startsWith(`myhome_${user.owner}`)) {
+        return getAnimalActions(user.animalType, false);
+      }
     }
-  };
+    return [];
+  }, [user, currentRoom, userId]);
 
-  const getItemWeight = (name) => {
-    switch (name) {
-      case 'Доска': return 2;
-      case 'Стул': return 6;
-      case 'Стол': return 8;
-      case 'Шкаф': return 18;
-      case 'Кровать': return 16;
-      default: return 0;
-    }
-  };
-
-  const getItemCost = (name) => {
-    switch (name) {
-      case 'Доска': return 15;
-      case 'Стул': return 53;
-      case 'Стол': return 75;
-      case 'Шкаф': return 195;
-      case 'Кровать': return 165;
-      default: return 0;
-    }
-  };
-
-  const getItemEffect = (name) => {
-    switch (name) {
-      case 'Доска': return 'Начало чего-то грандиозного. Или не очень. Но точно полезного!';
-      case 'Стул': return 'На нём можно сидеть.';
-      case 'Стол': return 'На нём можно есть.';
-      case 'Шкаф': return 'В него можно повесить одежду';
-      case 'Кровать': return 'На ней можно спать.';
-      default: return '';
-    }
-  };
-
-  let availableActions = [];
-  if (user && !user.isHuman && currentRoom && currentRoom.startsWith(`myhome_${user.owner}`)) {
-    availableActions = animalActions(user.animalType);
-  } else if (currentRoom && currentRoom.startsWith(`myhome_${userId}`)) {
-    availableActions = homeActions;
-  } else if (currentRoom === 'Автобусная остановка') {
-    availableActions = busStopActions;
-  } else if (currentRoom === 'Лес') {
-    availableActions = forestActions;
-  } else if (currentRoom === 'Полигон утилизации') {
-    availableActions = disposalActions;
-  } else if (currentRoom === 'Мастерская') {
-    availableActions = workshopActions;
-  }
-
-  const getMaterialsText = () => {
+  const getMaterialsText = useCallback(() => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return '';
     const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
     const materials = [];
     if (item.materials.sticks > 0) materials.push(`${item.materials.sticks} палки`);
     if (item.materials.boards > 0) materials.push(`${item.materials.boards} доски`);
     return materials.length > 0 ? `Необходимо: ${materials.join(', ')}` : 'Материалы не требуются';
-  };
+  }, [selectedAction, selectedCraftItem]);
 
-  const renderSliders = () => {
+  const renderSliders = useCallback(() => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return null;
     const item = selectedAction.craftableItems.find(i => i.name === selectedCraftItem);
     const sliders = [];
@@ -669,9 +643,9 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     }
 
     return sliders;
-  };
+  }, [selectedAction, selectedCraftItem, sliderValues, theme, handleSliderChange]);
 
-  const renderCheckboxes = () => {
+  const renderCheckboxes = useCallback(() => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return null;
     return (
       <CheckboxContainer>
@@ -698,41 +672,34 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
         </CheckboxLabel>
       </CheckboxContainer>
     );
-  };
+  }, [selectedAction, checkboxes, theme, handleCheckboxChange]);
 
   return (
     <ActionsContainer theme={theme}>
       <ContentContainer>
         <ActionGrid>
           {availableActions.length > 0 ? (
-            availableActions.map((action) => {
-              const actionKey = {
-                'Найти палку': 'findStick',
-                'Найти ягоды': 'findBerries',
-                'Найти грибы': 'findMushrooms',
-              }[action.title] || null;
-              return (
-                <ActionCard
-                  key={action.id}
-                  theme={theme}
-                  onClick={() => handleActionClick(action)}
-                  disabled={actionKey && isCooldown[actionKey]}
-                >
-                  <div>
-                    <ActionTitle theme={theme}>{action.title}</ActionTitle>
-                    <ActionDescription theme={theme}>{action.description}</ActionDescription>
-                  </div>
-                  {actionKey && isCooldown[actionKey] && (
-                    <>
-                      <ProgressBar progress={progress[actionKey]} />
-                      <TimerDisplay theme={theme}>
-                        Осталось: {timeLeft[actionKey]} сек
-                      </TimerDisplay>
-                    </>
-                  )}
-                </ActionCard>
-              );
-            })
+            availableActions.map((action) => (
+              <ActionCard
+                key={action.id}
+                theme={theme}
+                onClick={() => handleActionClick(action)}
+                disabled={action.cooldownKey && cooldowns[action.cooldownKey].active}
+              >
+                <div>
+                  <ActionTitle theme={theme}>{action.title}</ActionTitle>
+                  <ActionDescription theme={theme}>{action.description}</ActionDescription>
+                </div>
+                {action.cooldownKey && cooldowns[action.cooldownKey].active && (
+                  <>
+                    <ProgressBar progress={cooldowns[action.cooldownKey].progress} />
+                    <TimerDisplay theme={theme}>
+                      Осталось: {cooldowns[action.cooldownKey].timeLeft} сек
+                    </TimerDisplay>
+                  </>
+                )}
+              </ActionCard>
+            ))
           ) : (
             <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
               Действия недоступны в этой комнате

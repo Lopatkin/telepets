@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
   SliderContainer, SliderLabel, Slider, SliderValue, Select, MaterialsText,
@@ -14,7 +14,7 @@ import useCooldowns from './hooks/useCooldowns';
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
-
+  const [cooldowns, setCooldowns, startCooldown] = useCooldowns(userId, COOLDOWN_DURATION);
   const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
   const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 });
   const [checkboxes, setCheckboxes] = useState({
@@ -26,8 +26,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [craftingProgress, setCraftingProgress] = useState(0);
 
   const COOLDOWN_DURATION = 10 * 1000;
-
-  const [cooldowns, startCooldown] = useCooldowns(userId, COOLDOWN_DURATION);
 
   const showNotification = useCallback((message, duration = 2000) => {
     setNotification({ show: true, message });
@@ -102,18 +100,18 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       showNotification('Ошибка соединения');
       return;
     }
-
+  
     const action = actionHandlers[selectedAction.title];
     if (!action) {
       showNotification('Действие не поддерживается');
       return;
     }
-
+  
     if (action.requiresOwner && !user.owner) {
       showNotification('У вас нет владельца!');
       return;
     }
-
+  
     if (action.item) {
       socket.emit('addItem', { owner: `user_${userId}`, item: action.item }, (response) => {
         if (response && response.success) {

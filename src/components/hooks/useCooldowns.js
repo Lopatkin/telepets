@@ -68,7 +68,18 @@ const useCooldowns = (userId, COOLDOWN_DURATION = 10 * 1000) => {
     return () => clearInterval(timer);
   }, [COOLDOWN_KEYS, COOLDOWN_DURATION]);
 
-  return [cooldowns, setCooldowns];
+  // Новая функция для активации кулдауна
+  const startCooldown = (cooldownKey) => {
+    if (COOLDOWN_KEYS[cooldownKey]) {
+      setCooldowns(prev => ({
+        ...prev,
+        [cooldownKey]: { active: true, timeLeft: Math.floor(COOLDOWN_DURATION / 1000), progress: 100 },
+      }));
+      localStorage.setItem(COOLDOWN_KEYS[cooldownKey], JSON.stringify({ startTime: Date.now() }));
+    }
+  };
+
+  return [cooldowns, setCooldowns, startCooldown];
 };
 
 export default useCooldowns;

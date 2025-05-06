@@ -14,7 +14,7 @@ import useCooldowns from './hooks/useCooldowns';
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
-  const [cooldowns, setCooldowns] = useCooldowns(userId, COOLDOWN_DURATION);
+  const [cooldowns, setCooldowns, startCooldown] = useCooldowns(userId, COOLDOWN_DURATION);
   const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
   const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 });
   const [checkboxes, setCheckboxes] = useState({
@@ -118,11 +118,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
           setSelectedAction(null);
           showNotification(action.successMessage);
           if (action.cooldownKey) {
-            setCooldowns(prev => ({
-              ...prev,
-              [action.cooldownKey]: { active: true, timeLeft: Math.floor(COOLDOWN_DURATION / 1000), progress: 100 },
-            }));
-            localStorage.setItem(COOLDOWN_KEYS[action.cooldownKey], JSON.stringify({ startTime: Date.now() }));
+            startCooldown(action.cooldownKey); // Используем startCooldown вместо прямой записи
           }
         } else {
           setSelectedAction(null);
@@ -150,7 +146,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
         showNotification(action.successMessage);
       });
     }
-  }, [socket, selectedAction, user, userId, currentRoom, COOLDOWN_DURATION, COOLDOWN_KEYS, showNotification]);
+  }, [socket, selectedAction, user, userId, currentRoom, COOLDOWN_DURATION, showNotification, startCooldown]);
 
   const getItemDescription = useCallback((name) => {
     const descriptions = {

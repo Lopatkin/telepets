@@ -7,17 +7,14 @@ import {
   CloseButton, ActionButton, ProgressBar, Notification, TimerDisplay
 } from '../styles/ActionsStyles';
 import { FaTimes } from 'react-icons/fa';
-import actionsConfig from './constants/actionsConfig'; // Импорт actionsConfig из отдельного файла
+import actionsConfig from './constants/actionsConfig';
 import actionHandlers from './handlers/actionHandlers';
+import useCooldowns from './hooks/useCooldowns';
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
-  const [cooldowns, setCooldowns] = useState({
-    findStick: { active: false, timeLeft: 0, progress: 100 },
-    findBerries: { active: false, timeLeft: 0, progress: 100 },
-    findMushrooms: { active: false, timeLeft: 0, progress: 100 },
-  });
+  const [cooldowns, setCooldowns] = useCooldowns(userId, COOLDOWN_DURATION);
   const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
   const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 });
   const [checkboxes, setCheckboxes] = useState({
@@ -29,65 +26,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [craftingProgress, setCraftingProgress] = useState(0);
 
   const COOLDOWN_DURATION = 10 * 1000;
-  const COOLDOWN_KEYS = useMemo(() => ({
-    findStick: `findStickCooldown_${userId}`,
-    findBerries: `findBerriesCooldown_${userId}`,
-    findMushrooms: `findMushroomsCooldown_${userId}`,
-  }), [userId]);
-
-  // Восстановление состояния кулдаунов
-  useEffect(() => {
-    Object.entries(COOLDOWN_KEYS).forEach(([key, storageKey]) => {
-      const savedCooldown = localStorage.getItem(storageKey);
-      if (savedCooldown) {
-        const { startTime } = JSON.parse(savedCooldown);
-        const elapsed = Date.now() - startTime;
-        const remaining = COOLDOWN_DURATION - elapsed;
-
-        if (remaining > 0) {
-          setCooldowns(prev => ({
-            ...prev,
-            [key]: { active: true, timeLeft: Math.ceil(remaining / 1000), progress: (remaining / COOLDOWN_DURATION) * 100 },
-          }));
-        } else {
-          localStorage.removeItem(storageKey);
-        }
-      }
-    });
-  }, [COOLDOWN_KEYS, COOLDOWN_DURATION]);
-
-  // Единый таймер для кулдаунов
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCooldowns(prev => {
-        const updated = { ...prev };
-        Object.entries(COOLDOWN_KEYS).forEach(([key, storageKey]) => {
-          if (updated[key].active && updated[key].timeLeft > 0) {
-            const savedCooldown = localStorage.getItem(storageKey);
-            if (!savedCooldown) return;
-
-            const { startTime } = JSON.parse(savedCooldown);
-            const elapsed = Date.now() - startTime;
-            const remaining = COOLDOWN_DURATION - elapsed;
-
-            if (remaining <= 0) {
-              updated[key] = { active: false, timeLeft: 0, progress: 100 };
-              localStorage.removeItem(storageKey);
-            } else {
-              updated[key] = {
-                active: true,
-                timeLeft: Math.ceil(remaining / 1000),
-                progress: (remaining / COOLDOWN_DURATION) * 100,
-              };
-            }
-          }
-        });
-        return updated;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [COOLDOWN_KEYS, COOLDOWN_DURATION]);
 
   const showNotification = useCallback((message, duration = 2000) => {
     setNotification({ show: true, message });

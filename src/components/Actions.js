@@ -491,6 +491,50 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     }
   }, [socket, selectedAction, user, userId, currentRoom, COOLDOWN_DURATION, COOLDOWN_KEYS, showNotification]);
 
+  const getItemDescription = useCallback((name) => {
+    const descriptions = {
+      'Доска': 'Материал для изготовления',
+      'Стул': 'Предмет мебели',
+      'Стол': 'Предмет мебели',
+      'Шкаф': 'Предмет мебели',
+      'Кровать': 'Предмет мебели',
+    };
+    return descriptions[name] || '';
+  }, []);
+
+  const getItemWeight = useCallback((name) => {
+    const weights = {
+      'Доска': 2,
+      'Стул': 6,
+      'Стол': 8,
+      'Шкаф': 18,
+      'Кровать': 16,
+    };
+    return weights[name] || 0;
+  }, []);
+
+  const getItemCost = useCallback((name) => {
+    const costs = {
+      'Доска': 15,
+      'Стул': 53,
+      'Стол': 75,
+      'Шкаф': 195,
+      'Кровать': 165,
+    };
+    return costs[name] || 0;
+  }, []);
+
+  const getItemEffect = useCallback((name) => {
+    const effects = {
+      'Доска': 'Начало чего-то грандиозного. Или не очень. Но точно полезного!',
+      'Стул': 'На нём можно сидеть.',
+      'Стол': 'На нём можно есть.',
+      'Шкаф': 'В него можно повесить одежду',
+      'Кровать': 'На ней можно спать.',
+    };
+    return effects[name] || '';
+  }, []);
+
   // Исправление: добавлены зависимости getItemCost, getItemDescription, getItemEffect, getItemWeight
   const handleStartClick = useCallback(() => {
     if (!canStartCrafting()) {
@@ -561,50 +605,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     getItemEffect,
     getItemWeight,
   ]);
-
-  const getItemDescription = useCallback((name) => {
-    const descriptions = {
-      'Доска': 'Материал для изготовления',
-      'Стул': 'Предмет мебели',
-      'Стол': 'Предмет мебели',
-      'Шкаф': 'Предмет мебели',
-      'Кровать': 'Предмет мебели',
-    };
-    return descriptions[name] || '';
-  }, []);
-
-  const getItemWeight = useCallback((name) => {
-    const weights = {
-      'Доска': 2,
-      'Стул': 6,
-      'Стол': 8,
-      'Шкаф': 18,
-      'Кровать': 16,
-    };
-    return weights[name] || 0;
-  }, []);
-
-  const getItemCost = useCallback((name) => {
-    const costs = {
-      'Доска': 15,
-      'Стул': 53,
-      'Стол': 75,
-      'Шкаф': 195,
-      'Кровать': 165,
-    };
-    return costs[name] || 0;
-  }, []);
-
-  const getItemEffect = useCallback((name) => {
-    const effects = {
-      'Доска': 'Начало чего-то грандиозного. Или не очень. Но точно полезного!',
-      'Стул': 'На нём можно сидеть.',
-      'Стол': 'На нём можно есть.',
-      'Шкаф': 'В него можно повесить одежду',
-      'Кровать': 'На ней можно спать.',
-    };
-    return effects[name] || '';
-  }, []);
 
   // Обновлённая логика определения доступных действий
   const availableActions = useMemo(() => {

@@ -10,7 +10,7 @@ import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from './utils/WorkshopCrafting';
 
-const COOLDOWN_DURATION = 10 * 1000;
+const COOLDOWN_DURATION = 10 * 100;
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);

@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema({
   animalType: String,
   name: String,
   credits: { type: Number, default: 0, min: 0 }, // Переносим кредиты сюда
-  lastRoom: { type: String, default: 'Полигон утилизации' },
+  lastRoom: { type: String, default: 'Автобусная остановка' },
   homeless: { type: Boolean, default: true },
   onLeash: { type: Boolean, default: false },
   lastActivity: { type: Date, default: Date.now },

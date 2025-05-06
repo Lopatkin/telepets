@@ -168,6 +168,7 @@ const actionsConfig = {
             { name: 'Стол', materials: { sticks: 4, boards: 2 }, clicksRequired: 12 },
             { name: 'Шкаф', materials: { sticks: 2, boards: 8 }, clicksRequired: 20 },
             { name: 'Кровать', materials: { sticks: 4, boards: 6 }, clicksRequired: 20 },
+            { name: 'Удочка', materials: { sticks: 1, boards: 0 }, clicksRequired: 5 },
           ],
         },
       ],

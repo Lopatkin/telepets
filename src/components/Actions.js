@@ -8,6 +8,7 @@ import {
 } from '../styles/ActionsStyles';
 import { FaTimes } from 'react-icons/fa';
 import actionsConfig from './constants/actionsConfig'; // Импорт actionsConfig из отдельного файла
+import actionHandlers from './handlers/actionHandlers';
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
@@ -162,80 +163,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       return;
     }
 
-    const actions = {
-      'Найти палку': {
-        item: {
-          name: 'Палка',
-          description: 'Многофункциональная вещь',
-          rarity: 'Обычный',
-          weight: 1,
-          cost: 5,
-          effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
-        },
-        successMessage: 'Вы нашли палку!',
-        cooldownKey: 'findStick',
-      },
-      'Найти ягоды': {
-        item: {
-          name: 'Лесные ягоды',
-          description: 'Вкусные и свежие',
-          rarity: 'Обычный',
-          weight: 0.1,
-          cost: 10,
-          effect: 'Слегка утоляют голод и повышают настроение',
-        },
-        successMessage: 'Вы нашли лесные ягоды!',
-        cooldownKey: 'findBerries',
-      },
-      'Найти грибы': {
-        item: {
-          name: 'Лесные грибы',
-          description: 'Вкусные и полезные, если не ядовитые',
-          rarity: 'Обычный',
-          weight: 0.3,
-          cost: 10,
-          effect: 'Слегка утоляют голод и повышают настроение, если правильно приготовить',
-        },
-        successMessage: 'Вы нашли лесные грибы!',
-        cooldownKey: 'findMushrooms',
-      },
-      'Утилизировать мусор': {
-        action: 'utilizeTrash',
-        successMessage: 'Мусор утилизирован!',
-      },
-      'Попросить еды': {
-        systemMessage: `${user.name} хочет есть`,
-        successMessage: 'Запрос еды отправлен хозяину!',
-        requiresOwner: true,
-      },
-      'Помяукать': {
-        systemMessage: `${user.name} мяукает`,
-        successMessage: 'Вы помяукали!',
-      },
-      'Погавкать': {
-        systemMessage: `${user.name} гавкает`,
-        successMessage: 'Вы погавкали!',
-      },
-      'Поспать': {
-        systemMessage: `${user.name} лёг спать`,
-        successMessage: 'Вы уютно заснули!',
-      },
-      'Попросить поиграть': {
-        systemMessage: `${user.name} хочет поиграть`,
-        successMessage: 'Запрос на игру отправлен хозяину!',
-        requiresOwner: true,
-      },
-      'Поиграть с другими животными': {
-        systemMessage: `${user.name} играет с другими животными`,
-        successMessage: 'Вы весело поиграли!',
-      },
-      'Поесть из миски': {
-        systemMessage: `${user.name} ест из миски`,
-        successMessage: 'Вы поели!',
-      },
-    };
-
-    const action = actions[selectedAction.title];
+    const action = actionHandlers[selectedAction.title];
     if (!action) {
       showNotification('Действие не поддерживается');
       return;
@@ -276,7 +204,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       });
     } else if (action.systemMessage) {
       socket.emit('sendSystemMessage', {
-        text: action.systemMessage,
+        text: typeof action.systemMessage === 'function' ? action.systemMessage(user) : action.systemMessage,
         room: currentRoom,
         timestamp: new Date().toISOString(),
       }, () => {

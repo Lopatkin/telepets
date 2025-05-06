@@ -34,8 +34,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
 
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);
-    setClickCount(0);
-    setCraftingProgress(0);
   }, []);
 
   const handleButtonClick = useCallback(() => {

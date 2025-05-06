@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'; // Добавляем импорт useMemo
+import { COOLDOWN_DURATION_CONST } from '../constants/settings';
 
 // Кастомный хук для управления кулдаунами
-const useCooldowns = (userId, COOLDOWN_DURATION = 10 * 1000) => {
+const useCooldowns = (userId, COOLDOWN_DURATION = COOLDOWN_DURATION_CONST) => {
     const [cooldowns, setCooldowns] = useState({
         findStick: { active: false, timeLeft: 0, progress: 100 },
         findBerries: { active: false, timeLeft: 0, progress: 100 },

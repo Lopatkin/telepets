@@ -9,14 +9,14 @@ import actionsConfig from './constants/actionsConfig';
 import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from './utils/WorkshopCrafting';
-import { COOLDOWN_DURATION, NOTIFICATION_DURATION } from './constants/settings';
+import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
-  const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION);
+  const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
 
-  const showNotification = useCallback((message, duration = NOTIFICATION_DURATION) => {
+  const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
     setNotification({ show: true, message });
     setTimeout(() => setNotification({ show: false, message: '' }), duration);
   }, []);

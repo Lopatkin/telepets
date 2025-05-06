@@ -1,4 +1,4 @@
-export const COOLDOWN_DURATION = 10 * 100;
-export const NOTIFICATION_DURATION = 2000;
+export const COOLDOWN_DURATION_CONST = 10 * 100;
+export const NOTIFICATION_DURATION_CONST = 2000;
 
 

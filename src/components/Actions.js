@@ -162,7 +162,7 @@ const getAnimalActions = (animalType, isShelter) => {
       title: 'Попросить еды',
       description: 'Попросить хозяина покормить вас',
       modalTitle: 'Попросить еды',
-      modalDescription: 'Вы просите хозяина дать вам еды. Это отправит уведомление вашему владельцу.',
+      modalDescription: 'Вы просите хозяина дать вам еды.',
       buttonText: 'Попросить',
     },
     {
@@ -405,7 +405,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
         successMessage: 'Вы уютно заснули!',
       },
       'Попросить поиграть': {
-        systemMessage: `${user.name} хочет поиграть с вами`,
+        systemMessage: `${user.name} хочет поиграть`,
         successMessage: 'Запрос на игру отправлен хозяину!',
         requiresOwner: true,
       },

@@ -8,189 +8,210 @@ import {
 } from '../styles/ActionsStyles';
 import { FaTimes } from 'react-icons/fa';
 
-// Объединяем действия в единый объект
+// Обновлённая структура actionsConfig с разделением по локациям и типам игроков
 const actionsConfig = {
-  home: [
-    {
-      id: 1,
-      title: 'Поспать',
-      description: 'Вы ложитесь спать',
-      modalTitle: 'Поспать',
-      modalDescription: 'Вы ложитесь спать, чтобы восстановить силы. В час восстанавливается около 10% Здоровья',
-      buttonText: 'Заснуть',
-    },
-    {
-      id: 2,
-      title: 'Поесть',
-      description: 'Время подкрепиться!',
-      modalTitle: 'Поесть',
-      modalDescription: 'Вы чувствуете голод и решаете немного перекусить. За один приём пищи восстанавливается 30% сытости',
-      buttonText: 'Поесть',
-    },
-    {
-      id: 3,
-      title: 'Тренировка',
-      description: 'Поддержание физической формы',
-      modalTitle: 'Тренировка',
-      modalDescription: 'Вы решаете потренироваться, чтобы держать своё тело в тонусе. Восстанавливает здоровье и улучшает настроение, но также пробуждает аппетит',
-      buttonText: 'Потренить',
-    },
-    {
-      id: 4,
-      title: 'Почитать',
-      description: 'Вы читаете книгу',
-      modalTitle: 'Почитать',
-      modalDescription: 'Вы решаете отдохнуть, полежать и почитать книгу. Пусть дела подождут. Повышает настроение',
-      buttonText: 'Почитать',
-    },
-    {
-      id: 5,
-      title: 'Прибраться',
-      description: 'Вы убираетесь в доме',
-      modalTitle: 'Прибраться',
-      modalDescription: 'Вы решаете навести порядок в доме',
-      buttonText: 'Прибраться',
-    },
-  ],
-  busStop: [
-    {
-      id: 6,
-      title: 'Присесть',
-      description: 'Присесть на скамейку',
-      modalTitle: 'Присесть',
-      modalDescription: 'Вы садитесь на скамейку в ожидании автобуса.',
-      buttonText: 'Сесть',
-    },
-    {
-      id: 7,
-      title: 'Почитать объявления',
-      description: 'На остановке много расклеенных объявлений.',
-      modalTitle: 'Почитать',
-      modalDescription: 'Пока ждёте транспорт Вы решаете почитать объявления, расклеенные на остановке. Вдруг что-то полезное или интересное?',
-      buttonText: 'Почитать',
-    },
-    {
-      id: 8,
-      title: 'Закурить',
-      description: 'Хоть это и вредно',
-      modalTitle: 'Закурить',
-      modalDescription: 'Как известно, если закурить сигарету, то автобус тут же приедет. Проверите?',
-      buttonText: 'Закурить',
-    },
-  ],
-  forest: [
-    {
-      id: 9,
-      title: 'Найти палку',
-      description: 'Палка - очень полезный предмет',
-      modalTitle: 'Найти палку',
-      modalDescription: 'Вы ходите по лесу и ищете палку. Палка - полезный и многофункциональный предмет, может пригодиться в самых разных жизненных ситуациях.',
-      buttonText: 'Подобрать',
-      cooldownKey: 'findStick',
-    },
-    {
-      id: 16,
-      title: 'Найти ягоды',
-      description: 'Вкусные и свежие',
-      modalTitle: 'Найти ягоды',
-      modalDescription: 'Вы ходите по лесу и ищете ягоды. Ежевика, брусника, черника, земляника. Съешьте сами или продайте.',
-      buttonText: 'Найти',
-      cooldownKey: 'findBerries',
-    },
-    {
-      id: 17,
-      title: 'Найти грибы',
-      description: 'Выбирайте только съедобные',
-      modalTitle: 'Найти грибы',
-      modalDescription: 'Вы ходите по лесу и ищете грибы. Белый гриб, подберёзовик, лисички, опята. Съешьте сами или продайте.',
-      buttonText: 'Найти',
-      cooldownKey: 'findMushrooms',
-    },
-  ],
-  disposal: [
-    {
-      id: 10,
-      title: 'Утилизировать мусор',
-      description: 'Избавьтесь от ненужного хлама',
-      modalTitle: 'Утилизировать мусор',
-      modalDescription: 'Вы сдаёте мусор на переработку. Это очищает ваш инвентарь от предметов с названием "Мусор".',
-      buttonText: 'Утилизировать',
-    },
-  ],
-  workshop: [
-    {
-      id: 11,
-      title: 'Столярная мастерская',
-      description: 'Создавайте деревянные изделия',
-      modalTitle: 'Столярная мастерская',
-      modalDescription: 'Используйте инструменты, чтобы смастерить что-то полезное',
-      buttonText: 'Создать',
-      craftableItems: [
-        { name: 'Доска', materials: { sticks: 2, boards: 0 }, clicksRequired: 4 },
-        { name: 'Стул', materials: { sticks: 4, boards: 1 }, clicksRequired: 10 },
-        { name: 'Стол', materials: { sticks: 4, boards: 2 }, clicksRequired: 12 },
-        { name: 'Шкаф', materials: { sticks: 2, boards: 8 }, clicksRequired: 20 },
-        { name: 'Кровать', materials: { sticks: 4, boards: 6 }, clicksRequired: 20 },
-      ],
-    },
-  ],
-  shelterAnimal: [
-    {
-      id: 18,
-      title: 'Поиграть с другими животными',
-      description: 'Весело провести время в приюте',
-      modalTitle: 'Поиграть',
-      modalDescription: 'Вы бегаете и играете с другими животными в приюте. Это поднимает настроение!',
-      buttonText: 'Играть',
-    },
-    {
-      id: 19,
-      title: 'Поесть из миски',
-      description: 'Поесть корма в приюте',
-      modalTitle: 'Поесть',
-      modalDescription: 'Вы находите миску с кормом и решаете поесть. Это утоляет голод.',
-      buttonText: 'Поесть',
-    },
-  ],
-};
-
-// Функция для получения действий для животных
-const getAnimalActions = (animalType, isShelter) => {
-  const baseActions = [
-    {
-      id: 12,
-      title: 'Попросить еды',
-      description: 'Попросить хозяина покормить вас',
-      modalTitle: 'Попросить еды',
-      modalDescription: 'Вы просите хозяина дать вам еды.',
-      buttonText: 'Попросить',
-    },
-    {
-      id: 13,
-      title: animalType === 'Собака' ? 'Погавкать' : 'Помяукать',
-      description: animalType === 'Собака' ? 'Громко гавкнуть' : 'Мяукнуть, чтобы привлечь внимание',
-      modalTitle: animalType === 'Собака' ? 'Погавкать' : 'Помяукать',
-      modalDescription: animalType === 'Собака' ? 'Вы громко гавкаете, чтобы привлечь внимание хозяина.' : 'Вы мяукаете, чтобы хозяин обратил на вас внимание.',
-      buttonText: animalType === 'Собака' ? 'Гав!' : 'Мяу!',
-    },
-    {
-      id: 14,
-      title: 'Поспать',
-      description: 'Улечься и поспать',
-      modalTitle: 'Поспать',
-      modalDescription: 'Вы находите уютное место и засыпаете, чтобы восстановить силы.',
-      buttonText: 'Заснуть',
-    },
-    {
-      id: 15,
-      title: 'Попросить поиграть',
-      description: 'Попросить хозяина поиграть с вами',
-      modalTitle: 'Попросить поиграть',
-      modalDescription: 'Вы просите хозяина поиграть с вами. Это отправит уведомление вашему владельцу.',
-      buttonText: 'Попросить',
-    },
-  ];
-  return isShelter ? [...actionsConfig.shelterAnimal, ...baseActions] : baseActions;
+  home: {
+    humanActions: [
+      {
+        id: 1,
+        title: 'Поспать',
+        description: 'Вы ложитесь спать',
+        modalTitle: 'Поспать',
+        modalDescription: 'Вы ложитесь спать, чтобы восстановить силы. В час восстанавливается около 10% Здоровья',
+        buttonText: 'Заснуть',
+      },
+      {
+        id: 2,
+        title: 'Поесть',
+        description: 'Время подкрепиться!',
+        modalTitle: 'Поесть',
+        modalDescription: 'Вы чувствуете голод и решаете немного перекусить. За один приём пищи восстанавливается 30% сытости',
+        buttonText: 'Поесть',
+      },
+      {
+        id: 3,
+        title: 'Тренировка',
+        description: 'Поддержание физической формы',
+        modalTitle: 'Тренировка',
+        modalDescription: 'Вы решаете потренироваться, чтобы держать своё тело в тонусе. Восстанавливает здоровье и улучшает настроение, но также пробуждает аппетит',
+        buttonText: 'Потренить',
+      },
+      {
+        id: 4,
+        title: 'Почитать',
+        description: 'Вы читаете книгу',
+        modalTitle: 'Почитать',
+        modalDescription: 'Вы решаете отдохнуть, полежать и почитать книгу. Пусть дела подождут. Повышает настроение',
+        buttonText: 'Почитать',
+      },
+      {
+        id: 5,
+        title: 'Прибраться',
+        description: 'Вы убираетесь в доме',
+        modalTitle: 'Прибраться',
+        modalDescription: 'Вы решаете навести порядок в доме',
+        buttonText: 'Прибраться',
+      },
+    ],
+    animalActions: [
+      {
+        id: 12,
+        title: 'Попросить еды',
+        description: 'Попросить хозяина покормить вас',
+        modalTitle: 'Попросить еды',
+        modalDescription: 'Вы просите хозяина дать вам еды.',
+        buttonText: 'Попросить',
+      },
+      {
+        id: 13,
+        title: 'Погавкать', // Будет динамически изменяться в availableActions
+        description: 'Громко гавкнуть',
+        modalTitle: 'Погавкать',
+        modalDescription: 'Вы громко гавкаете, чтобы привлечь внимание хозяина.',
+        buttonText: 'Гав!',
+        animalSpecific: true, // Признак для динамической обработки
+      },
+      {
+        id: 14,
+        title: 'Поспать',
+        description: 'Улечься и поспать',
+        modalTitle: 'Поспать',
+        modalDescription: 'Вы находите уютное место и засыпаете, чтобы восстановить силы.',
+        buttonText: 'Заснуть',
+      },
+      {
+        id: 15,
+        title: 'Попросить поиграть',
+        description: 'Попросить хозяина поиграть с вами',
+        modalTitle: 'Попросить поиграть',
+        modalDescription: 'Вы просите хозяина поиграть с вами. Это отправит уведомление вашему владельцу.',
+        buttonText: 'Попросить',
+      },
+    ],
+  },
+  busStop: {
+    humanActions: [
+      {
+        id: 6,
+        title: 'Присесть',
+        description: 'Присесть на скамейку',
+        modalTitle: 'Присесть',
+        modalDescription: 'Вы садитесь на скамейку в ожидании автобуса.',
+        buttonText: 'Сесть',
+      },
+      {
+        id: 7,
+        title: 'Почитать объявления',
+        description: 'На остановке много расклеенных объявлений.',
+        modalTitle: 'Почитать',
+        modalDescription: 'Пока ждёте транспорт Вы решаете почитать объявления, расклеенные на остановке. Вдруг что-то полезное или интересное?',
+        buttonText: 'Почитать',
+      },
+      {
+        id: 8,
+        title: 'Закурить',
+        description: 'Хоть это и вредно',
+        modalTitle: 'Закурить',
+        modalDescription: 'Как известно, если закурить сигарету, то автобус тут же приедет. Проверите?',
+        buttonText: 'Закурить',
+      },
+    ],
+    animalActions: [],
+  },
+  forest: {
+    humanActions: [
+      {
+        id: 9,
+        title: 'Найти палку',
+        description: 'Палка - очень полезный предмет',
+        modalTitle: 'Найти палку',
+        modalDescription: 'Вы ходите по лесу и ищете палку. Палка - полезный и многофункциональный предмет, может пригодиться в самых разных жизненных ситуациях.',
+        buttonText: 'Подобрать',
+        cooldownKey: 'findStick',
+      },
+      {
+        id: 16,
+        title: 'Найти ягоды',
+        description: 'Вкусные и свежие',
+        modalTitle: 'Найти ягоды',
+        modalDescription: 'Вы ходите по лесу и ищете ягоды. Ежевика, брусника, черника, земляника. Съешьте сами или продайте.',
+        buttonText: 'Найти',
+        cooldownKey: 'findBerries',
+      },
+      {
+        id: 17,
+        title: 'Найти грибы',
+        description: 'Выбирайте только съедобные',
+        modalTitle: 'Найти грибы',
+        modalDescription: 'Вы ходите по лесу и ищете грибы. Белый гриб, подберёзовик, лисички, опята. Съешьте сами или продайте.',
+        buttonText: 'Найти',
+        cooldownKey: 'findMushrooms',
+      },
+    ],
+    animalActions: [],
+  },
+  disposal: {
+    humanActions: [
+      {
+        id: 10,
+        title: 'Утилизировать мусор',
+        description: 'Избавьтесь от ненужного хлама',
+        modalTitle: 'Утилизировать мусор',
+        modalDescription: 'Вы сдаёте мусор на переработку. Это очищает ваш инвентарь от предметов с названием "Мусор".',
+        buttonText: 'Утилизировать',
+      },
+    ],
+    animalActions: [],
+  },
+  workshop: {
+    humanActions: [
+      {
+        id: 11,
+        title: 'Столярная мастерская',
+        description: 'Создавайте деревянные изделия',
+        modalTitle: 'Столярная мастерская',
+        modalDescription: 'Используйте инструменты, чтобы смастерить что-то полезное',
+        buttonText: 'Создать',
+        craftableItems: [
+          { name: 'Доска', materials: { sticks: 2, boards: 0 }, clicksRequired: 4 },
+          { name: 'Стул', materials: { sticks: 4, boards: 1 }, clicksRequired: 10 },
+          { name: 'Стол', materials: { sticks: 4, boards: 2 }, clicksRequired: 12 },
+          { name: 'Шкаф', materials: { sticks: 2, boards: 8 }, clicksRequired: 20 },
+          { name: 'Кровать', materials: { sticks: 4, boards: 6 }, clicksRequired: 20 },
+        ],
+      },
+    ],
+    animalActions: [],
+  },
+  shelter: {
+    humanActions: [],
+    animalActions: [
+      {
+        id: 18,
+        title: 'Поиграть с другими животными',
+        description: 'Весело провести время в приюте',
+        modalTitle: 'Поиграть',
+        modalDescription: 'Вы бегаете и играете с другими животными в приюте. Это поднимает настроение!',
+        buttonText: 'Играть',
+      },
+      {
+        id: 19,
+        title: 'Поесть из миски',
+        description: 'Поесть корма в приюте',
+        modalTitle: 'Поесть',
+        modalDescription: 'Вы находите миску с кормом и решаете поесть. Это утоляет голод.',
+        buttonText: 'Поесть',
+      },
+      {
+        id: 14,
+        title: 'Поспать',
+        description: 'Улечься и поспать',
+        modalTitle: 'Поспать',
+        modalDescription: 'Вы находите уютное место и засыпаете, чтобы восстановить силы.',
+        buttonText: 'Заснуть',
+      },
+    ],
+  },
 };
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
@@ -572,24 +593,47 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     return effects[name] || '';
   }, []);
 
-  // Определяем доступные действия
+  // Обновлённая логика определения доступных действий
   const availableActions = useMemo(() => {
     if (!user || !currentRoom) return [];
-    if (user.isHuman) {
-      if (currentRoom.startsWith(`myhome_${userId}`)) return actionsConfig.home;
-      if (currentRoom === 'Автобусная остановка') return actionsConfig.busStop;
-      if (currentRoom === 'Лес') return actionsConfig.forest;
-      if (currentRoom === 'Полигон утилизации') return actionsConfig.disposal;
-      if (currentRoom === 'Мастерская') return actionsConfig.workshop;
-    } else {
-      if (currentRoom === 'Приют для животных "Кошкин дом"') {
-        return getAnimalActions(user.animalType, true);
-      }
-      if (currentRoom.startsWith(`myhome_${user.owner}`)) {
-        return getAnimalActions(user.animalType, false);
-      }
+
+    // Маппинг комнат на ключи actionsConfig
+    const roomMap = {
+      home: currentRoom.startsWith(`myhome_${user.isHuman ? userId : user.owner}`),
+      busStop: currentRoom === 'Автобусная остановка',
+      forest: currentRoom === 'Лес',
+      disposal: currentRoom === 'Полигон утилизации',
+      workshop: currentRoom === 'Мастерская',
+      shelter: currentRoom === 'Приют для животных "Кошкин дом"',
+    };
+
+    // Находим подходящую локацию
+    const locationKey = Object.keys(roomMap).find(key => roomMap[key]);
+    if (!locationKey || !actionsConfig[locationKey]) return [];
+
+    // Выбираем действия в зависимости от типа игрока
+    const actions = user.isHuman
+      ? actionsConfig[locationKey].humanActions
+      : actionsConfig[locationKey].animalActions;
+
+    // Для животных динамически подстраиваем действие "Погавкать"/"Помяукать"
+    if (!user.isHuman) {
+      return actions.map(action => {
+        if (action.animalSpecific && action.title === 'Погавкать' && user.animalType === 'Кот') {
+          return {
+            ...action,
+            title: 'Помяукать',
+            modalTitle: 'Помяукать',
+            description: 'Мяукнуть, чтобы привлечь внимание',
+            modalDescription: 'Вы мяукаете, чтобы хозяин обратил на вас внимание.',
+            buttonText: 'Мяу!',
+          };
+        }
+        return action;
+      });
     }
-    return [];
+
+    return actions;
   }, [user, currentRoom, userId]);
 
   const getMaterialsText = useCallback(() => {

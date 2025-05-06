@@ -491,6 +491,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     }
   }, [socket, selectedAction, user, userId, currentRoom, COOLDOWN_DURATION, COOLDOWN_KEYS, showNotification]);
 
+  // Исправление: добавлены зависимости getItemCost, getItemDescription, getItemEffect, getItemWeight
   const handleStartClick = useCallback(() => {
     if (!canStartCrafting()) {
       showNotification('Не все условия выполнены!');
@@ -547,7 +548,19 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
         showNotification(response?.message || 'Ошибка при создании предмета');
       }
     });
-  }, [canStartCrafting, selectedAction, selectedCraftItem, clickCount, socket, userId, showNotification]);
+  }, [
+    canStartCrafting,
+    selectedAction,
+    selectedCraftItem,
+    clickCount,
+    socket,
+    userId,
+    showNotification,
+    getItemCost,
+    getItemDescription,
+    getItemEffect,
+    getItemWeight,
+  ]);
 
   const getItemDescription = useCallback((name) => {
     const descriptions = {

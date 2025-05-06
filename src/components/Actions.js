@@ -16,7 +16,8 @@ const COOLDOWN_DURATION = 10 * 1000;
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
-  const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION); // Убираем неиспользуемый setCooldowns  const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
+  const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION); // Убираем неиспользуемый setCooldowns  
+  const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
   const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 });
   const [checkboxes, setCheckboxes] = useState({
     prepareMachine: false,

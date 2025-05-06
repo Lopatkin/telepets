@@ -1,0 +1,4 @@
+export const COOLDOWN_DURATION = 10 * 100;
+export const NOTIFICATION_DURATION = 2000;
+
+

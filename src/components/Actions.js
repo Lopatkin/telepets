@@ -45,7 +45,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       setIsLoadingItems(false);
     }
     setSelectedAction(action);
-  }, [cooldowns, showNotification, socket, user]);
+  }, [cooldowns, showNotification, socket, user, userId]);
 
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);

@@ -173,7 +173,7 @@ function App() {
         });
       });
 
-      
+      socketRef.current.on('items', ({ owner, items }) => handleItemsUpdate(items)); // Явная привязка
       socketRef.current.on('leashStatus', ({ onLeash }) => {
         setUser((prev) => ({ ...prev, onLeash }));
       });

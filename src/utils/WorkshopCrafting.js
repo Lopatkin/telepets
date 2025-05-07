@@ -1,10 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
   SliderContainer, SliderLabel, Slider, SliderValue, Select, MaterialsText,
 } from '../styles/ActionsStyles';
+import { ClipLoader } from 'react-spinners';
 
-// Компонент для логики крафта в Столярной мастерской
 const WorkshopCrafting = ({
   theme,
   selectedAction,
@@ -23,6 +23,23 @@ const WorkshopCrafting = ({
   });
   const [clickCount, setClickCount] = useState(0);
   const [craftingProgress, setCraftingProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Запрашиваем предметы при монтировании компонента
+  useEffect(() => {
+    if (socket && userId) {
+      console.log('Requesting items on mount for user:', `user_${userId}`);
+      socket.emit('getItems', { owner: `user_${userId}` });
+    }
+  }, [socket, userId]);
+
+  // Отслеживаем получение personalItems
+  useEffect(() => {
+    if (personalItems.length >= 0) {
+      console.log('personalItems updated:', personalItems); // Для отладки
+      setIsLoading(false);
+    }
+  }, [personalItems]);
 
   const handleCraftItemChange = useCallback((e) => {
     setSelectedCraftItem(e.target.value);
@@ -41,7 +58,10 @@ const WorkshopCrafting = ({
   }, []);
 
   const hasEnoughMaterials = useCallback(() => {
-    if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return false;
+    if (!selectedAction || selectedAction.title !== 'Столярная мастерская') {
+      console.log('Invalid action or title');
+      return false;
+    }
     const item = selectedAction.craftableItems.find((i) => i.name === selectedCraftItem);
     const requiredSticks = item.materials.sticks;
     const requiredBoards = item.materials.boards;
@@ -49,6 +69,7 @@ const WorkshopCrafting = ({
     const stickCount = personalItems.filter((i) => i.name === 'Палка').length;
     const boardCount = personalItems.filter((i) => i.name === 'Доска').length;
 
+    console.log('Checking materials:', { stickCount, requiredSticks, boardCount, requiredBoards }); // Для отладки
     return stickCount >= requiredSticks && boardCount >= requiredBoards;
   }, [selectedAction, selectedCraftItem, personalItems]);
 
@@ -62,8 +83,9 @@ const WorkshopCrafting = ({
     const checkboxesChecked = checkboxes.prepareMachine && checkboxes.measureAndMark && checkboxes.secureMaterials;
     const materialsAvailable = hasEnoughMaterials();
 
-    return slidersCorrect && checkboxesChecked && materialsAvailable;
-  }, [selectedAction, selectedCraftItem, sliderValues, checkboxes, hasEnoughMaterials]);
+    console.log('Can start crafting:', { slidersCorrect, checkboxesChecked, materialsAvailable, isLoading }); // Для отладки
+    return slidersCorrect && checkboxesChecked && materialsAvailable && !isLoading;
+  }, [selectedAction, selectedCraftItem, sliderValues, checkboxes, hasEnoughMaterials, isLoading]);
 
   const getMaterialsText = useCallback(() => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return '';
@@ -216,26 +238,34 @@ const WorkshopCrafting = ({
 
   return (
     <>
-      <Select
-        value={selectedCraftItem}
-        onChange={handleCraftItemChange}
-        theme={theme}
-      >
-        {selectedAction.craftableItems.map((item) => (
-          <option key={item.name} value={item.name}>
-            {item.name}
-          </option>
-        ))}
-      </Select>
-      <MaterialsText theme={theme}>{getMaterialsText()}</MaterialsText>
-      {renderSliders()}
-      {renderCheckboxes()}
-      <ProgressBarContainer theme={theme}>
-        <Progress progress={craftingProgress} />
-      </ProgressBarContainer>
-      <StartButton onClick={handleStartClick} disabled={!canStartCrafting()}>
-        СТАРТ
-      </StartButton>
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+          <ClipLoader color="#007AFF" size={30} />
+        </div>
+      ) : (
+        <>
+          <Select
+            value={selectedCraftItem}
+            onChange={handleCraftItemChange}
+            theme={theme}
+          >
+            {selectedAction.craftableItems.map((item) => (
+              <option key={item.name} value={item.name}>
+                {item.name}
+              </option>
+            ))}
+          </Select>
+          <MaterialsText theme={theme}>{getMaterialsText()}</MaterialsText>
+          {renderSliders()}
+          {renderCheckboxes()}
+          <ProgressBarContainer theme={theme}>
+            <Progress progress={craftingProgress} />
+          </ProgressBarContainer>
+          <StartButton onClick={handleStartClick} disabled={!canStartCrafting()}>
+            СТАРТ
+          </StartButton>
+        </>
+      )}
     </>
   );
 };

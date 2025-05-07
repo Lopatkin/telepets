@@ -13,6 +13,7 @@ import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constant
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
+  const [isLoadingItems, setIsLoadingItems] = useState(false); // Новое состояние для загрузки
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
 
@@ -21,16 +22,19 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     setTimeout(() => setNotification({ show: false, message: '' }), duration);
   }, []);
 
-  const handleActionClick = useCallback((action) => {
+  const handleActionClick = useCallback(async (action) => {
     if (action.cooldownKey && cooldowns[action.cooldownKey].active) {
       showNotification('Действие недоступно, подождите');
       return;
     }
     if (action.title === 'Столярная мастерская' && socket) {
-      socket.emit('getItems', { owner: `user_${userId}` }); // Запрашиваем актуальные предметы
+      setIsLoadingItems(true);
+      await new Promise((resolve) => socket.emit('getItems', { owner: `user_${userId}` }, resolve));
+      setIsLoadingItems(false);
     }
     setSelectedAction(action);
   }, [cooldowns, showNotification, socket, userId]);
+
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);
   }, []);
@@ -165,7 +169,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
           )}
         </ActionGrid>
       </ContentContainer>
-      {selectedAction && (
+      {selectedAction && !isLoadingItems && (
         <ModalOverlay onClick={handleCloseModal}>
           <ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
             <CloseButton theme={theme} onClick={handleCloseModal}><FaTimes /></CloseButton>

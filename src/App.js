@@ -69,6 +69,7 @@ function App() {
 
   const handleItemsUpdate = (items) => {
     console.log('Updating personalItems:', items); // Отладка
+    console.log('Owner filter:', `user_${user?.userId}`); // Отладка
     setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
   };
 
@@ -172,6 +173,7 @@ function App() {
         });
       });
 
+      
       socketRef.current.on('leashStatus', ({ onLeash }) => {
         setUser((prev) => ({ ...prev, onLeash }));
       });

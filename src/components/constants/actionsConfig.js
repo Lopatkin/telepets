@@ -234,6 +234,7 @@ const actionsConfig = {
             effect: 'Ожидание приятного.',
             rarity: 'Обычный',
           },
+          
         ],
       },
     ],

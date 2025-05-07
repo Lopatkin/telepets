@@ -26,9 +26,11 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       showNotification('Действие недоступно, подождите');
       return;
     }
+    if (action.title === 'Столярная мастерская' && socket) {
+      socket.emit('getItems', { owner: `user_${userId}` }); // Запрашиваем актуальные предметы
+    }
     setSelectedAction(action);
-  }, [cooldowns, showNotification]);
-
+  }, [cooldowns, showNotification, socket, userId]);
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);
   }, []);

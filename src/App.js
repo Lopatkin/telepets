@@ -68,6 +68,7 @@ function App() {
   };
 
   const handleItemsUpdate = (items) => {
+    console.log('Updating personalItems:', items); // Отладка
     setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
   };
 

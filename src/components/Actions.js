@@ -31,7 +31,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     if (action.title === 'Столярная мастерская' && socket && userId) {
       socket.emit('getItems', { owner: `user_${userId}` });
     }
-  }, [cooldowns, showNotification]);
+  }, [cooldowns, showNotification, socket, userId]);
 
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);

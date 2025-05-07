@@ -49,9 +49,6 @@ const WorkshopCrafting = ({
     const stickCount = personalItems.filter((i) => i.name === 'Палка').length;
     const boardCount = personalItems.filter((i) => i.name === 'Доска').length;
 
-    console.log('Checking materials:', { stickCount, requiredSticks, boardCount, requiredBoards }); // Отладка
-    console.log('Current personalItems:', personalItems); // Отладка
-
     return stickCount >= requiredSticks && boardCount >= requiredBoards;
   }, [selectedAction, selectedCraftItem, personalItems]);
 

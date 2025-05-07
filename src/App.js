@@ -67,21 +67,7 @@ function App() {
     setIsActionModalOpen(false);
   };
 
-  const handleItemsUpdate = (items, owner) => {
-    console.log('handleItemsUpdate called with items:', items, 'owner:', owner); // Отладка
-    if (!user?.userId) {
-      console.log('userId is undefined, attempting to use owner:', owner); // Отладка
-      const inferredUserId = owner?.startsWith('user_') ? owner.replace('user_', '') : null;
-      if (inferredUserId && inferredUserId === socketRef.current?.userData?.userId) {
-        console.log('Using inferred userId:', inferredUserId); // Отладка
-        setPersonalItems(items.filter(item => item.owner === owner));
-      } else {
-        console.log('Skipping personalItems update: no valid userId or owner'); // Отладка
-        return;
-      }
-      return;
-    }
-    console.log('Applying owner filter:', `user_${user.userId}`); // Отладка
+  const handleItemsUpdate = (items) => {
     setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
   };
 
@@ -185,7 +171,6 @@ function App() {
         });
       });
 
-      socketRef.current.on('items', ({ owner, items }) => handleItemsUpdate(items, owner)); // Передаём owner
       socketRef.current.on('leashStatus', ({ onLeash }) => {
         setUser((prev) => ({ ...prev, onLeash }));
       });

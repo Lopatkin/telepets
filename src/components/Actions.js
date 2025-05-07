@@ -13,7 +13,6 @@ import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constant
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
-  const [isLoadingItems, setIsLoadingItems] = useState(false); // Новое состояние для загрузки
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
 
@@ -22,30 +21,13 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     setTimeout(() => setNotification({ show: false, message: '' }), duration);
   }, []);
 
-  const handleActionClick = useCallback(async (action) => {
+  const handleActionClick = useCallback((action) => {
     if (action.cooldownKey && cooldowns[action.cooldownKey].active) {
       showNotification('Действие недоступно, подождите');
       return;
     }
-    if (action.title === 'Столярная мастерская' && socket && user?.userId) {
-      console.log('Requesting items for userId:', userId); // Отладка
-      setIsLoadingItems(true);
-      await new Promise((resolve, reject) => {
-        socket.emit('getItems', { owner: `user_${userId}` }, (response) => {
-          console.log('Received items response:', response); // Отладка
-          resolve(response);
-        });
-        // Таймаут на случай, если сервер не отвечает
-        setTimeout(() => {
-          setIsLoadingItems(false);
-          showNotification('Ошибка: не удалось загрузить инвентарь');
-          reject(new Error('Timeout waiting for items response'));
-        }, 5000);
-      });
-      setIsLoadingItems(false);
-    }
     setSelectedAction(action);
-  }, [cooldowns, showNotification, socket, user, userId]);
+  }, [cooldowns, showNotification]);
 
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);
@@ -181,7 +163,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
           )}
         </ActionGrid>
       </ContentContainer>
-      {selectedAction && !isLoadingItems && (
+      {selectedAction && (
         <ModalOverlay onClick={handleCloseModal}>
           <ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
             <CloseButton theme={theme} onClick={handleCloseModal}><FaTimes /></CloseButton>

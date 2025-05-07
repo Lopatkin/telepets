@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import {
   ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
   SliderContainer, SliderLabel, Slider, SliderValue, Select, MaterialsText,
-} from '../../styles/ActionsStyles';
+} from '../styles/ActionsStyles';
 
 // Компонент для логики крафта в Столярной мастерской
 const WorkshopCrafting = ({
@@ -65,49 +65,14 @@ const WorkshopCrafting = ({
     return slidersCorrect && checkboxesChecked && materialsAvailable;
   }, [selectedAction, selectedCraftItem, sliderValues, checkboxes, hasEnoughMaterials]);
 
-  const getItemDescription = useCallback((name) => {
-    const descriptions = {
-      'Доска': 'Материал для изготовления',
-      'Стул': 'Предмет мебели',
-      'Стол': 'Предмет мебели',
-      'Шкаф': 'Предмет мебели',
-      'Кровать': 'Предмет мебели',
-    };
-    return descriptions[name] || '';
-  }, []);
-
-  const getItemWeight = useCallback((name) => {
-    const weights = {
-      'Доска': 2,
-      'Стул': 6,
-      'Стол': 8,
-      'Шкаф': 18,
-      'Кровать': 16,
-    };
-    return weights[name] || 0;
-  }, []);
-
-  const getItemCost = useCallback((name) => {
-    const costs = {
-      'Доска': 15,
-      'Стул': 53,
-      'Стол': 75,
-      'Шкаф': 195,
-      'Кровать': 165,
-    };
-    return costs[name] || 0;
-  }, []);
-
-  const getItemEffect = useCallback((name) => {
-    const effects = {
-      'Доска': 'Начало чего-то грандиозного. Или не очень. Но точно полезного!',
-      'Стул': 'На нём можно сидеть.',
-      'Стол': 'На нём можно есть.',
-      'Шкаф': 'В него можно повесить одежду',
-      'Кровать': 'На ней можно спать.',
-    };
-    return effects[name] || '';
-  }, []);
+  const getMaterialsText = useCallback(() => {
+    if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return '';
+    const item = selectedAction.craftableItems.find((i) => i.name === selectedCraftItem);
+    const materials = [];
+    if (item.materials.sticks > 0) materials.push(`${item.materials.sticks} палки`);
+    if (item.materials.boards > 0) materials.push(`${item.materials.boards} доски`);
+    return materials.length > 0 ? `Необходимо: ${materials.join(', ')}` : 'Материалы не требуются';
+  }, [selectedAction, selectedCraftItem]);
 
   const handleStartClick = useCallback(() => {
     if (!canStartCrafting()) {
@@ -129,12 +94,12 @@ const WorkshopCrafting = ({
     }
 
     const craftedItem = {
-      name: selectedCraftItem,
-      description: getItemDescription(selectedCraftItem),
-      rarity: 'Обычный',
-      weight: getItemWeight(selectedCraftItem),
-      cost: getItemCost(selectedCraftItem),
-      effect: getItemEffect(selectedCraftItem),
+      name: item.name,
+      description: item.description,
+      rarity: item.rarity,
+      weight: item.weight,
+      cost: item.cost,
+      effect: item.effect,
     };
 
     const requiredSticks = item.materials.sticks;
@@ -155,7 +120,7 @@ const WorkshopCrafting = ({
       });
     }
 
-    socket.emit('addItem', { owner: 'Мастерская', item: craftedItem }, (response) => {
+    socket.emit('addItem', { owner: `user_${userId}`, item: craftedItem }, (response) => {
       if (response && response.success) {
         showNotification(`Вы успешно создали: ${selectedCraftItem}!`);
         setSelectedAction(null);
@@ -173,21 +138,8 @@ const WorkshopCrafting = ({
     socket,
     userId,
     showNotification,
-    getItemCost,
-    getItemDescription,
-    getItemEffect,
-    getItemWeight,
     setSelectedAction,
   ]);
-
-  const getMaterialsText = useCallback(() => {
-    if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return '';
-    const item = selectedAction.craftableItems.find((i) => i.name === selectedCraftItem);
-    const materials = [];
-    if (item.materials.sticks > 0) materials.push(`${item.materials.sticks} палки`);
-    if (item.materials.boards > 0) materials.push(`${item.materials.boards} доски`);
-    return materials.length > 0 ? `Необходимо: ${materials.join(', ')}` : 'Материалы не требуются';
-  }, [selectedAction, selectedCraftItem]);
 
   const renderSliders = useCallback(() => {
     if (!selectedAction || selectedAction.title !== 'Столярная мастерская') return null;

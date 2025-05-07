@@ -8,7 +8,7 @@ import { FaTimes } from 'react-icons/fa';
 import actionsConfig from './constants/actionsConfig';
 import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
-import WorkshopCrafting from './utils/WorkshopCrafting';
+import WorkshopCrafting from '../utils/WorkshopCrafting';
 import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {

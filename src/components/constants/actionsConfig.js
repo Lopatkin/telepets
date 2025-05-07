@@ -226,7 +226,7 @@ const actionsConfig = {
           },
           {
             name: 'Удочка',
-            materials: { sticks: 1, boards: 0 },
+            materials: { sticks: 1, boards: 1 },
             clicksRequired: 3,
             description: 'Ловить рыбу',
             weight: 1,

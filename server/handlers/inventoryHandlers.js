@@ -13,10 +13,13 @@ function registerInventoryHandlers({
             console.log('Server: getItems requested for owner:', owner, 'by user:', socket.userData?.userId); // Отладка
             console.log('Server: fetching items from DB for owner:', owner); // Отладка
             const items = await Item.find({ owner });
-            console.log('Server: sending items:', items, 'to client:', socket.id); // Отладка
+            console.log('Server: fetched items:', items, 'for owner:', owner); // Отладка
+            console.log('Server: sending items to client:', socket.id); // Отладка
             socket.emit('items', { owner, items });
+            if (callback) callback({ success: true, items }); // Явный ответ
         } catch (err) {
             console.error('Error fetching items:', err.message, err.stack);
+            if (callback) callback({ success: false, message: 'Ошибка при получении предметов' });
         }
     });
 

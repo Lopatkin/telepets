@@ -27,7 +27,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       showNotification('Действие недоступно, подождите');
       return;
     }
-    if (action.title === 'Столярная мастерская' && socket && userId) {
+    if (action.title === 'Столярная мастерская' && socket && user?.userId) {
       console.log('Requesting items for userId:', userId); // Отладка
       setIsLoadingItems(true);
       await new Promise((resolve, reject) => {
@@ -35,11 +35,17 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
           console.log('Received items response:', response); // Отладка
           resolve(response);
         });
+        // Таймаут на случай, если сервер не отвечает
+        setTimeout(() => {
+          setIsLoadingItems(false);
+          showNotification('Ошибка: не удалось загрузить инвентарь');
+          reject(new Error('Timeout waiting for items response'));
+        }, 5000);
       });
       setIsLoadingItems(false);
     }
     setSelectedAction(action);
-  }, [cooldowns, showNotification, socket, userId]);
+  }, [cooldowns, showNotification, socket, user]);
 
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);

@@ -169,6 +169,13 @@ function App() {
             owner: pet.owner
           })));
         });
+
+        // Добавляем обработчик события items для обновления personalItems
+        socketRef.current.on('items', ({ owner, items }) => {
+          if (owner === `user_${user?.userId}`) {
+            setPersonalItems(items);
+          }
+        });
       });
 
       socketRef.current.on('leashStatus', ({ onLeash }) => {
@@ -211,6 +218,7 @@ function App() {
         if (socketRef.current) {
           socketRef.current.off('userUpdate'); // Добавляем снятие userUpdate
           socketRef.current.off('leashStatus');
+          socketRef.current.off('items'); // Добавляем снятие обработчика items
           socketRef.current.disconnect();
           console.log('Socket disconnected on unmount');
         }

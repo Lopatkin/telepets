@@ -27,12 +27,8 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       return;
     }
     setSelectedAction(action);
-    // Добавляем запрос на получение актуального списка предметов при выборе "Столярная мастерская"
-    if (action.title === 'Столярная мастерская' && socket && userId) {
-      socket.emit('getItems', { owner: `user_${userId}` });
-    }
-  }, [cooldowns, showNotification, socket, userId]);
-  
+  }, [cooldowns, showNotification]);
+
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);
   }, []);

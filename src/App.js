@@ -1,4 +1,3 @@
-// Импорты остаются без изменений
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
@@ -11,6 +10,7 @@ import Actions from './components/Actions';
 import Inventory from './components/Inventory';
 import { ClipLoader } from 'react-spinners';
 import Registration from './components/Registration';
+
 import BouncingBall from './components/BouncingBall';
 
 // Добавить стиль для BouncingBallOverlay
@@ -56,14 +56,14 @@ function App() {
   const [socket, setSocket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [personalItems, setPersonalItems] = useState([]);
-  const [pets, setPets] = useState([]);
+  const [pets, setPets] = useState([]); // Новое состояние для питомцев
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
   const bouncingBallContainerRef = useRef(null);
 
   const closeActionModal = () => {
-    console.log('Closing action modal');
+    console.log('Closing action modal'); // Отладка
     setIsActionModalOpen(false);
   };
 
@@ -99,20 +99,21 @@ function App() {
               username: telegramData.user.username || '',
               lastName: telegramData.user.last_name || '',
               photoUrl: telegramData.user.photo_url || '',
-              owner: telegramData.isHuman === false ? null : undefined
+              owner: telegramData.isHuman === false ? null : undefined // Добавляем owner для животных
             };
+            // Загружаем последнюю комнату из localStorage, по умолчанию "Полигон утилизации"
             const lastRoom = JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации';
-            console.log('Загружена последняя комната из localStorage:', lastRoom);
+            console.log('Загружена последняя комната из localStorage:', lastRoom); // Для отладки
             socketRef.current.emit('auth', { ...initialUserData });
             setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
           } else {
             const testUser = {
               userId: 'test123',
               firstName: 'Test User',
-              isHuman: false
+              isHuman: false // Предполагаем, что тестовый пользователь — человек
             };
             const lastRoom = 'Полигон утилизации';
-            console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
+            console.log('Используется дефолтная комната для тестового пользователя:', lastRoom); // Для отладки
             socketRef.current.emit('auth', { ...testUser });
             setTelegramTheme('light');
           }
@@ -120,10 +121,10 @@ function App() {
           const testUser = {
             userId: 'test123',
             firstName: 'Test User',
-            isHuman: false
+            isHuman: false // Предполагаем, что тестовый пользователь — человек
           };
           const lastRoom = 'Полигон утилизации';
-          console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
+          console.log('Используется дефолтная комната для тестового пользователя:', lastRoom); // Для отладки
           socketRef.current.emit('auth', { ...testUser });
           setTelegramTheme('light');
         }
@@ -136,10 +137,10 @@ function App() {
               ...updatedUser,
               credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
-              freeRoam: updatedUser.freeRoam ?? false
+              freeRoam: updatedUser.freeRoam ?? false // Добавляем freeRoam
             };
-            console.log('Updated user state after userUpdate:', newUser);
-            console.log('freeRoam value after update:', newUser.freeRoam);
+            console.log('Updated user state after userUpdate:', newUser); // Отладка
+            console.log('freeRoam value after update:', newUser.freeRoam); // Отладка
             return newUser;
           });
           if (updatedUser.isRegistered !== undefined) {
@@ -150,12 +151,14 @@ function App() {
           }
         });
 
+        // Обработка добавления нового питомца
         socketRef.current.on('takeAnimalHomeSuccess', ({ animalId, owner, animal }) => {
           if (owner === user?.userId) {
             setPets(prevPets => [...prevPets, animal]);
           }
         });
 
+        // Новый обработчик для получения списка питомцев
         socketRef.current.on('petsList', (petsData) => {
           setPets(petsData.map(pet => ({
             userId: pet.userId,
@@ -213,7 +216,7 @@ function App() {
 
       return () => {
         if (socketRef.current) {
-          socketRef.current.off('userUpdate');
+          socketRef.current.off('userUpdate'); // Добавляем снятие userUpdate
           socketRef.current.off('leashStatus');
           socketRef.current.off('items'); // Добавляем снятие обработчика items
           socketRef.current.disconnect();
@@ -300,14 +303,23 @@ function App() {
   }
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
+  // Обновляем логику canAccessMap
   const isAnimalAtHome = user && !user.isHuman && currentRoom && currentRoom.startsWith('myhome_');
   const isAnimalOnLeashWithOwnerOnline = user && !user.isHuman && user.onLeash && user.ownerOnline;
   const canAccessMap = user && (
-    user.isHuman ||
-    user.freeRoam ||
-    (!isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline)
+    user.isHuman || // Люди всегда имеют доступ
+    user.freeRoam || // Животные с freeRoam имеют доступ
+    (!isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline) // Животные не дома и не на поводке с владельцем онлайн
   );
-  console.log('canAccessMap:', canAccessMap, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline);
+  console.log('canAccessMap:', canAccessMap, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline); // Отладка
+
+  // Добавляем useEffect для проверки activeTab после изменения user.freeRoam
+  // useEffect(() => {
+  //   if (user?.freeRoam && activeTab !== 'map' && !user.isHuman) {
+  //     console.log('freeRoam enabled, switching to map tab'); // Отладка
+  //     setActiveTab('map'); // Переключаем на вкладку "Карта" при включении freeRoam
+  //   }
+  // }, [user?.freeRoam, activeTab, user?.isHuman]);
 
   return (
     <AppContainer>
@@ -345,7 +357,7 @@ function App() {
             onItemsUpdate={handleItemsUpdate}
             closeActionModal={closeActionModal}
             setIsModalOpen={setIsActionModalOpen}
-            user={user}
+            user={user} // Добавляем user
           />
         )}
         {activeTab === 'map' && canAccessMap && (
@@ -354,7 +366,7 @@ function App() {
             onRoomSelect={handleRoomSelect}
             theme={appliedTheme}
             currentRoom={currentRoom}
-            user={user}
+            user={user} // Уже передаётся
           />
         )}
         {activeTab === 'profile' && (

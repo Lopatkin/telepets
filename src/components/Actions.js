@@ -1,3 +1,4 @@
+// Импорты остаются без изменений
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   ActionsContainer, ActionGrid, ContentContainer, ActionCard, ActionTitle,
@@ -61,7 +62,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
           setSelectedAction(null);
           showNotification(action.successMessage);
           if (action.cooldownKey) {
-            startCooldown(action.cooldownKey); // Используем startCooldown вместо прямой записи
+            startCooldown(action.cooldownKey);
           }
         } else {
           setSelectedAction(null);

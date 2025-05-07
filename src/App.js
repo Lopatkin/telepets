@@ -330,7 +330,10 @@ function App() {
             userId={user?.userId}
             socket={socket}
             personalItems={personalItems}
-            user={user}
+            pets={pets} // Передаём питомцев
+            isModalOpen={isActionModalOpen}
+            setIsModalOpen={setIsActionModalOpen}
+            user={user} // Добавляем пропс user
           />
         )}
         {activeTab === 'housing' && socket && (

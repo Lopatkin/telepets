@@ -27,9 +27,15 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       showNotification('Действие недоступно, подождите');
       return;
     }
-    if (action.title === 'Столярная мастерская' && socket) {
+    if (action.title === 'Столярная мастерская' && socket && userId) {
+      console.log('Requesting items for userId:', userId); // Отладка
       setIsLoadingItems(true);
-      await new Promise((resolve) => socket.emit('getItems', { owner: `user_${userId}` }, resolve));
+      await new Promise((resolve, reject) => {
+        socket.emit('getItems', { owner: `user_${userId}` }, (response) => {
+          console.log('Received items response:', response); // Отладка
+          resolve(response);
+        });
+      });
       setIsLoadingItems(false);
     }
     setSelectedAction(action);

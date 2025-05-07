@@ -9,10 +9,11 @@ function registerInventoryHandlers({
     userCurrentRoom
 }) {
     socket.on('getItems', async ({ owner }) => {
-        console.log('Server: getItems requested for owner:', owner); // Отладка
         try {
+            console.log('Server: getItems requested for owner:', owner, 'by user:', socket.userData?.userId); // Отладка
+            console.log('Server: fetching items from DB for owner:', owner); // Отладка
             const items = await Item.find({ owner });
-            console.log('Server: sending items:', items); // Отладка
+            console.log('Server: sending items:', items, 'to client:', socket.id); // Отладка
             socket.emit('items', { owner, items });
         } catch (err) {
             console.error('Error fetching items:', err.message, err.stack);

@@ -68,8 +68,12 @@ function App() {
   };
 
   const handleItemsUpdate = (items) => {
-    console.log('Updating personalItems:', items); // Отладка
-    console.log('Owner filter:', `user_${user?.userId}`); // Отладка
+    console.log('handleItemsUpdate called with items:', items); // Отладка
+    if (!user?.userId) {
+      console.log('Skipping personalItems update: userId is undefined'); // Отладка
+      return;
+    }
+    console.log('Applying owner filter:', `user_${user.userId}`); // Отладка
     setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
   };
 

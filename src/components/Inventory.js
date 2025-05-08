@@ -635,6 +635,12 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
             </S.ItemList>
           )
         )}
+
+        {activeTab === 'location' && locationLimit && (
+          <S.WeightLimit theme={theme}>
+            Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
+          </S.WeightLimit>
+        )}
       </S.ContentContainer>
       <S.Modal
         isOpen={!!selectedItem || !!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}

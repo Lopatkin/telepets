@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react'; // Добавляем useCallback
 import styled from 'styled-components';
 import io from 'socket.io-client';
 import Chat from './components/Chat';
@@ -65,8 +65,8 @@ function App() {
     setIsActionModalOpen(false);
   };
 
-  // Обновление предметов в локальном кэше
-  const handleItemsUpdate = (data) => {
+  // Обновление предметов в локальном кэше, стабилизировано с useCallback
+  const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
     if (owner === `user_${user?.userId}`) {
       const updatedItems = items.map(item => ({
@@ -75,7 +75,7 @@ function App() {
       }));
       setPersonalItems(updatedItems);
     }
-  };
+  }, [user?.userId, setPersonalItems]); // Зависимости: user?.userId, setPersonalItems
 
   useEffect(() => {
     const initializeSocket = () => {
@@ -227,7 +227,7 @@ function App() {
     };
 
     initializeSocket();
-  }, [user]);
+  }, [handleItemsUpdate]); // Заменяем user на handleItemsUpdate
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);

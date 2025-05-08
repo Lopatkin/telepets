@@ -4,7 +4,6 @@ import {
   SliderContainer, SliderLabel, Slider, SliderValue, Select, MaterialsText,
 } from '../styles/ActionsStyles';
 
-// Компонент для логики крафта в Столярной мастерской
 const WorkshopCrafting = ({
   theme,
   selectedAction,
@@ -13,6 +12,7 @@ const WorkshopCrafting = ({
   userId,
   showNotification,
   setSelectedAction,
+  setPersonalItems, // Добавляем setPersonalItems
 }) => {
   const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
   const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 });
@@ -105,6 +105,36 @@ const WorkshopCrafting = ({
     const requiredSticks = item.materials.sticks;
     const requiredBoards = item.materials.boards;
 
+    // Локально обновляем personalItems перед отправкой на сервер
+    let updatedItems = [...personalItems];
+    if (requiredSticks > 0) {
+      let sticksToRemove = requiredSticks;
+      updatedItems = updatedItems.filter(item => {
+        if (item.name === 'Палка' && sticksToRemove > 0) {
+          sticksToRemove--;
+          return false;
+        }
+        return true;
+      });
+    }
+    if (requiredBoards > 0) {
+      let boardsToRemove = requiredBoards;
+      updatedItems = updatedItems.filter(item => {
+        if (item.name === 'Доска' && boardsToRemove > 0) {
+          boardsToRemove--;
+          return false;
+        }
+        return true;
+      });
+    }
+    const newItem = {
+      ...craftedItem,
+      _id: `temp_${Date.now()}`, // Временный ID
+    };
+    updatedItems.push(newItem);
+    setPersonalItems(updatedItems);
+
+    // Отправляем запросы на сервер
     if (requiredSticks > 0) {
       socket.emit('removeItems', {
         owner: `user_${userId}`,
@@ -128,6 +158,8 @@ const WorkshopCrafting = ({
         setCraftingProgress(0);
       } else {
         showNotification(response?.message || 'Ошибка при создании предмета');
+        // Откатываем локальные изменения при ошибке
+        setPersonalItems(personalItems);
       }
     });
   }, [
@@ -139,6 +171,8 @@ const WorkshopCrafting = ({
     userId,
     showNotification,
     setSelectedAction,
+    personalItems,
+    setPersonalItems,
   ]);
 
   const renderSliders = useCallback(() => {

@@ -10,10 +10,8 @@ import Actions from './components/Actions';
 import Inventory from './components/Inventory';
 import { ClipLoader } from 'react-spinners';
 import Registration from './components/Registration';
-
 import BouncingBall from './components/BouncingBall';
 
-// Добавить стиль для BouncingBallOverlay
 const BouncingBallOverlay = styled.div`
   position: absolute;
   top: 0;
@@ -29,7 +27,7 @@ const AppContainer = styled.div`
   height: 100vh;
   display: flex;
   flex-direction: column;
-  position: relative; /* Добавляем для позиционирования BouncingBallOverlay */
+  position: relative;
 `;
 
 const Content = styled.div`
@@ -56,19 +54,27 @@ function App() {
   const [socket, setSocket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [personalItems, setPersonalItems] = useState([]);
-  const [pets, setPets] = useState([]); // Новое состояние для питомцев
+  const [pets, setPets] = useState([]);
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
   const bouncingBallContainerRef = useRef(null);
 
   const closeActionModal = () => {
-    console.log('Closing action modal'); // Отладка
+    console.log('Closing action modal');
     setIsActionModalOpen(false);
   };
 
-  const handleItemsUpdate = (items) => {
-    setPersonalItems(items.filter(item => item.owner === `user_${user?.userId}`));
+  // Обновление предметов в локальном кэше
+  const handleItemsUpdate = (data) => {
+    const { owner, items } = data;
+    if (owner === `user_${user?.userId}`) {
+      const updatedItems = items.map(item => ({
+        ...item,
+        _id: item._id.toString(),
+      }));
+      setPersonalItems(updatedItems);
+    }
   };
 
   useEffect(() => {
@@ -99,21 +105,20 @@ function App() {
               username: telegramData.user.username || '',
               lastName: telegramData.user.last_name || '',
               photoUrl: telegramData.user.photo_url || '',
-              owner: telegramData.isHuman === false ? null : undefined // Добавляем owner для животных
+              owner: telegramData.isHuman === false ? null : undefined
             };
-            // Загружаем последнюю комнату из localStorage, по умолчанию "Полигон утилизации"
             const lastRoom = JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации';
-            console.log('Загружена последняя комната из localStorage:', lastRoom); // Для отладки
+            console.log('Загружена последняя комната из localStorage:', lastRoom);
             socketRef.current.emit('auth', { ...initialUserData });
             setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
           } else {
             const testUser = {
               userId: 'test123',
               firstName: 'Test User',
-              isHuman: false // Предполагаем, что тестовый пользователь — человек
+              isHuman: false
             };
             const lastRoom = 'Полигон утилизации';
-            console.log('Используется дефолтная комната для тестового пользователя:', lastRoom); // Для отладки
+            console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
             socketRef.current.emit('auth', { ...testUser });
             setTelegramTheme('light');
           }
@@ -121,10 +126,10 @@ function App() {
           const testUser = {
             userId: 'test123',
             firstName: 'Test User',
-            isHuman: false // Предполагаем, что тестовый пользователь — человек
+            isHuman: false
           };
           const lastRoom = 'Полигон утилизации';
-          console.log('Используется дефолтная комната для тестового пользователя:', lastRoom); // Для отладки
+          console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
           socketRef.current.emit('auth', { ...testUser });
           setTelegramTheme('light');
         }
@@ -137,10 +142,10 @@ function App() {
               ...updatedUser,
               credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
-              freeRoam: updatedUser.freeRoam ?? false // Добавляем freeRoam
+              freeRoam: updatedUser.freeRoam ?? false
             };
-            console.log('Updated user state after userUpdate:', newUser); // Отладка
-            console.log('freeRoam value after update:', newUser.freeRoam); // Отладка
+            console.log('Updated user state after userUpdate:', newUser);
+            console.log('freeRoam value after update:', newUser.freeRoam);
             return newUser;
           });
           if (updatedUser.isRegistered !== undefined) {
@@ -151,14 +156,12 @@ function App() {
           }
         });
 
-        // Обработка добавления нового питомца
         socketRef.current.on('takeAnimalHomeSuccess', ({ animalId, owner, animal }) => {
           if (owner === user?.userId) {
             setPets(prevPets => [...prevPets, animal]);
           }
         });
 
-        // Новый обработчик для получения списка питомцев
         socketRef.current.on('petsList', (petsData) => {
           setPets(petsData.map(pet => ({
             userId: pet.userId,
@@ -169,6 +172,9 @@ function App() {
             owner: pet.owner
           })));
         });
+
+        // Обработка обновления предметов для синхронизации кэша
+        socketRef.current.on('items', handleItemsUpdate);
       });
 
       socketRef.current.on('leashStatus', ({ onLeash }) => {
@@ -193,6 +199,8 @@ function App() {
           setCurrentRoom(defaultRoom);
           joinedRoomsRef.current.add(defaultRoom);
           socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
+          // Загружаем предметы сразу после аутентификации
+          socketRef.current.emit('getItems', { owner: `user_${socketRef.current.userData.userId}` });
         }
       });
 
@@ -209,8 +217,9 @@ function App() {
 
       return () => {
         if (socketRef.current) {
-          socketRef.current.off('userUpdate'); // Добавляем снятие userUpdate
+          socketRef.current.off('userUpdate');
           socketRef.current.off('leashStatus');
+          socketRef.current.off('items');
           socketRef.current.disconnect();
           console.log('Socket disconnected on unmount');
         }
@@ -218,7 +227,6 @@ function App() {
     };
 
     initializeSocket();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleRegistrationComplete = (defaultRoom) => {
@@ -295,23 +303,14 @@ function App() {
   }
 
   const appliedTheme = theme === 'telegram' ? telegramTheme : theme;
-  // Обновляем логику canAccessMap
   const isAnimalAtHome = user && !user.isHuman && currentRoom && currentRoom.startsWith('myhome_');
   const isAnimalOnLeashWithOwnerOnline = user && !user.isHuman && user.onLeash && user.ownerOnline;
   const canAccessMap = user && (
-    user.isHuman || // Люди всегда имеют доступ
-    user.freeRoam || // Животные с freeRoam имеют доступ
-    (!isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline) // Животные не дома и не на поводке с владельцем онлайн
+    user.isHuman ||
+    user.freeRoam ||
+    (!isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline)
   );
-  console.log('canAccessMap:', canAccessMap, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline); // Отладка
-
-  // Добавляем useEffect для проверки activeTab после изменения user.freeRoam
-  // useEffect(() => {
-  //   if (user?.freeRoam && activeTab !== 'map' && !user.isHuman) {
-  //     console.log('freeRoam enabled, switching to map tab'); // Отладка
-  //     setActiveTab('map'); // Переключаем на вкладку "Карта" при включении freeRoam
-  //   }
-  // }, [user?.freeRoam, activeTab, user?.isHuman]);
+  console.log('canAccessMap:', canAccessMap, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline);
 
   return (
     <AppContainer>
@@ -334,10 +333,11 @@ function App() {
             userId={user?.userId}
             socket={socket}
             personalItems={personalItems}
-            pets={pets} // Передаём питомцев
+            setPersonalItems={setPersonalItems}
+            pets={pets}
             isModalOpen={isActionModalOpen}
             setIsModalOpen={setIsActionModalOpen}
-            user={user} // Добавляем пропс user
+            user={user}
           />
         )}
         {activeTab === 'housing' && socket && (
@@ -349,7 +349,8 @@ function App() {
             onItemsUpdate={handleItemsUpdate}
             closeActionModal={closeActionModal}
             setIsModalOpen={setIsActionModalOpen}
-            user={user} // Добавляем user
+            personalItems={personalItems} // Передаём personalItems
+            user={user}
           />
         )}
         {activeTab === 'map' && canAccessMap && (
@@ -358,7 +359,7 @@ function App() {
             onRoomSelect={handleRoomSelect}
             theme={appliedTheme}
             currentRoom={currentRoom}
-            user={user} // Уже передаётся
+            user={user}
           />
         )}
         {activeTab === 'profile' && (

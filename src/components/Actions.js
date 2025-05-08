@@ -5,14 +5,13 @@ import {
   CloseButton, ActionButton, ProgressBar, Notification, TimerDisplay
 } from '../styles/ActionsStyles';
 import { FaTimes } from 'react-icons/fa';
-import { ClipLoader } from 'react-spinners';
 import actionsConfig from './constants/actionsConfig';
 import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from '../utils/WorkshopCrafting';
 import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 
-function Actions({ theme, currentRoom, userId, socket, personalItems, setPersonalItems, user }) {
+function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
@@ -58,7 +57,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, setPersona
           setSelectedAction(null);
           showNotification(action.successMessage);
           if (action.cooldownKey) {
-            startCooldown(action.cooldownKey);
+            startCooldown(action.cooldownKey); // Используем startCooldown вместо прямой записи
           }
         } else {
           setSelectedAction(null);
@@ -70,6 +69,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, setPersona
         if (response && response.success) {
           setSelectedAction(null);
           showNotification(response.message);
+          socket.emit('getItems', { owner: `user_${userId}` });
         } else {
           setSelectedAction(null);
           showNotification(response?.message || 'Ошибка при утилизации');
@@ -87,9 +87,11 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, setPersona
     }
   }, [socket, selectedAction, user, userId, currentRoom, showNotification, startCooldown]);
 
+  // Обновлённая логика определения доступных действий
   const availableActions = useMemo(() => {
     if (!user || !currentRoom) return [];
 
+    // Маппинг комнат на ключи actionsConfig
     const roomMap = {
       home: currentRoom.startsWith(`myhome_${user.isHuman ? userId : user.owner}`),
       busStop: currentRoom === 'Автобусная остановка',
@@ -99,13 +101,16 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, setPersona
       shelter: currentRoom === 'Приют для животных "Кошкин дом"',
     };
 
+    // Находим подходящую локацию
     const locationKey = Object.keys(roomMap).find(key => roomMap[key]);
     if (!locationKey || !actionsConfig[locationKey]) return [];
 
+    // Выбираем действия в зависимости от типа игрока
     const actions = user.isHuman
       ? actionsConfig[locationKey].humanActions
       : actionsConfig[locationKey].animalActions;
 
+    // Для животных динамически подстраиваем действие "Погавкать"/"Помяукать"
     if (!user.isHuman) {
       return actions.map(action => {
         if (action.animalSpecific && action.title === 'Погавкать' && user.animalType === 'Кот') {
@@ -164,23 +169,15 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, setPersona
             <CloseButton theme={theme} onClick={handleCloseModal}><FaTimes /></CloseButton>
             <ModalTitle theme={theme}>{selectedAction.modalTitle}</ModalTitle>
             {selectedAction.title === 'Столярная мастерская' ? (
-              personalItems.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px' }}>
-                  <ClipLoader color={theme === 'dark' ? '#ccc' : '#007AFF'} size={30} />
-                  <p>Загрузка инвентаря...</p>
-                </div>
-              ) : (
-                <WorkshopCrafting
-                  theme={theme}
-                  selectedAction={selectedAction}
-                  personalItems={personalItems}
-                  socket={socket}
-                  userId={userId}
-                  showNotification={showNotification}
-                  setSelectedAction={setSelectedAction}
-                  setPersonalItems={setPersonalItems} // Передаём setPersonalItems
-                />
-              )
+              <WorkshopCrafting
+                theme={theme}
+                selectedAction={selectedAction}
+                personalItems={personalItems}
+                socket={socket}
+                userId={userId}
+                showNotification={showNotification}
+                setSelectedAction={setSelectedAction}
+              />
             ) : (
               <>
                 <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>

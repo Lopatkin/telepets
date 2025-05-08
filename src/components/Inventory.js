@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import * as S from '../styles/InventoryStyles';
-import { FaEdit } from 'react-icons/fa';
-import { ClipLoader } from 'react-spinners';
+import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Добавляем импорт useMemo
+import * as S from '../styles/InventoryStyles'; // Импорт всех стилей
+import { FaEdit } from 'react-icons/fa'; // Добавляем иконку редактирования
 
-function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, personalItems }) {
+function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
   const [activeTab, setActiveTab] = useState('personal');
   const [activeLocationSubTab, setActiveLocationSubTab] = useState('items');
+  const [personalItems, setPersonalItems] = useState([]);
   const [locationItems, setLocationItems] = useState([]);
   const [shelterAnimals, setShelterAnimals] = useState([]);
   const [personalLimit, setPersonalLimit] = useState(null);
@@ -18,10 +18,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
   const [selectedItem, setSelectedItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [actionQuantity, setActionQuantity] = useState({ itemName: null, weight: null, count: 1, action: null });
-  const [renameModalOpen, setRenameModalOpen] = useState(false);
-  const [newAnimalName, setNewAnimalName] = useState('');
-  const [freeRoam, setFreeRoam] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Новое состояние для отслеживания загрузки
+  const [renameModalOpen, setRenameModalOpen] = useState(false); // Состояние для модального окна переименования
+  const [newAnimalName, setNewAnimalName] = useState(''); // Состояние для нового имени животного
+  const [freeRoam, setFreeRoam] = useState(false); // Состояние для чекбокса "Свободный выгул"
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
@@ -49,6 +48,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
   const handleFreeRoamChange = (animalId, checked) => {
     socket.emit('setFreeRoam', { animalId, freeRoam: checked }, (response) => {
       if (response.success) {
+        // Обновляем selectedItem после успешного ответа
         socket.emit('getAnimalInfo', { animalId }, (infoResponse) => {
           if (infoResponse.success) {
             setSelectedItem(prev => ({
@@ -70,9 +70,10 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
     });
   };
 
-  // Группировка предметов
+  // В функции groupItemsByNameAndWeight используем animalId для "Паспорта животного"
   const groupItemsByNameAndWeight = (items) => {
     const grouped = items.reduce((acc, item) => {
+      // Для "Паспорта животного" используем animalId, если оно есть, иначе стандартный ключ
       const key = item.name === 'Паспорт животного' && item.animalId
         ? `${item.name}_${item.weight}_${item.animalId}`
         : `${item.name}_${item.weight}`;
@@ -86,16 +87,16 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
     return Object.values(grouped);
   };
 
-  // Обработка обновления предметов
   const handleItemsUpdate = useCallback((data) => {
+    // console.log('Received items update:', { owner, items }); // Добавляем логирование
     const { owner, items } = data;
     const updatedItems = items.map(item => ({
       ...item,
       _id: item._id.toString(),
     }));
     if (owner === userOwnerKey) {
+      setPersonalItems(updatedItems);
       onItemsUpdate(updatedItems);
-      setIsLoading(false); // Завершаем загрузку при получении personalItems
     } else if (owner === locationOwnerKey) {
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
         setLocationItems(updatedItems);
@@ -103,15 +104,14 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
     }
   }, [userOwnerKey, locationOwnerKey, pendingItems, onItemsUpdate]);
 
-  // Обработка лимитов инвентаря
   const handleLimitUpdate = useCallback((limit) => {
     if (limit.owner === userOwnerKey) setPersonalLimit(limit);
     else if (limit.owner === locationOwnerKey) setLocationLimit(limit);
   }, [userOwnerKey, locationOwnerKey]);
 
-  // Обработка действий с предметами
   const handleItemAction = useCallback((data) => {
     const { action, owner, itemId, item } = data;
+
     if (action === 'remove' && owner === locationOwnerKey) {
       setAnimatingItem({ itemId, action: 'shrink' });
       setTimeout(() => {
@@ -129,12 +129,11 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
     }
   }, [locationOwnerKey]);
 
-  // Обработка животных в приюте
   const handleShelterAnimals = useCallback((animals) => {
     setShelterAnimals(animals);
   }, []);
 
-  // Статические предметы магазина
+  // Переносим shopStaticItems в useMemo
   const shopStaticItems = useMemo(() => [
     {
       _id: 'shop_collar',
@@ -154,16 +153,17 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
       cost: 200,
       effect: 'Вы чувствуете власть над кем-то. Приятно.',
     },
-  ], []);
+  ], []); // Пустой массив зависимостей, так как данные статичны
 
-  // Загрузка данных при монтировании
   useEffect(() => {
-    if (!socket || !userId) {
-      setIsLoading(false); // Если нет сокета или userId, завершаем загрузку
-      return;
-    }
+    console.log('Inventory props:', { userId, currentRoom, user });
+  }, [userId, currentRoom, user]);
 
-    // Запрашиваем только предметы локации и лимиты, так как personalItems приходят через пропсы
+  // Убираем shopStaticItems из зависимостей useEffect, так как он теперь стабилен
+  useEffect(() => {
+    if (!socket || !userId) return;
+
+    socket.emit('getItems', { owner: userOwnerKey });
     socket.emit('getItems', { owner: locationOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
@@ -172,7 +172,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
       socket.emit('getShelterAnimals');
     }
 
-    // Устанавливаем предметы магазина
+    // Добавляем предметы магазина для "Магазин 'Всё на свете'" только для людей
     if (currentRoom === 'Магазин "Всё на свете"' && user?.isHuman) {
       setShopItems(shopStaticItems);
     } else {
@@ -188,6 +188,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
       setTimeout(() => setError(null), 3000);
     });
 
+
     return () => {
       socket.off('items', handleItemsUpdate);
       socket.off('inventoryLimit', handleLimitUpdate);
@@ -195,22 +196,16 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, user, shopStaticItems, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems]);
 
-  // Проверяем, завершена ли загрузка personalItems
-  useEffect(() => {
-    if (personalItems) {
-      setIsLoading(false); // Завершаем загрузку, когда personalItems получены
-    }
-  }, [personalItems]);
-
-  // Обработка покупки
+  // Добавляем обработчик покупки
   const handleBuyItem = async (item) => {
     if (isActionCooldown) return;
 
     try {
       setIsActionCooldown(true);
 
+      // Проверяем баланс пользователя с помощью Promise
       const creditsResponse = await new Promise((resolve) => {
         socket.emit('getCredits', {}, resolve);
       });
@@ -227,6 +222,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
         return;
       }
 
+      // Создаем предмет и списываем кредиты
       const addItemResponse = await new Promise((resolve) => {
         socket.emit('addItem', {
           owner: userOwnerKey,
@@ -247,6 +243,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
         return;
       }
 
+      // После успешного добавления предмета списываем кредиты
       const spendResponse = await new Promise((resolve) => {
         socket.emit('spendCredits', {
           amount: item.cost,
@@ -266,7 +263,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
     }
   };
 
-  // Обработка забора животного
   const handleTakeHome = (animalId, animalName) => {
     if (!socket || !userId) {
       console.error('Socket or userId not available');
@@ -275,6 +271,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
       return;
     }
 
+    // Проверка наличия "Ошейника" и "Поводка"
     const hasCollar = personalItems.some(item => item.name === 'Ошейник');
     const hasLeash = personalItems.some(item => item.name === 'Поводок');
 
@@ -285,15 +282,14 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
     }
 
     socket.emit('takeAnimalHome', { animalId, animalName });
+    console.log(`Sent takeAnimalHome request for animal ID: ${animalId}, Name: ${animalName}`);
   };
 
-  // Обработка перемещения предметов
   const handleMoveItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
     setActionQuantity({ itemName, weight, count: 1, action: 'move', maxCount });
   };
 
-  // Обработка подбора предметов
   const handlePickupItem = (itemId) => {
     if (isActionCooldown) return;
 
@@ -312,13 +308,11 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
     }, 500);
   };
 
-  // Обработка удаления предметов
   const handleDeleteItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
     setActionQuantity({ itemName, weight, count: 1, action: 'delete', maxCount });
   };
 
-  // Подтверждение удаления предмета
   const confirmDeleteItem = (confirmed) => {
     if (confirmed && confirmDelete) {
       const itemId = confirmDelete;
@@ -329,7 +323,19 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
       setAnimatingItem({ itemId, action: 'split' });
 
       setTimeout(() => {
+        const updatedItems = personalItems.filter(item => item._id.toString() !== itemId);
+        const trashItem = {
+          _id: `temp_${Date.now()}`,
+          name: 'Мусор',
+          description: 'Раньше это было чем-то полезным',
+          rarity: 'Бесполезный',
+          weight: itemToDelete.weight,
+          cost: 1,
+          effect: 'Чувство обременения чем-то бесполезным',
+        };
+        setPersonalItems([...updatedItems, trashItem]);
         socket.emit('deleteItem', { itemId });
+
         setAnimatingItem(null);
         setTimeout(() => {
           setIsActionCooldown(false);
@@ -340,7 +346,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
     setConfirmDelete(null);
   };
 
-  // Подтверждение действия с количеством
   const confirmActionQuantity = () => {
     if (!actionQuantity.itemName || isActionCooldown) return;
 
@@ -352,6 +357,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
       setTimeout(() => {
         const itemsToMove = personalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
+        setPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
         socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
@@ -361,6 +367,17 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
       setTimeout(() => {
         const itemsToDelete = personalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
+        const updatedItems = personalItems.filter(item => !itemIds.includes(item._id));
+        const trashItems = itemsToDelete.map(item => ({
+          _id: `temp_${Date.now()}_${Math.random()}`,
+          name: 'Мусор',
+          description: 'Раньше это было чем-то полезным',
+          rarity: 'Бесполезный',
+          weight: item.weight,
+          cost: 1,
+          effect: 'Чувство обременения чем-то бесполезным',
+        }));
+        setPersonalItems([...updatedItems, ...trashItems]);
         itemIds.forEach(itemId => socket.emit('deleteItem', { itemId }));
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
@@ -370,7 +387,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
     setActionQuantity({ itemName: null, weight: null, count: 1, action: null });
   };
 
-  // Обработка просмотра паспорта животного
+  // В функции Inventory перед return добавить новую функцию для обработки нажатия "Посмотреть"
   const handleViewPassport = (item) => {
     socket.emit('getAnimalInfo', { animalId: item.animalId }, (response) => {
       if (response.success) {
@@ -380,9 +397,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
           animalType: response.animal.animalType,
           lastRoom: response.animal.lastRoom,
           onLeash: response.animal.onLeash,
-          freeRoam: response.animal.freeRoam || false
+          freeRoam: response.animal.freeRoam || false // Добавляем freeRoam
         });
-        setFreeRoam(response.animal.freeRoam || false);
+        setFreeRoam(response.animal.freeRoam || false); // Устанавливаем начальное значение freeRoam
       } else {
         setError(response.message || 'Ошибка при получении данных животного');
         setTimeout(() => setError(null), 3000);
@@ -444,202 +461,199 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
             {error}
           </div>
         )}
-        {activeTab === 'personal' && personalLimit && isLoading ? (
-          <div style={{ textAlign: 'center', padding: '20px' }}>
-            <ClipLoader color={theme === 'dark' ? '#ccc' : '#007AFF'} size={30} />
-            <p>Загрузка инвентаря...</p>
-          </div>
-        ) : (
-          activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (
-            <S.AnimalList>
-              {shelterAnimals.map(animal => (
-                <S.AnimalCard key={animal.userId} theme={theme}>
-                  <S.StatusCircle isOnline={animal.isOnline} />
-                  <S.Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
-                  <S.AnimalName theme={theme}>{animal.name}</S.AnimalName>
-                  {!animal.owner && user?.isHuman && (
-                    <S.TakeHomeButton onClick={() => handleTakeHome(animal.userId, animal.name)}>
-                      Забрать домой
-                    </S.TakeHomeButton>
-                  )}
-                </S.AnimalCard>
-              ))}
-              {shelterAnimals.length === 0 && (
-                <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-                  В приюте нет животных
-                </div>
-              )}
-            </S.AnimalList>
-          ) : (
-            <S.ItemList subTab={activeTab}>
-              {activeTab === 'personal' && groupItemsByNameAndWeight(personalItems).map(({ item, count }) => (
-                <S.ItemCard
-                  key={item._id}
-                  theme={theme}
-                  isAnimating={
-                    animatingItem && (
-                      (animatingItem.itemId === `${item.name}_${item.weight}_move`) ||
-                      (animatingItem.itemId === `${item.name}_${item.weight}_delete`)
-                    ) ? animatingItem.action : null
-                  }
-                >
-                  <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
-                  {item.name === 'Паспорт животного' ? (
-                    <>
-                      <S.ItemDetail theme={theme}>Описание: {item.description}</S.ItemDetail>
-                      <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
-                      <S.ItemDetail theme={theme}>Вес: {item.weight}</S.ItemDetail>
-                      <S.ItemDetail theme={theme}>Стоимость: {item.cost}</S.ItemDetail>
-                      <S.ItemDetail theme={theme}>Эффект: {item.effect}</S.ItemDetail>
-                    </>
-                  ) : item.description === 'Кошка' || item.description === 'Собака' ? (
-                    <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
-                  ) : (
-                    <>
-                      <S.ItemDetail theme={theme}>Описание: {item.description}</S.ItemDetail>
-                      <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
-                      <S.ItemDetail theme={theme}>Вес: {item.weight}</S.ItemDetail>
-                      <S.ItemDetail theme={theme}>Стоимость: {item.cost}</S.ItemDetail>
-                      <S.ItemDetail theme={theme}>Эффект: {item.effect}</S.ItemDetail>
-                    </>
-                  )}
-                  <S.ActionButtons>
-                    {item.name === 'Паспорт животного' ? (
-                      <S.PickupButton
-                        onClick={() => handleViewPassport(item)}
-                        disabled={isActionCooldown}
-                      >
-                        Посмотреть
-                        {isActionCooldown && <S.ProgressBar />}
-                      </S.PickupButton>
-                    ) : (
-                      <>
-                        {locationOwnerKey && (
-                          <S.MoveButton
-                            onClick={() => handleMoveItem(item.name, item.weight, count)}
-                            disabled={isActionCooldown}
-                          >
-                            Выложить
-                            {isActionCooldown && <S.ProgressBar />}
-                          </S.MoveButton>
-                        )}
-                        {item.name !== 'Мусор' && (
-                          <S.DeleteButton
-                            onClick={() => handleDeleteItem(item.name, item.weight, count)}
-                            disabled={isActionCooldown}
-                          >
-                            Сломать
-                            {isActionCooldown && <S.ProgressBar />}
-                          </S.DeleteButton>
-                        )}
-                      </>
-                    )}
-                  </S.ActionButtons>
-                </S.ItemCard>
-              ))}
-              {activeTab === 'location' && !isShelter && currentRoom === 'Магазин "Всё на свете"' && user?.isHuman ? (
-                <S.ItemList subTab={activeTab}>
-                  {shopItems.map(item => (
-                    <S.ItemCard
-                      key={item._id}
-                      theme={theme}
-                      isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-                    >
-                      <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
-                        <S.ItemTitle theme={theme}>{item.name}</S.ItemTitle>
-                        <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
-                      </S.ItemInfo>
-                      <S.ActionButtons>
-                        <S.PickupButton
-                          onClick={() => handleBuyItem(item)}
-                          disabled={isActionCooldown}
-                        >
-                          Купить за {item.cost} кредитов
-                          {isActionCooldown && <S.ProgressBar />}
-                        </S.PickupButton>
-                      </S.ActionButtons>
-                    </S.ItemCard>
-                  ))}
-                  {shopItems.length === 0 && (
-                    <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-                      В магазине нет товаров
-                    </div>
-                  )}
-                </S.ItemList>
-              ) : activeTab === 'location' && !isShelter ? (
-                <S.ItemList subTab={activeTab}>
-                  {groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
-                    <S.ItemCard
-                      key={item._id}
-                      theme={theme}
-                      isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-                    >
-                      <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
-                        <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
-                        <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
-                      </S.ItemInfo>
-                      <S.ActionButtons>
-                        <S.PickupButton
-                          onClick={() => handlePickupItem(item._id)}
-                          disabled={isActionCooldown}
-                        >
-                          Подобрать
-                          {isActionCooldown && <S.ProgressBar />}
-                        </S.PickupButton>
-                      </S.ActionButtons>
-                    </S.ItemCard>
-                  ))}
-                  {locationItems.length === 0 && (
-                    <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-                      На этой локации нет предметов
-                    </div>
-                  )}
-                </S.ItemList>
-              ) : null}
-              {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
-                <S.ItemCard
-                  key={item._id}
-                  theme={theme}
-                  isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-                >
-                  <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
-                    <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
-                    <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
-                  </S.ItemInfo>
-                  <S.ActionButtons>
-                    <S.PickupButton
-                      onClick={() => handlePickupItem(item._id)}
-                      disabled={isActionCooldown}
-                    >
-                      Подобрать
-                      {isActionCooldown && <S.ProgressBar />}
-                    </S.PickupButton>
-                  </S.ActionButtons>
-                </S.ItemCard>
-              ))}
-              {activeTab === 'personal' && personalItems.length === 0 && !isLoading && (
-                <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-                  У вас пока нет предметов
-                </div>
-              )}
-              {activeTab === 'location' && !isShelter && locationItems.length === 0 && (
-                <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-                  На этой локации нет предметов
-                </div>
-              )}
-              {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && locationItems.length === 0 && (
-                <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-                  На этой локации нет предметов
-                </div>
-              )}
-            </S.ItemList>
-          )
+        {activeTab === 'personal' && personalLimit && (
+          <S.WeightLimit theme={theme}>
+            Вес: {personalLimit.currentWeight} кг / {personalLimit.maxWeight} кг
+          </S.WeightLimit>
         )}
-
         {activeTab === 'location' && locationLimit && (
           <S.WeightLimit theme={theme}>
             Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
           </S.WeightLimit>
+        )}
+        {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (
+          <S.AnimalList>
+            {shelterAnimals.map(animal => (
+              <S.AnimalCard key={animal.userId} theme={theme}>
+                <S.StatusCircle isOnline={animal.isOnline} />
+                <S.Avatar src={animal.photoUrl || '/default-animal-avatar.png'} alt="Аватар" />
+                <S.AnimalName theme={theme}>{animal.name}</S.AnimalName>
+                {!animal.owner && user?.isHuman && (
+                  <S.TakeHomeButton onClick={() => handleTakeHome(animal.userId, animal.name)}>
+                    Забрать домой
+                  </S.TakeHomeButton>
+                )}
+              </S.AnimalCard>
+            ))}
+            {shelterAnimals.length === 0 && (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                В приюте нет животных
+              </div>
+            )}
+          </S.AnimalList>
+        ) : (
+          <S.ItemList subTab={activeTab}>
+            {activeTab === 'personal' && groupItemsByNameAndWeight(personalItems).map(({ item, count }) => (
+              <S.ItemCard
+                key={item._id}
+                theme={theme}
+                isAnimating={
+                  animatingItem && (
+                    (animatingItem.itemId === `${item.name}_${item.weight}_move`) ||
+                    (animatingItem.itemId === `${item.name}_${item.weight}_delete`)
+                  ) ? animatingItem.action : null
+                }
+              >
+                <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
+                {item.name === 'Паспорт животного' ? (
+                  <>
+                    <S.ItemDetail theme={theme}>Описание: {item.description}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Вес: {item.weight}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Стоимость: {item.cost}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Эффект: {item.effect}</S.ItemDetail>
+                  </>
+                ) : item.description === 'Кошка' || item.description === 'Собака' ? (
+                  <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                ) : (
+                  <>
+                    <S.ItemDetail theme={theme}>Описание: {item.description}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Вес: {item.weight}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Стоимость: {item.cost}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Эффект: {item.effect}</S.ItemDetail>
+                  </>
+                )}
+                <S.ActionButtons>
+                  {item.name === 'Паспорт животного' ? (
+                    <S.PickupButton
+                      onClick={() => handleViewPassport(item)}
+                      disabled={isActionCooldown}
+                    >
+                      Посмотреть
+                      {isActionCooldown && <S.ProgressBar />}
+                    </S.PickupButton>
+                  ) : (
+                    <>
+                      {locationOwnerKey && (
+                        <S.MoveButton
+                          onClick={() => handleMoveItem(item.name, item.weight, count)}
+                          disabled={isActionCooldown}
+                        >
+                          Выложить
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.MoveButton>
+                      )}
+                      {item.name !== 'Мусор' && (
+                        <S.DeleteButton
+                          onClick={() => handleDeleteItem(item.name, item.weight, count)}
+                          disabled={isActionCooldown}
+                        >
+                          Сломать
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.DeleteButton>
+                      )}
+                    </>
+                  )}
+                </S.ActionButtons>
+              </S.ItemCard>
+            ))}
+            {activeTab === 'location' && !isShelter && currentRoom === 'Магазин "Всё на свете"' && user?.isHuman ? (
+              <S.ItemList subTab={activeTab}>
+                {shopItems.map(item => (
+                  <S.ItemCard
+                    key={item._id}
+                    theme={theme}
+                    isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+                  >
+                    <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
+                      <S.ItemTitle theme={theme}>{item.name}</S.ItemTitle>
+                      <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                    </S.ItemInfo>
+                    <S.ActionButtons>
+                      <S.PickupButton
+                        onClick={() => handleBuyItem(item)}
+                        disabled={isActionCooldown}
+                      >
+                        Купить за {item.cost} кредитов
+                        {isActionCooldown && <S.ProgressBar />}
+                      </S.PickupButton>
+                    </S.ActionButtons>
+                  </S.ItemCard>
+                ))}
+                {shopItems.length === 0 && (
+                  <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                    В магазине нет товаров
+                  </div>
+                )}
+              </S.ItemList>
+            ) : activeTab === 'location' && !isShelter ? (
+              <S.ItemList subTab={activeTab}>
+                {groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+                  <S.ItemCard
+                    key={item._id}
+                    theme={theme}
+                    isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+                  >
+                    <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
+                      <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
+                      <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                    </S.ItemInfo>
+                    <S.ActionButtons>
+                      <S.PickupButton
+                        onClick={() => handlePickupItem(item._id)}
+                        disabled={isActionCooldown}
+                      >
+                        Подобрать
+                        {isActionCooldown && <S.ProgressBar />}
+                      </S.PickupButton>
+                    </S.ActionButtons>
+                  </S.ItemCard>
+                ))}
+                {locationItems.length === 0 && (
+                  <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                    На этой локации нет предметов
+                  </div>
+                )}
+              </S.ItemList>
+            ) : null}
+            {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+              <S.ItemCard
+                key={item._id}
+                theme={theme}
+                isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+              >
+                <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
+                  <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
+                  <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                </S.ItemInfo>
+                <S.ActionButtons>
+                  <S.PickupButton
+                    onClick={() => handlePickupItem(item._id)}
+                    disabled={isActionCooldown}
+                  >
+                    Подобрать
+                    {isActionCooldown && <S.ProgressBar />}
+                  </S.PickupButton>
+                </S.ActionButtons>
+              </S.ItemCard>
+            ))}
+            {activeTab === 'personal' && personalItems.length === 0 && (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                У вас пока нет предметов
+              </div>
+            )}
+            {activeTab === 'location' && !isShelter && locationItems.length === 0 && (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                На этой локации нет предметов
+              </div>
+            )}
+            {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && locationItems.length === 0 && (
+              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                На этой локации нет предметов
+              </div>
+            )}
+          </S.ItemList>
         )}
       </S.ContentContainer>
       <S.Modal
@@ -648,6 +662,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
         onClick={closeModal}
         isConfirm={!!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
       >
+        {/* // Обновляем модальное окно для "Паспорт животного" */}
         {selectedItem && selectedItem.name === 'Паспорт животного' && (
           <S.ModalContent theme={theme}>
             <S.ItemTitle theme={theme}>Паспорт животного</S.ItemTitle>
@@ -691,6 +706,8 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
             </S.ActionButtons>
           </S.ModalContent>
         )}
+
+        {/* // Модальное окно для переименования */}
         {renameModalOpen && (
           <S.Modal isOpen={true} theme={theme}>
             <S.RenameModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
@@ -699,7 +716,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
                 type="text"
                 value={newAnimalName}
                 onChange={(e) => setNewAnimalName(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()} // Предотвращаем закрытие при клике на поле
                 placeholder="Введите новое имя"
                 theme={theme}
               />
@@ -722,6 +739,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
             </S.RenameModalContent>
           </S.Modal>
         )}
+
         {confirmDelete && (
           <S.ConfirmModalContent theme={theme}>
             <S.ConfirmText>Вы уверены, что хотите сломать этот предмет?</S.ConfirmText>

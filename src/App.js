@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'; // Добавляем useCallback
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import io from 'socket.io-client';
 import Chat from './components/Chat';
@@ -67,15 +67,23 @@ function App() {
 
   // Обновление предметов в локальном кэше, стабилизировано с useCallback
   const handleItemsUpdate = useCallback((data) => {
+    if (!user?.userId) {
+      console.log('handleItemsUpdate: userId отсутствует, пропускаем обновление');
+      return;
+    }
     const { owner, items } = data;
-    if (owner === `user_${user?.userId}`) {
+    console.log('handleItemsUpdate: Получены данные предметов:', { owner, items });
+    if (owner === `user_${user.userId}`) {
       const updatedItems = items.map(item => ({
         ...item,
         _id: item._id.toString(),
       }));
+      console.log('handleItemsUpdate: Обновляем personalItems:', updatedItems);
       setPersonalItems(updatedItems);
+    } else {
+      console.log('handleItemsUpdate: owner не совпадает, игнорируем:', owner);
     }
-  }, [user?.userId, setPersonalItems]); // Зависимости: user?.userId, setPersonalItems
+  }, [user?.userId, setPersonalItems]);
 
   useEffect(() => {
     const initializeSocket = () => {
@@ -173,46 +181,45 @@ function App() {
           })));
         });
 
-        // Обработка обновления предметов для синхронизации кэша
         socketRef.current.on('items', handleItemsUpdate);
-      });
 
-      socketRef.current.on('leashStatus', ({ onLeash }) => {
-        setUser((prev) => ({ ...prev, onLeash }));
-      });
+        socketRef.current.on('leashStatus', ({ onLeash }) => {
+          setUser((prev) => ({ ...prev, onLeash }));
+        });
 
-      socketRef.current.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason);
-        setSocket(null);
-        setIsAuthenticated(false);
-      });
+        socketRef.current.on('disconnect', (reason) => {
+          console.log('Socket disconnected:', reason);
+          setSocket(null);
+          setIsAuthenticated(false);
+        });
 
-      socketRef.current.on('connect_error', (error) => {
-        console.error('Connection error:', error.message);
-      });
+        socketRef.current.on('connect_error', (error) => {
+          console.error('Connection error:', error.message);
+        });
 
-      socketRef.current.on('authSuccess', ({ defaultRoom, isRegistered }) => {
-        console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
-        setIsAuthenticated(true);
-        setIsRegistered(isRegistered);
-        if (isRegistered) {
-          setCurrentRoom(defaultRoom);
-          joinedRoomsRef.current.add(defaultRoom);
-          socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
-          // Загружаем предметы сразу после аутентификации
-          socketRef.current.emit('getItems', { owner: `user_${socketRef.current.userData.userId}` });
-        }
-      });
+        socketRef.current.on('authSuccess', ({ defaultRoom, isRegistered }) => {
+          console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
+          setIsAuthenticated(true);
+          setIsRegistered(isRegistered);
+          if (isRegistered) {
+            setCurrentRoom(defaultRoom);
+            joinedRoomsRef.current.add(defaultRoom);
+            socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
+            console.log('authSuccess: Запрашиваем предметы для userId:', socketRef.current.userData.userId);
+            socketRef.current.emit('getItems', { owner: `user_${socketRef.current.userData.userId}` });
+          }
+        });
 
-      socketRef.current.on('forceRoomChange', ({ newRoom }) => {
-        console.log('Перемещение в новую комнату:', newRoom);
-        setCurrentRoom(newRoom);
-        joinedRoomsRef.current.add(newRoom);
-        socketRef.current.emit('joinRoom', { room: newRoom, lastTimestamp: null });
-      });
+        socketRef.current.on('forceRoomChange', ({ newRoom }) => {
+          console.log('Перемещение в новую комнату:', newRoom);
+          setCurrentRoom(newRoom);
+          joinedRoomsRef.current.add(newRoom);
+          socketRef.current.emit('joinRoom', { room: newRoom, lastTimestamp: null });
+        });
 
-      socketRef.current.on('error', ({ message }) => {
-        console.error('Server error:', message);
+        socketRef.current.on('error', ({ message }) => {
+          console.error('Server error:', message);
+        });
       });
 
       return () => {
@@ -220,6 +227,11 @@ function App() {
           socketRef.current.off('userUpdate');
           socketRef.current.off('leashStatus');
           socketRef.current.off('items');
+          socketRef.current.off('disconnect');
+          socketRef.current.off('connect_error');
+          socketRef.current.off('authSuccess');
+          socketRef.current.off('forceRoomChange');
+          socketRef.current.off('error');
           socketRef.current.disconnect();
           console.log('Socket disconnected on unmount');
         }
@@ -227,7 +239,15 @@ function App() {
     };
 
     initializeSocket();
-  }, [handleItemsUpdate, user?.userId]); // Добавляем user?.userId в зависимости
+  }, [handleItemsUpdate, user?.userId]);
+
+  // Запрашиваем предметы при изменении user?.userId
+  useEffect(() => {
+    if (socket && user?.userId && isAuthenticated && isRegistered) {
+      console.log('Запрос предметов для userId:', user.userId);
+      socket.emit('getItems', { owner: `user_${user.userId}` });
+    }
+  }, [socket, user?.userId, isAuthenticated, isRegistered]);
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);
@@ -349,7 +369,7 @@ function App() {
             onItemsUpdate={handleItemsUpdate}
             closeActionModal={closeActionModal}
             setIsModalOpen={setIsActionModalOpen}
-            personalItems={personalItems} // Передаём personalItems
+            personalItems={personalItems}
             user={user}
           />
         )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
 import { FaEdit } from 'react-icons/fa';
-import { ClipLoader } from 'react-spinners'; // Добавляем индикатор загрузки
+import { ClipLoader } from 'react-spinners';
 
 function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, personalItems }) {
   const [shopItems, setShopItems] = useState([]);
@@ -21,6 +21,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [newAnimalName, setNewAnimalName] = useState('');
   const [freeRoam, setFreeRoam] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Новое состояние для отслеживания загрузки
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
@@ -93,7 +94,8 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
       _id: item._id.toString(),
     }));
     if (owner === userOwnerKey) {
-      onItemsUpdate(updatedItems); // Обновляем personalItems в App.js через onItemsUpdate
+      onItemsUpdate(updatedItems);
+      setIsLoading(false); // Завершаем загрузку при получении personalItems
     } else if (owner === locationOwnerKey) {
       if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
         setLocationItems(updatedItems);
@@ -156,7 +158,10 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
 
   // Загрузка данных при монтировании
   useEffect(() => {
-    if (!socket || !userId) return;
+    if (!socket || !userId) {
+      setIsLoading(false); // Если нет сокета или userId, завершаем загрузку
+      return;
+    }
 
     // Запрашиваем только предметы локации и лимиты, так как personalItems приходят через пропсы
     socket.emit('getItems', { owner: locationOwnerKey });
@@ -191,6 +196,13 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
       socket.off('error');
     };
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, user, shopStaticItems, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals]);
+
+  // Проверяем, завершена ли загрузка personalItems
+  useEffect(() => {
+    if (personalItems) {
+      setIsLoading(false); // Завершаем загрузку, когда personalItems получены
+    }
+  }, [personalItems]);
 
   // Обработка покупки
   const handleBuyItem = async (item) => {
@@ -432,17 +444,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
             {error}
           </div>
         )}
-        {activeTab === 'personal' && personalLimit && (
-          <S.WeightLimit theme={theme}>
-            Вес: {personalLimit.currentWeight} кг / {personalLimit.maxWeight} кг
-          </S.WeightLimit>
-        )}
-        {activeTab === 'location' && locationLimit && (
-          <S.WeightLimit theme={theme}>
-            Вес: {locationLimit.currentWeight} кг / {personalLimit.maxWeight} кг
-          </S.WeightLimit>
-        )}
-        {activeTab === 'personal' && personalItems.length === 0 && personalLimit ? (
+        {activeTab === 'personal' && personalLimit && isLoading ? (
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <ClipLoader color={theme === 'dark' ? '#ccc' : '#007AFF'} size={30} />
             <p>Загрузка инвентаря...</p>
@@ -615,7 +617,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user, pe
                   </S.ActionButtons>
                 </S.ItemCard>
               ))}
-              {activeTab === 'personal' && personalItems.length === 0 && (
+              {activeTab === 'personal' && personalItems.length === 0 && !isLoading && (
                 <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
                   У вас пока нет предметов
                 </div>

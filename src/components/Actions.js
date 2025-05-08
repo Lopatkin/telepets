@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   ActionsContainer, ActionGrid, ContentContainer, ActionCard, ActionTitle,
   ActionDescription, ModalOverlay, ModalContent, ModalTitle, ModalDescription,
@@ -11,7 +11,7 @@ import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from '../utils/WorkshopCrafting';
 import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 
-function Actions({ theme, currentRoom, userId, socket, personalItems, setPersonalItems, user }) { // Добавляем setPersonalItems
+function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
@@ -21,47 +21,13 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, setPersona
     setTimeout(() => setNotification({ show: false, message: '' }), duration);
   }, []);
 
-  // Функция для запроса актуальных предметов
-  const fetchPersonalItems = useCallback(() => {
-    if (!socket || !userId) {
-      console.error('Socket or userId not available');
-      return;
-    }
-    socket.emit('getItems', { owner: `user_${userId}` });
-  }, [socket, userId]);
-
-  // Обработка ответа от сервера с предметами
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleItemsUpdate = (data) => {
-      const { owner, items } = data;
-      if (owner === `user_${userId}`) {
-        const updatedItems = items.map(item => ({
-          ...item,
-          _id: item._id.toString(),
-        }));
-        setPersonalItems(updatedItems);
-      }
-    };
-
-    socket.on('items', handleItemsUpdate);
-
-    return () => {
-      socket.off('items', handleItemsUpdate);
-    };
-  }, [socket, userId, setPersonalItems]);
-
   const handleActionClick = useCallback((action) => {
     if (action.cooldownKey && cooldowns[action.cooldownKey].active) {
       showNotification('Действие недоступно, подождите');
       return;
     }
-    if (action.title === 'Столярная мастерская') {
-      fetchPersonalItems(); // Запрашиваем актуальные предметы перед открытием модального окна
-    }
     setSelectedAction(action);
-  }, [cooldowns, showNotification, fetchPersonalItems]);
+  }, [cooldowns, showNotification]);
 
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);
@@ -91,7 +57,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, setPersona
           setSelectedAction(null);
           showNotification(action.successMessage);
           if (action.cooldownKey) {
-            startCooldown(action.cooldownKey);
+            startCooldown(action.cooldownKey); // Используем startCooldown вместо прямой записи
           }
         } else {
           setSelectedAction(null);
@@ -121,9 +87,11 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, setPersona
     }
   }, [socket, selectedAction, user, userId, currentRoom, showNotification, startCooldown]);
 
+  // Обновлённая логика определения доступных действий
   const availableActions = useMemo(() => {
     if (!user || !currentRoom) return [];
 
+    // Маппинг комнат на ключи actionsConfig
     const roomMap = {
       home: currentRoom.startsWith(`myhome_${user.isHuman ? userId : user.owner}`),
       busStop: currentRoom === 'Автобусная остановка',
@@ -133,13 +101,16 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, setPersona
       shelter: currentRoom === 'Приют для животных "Кошкин дом"',
     };
 
+    // Находим подходящую локацию
     const locationKey = Object.keys(roomMap).find(key => roomMap[key]);
     if (!locationKey || !actionsConfig[locationKey]) return [];
 
+    // Выбираем действия в зависимости от типа игрока
     const actions = user.isHuman
       ? actionsConfig[locationKey].humanActions
       : actionsConfig[locationKey].animalActions;
 
+    // Для животных динамически подстраиваем действие "Погавкать"/"Помяукать"
     if (!user.isHuman) {
       return actions.map(action => {
         if (action.animalSpecific && action.title === 'Погавкать' && user.animalType === 'Кот') {

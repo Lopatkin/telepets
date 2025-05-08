@@ -227,7 +227,7 @@ function App() {
     };
 
     initializeSocket();
-  }, [handleItemsUpdate]); // Заменяем user на handleItemsUpdate
+  }, [handleItemsUpdate, user?.userId]); // Добавляем user?.userId в зависимости
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);

@@ -334,6 +334,7 @@ function App() {
             userId={user?.userId}
             socket={socket}
             personalItems={personalItems}
+            setPersonalItems={setPersonalItems} // Передаём setPersonalItems
             pets={pets} // Передаём питомцев
             isModalOpen={isActionModalOpen}
             setIsModalOpen={setIsActionModalOpen}

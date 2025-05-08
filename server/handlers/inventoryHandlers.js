@@ -10,10 +10,13 @@ function registerInventoryHandlers({
 }) {
     socket.on('getItems', async ({ owner }) => {
         try {
+            console.log(`Fetching items for owner: ${owner}`); // Добавляем логирование
             const items = await Item.find({ owner });
+            console.log(`Found ${items.length} items for owner: ${owner}`); // Логирование результата
             socket.emit('items', { owner, items });
         } catch (err) {
             console.error('Error fetching items:', err.message, err.stack);
+            socket.emit('error', { message: 'Ошибка при получении предметов' });
         }
     });
 

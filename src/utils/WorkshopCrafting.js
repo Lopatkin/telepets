@@ -3,6 +3,7 @@ import {
   ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
   SliderContainer, SliderLabel, Slider, SliderValue, Select, MaterialsText,
 } from '../styles/ActionsStyles';
+import { ClipLoader } from 'react-spinners'; // Добавляем ClipLoader для индикатора загрузки
 
 // Компонент для логики крафта в Столярной мастерской
 const WorkshopCrafting = ({
@@ -23,6 +24,7 @@ const WorkshopCrafting = ({
   });
   const [clickCount, setClickCount] = useState(0);
   const [craftingProgress, setCraftingProgress] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false); // Новое состояние для блокировки
 
   const handleCraftItemChange = useCallback((e) => {
     setSelectedCraftItem(e.target.value);
@@ -81,6 +83,11 @@ const WorkshopCrafting = ({
       return;
     }
 
+    if (isProcessing) {
+      showNotification('Крафт уже выполняется, подождите!');
+      return;
+    }
+
     const item = selectedAction.craftableItems.find((i) => i.name === selectedCraftItem);
     const clicksRequired = item.clicksRequired;
 
@@ -94,6 +101,8 @@ const WorkshopCrafting = ({
       return;
     }
 
+    setIsProcessing(true); // Блокируем кнопку
+
     const craftedItem = {
       name: item.name,
       description: item.description,
@@ -106,6 +115,7 @@ const WorkshopCrafting = ({
     const requiredSticks = item.materials.sticks;
     const requiredBoards = item.materials.boards;
 
+    // Удаление материалов
     if (requiredSticks > 0) {
       socket.emit('removeItems', {
         owner: `user_${userId}`,
@@ -121,7 +131,9 @@ const WorkshopCrafting = ({
       });
     }
 
+    // Добавление нового предмета
     socket.emit('addItem', { owner: `user_${userId}`, item: craftedItem }, (response) => {
+      setIsProcessing(false); // Разблокируем кнопку после ответа
       if (response && response.success) {
         showNotification(`Вы успешно создали: ${selectedCraftItem}!`);
         setSelectedAction(null);
@@ -140,6 +152,7 @@ const WorkshopCrafting = ({
     userId,
     showNotification,
     setSelectedAction,
+    isProcessing,
   ]);
 
   const renderSliders = useCallback(() => {
@@ -234,8 +247,8 @@ const WorkshopCrafting = ({
       <ProgressBarContainer theme={theme}>
         <Progress progress={craftingProgress} />
       </ProgressBarContainer>
-      <StartButton onClick={handleStartClick} disabled={!canStartCrafting()}>
-        СТАРТ
+      <StartButton onClick={handleStartClick} disabled={!canStartCrafting() || isProcessing}>
+        {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'СТАРТ'}
       </StartButton>
     </>
   );

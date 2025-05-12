@@ -342,9 +342,20 @@ function registerInventoryHandlers({
         }
     });
 
+    // Модифицировать обработчик removeItems
     socket.on('removeItems', async (data) => {
         try {
             const { owner, name, count } = data;
+
+            // Проверка интервала между действиями
+            const now = Date.now();
+            const lastActionTime = userLastAction.get(owner) || 0;
+            if (now - lastActionTime < MIN_ACTION_INTERVAL) {
+                socket.emit('error', { message: 'Слишком частые действия, подождите' });
+                return;
+            }
+            userLastAction.set(owner, now); // Обновляем время последнего действия
+
             const items = await Item.find({ owner, name }).limit(count);
 
             if (items.length < count) {

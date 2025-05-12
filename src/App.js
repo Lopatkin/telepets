@@ -249,7 +249,7 @@ function App() {
 
   // Добавляем эффект для повторного запроса getItems после обновления user
   useEffect(() => {
-    if (socket && user?.userId && isAuthenticated && isRegistered) {
+    if (socket && user?.userId && isAuthenticated && isRegistered && personalItems.length === 0) {
       console.log('Re-emitting getItems for user:', `user_${user.userId}`);
       socket.emit('getItems', { owner: `user_${user.userId}` });
     }

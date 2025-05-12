@@ -253,7 +253,7 @@ function App() {
       console.log('Re-emitting getItems for user:', `user_${user.userId}`);
       socket.emit('getItems', { owner: `user_${user.userId}` });
     }
-  }, [socket, user, isAuthenticated, isRegistered]);
+  }, [socket, user, isAuthenticated, isRegistered, personalItems.length]);
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);

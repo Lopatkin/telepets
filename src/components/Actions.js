@@ -10,18 +10,26 @@ import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from '../utils/WorkshopCrafting';
 import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
-import { ClipLoader } from 'react-spinners'; // Добавляем ClipLoader для индикатора загрузки
+import { ClipLoader } from 'react-spinners';
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
-  const [isLoading, setIsLoading] = useState(!personalItems.length); // Состояние загрузки
+  const [isLoading, setIsLoading] = useState(true); // Инициализируем как true
 
-  // Логируем personalItems при получении и изменении
+  // Запрашиваем personalItems при монтировании компонента
+  useEffect(() => {
+    if (socket && userId) {
+      console.log('Emitting getItems for user in Actions:', `user_${userId}`);
+      socket.emit('getItems', { owner: `user_${userId}` });
+    }
+  }, [socket, userId]);
+
+  // Обновляем isLoading и логируем personalItems
   useEffect(() => {
     console.log('Received personalItems in Actions:', personalItems);
-    setIsLoading(!personalItems.length); // Отключаем загрузку, если данные получены
+    setIsLoading(personalItems.length === 0); // Отключаем загрузку, если есть данные
   }, [personalItems]);
 
   const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
@@ -134,7 +142,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     return actions;
   }, [user, currentRoom, userId]);
 
-  // Показываем индикатор загрузки, если данные ещё не загружены
   if (isLoading) {
     return (
       <ActionsContainer theme={theme}>

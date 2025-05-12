@@ -67,11 +67,14 @@ function App() {
 
   const handleItemsUpdate = (data) => {
     const { owner, items } = data;
+    console.log('handleItemsUpdate:', { owner, items });
     if (owner === `user_${user?.userId}`) {
-      setPersonalItems(items.map(item => ({
+      const updatedItems = items.map(item => ({
         ...item,
         _id: item._id.toString(),
-      })));
+      }));
+      console.log('Updating personalItems:', updatedItems);
+      setPersonalItems(updatedItems);
     }
   };
 
@@ -174,6 +177,7 @@ function App() {
         socketRef.current.on('items', handleItemsUpdate);
         socketRef.current.on('itemAction', (data) => {
           const { action, owner, item, itemId, itemIds } = data;
+          console.log('Received itemAction:', data);
           if (owner === `user_${user?.userId}`) {
             if (action === 'add') {
               setPersonalItems(prev => [...prev, { ...item, _id: item._id.toString() }]);

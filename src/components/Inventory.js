@@ -19,10 +19,18 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [newAnimalName, setNewAnimalName] = useState('');
   const [freeRoam, setFreeRoam] = useState(false);
+  // Добавляем временное состояние для локального отображения personalItems
+  const [tempPersonalItems, setTempPersonalItems] = useState(personalItems);
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
+
+  // Синхронизируем tempPersonalItems с personalItems при их изменении
+  useEffect(() => {
+    console.log('Received personalItems in Inventory:', personalItems);
+    setTempPersonalItems(personalItems);
+  }, [personalItems]);
 
   const handleRenameAnimal = (animalId, newName) => {
     socket.emit('renameAnimal', { animalId, newName }, (response) => {
@@ -66,6 +74,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   };
 
   const groupItemsByNameAndWeight = (items) => {
+    console.log('Grouping items:', items);
     const grouped = items.reduce((acc, item) => {
       const key = item.name === 'Паспорт животного' && item.animalId
         ? `${item.name}_${item.weight}_${item.animalId}`
@@ -129,8 +138,8 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   ], []);
 
   useEffect(() => {
-    console.log('Inventory props:', { userId, currentRoom, user });
-  }, [userId, currentRoom, user]);
+    console.log('Inventory props:', { userId, currentRoom, user, personalItems });
+  }, [userId, currentRoom, user, personalItems]);
 
   useEffect(() => {
     if (!socket || !userId) return;
@@ -151,6 +160,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
     socket.on('items', (data) => {
       const { owner, items } = data;
+      console.log('Received items event:', data);
       if (owner === locationOwnerKey) {
         setLocationItems(items.map(item => ({
           ...item,
@@ -230,6 +240,12 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         setError(spendResponse?.message || 'Ошибка при списании кредитов');
       }
 
+      // Локально добавляем предмет в tempPersonalItems
+      setTempPersonalItems(prev => [...prev, {
+        ...item,
+        _id: addItemResponse.itemId?.toString() || `temp_${Date.now()}`,
+      }]);
+
       setIsActionCooldown(false);
     } catch (err) {
       console.error('Ошибка при покупке:', err);
@@ -246,8 +262,8 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       return;
     }
 
-    const hasCollar = personalItems.some(item => item.name === 'Ошейник');
-    const hasLeash = personalItems.some(item => item.name === 'Поводок');
+    const hasCollar = tempPersonalItems.some(item => item.name === 'Ошейник');
+    const hasLeash = tempPersonalItems.some(item => item.name === 'Поводок');
 
     if (!hasCollar || !hasLeash) {
       setError('Чтобы забрать питомца из приюта, вам нужен ошейник и поводок.');
@@ -271,6 +287,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setAnimatingItem({ itemId, action: 'pickup' });
 
     setTimeout(() => {
+      const itemToAdd = locationItems.find(item => item._id.toString() === itemId);
+      if (itemToAdd) {
+        // Локально добавляем предмет в tempPersonalItems
+        setTempPersonalItems(prev => [...prev, { ...itemToAdd }]);
+      }
       const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
       setLocationItems(updatedLocationItems);
       setAnimatingItem(null);
@@ -290,13 +311,15 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const confirmDeleteItem = (confirmed) => {
     if (confirmed && confirmDelete) {
       const itemId = confirmDelete;
-      const itemToDelete = personalItems.find(item => item._id.toString() === itemId);
+      const itemToDelete = tempPersonalItems.find(item => item._id.toString() === itemId);
       if (!itemToDelete) return;
 
       setIsActionCooldown(true);
       setAnimatingItem({ itemId, action: 'split' });
 
       setTimeout(() => {
+        // Локально удаляем предмет из tempPersonalItems
+        setTempPersonalItems(prev => prev.filter(item => item._id.toString() !== itemId));
         socket.emit('deleteItem', { itemId });
         setAnimatingItem(null);
         setTimeout(() => {
@@ -317,8 +340,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     if (action === 'move') {
       setAnimatingItem({ itemId: `${itemName}_${weight}_move`, action: 'move' });
       setTimeout(() => {
-        const itemsToMove = personalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
+        const itemsToMove = tempPersonalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
+        // Локально удаляем предметы из tempPersonalItems и добавляем в locationItems
+        setTempPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
+        setLocationItems(prev => [...prev, ...itemsToMove]);
         socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
@@ -326,8 +352,10 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     } else if (action === 'delete') {
       setAnimatingItem({ itemId: `${itemName}_${weight}_delete`, action: 'split' });
       setTimeout(() => {
-        const itemsToDelete = personalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
+        const itemsToDelete = tempPersonalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
+        // Локально удаляем предметы из tempPersonalItems
+        setTempPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
         itemIds.forEach(itemId => socket.emit('deleteItem', { itemId }));
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
@@ -442,7 +470,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
           </S.AnimalList>
         ) : (
           <S.ItemList subTab={activeTab}>
-            {activeTab === 'personal' && groupItemsByNameAndWeight(personalItems).map(({ item, count }) => (
+            {activeTab === 'personal' && groupItemsByNameAndWeight(tempPersonalItems).map(({ item, count }) => (
               <S.ItemCard
                 key={item._id}
                 theme={theme}
@@ -587,7 +615,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                 </S.ActionButtons>
               </S.ItemCard>
             ))}
-            {activeTab === 'personal' && personalItems.length === 0 && (
+            {activeTab === 'personal' && tempPersonalItems.length === 0 && (
               <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
                 У вас пока нет предметов
               </div>

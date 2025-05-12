@@ -360,11 +360,11 @@ function App() {
         )}
         {activeTab === 'actions' && socket && (
           <Actions
-            theme={appliedTheme}
-            currentRoom={currentRoom}
             userId={user?.userId}
+            currentRoom={currentRoom}
+            theme={appliedTheme}
             socket={socket}
-            personalItems={personalItems}
+            personalItems={personalItems} // Добавляем personalItems
             pets={pets}
             isModalOpen={isActionModalOpen}
             setIsModalOpen={setIsActionModalOpen}

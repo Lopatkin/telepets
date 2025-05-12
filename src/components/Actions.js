@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   ActionsContainer, ActionGrid, ContentContainer, ActionCard, ActionTitle,
   ActionDescription, ModalOverlay, ModalContent, ModalTitle, ModalDescription,
@@ -10,11 +10,19 @@ import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from '../utils/WorkshopCrafting';
 import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
+import { ClipLoader } from 'react-spinners'; // Добавляем ClipLoader для индикатора загрузки
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
+  const [isLoading, setIsLoading] = useState(!personalItems.length); // Состояние загрузки
+
+  // Логируем personalItems при получении и изменении
+  useEffect(() => {
+    console.log('Received personalItems in Actions:', personalItems);
+    setIsLoading(!personalItems.length); // Отключаем загрузку, если данные получены
+  }, [personalItems]);
 
   const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
     setNotification({ show: true, message });
@@ -26,8 +34,9 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       showNotification('Действие недоступно, подождите');
       return;
     }
+    console.log('Selected action:', action.title, 'personalItems:', personalItems);
     setSelectedAction(action);
-  }, [cooldowns, showNotification]);
+  }, [cooldowns, showNotification, personalItems]);
 
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);
@@ -57,7 +66,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
           setSelectedAction(null);
           showNotification(action.successMessage);
           if (action.cooldownKey) {
-            startCooldown(action.cooldownKey); // Используем startCooldown вместо прямой записи
+            startCooldown(action.cooldownKey);
           }
         } else {
           setSelectedAction(null);
@@ -87,11 +96,9 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
     }
   }, [socket, selectedAction, user, userId, currentRoom, showNotification, startCooldown]);
 
-  // Обновлённая логика определения доступных действий
   const availableActions = useMemo(() => {
     if (!user || !currentRoom) return [];
 
-    // Маппинг комнат на ключи actionsConfig
     const roomMap = {
       home: currentRoom.startsWith(`myhome_${user.isHuman ? userId : user.owner}`),
       busStop: currentRoom === 'Автобусная остановка',
@@ -101,16 +108,13 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
       shelter: currentRoom === 'Приют для животных "Кошкин дом"',
     };
 
-    // Находим подходящую локацию
     const locationKey = Object.keys(roomMap).find(key => roomMap[key]);
     if (!locationKey || !actionsConfig[locationKey]) return [];
 
-    // Выбираем действия в зависимости от типа игрока
     const actions = user.isHuman
       ? actionsConfig[locationKey].humanActions
       : actionsConfig[locationKey].animalActions;
 
-    // Для животных динамически подстраиваем действие "Погавкать"/"Помяукать"
     if (!user.isHuman) {
       return actions.map(action => {
         if (action.animalSpecific && action.title === 'Погавкать' && user.animalType === 'Кот') {
@@ -129,6 +133,20 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
 
     return actions;
   }, [user, currentRoom, userId]);
+
+  // Показываем индикатор загрузки, если данные ещё не загружены
+  if (isLoading) {
+    return (
+      <ActionsContainer theme={theme}>
+        <ContentContainer>
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            <ClipLoader color="#007AFF" size={40} />
+            <p style={{ color: theme === 'dark' ? '#ccc' : '#666' }}>Загрузка предметов...</p>
+          </div>
+        </ContentContainer>
+      </ActionsContainer>
+    );
+  }
 
   return (
     <ActionsContainer theme={theme}>

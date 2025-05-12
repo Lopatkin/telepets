@@ -211,7 +211,12 @@ function App() {
           setCurrentRoom(defaultRoom);
           joinedRoomsRef.current.add(defaultRoom);
           socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
-          socketRef.current.emit('getItems', { owner: `user_${user?.userId}` });
+          if (user?.userId) {
+            console.log('Emitting getItems for user:', `user_${user.userId}`);
+            socketRef.current.emit('getItems', { owner: `user_${user.userId}` });
+          } else {
+            console.warn('user.userId is undefined during authSuccess');
+          }
         }
       });
 
@@ -242,12 +247,25 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleItemsUpdate]);
 
+  // Добавляем эффект для повторного запроса getItems после обновления user
+  useEffect(() => {
+    if (socket && user?.userId && isAuthenticated && isRegistered) {
+      console.log('Re-emitting getItems for user:', `user_${user.userId}`);
+      socket.emit('getItems', { owner: `user_${user.userId}` });
+    }
+  }, [socket, user, isAuthenticated, isRegistered]);
+
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);
     setCurrentRoom(defaultRoom);
     joinedRoomsRef.current.add(defaultRoom);
     socket.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
-    socket.emit('getItems', { owner: `user_${user?.userId}` });
+    if (user?.userId) {
+      console.log('Emitting getItems after registration:', `user_${user.userId}`);
+      socket.emit('getItems', { owner: `user_${user.userId}` });
+    } else {
+      console.warn('user.userId is undefined during handleRegistrationComplete');
+    }
   };
 
   useEffect(() => {

@@ -19,14 +19,12 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [newAnimalName, setNewAnimalName] = useState('');
   const [freeRoam, setFreeRoam] = useState(false);
-  // Добавляем временное состояние для локального отображения personalItems
   const [tempPersonalItems, setTempPersonalItems] = useState(personalItems);
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
 
-  // Синхронизируем tempPersonalItems с personalItems при их изменении
   useEffect(() => {
     console.log('Received personalItems in Inventory:', personalItems);
     setTempPersonalItems(personalItems);
@@ -144,7 +142,10 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   useEffect(() => {
     if (!socket || !userId) return;
 
+    console.log('Emitting getItems for location:', locationOwnerKey);
     socket.emit('getItems', { owner: locationOwnerKey });
+    console.log('Emitting getItems for user:', userOwnerKey);
+    socket.emit('getItems', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
@@ -240,7 +241,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         setError(spendResponse?.message || 'Ошибка при списании кредитов');
       }
 
-      // Локально добавляем предмет в tempPersonalItems
       setTempPersonalItems(prev => [...prev, {
         ...item,
         _id: addItemResponse.itemId?.toString() || `temp_${Date.now()}`,
@@ -289,7 +289,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setTimeout(() => {
       const itemToAdd = locationItems.find(item => item._id.toString() === itemId);
       if (itemToAdd) {
-        // Локально добавляем предмет в tempPersonalItems
         setTempPersonalItems(prev => [...prev, { ...itemToAdd }]);
       }
       const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
@@ -318,7 +317,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setAnimatingItem({ itemId, action: 'split' });
 
       setTimeout(() => {
-        // Локально удаляем предмет из tempPersonalItems
         setTempPersonalItems(prev => prev.filter(item => item._id.toString() !== itemId));
         socket.emit('deleteItem', { itemId });
         setAnimatingItem(null);
@@ -342,7 +340,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setTimeout(() => {
         const itemsToMove = tempPersonalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
-        // Локально удаляем предметы из tempPersonalItems и добавляем в locationItems
         setTempPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
         setLocationItems(prev => [...prev, ...itemsToMove]);
         socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey });
@@ -354,7 +351,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setTimeout(() => {
         const itemsToDelete = tempPersonalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
-        // Локально удаляем предметы из tempPersonalItems
         setTempPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
         itemIds.forEach(itemId => socket.emit('deleteItem', { itemId }));
         setAnimatingItem(null);
@@ -445,7 +441,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         )}
         {activeTab === 'location' && locationLimit && (
           <S.WeightLimit theme={theme}>
-            Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
+            Вес: {locationLimit.currentWeight} кг / {personalLimit.maxWeight} кг
           </S.WeightLimit>
         )}
         {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (

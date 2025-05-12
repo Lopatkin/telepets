@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Добавляем импорт useMemo
-import * as S from '../styles/InventoryStyles'; // Импорт всех стилей
-import { FaEdit } from 'react-icons/fa'; // Добавляем иконку редактирования
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import * as S from '../styles/InventoryStyles';
+import { FaEdit } from 'react-icons/fa';
 
-function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) {
+function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
   const [activeTab, setActiveTab] = useState('personal');
   const [activeLocationSubTab, setActiveLocationSubTab] = useState('items');
-  const [personalItems, setPersonalItems] = useState([]);
   const [locationItems, setLocationItems] = useState([]);
   const [shelterAnimals, setShelterAnimals] = useState([]);
   const [personalLimit, setPersonalLimit] = useState(null);
@@ -18,15 +17,14 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
   const [selectedItem, setSelectedItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [actionQuantity, setActionQuantity] = useState({ itemName: null, weight: null, count: 1, action: null });
-  const [renameModalOpen, setRenameModalOpen] = useState(false); // Состояние для модального окна переименования
-  const [newAnimalName, setNewAnimalName] = useState(''); // Состояние для нового имени животного
-  const [freeRoam, setFreeRoam] = useState(false); // Состояние для чекбокса "Свободный выгул"
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [newAnimalName, setNewAnimalName] = useState('');
+  const [freeRoam, setFreeRoam] = useState(false);
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
 
-  // Функция для обработки переименования животного
   const handleRenameAnimal = (animalId, newName) => {
     socket.emit('renameAnimal', { animalId, newName }, (response) => {
       if (response.success) {
@@ -44,11 +42,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     });
   };
 
-  // Функция для обработки изменения "Свободного выгула"
   const handleFreeRoamChange = (animalId, checked) => {
     socket.emit('setFreeRoam', { animalId, freeRoam: checked }, (response) => {
       if (response.success) {
-        // Обновляем selectedItem после успешного ответа
         socket.emit('getAnimalInfo', { animalId }, (infoResponse) => {
           if (infoResponse.success) {
             setSelectedItem(prev => ({
@@ -70,10 +66,8 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     });
   };
 
-  // В функции groupItemsByNameAndWeight используем animalId для "Паспорта животного"
   const groupItemsByNameAndWeight = (items) => {
     const grouped = items.reduce((acc, item) => {
-      // Для "Паспорта животного" используем animalId, если оно есть, иначе стандартный ключ
       const key = item.name === 'Паспорт животного' && item.animalId
         ? `${item.name}_${item.weight}_${item.animalId}`
         : `${item.name}_${item.weight}`;
@@ -86,23 +80,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     }, {});
     return Object.values(grouped);
   };
-
-  const handleItemsUpdate = useCallback((data) => {
-    // console.log('Received items update:', { owner, items }); // Добавляем логирование
-    const { owner, items } = data;
-    const updatedItems = items.map(item => ({
-      ...item,
-      _id: item._id.toString(),
-    }));
-    if (owner === userOwnerKey) {
-      setPersonalItems(updatedItems);
-      onItemsUpdate(updatedItems);
-    } else if (owner === locationOwnerKey) {
-      if (!pendingItems.some(item => item.owner === locationOwnerKey)) {
-        setLocationItems(updatedItems);
-      }
-    }
-  }, [userOwnerKey, locationOwnerKey, pendingItems, onItemsUpdate]);
 
   const handleLimitUpdate = useCallback((limit) => {
     if (limit.owner === userOwnerKey) setPersonalLimit(limit);
@@ -133,7 +110,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     setShelterAnimals(animals);
   }, []);
 
-  // Переносим shopStaticItems в useMemo
   const shopStaticItems = useMemo(() => [
     {
       _id: 'shop_collar',
@@ -153,17 +129,16 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       cost: 200,
       effect: 'Вы чувствуете власть над кем-то. Приятно.',
     },
-  ], []); // Пустой массив зависимостей, так как данные статичны
+  ], []);
 
   useEffect(() => {
     console.log('Inventory props:', { userId, currentRoom, user });
   }, [userId, currentRoom, user]);
 
-  // Убираем shopStaticItems из зависимостей useEffect, так как он теперь стабилен
   useEffect(() => {
     if (!socket || !userId) return;
 
-    socket.emit('getItems', { owner: userOwnerKey });
+    // Загружаем только locationItems и лимиты, personalItems берём из пропсов
     socket.emit('getItems', { owner: locationOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
@@ -172,14 +147,23 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       socket.emit('getShelterAnimals');
     }
 
-    // Добавляем предметы магазина для "Магазин 'Всё на свете'" только для людей
     if (currentRoom === 'Магазин "Всё на свете"' && user?.isHuman) {
       setShopItems(shopStaticItems);
     } else {
       setShopItems([]);
     }
 
-    socket.on('items', handleItemsUpdate);
+    socket.on('items', (data) => {
+      const { owner, items } = data;
+      if (owner === locationOwnerKey) {
+        setLocationItems(items.map(item => ({
+          ...item,
+          _id: item._id.toString(),
+        })));
+      } else if (owner === userOwnerKey) {
+        onItemsUpdate(data); // Обновляем кэш в App.js
+      }
+    });
     socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
     socket.on('shelterAnimals', handleShelterAnimals);
@@ -188,24 +172,21 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       setTimeout(() => setError(null), 3000);
     });
 
-
     return () => {
-      socket.off('items', handleItemsUpdate);
+      socket.off('items');
       socket.off('inventoryLimit', handleLimitUpdate);
       socket.off('itemAction', handleItemAction);
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemsUpdate, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems, onItemsUpdate]);
 
-  // Добавляем обработчик покупки
   const handleBuyItem = async (item) => {
     if (isActionCooldown) return;
 
     try {
       setIsActionCooldown(true);
 
-      // Проверяем баланс пользователя с помощью Promise
       const creditsResponse = await new Promise((resolve) => {
         socket.emit('getCredits', {}, resolve);
       });
@@ -222,7 +203,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         return;
       }
 
-      // Создаем предмет и списываем кредиты
       const addItemResponse = await new Promise((resolve) => {
         socket.emit('addItem', {
           owner: userOwnerKey,
@@ -243,7 +223,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         return;
       }
 
-      // После успешного добавления предмета списываем кредиты
       const spendResponse = await new Promise((resolve) => {
         socket.emit('spendCredits', {
           amount: item.cost,
@@ -271,7 +250,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
       return;
     }
 
-    // Проверка наличия "Ошейника" и "Поводка"
     const hasCollar = personalItems.some(item => item.name === 'Ошейник');
     const hasLeash = personalItems.some(item => item.name === 'Поводок');
 
@@ -294,6 +272,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     if (isActionCooldown) return;
 
     setIsActionCooldown(true);
+    Device: Pointer;
     setAnimatingItem({ itemId, action: 'pickup' });
 
     setTimeout(() => {
@@ -387,7 +366,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
     setActionQuantity({ itemName: null, weight: null, count: 1, action: null });
   };
 
-  // В функции Inventory перед return добавить новую функцию для обработки нажатия "Посмотреть"
   const handleViewPassport = (item) => {
     socket.emit('getAnimalInfo', { animalId: item.animalId }, (response) => {
       if (response.success) {
@@ -397,9 +375,9 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
           animalType: response.animal.animalType,
           lastRoom: response.animal.lastRoom,
           onLeash: response.animal.onLeash,
-          freeRoam: response.animal.freeRoam || false // Добавляем freeRoam
+          freeRoam: response.animal.freeRoam || false
         });
-        setFreeRoam(response.animal.freeRoam || false); // Устанавливаем начальное значение freeRoam
+        setFreeRoam(response.animal.freeRoam || false);
       } else {
         setError(response.message || 'Ошибка при получении данных животного');
         setTimeout(() => setError(null), 3000);
@@ -662,7 +640,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
         onClick={closeModal}
         isConfirm={!!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
       >
-        {/* // Обновляем модальное окно для "Паспорт животного" */}
         {selectedItem && selectedItem.name === 'Паспорт животного' && (
           <S.ModalContent theme={theme}>
             <S.ItemTitle theme={theme}>Паспорт животного</S.ItemTitle>
@@ -706,8 +683,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
             </S.ActionButtons>
           </S.ModalContent>
         )}
-
-        {/* // Модальное окно для переименования */}
         {renameModalOpen && (
           <S.Modal isOpen={true} theme={theme}>
             <S.RenameModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
@@ -716,7 +691,7 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
                 type="text"
                 value={newAnimalName}
                 onChange={(e) => setNewAnimalName(e.target.value)}
-                onClick={(e) => e.stopPropagation()} // Предотвращаем закрытие при клике на поле
+                onClick={(e) => e.stopPropagation()}
                 placeholder="Введите новое имя"
                 theme={theme}
               />
@@ -739,7 +714,6 @@ function Inventory({ userId, currentRoom, theme, socket, onItemsUpdate, user }) 
             </S.RenameModalContent>
           </S.Modal>
         )}
-
         {confirmDelete && (
           <S.ConfirmModalContent theme={theme}>
             <S.ConfirmText>Вы уверены, что хотите сломать этот предмет?</S.ConfirmText>

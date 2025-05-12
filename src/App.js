@@ -12,7 +12,6 @@ import { ClipLoader } from 'react-spinners';
 import Registration from './components/Registration';
 import BouncingBall from './components/BouncingBall';
 
-// Добавить стиль для BouncingBallOverlay
 const BouncingBallOverlay = styled.div`
   position: absolute;
   top: 0;
@@ -28,7 +27,7 @@ const AppContainer = styled.div`
   height: 100vh;
   display: flex;
   flex-direction: column;
-  position: relative; /* Добавляем для позиционирования BouncingBallOverlay */
+  position: relative;
 `;
 
 const Content = styled.div`
@@ -54,7 +53,7 @@ function App() {
   const joinedRoomsRef = useRef(new Set());
   const [socket, setSocket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [personalItems, setPersonalItems] = useState([]); // Кэш для personalItems
+  const [personalItems, setPersonalItems] = useState([]);
   const [pets, setPets] = useState([]);
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
@@ -66,7 +65,6 @@ function App() {
     setIsActionModalOpen(false);
   };
 
-  // Обновление кэша personalItems
   const handleItemsUpdate = (data) => {
     const { owner, items } = data;
     if (owner === `user_${user?.userId}`) {
@@ -173,7 +171,6 @@ function App() {
           })));
         });
 
-        // Добавляем обработчики для работы с предметами
         socketRef.current.on('items', handleItemsUpdate);
         socketRef.current.on('itemAction', (data) => {
           const { action, owner, item, itemId, itemIds } = data;
@@ -210,8 +207,7 @@ function App() {
           setCurrentRoom(defaultRoom);
           joinedRoomsRef.current.add(defaultRoom);
           socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
-          // Загружаем personalItems после успешной аутентификации
-          socketRef.current.emit('getItems', { owner: `user_${socket.userData.userId}` });
+          socketRef.current.emit('getItems', { owner: `user_${user?.userId}` });
         }
       });
 
@@ -239,14 +235,14 @@ function App() {
     };
 
     initializeSocket();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleItemsUpdate]);
 
   const handleRegistrationComplete = (defaultRoom) => {
     setIsRegistered(true);
     setCurrentRoom(defaultRoom);
     joinedRoomsRef.current.add(defaultRoom);
     socket.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
-    // Загружаем personalItems после регистрации
     socket.emit('getItems', { owner: `user_${user?.userId}` });
   };
 
@@ -346,7 +342,7 @@ function App() {
             currentRoom={currentRoom}
             userId={user?.userId}
             socket={socket}
-            personalItems={personalItems} // Передаём кэшированные personalItems
+            personalItems={personalItems}
             pets={pets}
             isModalOpen={isActionModalOpen}
             setIsModalOpen={setIsActionModalOpen}
@@ -359,7 +355,7 @@ function App() {
             currentRoom={currentRoom}
             theme={appliedTheme}
             socket={socket}
-            personalItems={personalItems} // Передаём кэшированные personalItems
+            personalItems={personalItems}
             onItemsUpdate={handleItemsUpdate}
             closeActionModal={closeActionModal}
             setIsModalOpen={setIsActionModalOpen}

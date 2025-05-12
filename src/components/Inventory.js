@@ -12,7 +12,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [locationLimit, setLocationLimit] = useState(null);
   const [error, setError] = useState(null);
   const [animatingItem, setAnimatingItem] = useState(null);
-  const [pendingItems, setPendingItems] = useState([]);
   const [isActionCooldown, setIsActionCooldown] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -96,11 +95,9 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         setAnimatingItem(null);
       }, 500);
     } else if (action === 'add' && owner === locationOwnerKey) {
-      setPendingItems(prev => [...prev, item]);
       setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
       setTimeout(() => {
         setLocationItems(prevItems => [...prevItems, item]);
-        setPendingItems(prev => prev.filter(i => i._id.toString() !== item._id.toString()));
         setAnimatingItem(null);
       }, 500);
     }
@@ -420,7 +417,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         )}
         {activeTab === 'location' && locationLimit && (
           <S.WeightLimit theme={theme}>
-            Вес: {locationLimit.currentWeight} кг / {personalLimit.maxWeight} кг
+            Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
           </S.WeightLimit>
         )}
         {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (

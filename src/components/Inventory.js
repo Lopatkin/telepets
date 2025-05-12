@@ -272,7 +272,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     if (isActionCooldown) return;
 
     setIsActionCooldown(true);
-    Device: Pointer;
     setAnimatingItem({ itemId, action: 'pickup' });
 
     setTimeout(() => {
@@ -302,17 +301,17 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setAnimatingItem({ itemId, action: 'split' });
 
       setTimeout(() => {
-        const updatedItems = personalItems.filter(item => item._id.toString() !== itemId);
-        const trashItem = {
-          _id: `temp_${Date.now()}`,
-          name: 'Мусор',
-          description: 'Раньше это было чем-то полезным',
-          rarity: 'Бесполезный',
-          weight: itemToDelete.weight,
-          cost: 1,
-          effect: 'Чувство обременения чем-то бесполезным',
-        };
-        setPersonalItems([...updatedItems, trashItem]);
+        // const updatedItems = personalItems.filter(item => item._id.toString() !== itemId);
+        // const trashItem = {
+        //   _id: `temp_${Date.now()}`,
+        //   name: 'Мусор',
+        //   description: 'Раньше это было чем-то полезным',
+        //   rarity: 'Бесполезный',
+        //   weight: itemToDelete.weight,
+        //   cost: 1,
+        //   effect: 'Чувство обременения чем-то бесполезным',
+        // };
+        // setPersonalItems([...updatedItems, trashItem]);
         socket.emit('deleteItem', { itemId });
 
         setAnimatingItem(null);
@@ -336,7 +335,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setTimeout(() => {
         const itemsToMove = personalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
-        setPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
         socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
@@ -346,17 +344,17 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setTimeout(() => {
         const itemsToDelete = personalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
-        const updatedItems = personalItems.filter(item => !itemIds.includes(item._id));
-        const trashItems = itemsToDelete.map(item => ({
-          _id: `temp_${Date.now()}_${Math.random()}`,
-          name: 'Мусор',
-          description: 'Раньше это было чем-то полезным',
-          rarity: 'Бесполезный',
-          weight: item.weight,
-          cost: 1,
-          effect: 'Чувство обременения чем-то бесполезным',
-        }));
-        setPersonalItems([...updatedItems, ...trashItems]);
+        // const updatedItems = personalItems.filter(item => !itemIds.includes(item._id));
+        // const trashItems = itemsToDelete.map(item => ({
+        //   _id: `temp_${Date.now()}_${Math.random()}`,
+        //   name: 'Мусор',
+        //   description: 'Раньше это было чем-то полезным',
+        //   rarity: 'Бесполезный',
+        //   weight: item.weight,
+        //   cost: 1,
+        //   effect: 'Чувство обременения чем-то бесполезным',
+        // }));
+        // setPersonalItems([...updatedItems, ...trashItems]);
         itemIds.forEach(itemId => socket.emit('deleteItem', { itemId }));
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);

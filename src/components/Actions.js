@@ -230,7 +230,10 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
             ) : (
               <>
                 <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>
-                <ActionButton onClick={handleButtonClick} disabled={isProcessing || (action.cooldownKey && cooldowns[action.cooldownKey].active)}>
+                <ActionButton
+                  onClick={handleButtonClick}
+                  disabled={isProcessing || (selectedAction?.cooldownKey && cooldowns[selectedAction.cooldownKey]?.active)}
+                >
                   {isProcessing ? <ClipLoader color="#fff" size={20} /> : selectedAction.buttonText}
                 </ActionButton>
               </>

@@ -17,6 +17,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false); // Новое состояние для отслеживания обработки запроса
 
   // Подписываемся на событие items через onItemsUpdate
   useEffect(() => {
@@ -64,6 +65,11 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
       return;
     }
 
+    if (isProcessing) {
+      showNotification('Действие уже выполняется, подождите');
+      return;
+    }
+
     const action = actionHandlers[selectedAction.title];
     if (!action) {
       showNotification('Действие не поддерживается');
@@ -75,8 +81,15 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
       return;
     }
 
+    if (action.cooldownKey && cooldowns[action.cooldownKey].active) {
+      showNotification('Действие недоступно, подождите');
+      return;
+    }
+
     if (action.item) {
+      setIsProcessing(true); // Блокируем кнопку
       socket.emit('addItem', { owner: `user_${userId}`, item: action.item }, (response) => {
+        setIsProcessing(false); // Разблокируем кнопку после ответа
         if (response && response.success) {
           setSelectedAction(null);
           showNotification(action.successMessage);
@@ -89,7 +102,9 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
         }
       });
     } else if (action.action === 'utilizeTrash') {
+      setIsProcessing(true);
       socket.emit('utilizeTrash', (response) => {
+        setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
           showNotification(response.message);
@@ -100,16 +115,18 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
         }
       });
     } else if (action.systemMessage) {
+      setIsProcessing(true);
       socket.emit('sendSystemMessage', {
         text: typeof action.systemMessage === 'function' ? action.systemMessage(user) : action.systemMessage,
         room: currentRoom,
         timestamp: new Date().toISOString(),
       }, () => {
+        setIsProcessing(false);
         setSelectedAction(null);
         showNotification(action.successMessage);
       });
     }
-  }, [socket, selectedAction, user, userId, currentRoom, showNotification, startCooldown]);
+  }, [socket, selectedAction, user, userId, currentRoom, showNotification, startCooldown, isProcessing, cooldowns]);
 
   const availableActions = useMemo(() => {
     if (!user || !currentRoom) return [];
@@ -213,8 +230,8 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
             ) : (
               <>
                 <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>
-                <ActionButton onClick={handleButtonClick}>
-                  {selectedAction.buttonText}
+                <ActionButton onClick={handleButtonClick} disabled={isProcessing || (action.cooldownKey && cooldowns[action.cooldownKey].active)}>
+                  {isProcessing ? <ClipLoader color="#fff" size={20} /> : selectedAction.buttonText}
                 </ActionButton>
               </>
             )}

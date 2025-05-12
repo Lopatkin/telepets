@@ -1,3 +1,7 @@
+const userLastAction = new Map(); // Для хранения времени последнего действия пользователя
+const MIN_ACTION_INTERVAL = 1000; // Минимальный интервал между действиями (1 секунда)
+
+
 function registerInventoryHandlers({
     io,
     socket,
@@ -34,6 +38,15 @@ function registerInventoryHandlers({
                 if (callback) callback({ success: false, message: 'Некорректные данные предмета' });
                 return;
             }
+
+            // Проверка интервала между действиями
+            const now = Date.now();
+            const lastActionTime = userLastAction.get(owner) || 0;
+            if (now - lastActionTime < MIN_ACTION_INTERVAL) {
+                if (callback) callback({ success: false, message: 'Слишком частые действия, подождите' });
+                return;
+            }
+            userLastAction.set(owner, now); // Обновляем время последнего действия
 
             if (item._id) {
                 itemLocks.set(item._id, true);

@@ -12,24 +12,31 @@ import WorkshopCrafting from '../utils/WorkshopCrafting';
 import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 import { ClipLoader } from 'react-spinners';
 
-function Actions({ theme, currentRoom, userId, socket, personalItems, user }) {
+function Actions({ theme, currentRoom, userId, socket, personalItems, user, onItemsUpdate }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
-  const [isLoading, setIsLoading] = useState(true); // Инициализируем как true
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Запрашиваем personalItems при монтировании компонента
+  // Подписываемся на событие items через onItemsUpdate
   useEffect(() => {
-    if (socket && userId) {
+    if (socket && onItemsUpdate) {
+      console.log('Subscribing to items event in Actions');
+      socket.on('items', onItemsUpdate);
+      // Запрашиваем предметы при монтировании
       console.log('Emitting getItems for user in Actions:', `user_${userId}`);
       socket.emit('getItems', { owner: `user_${userId}` });
+      return () => {
+        console.log('Unsubscribing from items event in Actions');
+        socket.off('items', onItemsUpdate);
+      };
     }
-  }, [socket, userId]);
+  }, [socket, userId, onItemsUpdate]);
 
   // Обновляем isLoading и логируем personalItems
   useEffect(() => {
     console.log('Received personalItems in Actions:', personalItems);
-    setIsLoading(personalItems.length === 0); // Отключаем загрузку, если есть данные
+    setIsLoading(personalItems.length === 0);
   }, [personalItems]);
 
   const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {

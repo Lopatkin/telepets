@@ -380,6 +380,7 @@ function App() {
             theme={appliedTheme}
             socket={socket}
             personalItems={personalItems} // Добавляем personalItems
+            onItemsUpdate={handleItemsUpdate} // Добавляем onItemsUpdate
             pets={pets}
             isModalOpen={isActionModalOpen}
             setIsModalOpen={setIsActionModalOpen}

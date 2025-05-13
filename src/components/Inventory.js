@@ -572,10 +572,26 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                     theme={theme}
                     isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
                   >
-                    <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
-                      <S.ItemTitle theme={theme}>{item.name}</S.ItemTitle>
-                      <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
-                    </S.ItemInfo>
+                    {/* Новый стиль отображения, аналогичный личным предметам */}
+                    <S.ItemTitle theme={theme}>{item.name}</S.ItemTitle>
+                    <S.ItemContentWrapper>
+                      <S.ItemImage
+                        src={
+                          item.name === 'Ошейник' ? collarImage :
+                            item.name === 'Поводок' ? leashImage : defaultItemImage
+                        }
+                        alt={item.name}
+                      />
+                      <S.ItemDetailsWrapper>
+                        <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                        <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
+                        <S.WeightCostWrapper>
+                          <S.ItemDetail theme={theme}>Вес: {item.weight} кг</S.ItemDetail>
+                          <S.ItemDetail theme={theme}> | Стоимость: {item.cost} кредитов</S.ItemDetail>
+                        </S.WeightCostWrapper>
+                      </S.ItemDetailsWrapper>
+                    </S.ItemContentWrapper>
+                    <S.ItemEffect theme={theme}>Эффект: {item.effect}</S.ItemEffect>
                     <S.ActionButtons>
                       <S.PickupButton
                         onClick={() => handleBuyItem(item)}
@@ -601,10 +617,32 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                     theme={theme}
                     isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
                   >
-                    <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
-                      <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
-                      <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
-                    </S.ItemInfo>
+                    {/* Новый стиль отображения, аналогичный личным предметам */}
+                    <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
+                    <S.ItemContentWrapper>
+                      <S.ItemImage
+                        src={
+                          item.name === 'Палка' ? stickImage :
+                            item.name === 'Доска' ? boardImage :
+                              item.name === 'Ошейник' ? collarImage :
+                                item.name === 'Мусор' ? garbageImage :
+                                  item.name === 'Поводок' ? leashImage :
+                                    item.name === 'Паспорт животного' ? passportImage : defaultItemImage
+                        }
+                        alt={item.name}
+                      />
+                      <S.ItemDetailsWrapper>
+                        <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                        <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
+                        <S.WeightCostWrapper>
+                          <S.ItemDetail theme={theme}>Вес: {item.weight} кг</S.ItemDetail>
+                          <S.ItemDetail theme={theme}> | Стоимость: {item.cost} кредитов</S.ItemDetail>
+                        </S.WeightCostWrapper>
+                      </S.ItemDetailsWrapper>
+                    </S.ItemContentWrapper>
+                    {item.name !== 'Паспорт животного' && (
+                      <S.ItemEffect theme={theme}>Эффект: {item.effect}</S.ItemEffect>
+                    )}
                     <S.ActionButtons>
                       <S.PickupButton
                         onClick={() => handlePickupItem(item._id)}
@@ -629,10 +667,32 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                 theme={theme}
                 isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
               >
-                <S.ItemInfo theme={theme} onClick={() => openModal(item)}>
-                  <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
-                  <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
-                </S.ItemInfo>
+                {/* Новый стиль отображения, аналогичный личным предметам */}
+                <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
+                <S.ItemContentWrapper>
+                  <S.ItemImage
+                    src={
+                      item.name === 'Палка' ? stickImage :
+                        item.name === 'Доска' ? boardImage :
+                          item.name === 'Ошейник' ? collarImage :
+                            item.name === 'Мусор' ? garbageImage :
+                              item.name === 'Поводок' ? leashImage :
+                                item.name === 'Паспорт животного' ? passportImage : defaultItemImage
+                    }
+                    alt={item.name}
+                  />
+                  <S.ItemDetailsWrapper>
+                    <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                    <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
+                    <S.WeightCostWrapper>
+                      <S.ItemDetail theme={theme}>Вес: {item.weight} кг</S.ItemDetail>
+                      <S.ItemDetail theme={theme}> | Стоимость: {item.cost} кредитов</S.ItemDetail>
+                    </S.WeightCostWrapper>
+                  </S.ItemDetailsWrapper>
+                </S.ItemContentWrapper>
+                {item.name !== 'Паспорт животного' && (
+                  <S.ItemEffect theme={theme}>Эффект: {item.effect}</S.ItemEffect>
+                )}
                 <S.ActionButtons>
                   <S.PickupButton
                     onClick={() => handlePickupItem(item._id)}

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
 import { FaEdit } from 'react-icons/fa';
 
-import stickImage from '..stick.jpg';
-import defaultItemImage from '..default-item.png';
+import stickImage from '../images/items/stick.jpg';
+import defaultItemImage from '../images/items/default-item.png';
 
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);

@@ -9,6 +9,7 @@ import actionsConfig from './constants/actionsConfig';
 import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from '../utils/WorkshopCrafting';
+import Fight from './Fight'; // Импортируем новую компоненту
 import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 import { ClipLoader } from 'react-spinners';
 
@@ -18,6 +19,15 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false); // Новое состояние для отслеживания обработки запроса
+  const [selectedNPC, setSelectedNPC] = useState(null); // Состояние для выбранного NPC
+  const [npcs, setNpcs] = useState([]); // Список NPC для охоты
+
+  // Моковые данные NPC для локации "Лес"
+  const forestNPCs = [
+    { id: 'npc_wolf', name: 'Волк', description: 'Дикий волк, опасный противник' },
+    { id: 'npc_bear', name: 'Медведь', description: 'Могучий медведь, сильный и выносливый' },
+    { id: 'npc_fox', name: 'Лиса', description: 'Хитрая лиса, быстрая и ловкая' }
+  ];
 
   // Подписываемся на событие items через onItemsUpdate
   useEffect(() => {
@@ -40,6 +50,15 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
     setIsLoading(personalItems.length === 0);
   }, [personalItems]);
 
+  // Загружаем NPC при выборе действия "Охотиться"
+  useEffect(() => {
+    if (selectedAction?.title === 'Охотиться' && socket) {
+      // Здесь можно отправить запрос на сервер для получения NPC
+      // Для примера используем моковые данные
+      setNpcs(forestNPCs);
+    }
+  }, [selectedAction, socket]);
+
   const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
     setNotification({ show: true, message });
     setTimeout(() => setNotification({ show: false, message: '' }), duration);
@@ -56,6 +75,11 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
 
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);
+    setSelectedNPC(null);
+  }, []);
+
+  const handleNPCClick = useCallback((npc) => {
+    setSelectedNPC(npc);
   }, []);
 
   const handleButtonClick = useCallback(() => {
@@ -114,6 +138,9 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
           showNotification(response?.message || 'Ошибка при утилизации');
         }
       });
+    } else if (action.action === 'hunt') {
+      // Для охоты ничего не делаем, ждем выбора NPC
+      return;
     } else if (action.systemMessage) {
       setIsProcessing(true);
       socket.emit('sendSystemMessage', {
@@ -212,12 +239,30 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
           )}
         </ActionGrid>
       </ContentContainer>
-      {selectedAction && (
+      {selectedAction && !selectedNPC && (
         <ModalOverlay onClick={handleCloseModal}>
           <ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
             <CloseButton theme={theme} onClick={handleCloseModal}><FaTimes /></CloseButton>
             <ModalTitle theme={theme}>{selectedAction.modalTitle}</ModalTitle>
-            {selectedAction.title === 'Столярная мастерская' ? (
+            {selectedAction.title === 'Охотиться' ? (
+              <div>
+                <ModalDescription theme={theme}>{selectedAction.modalDescription}</ModalDescription>
+                {npcs.length > 0 ? (
+                  npcs.map((npc) => (
+                    <ActionCard
+                      key={npc.id}
+                      theme={theme}
+                      onClick={() => handleNPCClick(npc)}
+                    >
+                      <ActionTitle theme={theme}>{npc.name}</ActionTitle>
+                      <ActionDescription theme={theme}>{npc.description}</ActionDescription>
+                    </ActionCard>
+                  ))
+                ) : (
+                  <ModalDescription theme={theme}>Животные не найдены</ModalDescription>
+                )}
+              </div>
+            ) : selectedAction.title === 'Столярная мастерская' ? (
               <WorkshopCrafting
                 theme={theme}
                 selectedAction={selectedAction}
@@ -238,6 +283,20 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
                 </ActionButton>
               </>
             )}
+          </ModalContent>
+        </ModalOverlay>
+      )}
+      {selectedNPC && (
+        <ModalOverlay onClick={handleCloseModal}>
+          <ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
+            <Fight
+              theme={theme}
+              socket={socket}
+              user={user}
+              npc={selectedNPC}
+              onClose={handleCloseModal}
+              showNotification={showNotification}
+            />
           </ModalContent>
         </ModalOverlay>
       )}

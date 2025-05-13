@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 // Конфигурация действий, разделённая по локациям и типам игроков
 const actionsConfig = {
   home: {
@@ -137,6 +139,15 @@ const actionsConfig = {
         buttonText: 'Найти',
         cooldownKey: 'findMushrooms',
       },
+      {
+        id: uuidv4(),
+        title: 'Охотиться',
+        modalTitle: 'Выбор цели',
+        description: 'Найти и сразиться с диким животным',
+        modalDescription: 'Выберите животное для охоты в лесу.',
+        buttonText: 'Начать бой',
+        cooldownKey: 'hunt'
+      },
     ],
     animalActions: [],
   },
@@ -234,7 +245,7 @@ const actionsConfig = {
             effect: 'Ожидание приятного.',
             rarity: 'Обычный',
           },
-          
+
         ],
       },
     ],

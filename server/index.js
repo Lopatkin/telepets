@@ -92,6 +92,7 @@ const activeSockets = new Map();
 const roomJoinTimes = new WeakMap();
 const itemCache = new Map();
 const itemLocks = new Map();
+const fightStates = new Map();
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -109,7 +110,8 @@ io.on('connection', (socket) => {
     activeSockets,
     roomJoinTimes,
     itemCache,
-    itemLocks
+    itemLocks,
+    fightStates
   };
 
   registerUserHandlers(dependencies);
@@ -118,6 +120,58 @@ io.on('connection', (socket) => {
   registerInventoryHandlers(dependencies);
   registerAnimalHandlers(dependencies);
 
+  // Обработчик раунда боя
+  socket.on('fightRound', (data, callback) => {
+    const { userId, npcId, playerAttackZone, playerDefenseZones, npcAttackZone, npcDefenseZones } = data;
+
+    // Инициализация состояния боя, если его нет
+    if (!fightStates.has(userId)) {
+      fightStates.set(userId, {
+        playerHP: 100,
+        npcHP: 100,
+        npcId
+      });
+    }
+
+    const fight = fightStates.get(userId);
+
+    let message = '';
+    let damageToPlayer = 0;
+    let damageToNPC = 0;
+
+    // Проверяем атаку игрока
+    if (playerAttackZone && !npcDefenseZones.includes(playerAttackZone)) {
+      damageToNPC = 10;
+      message += `Вы ударили ${npcId.replace('npc_', '')} в ${playerAttackZone}! `;
+    } else {
+      message += `Ваш удар в ${playerAttackZone} был заблокирован! `;
+    }
+
+    // Проверяем атаку NPC
+    if (npcAttackZone && !playerDefenseZones.includes(npcAttackZone)) {
+      damageToPlayer = 10;
+      message += `${npcId.replace('npc_', '')} ударил вас в ${npcAttackZone}! `;
+    } else {
+      message += `Вы заблокировали удар в ${npcAttackZone}! `;
+    }
+
+    // Обновляем HP
+    fight.playerHP = Math.max(0, fight.playerHP - damageToPlayer);
+    fight.npcHP = Math.max(0, fight.npcHP - damageToNPC);
+
+    // Проверяем завершение боя
+    if (fight.playerHP <= 0 || fight.npcHP <= 0) {
+      fightStates.delete(userId);
+    }
+
+    callback({
+      success: true,
+      playerHP: fight.playerHP,
+      npcHP: fight.npcHP,
+      message
+    });
+  });
+
   socket.on('disconnect', (reason) => {
     console.log('User disconnected:', socket.id, 'Reason:', reason);
 
@@ -125,6 +179,8 @@ io.on('connection', (socket) => {
       if (activeSockets.get(socket.userData.userId) === socket) {
         activeSockets.delete(socket.userData.userId);
         console.log(`Removed socket for user ${socket.userData.userId}`);
+
+        fightStates.delete(socket.userData.userId);
 
         // Проверяем, есть ли животные, привязанные к этому пользователю
         const ownerKey = `user_${socket.userData.userId}`;

@@ -4,6 +4,11 @@ import { FaEdit } from 'react-icons/fa';
 
 import stickImage from '../images/items/stick.jpg';
 import defaultItemImage from '../images/items/default-item.png';
+import boardImage from '../images/items/board.png';
+import collarImage from '../images/items/collar.png';
+import garbageImage from '../images/items/garbage.png';
+import leashImage from '../images/items/leash.png';
+import passportImage from '../images/items/passport.png';
 
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
@@ -483,7 +488,14 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                 <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
                 <S.ItemContentWrapper>
                   <S.ItemImage
-                    src={item.name === 'Палка' ? stickImage : defaultItemImage}
+                    src={
+                      item.name === 'Палка' ? stickImage :
+                        item.name === 'Доска' ? boardImage :
+                          item.name === 'Ошейник' ? collarImage :
+                            item.name === 'Мусор' ? garbageImage :
+                              item.name === 'Поводок' ? leashImage :
+                                item.name === 'Паспорт животного' ? passportImage : defaultItemImage
+                    }
                     alt={item.name}
                   />
                   <S.ItemDetailsWrapper>

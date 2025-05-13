@@ -487,27 +487,37 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                     alt={item.name}
                   />
                   <S.ItemDetailsWrapper>
-                    {item.name === 'Паспорт животного' ? (
-                      <>
-                        <S.ItemDetail theme={theme}>Описание: {item.description}</S.ItemDetail>
-                        <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
-                        <S.ItemDetail theme={theme}>Вес: {item.weight}</S.ItemDetail>
-                        <S.ItemDetail theme={theme}>Стоимость: {item.cost}</S.ItemDetail>
-                        <S.ItemDetail theme={theme}>Эффект: {item.effect}</S.ItemDetail>
-                      </>
-                    ) : item.description === 'Кошка' || item.description === 'Собака' ? (
-                      <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                    {item.name === 'Паспорт животного' || item.description === 'Кошка' || item.description === 'Собака' ? (
+                      item.name === 'Паспорт животного' ? (
+                        <>
+                          <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                          <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
+                          <S.WeightCostWrapper>
+                            <S.ItemDetail theme={theme}>Вес: {item.weight} кг</S.ItemDetail>
+                            <S.ItemDetail theme={theme}> | Стоимость: {item.cost} кредитов</S.ItemDetail>
+                          </S.WeightCostWrapper>
+                        </>
+                      ) : (
+                        <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                      )
                     ) : (
                       <>
-                        <S.ItemDetail theme={theme}>Описание: {item.description}</S.ItemDetail>
+                        <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
                         <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
-                        <S.ItemDetail theme={theme}>Вес: {item.weight}</S.ItemDetail>
-                        <S.ItemDetail theme={theme}>Стоимость: {item.cost}</S.ItemDetail>
-                        <S.ItemDetail theme={theme}>Эффект: {item.effect}</S.ItemDetail>
+                        <S.WeightCostWrapper>
+                          <S.ItemDetail theme={theme}>Вес: {item.weight} кг</S.ItemDetail>
+                          <S.ItemDetail theme={theme}> | Стоимость: {item.cost} кредитов</S.ItemDetail>
+                        </S.WeightCostWrapper>
                       </>
                     )}
                   </S.ItemDetailsWrapper>
                 </S.ItemContentWrapper>
+                {(item.name === 'Паспорт животного' || item.description === 'Кошка' || item.description === 'Собака') ? null : (
+                  <S.ItemEffect theme={theme}>Эффект: {item.effect}</S.ItemEffect>
+                )}
+                {item.name === 'Паспорт животного' && (
+                  <S.ItemEffect theme={theme}>Эффект: {item.effect}</S.ItemEffect>
+                )}
                 <S.ActionButtons>
                   {item.name === 'Паспорт животного' ? (
                     <S.PickupButton

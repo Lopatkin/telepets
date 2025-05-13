@@ -25,7 +25,7 @@ export const ItemImage = styled.img`
   height: 60px;
   object-fit: cover;
   border-radius: 4px;
-  border: 1px solid ${props => props.theme === 'dark' ? '#111' : '#ddd'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#222' : '#222'};
 `;
 
 export const ItemDetailsWrapper = styled.div`

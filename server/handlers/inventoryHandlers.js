@@ -21,6 +21,96 @@ function registerInventoryHandlers({
         }
     });
 
+    socket.on('craftItem', async ({ owner, craftedItem, materials }, callback) => {
+        try {
+            console.log('Received craftItem data:', { owner, craftedItem, materials });
+            if (!craftedItem || typeof craftedItem !== 'object' || !materials || typeof materials !== 'object') {
+                console.error('Invalid craftItem data:', { craftedItem, materials });
+                if (callback) callback({ success: false, message: 'Некорректные данные предмета или материалов' });
+                return;
+            }
+
+            // Проверка интервала между действиями
+            const now = Date.now();
+            const lastActionTime = userLastAction.get(owner) || 0;
+            if (now - lastActionTime < MIN_ACTION_INTERVAL) {
+                if (callback) callback({ success: false, message: 'Слишком частые действия, подождите' });
+                return;
+            }
+            userLastAction.set(owner, now);
+
+            // Проверка наличия материалов
+            const requiredSticks = materials.sticks || 0;
+            const requiredBoards = materials.boards || 0;
+            const stickItems = requiredSticks > 0 ? await Item.find({ owner, name: 'Палка' }).limit(requiredSticks) : [];
+            const boardItems = requiredBoards > 0 ? await Item.find({ owner, name: 'Доска' }).limit(requiredBoards) : [];
+
+            if (stickItems.length < requiredSticks || boardItems.length < requiredBoards) {
+                if (callback) callback({ success: false, message: 'Недостаточно материалов для крафта' });
+                return;
+            }
+
+            // Проверка лимитов инвентаря
+            const ownerLimit = await InventoryLimit.findOne({ owner });
+            if (!ownerLimit) {
+                if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
+                return;
+            }
+
+            const craftedItemWeight = parseFloat(craftedItem.weight) || 0;
+            const materialsWeight = stickItems.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0) +
+                boardItems.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
+            const weightDifference = craftedItemWeight - materialsWeight;
+
+            if (ownerLimit.currentWeight + weightDifference > ownerLimit.maxWeight) {
+                if (callback) callback({ success: false, message: 'Превышен лимит веса инвентаря' });
+                return;
+            }
+
+            // Удаление материалов
+            const stickIds = stickItems.map(item => item._id);
+            const boardIds = boardItems.map(item => item._id);
+            await Item.deleteMany({ _id: { $in: [...stickIds, ...boardIds] } });
+
+            // Создание нового предмета
+            const newItem = await Item.create({ owner, ...craftedItem });
+            console.log('Crafted item:', newItem);
+
+            // Обновление веса инвентаря
+            await InventoryLimit.updateOne(
+                { owner },
+                { $inc: { currentWeight: weightDifference } }
+            );
+
+            // Обновление кэша
+            const ownerItems = itemCache.get(owner) || [];
+            const updatedItems = ownerItems
+                .filter(i => !stickIds.includes(i._id) && !boardIds.includes(i._id))
+                .concat([newItem]);
+            itemCache.set(owner, updatedItems);
+
+            // Получение обновленных лимитов
+            const updatedLimit = await InventoryLimit.findOne({ owner });
+
+            // Уведомление клиентов
+            socket.emit('inventoryLimit', updatedLimit);
+            io.to(owner).emit('items', { owner, items: updatedItems });
+
+            const currentRoom = userCurrentRoom.get(socket.userData.userId);
+            if (currentRoom) {
+                io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemIds: [...stickIds, ...boardIds] });
+                io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: newItem });
+                io.to(currentRoom).emit('items', { owner, items: updatedItems });
+                io.to(currentRoom).emit('inventoryLimit', updatedLimit);
+            }
+
+            if (callback) callback({ success: true, item: newItem });
+        } catch (err) {
+            console.error('Error crafting item:', err.message, err.stack);
+            if (callback) callback({ success: false, message: 'Ошибка при создании предмета' });
+        }
+    });
+
     socket.on('getInventoryLimit', async ({ owner }) => {
         try {
             const limit = await InventoryLimit.findOne({ owner });

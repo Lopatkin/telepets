@@ -480,7 +480,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                 <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
                 <S.ItemContentWrapper>
                   <S.ItemImage
-                    src={item.name === 'Палка' ? '/images/items/stick.jpg' : '/images/items/default-item.png'}
+                    src={item.name === 'Палка' ? '../images/items/stick.jpg' : '../images/items/default-item.png'}
                     alt={item.name}
                   />
                   <S.ItemDetailsWrapper>

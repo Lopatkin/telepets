@@ -388,9 +388,9 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     });
   };
 
-  const openModal = (item) => {
-    setSelectedItem(item);
-  };
+  // const openModal = (item) => {
+  //   setSelectedItem(item);
+  // };
 
   const closeModal = (e) => {
     if (e.target === e.currentTarget) {

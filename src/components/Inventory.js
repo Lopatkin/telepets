@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
 import { FaEdit } from 'react-icons/fa';
 
+import stickImage from './images/items/stick.jpg';
+import defaultItemImage from './images/items/default-item.png';
+
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
   const [activeTab, setActiveTab] = useState('personal');
@@ -480,9 +483,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                 <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
                 <S.ItemContentWrapper>
                   <S.ItemImage
-                    src={item.name === 'Палка' ? '../images/items/stick.jpg' : '../images/items/default-item.png'}
+                    src={item.name === 'Палка' ? stickImage : defaultItemImage}
                     alt={item.name}
                   />
+
+                  src\images\items\stick.jpg
                   <S.ItemDetailsWrapper>
                     {item.name === 'Паспорт животного' ? (
                       <>

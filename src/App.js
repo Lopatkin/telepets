@@ -11,6 +11,7 @@ import Inventory from './components/Inventory';
 import { ClipLoader } from 'react-spinners';
 import Registration from './components/Registration';
 import BouncingBall from './components/BouncingBall';
+import startLoadingImage from './images/start_loading.jpg';
 
 const BouncingBallOverlay = styled.div`
   position: absolute;
@@ -41,6 +42,10 @@ const LoadingContainer = styled.div`
   justify-content: center;
   align-items: center;
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#fff'};
+  background-image: url(${startLoadingImage});
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 `;
 
 function App() {

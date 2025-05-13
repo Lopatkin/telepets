@@ -7,12 +7,14 @@ const useCooldowns = (userId, COOLDOWN_DURATION = COOLDOWN_DURATION_CONST) => {
         findStick: { active: false, timeLeft: 0, progress: 100 },
         findBerries: { active: false, timeLeft: 0, progress: 100 },
         findMushrooms: { active: false, timeLeft: 0, progress: 100 },
+        hunt: { active: false, timeLeft: 0, progress: 100 }, // Добавляем hunt в начальное состояние
     });
 
     const COOLDOWN_KEYS = useMemo(() => ({
         findStick: `findStickCooldown_${userId}`,
         findBerries: `findBerriesCooldown_${userId}`,
         findMushrooms: `findMushroomsCooldown_${userId}`,
+        hunt: `huntCooldown_${userId}`, // Добавляем hunt в COOLDOWN_KEYS
     }), [userId]);
 
     // Восстановление состояния кулдаунов

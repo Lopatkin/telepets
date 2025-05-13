@@ -65,7 +65,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
   }, []);
 
   const handleActionClick = useCallback((action) => {
-    if (action.cooldownKey && cooldowns[action.cooldownKey].active) {
+    if (action.cooldownKey && cooldowns[action.cooldownKey]?.active) {
       showNotification('Действие недоступно, подождите');
       return;
     }
@@ -105,7 +105,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
       return;
     }
 
-    if (action.cooldownKey && cooldowns[action.cooldownKey].active) {
+    if (action.cooldownKey && cooldowns[action.cooldownKey]?.active) {
       showNotification('Действие недоступно, подождите');
       return;
     }
@@ -211,27 +211,30 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
       <ContentContainer>
         <ActionGrid>
           {availableActions.length > 0 ? (
-            availableActions.map((action) => (
-              <ActionCard
-                key={action.id}
-                theme={theme}
-                onClick={() => handleActionClick(action)}
-                disabled={action.cooldownKey && cooldowns[action.cooldownKey].active}
-              >
-                <div>
-                  <ActionTitle theme={theme}>{action.title}</ActionTitle>
-                  <ActionDescription theme={theme}>{action.description}</ActionDescription>
-                </div>
-                {action.cooldownKey && cooldowns[action.cooldownKey].active && (
-                  <>
-                    <ProgressBar progress={cooldowns[action.cooldownKey].progress} />
-                    <TimerDisplay theme={theme}>
-                      Осталось: {cooldowns[action.cooldownKey].timeLeft} сек
-                    </TimerDisplay>
-                  </>
-                )}
-              </ActionCard>
-            ))
+            availableActions.map((action) => {
+              console.log('Rendering action:', action.title, 'cooldownKey:', action.cooldownKey);
+              return (
+                <ActionCard
+                  key={action.id}
+                  theme={theme}
+                  onClick={() => handleActionClick(action)}
+                  disabled={action.cooldownKey && cooldowns[action.cooldownKey]?.active}
+                >
+                  <div>
+                    <ActionTitle theme={theme}>{action.title}</ActionTitle>
+                    <ActionDescription theme={theme}>{action.description}</ActionDescription>
+                  </div>
+                  {action.cooldownKey && cooldowns[action.cooldownKey]?.active && (
+                    <>
+                      <ProgressBar progress={cooldowns[action.cooldownKey].progress} />
+                      <TimerDisplay theme={theme}>
+                        Осталось: {cooldowns[action.cooldownKey].timeLeft} сек
+                      </TimerDisplay>
+                    </>
+                  )}
+                </ActionCard>
+              );
+            })
           ) : (
             <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
               Действия недоступны в этой комнате

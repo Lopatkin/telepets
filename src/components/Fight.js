@@ -63,9 +63,9 @@ const ZoneGrid = styled.div`
 const Zone = styled.div`
   padding: 10px;
   border: 2px solid ${({ theme, selected, isAttack }) =>
-    selected ? (isAttack ? 'red' : 'blue') : theme === 'dark' ? '#555' : '#ccc'};
+        selected ? (isAttack ? 'red' : 'blue') : theme === 'dark' ? '#555' : '#ccc'};
   background: ${({ theme, selected, isAttack }) =>
-    selected ? (isAttack ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 0, 255, 0.2)') : 'transparent'};
+        selected ? (isAttack ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 0, 255, 0.2)') : 'transparent'};
   border-radius: 5px;
   text-align: center;
   cursor: pointer;
@@ -129,174 +129,175 @@ const Notification = styled.div`
 `;
 
 function Fight({ theme, socket, user, npc, onClose, showNotification }) {
-  const [playerHP, setPlayerHP] = useState(100);
-  const [npcHP, setNpcHP] = useState(100);
-  const [playerAttackZone, setPlayerAttackZone] = useState(null);
-  const [playerDefenseZones, setPlayerDefenseZones] = useState([]);
-  const [npcAttackZone, setNpcAttackZone] = useState(null);
-  const [npcDefenseZones, setNpcDefenseZones] = useState([]);
-  const [timeLeft, setTimeLeft] = useState(30);
-  const [isRoundActive, setIsRoundActive] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [notification, setNotification] = useState({ show: false, message: '' });
+    const [playerHP, setPlayerHP] = useState(100);
+    const [npcHP, setNpcHP] = useState(100);
+    const [playerAttackZone, setPlayerAttackZone] = useState(null);
+    const [playerDefenseZones, setPlayerDefenseZones] = useState([]);
+    const [npcAttackZone, setNpcAttackZone] = useState(null);
+    const [npcDefenseZones, setNpcDefenseZones] = useState([]);
+    const [timeLeft, setTimeLeft] = useState(30);
+    const [isRoundActive, setIsRoundActive] = useState(true);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [notification, setNotification] = useState({ show: false, message: '' });
 
-  const zones = ['head', 'back', 'belly', 'legs'];
+    // Оборачиваем zones в useMemo для стабильности
+    const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-  // Таймер раунда
-  useEffect(() => {
-    if (!isRoundActive) return;
+    // Таймер раунда
+    useEffect(() => {
+        if (!isRoundActive) return;
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          handleRoundEnd();
-          return 30;
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    handleRoundEnd();
+                    return 30;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isRoundActive, handleRoundEnd]); // Добавляем handleRoundEnd в зависимости
+
+    // Обработка выбора зон игроком
+    const handleZoneClick = useCallback((zone, isPlayerMannequin, isAttack) => {
+        if (!isRoundActive || isProcessing) return;
+
+        if (isPlayerMannequin && isAttack) {
+            setPlayerAttackZone(zone);
+        } else if (isPlayerMannequin && !isAttack) {
+            setPlayerDefenseZones((prev) => {
+                if (prev.includes(zone)) {
+                    return prev.filter((z) => z !== zone);
+                }
+                if (prev.length < 2) {
+                    return [...prev, zone];
+                }
+                return prev;
+            });
         }
-        return prev - 1;
-      });
-    }, 1000);
+    }, [isRoundActive, isProcessing]);
 
-    return () => clearInterval(timer);
-  }, [isRoundActive]);
+    // Завершение раунда
+    const handleRoundEnd = useCallback(() => {
+        if (!socket || isProcessing) return;
 
-  // Обработка выбора зон игроком
-  const handleZoneClick = useCallback((zone, isPlayerMannequin, isAttack) => {
-    if (!isRoundActive || isProcessing) return;
+        setIsProcessing(true);
 
-    if (isPlayerMannequin && isAttack) {
-      setPlayerAttackZone(zone);
-    } else if (isPlayerMannequin && !isAttack) {
-      setPlayerDefenseZones((prev) => {
-        if (prev.includes(zone)) {
-          return prev.filter((z) => z !== zone);
+        // Генерируем действия NPC
+        const npcAttack = zones[Math.floor(Math.random() * zones.length)];
+        const npcDefense = [];
+        while (npcDefense.length < 2) {
+            const zone = zones[Math.floor(Math.random() * zones.length)];
+            if (!npcDefense.includes(zone)) npcDefense.push(zone);
         }
-        if (prev.length < 2) {
-          return [...prev, zone];
+
+        setNpcAttackZone(npcAttack);
+        setNpcDefenseZones(npcDefense);
+
+        // Отправляем данные на сервер
+        socket.emit('fightRound', {
+            userId: user.userId,
+            npcId: npc.id,
+            playerAttackZone,
+            playerDefenseZones,
+            npcAttackZone: npcAttack,
+            npcDefenseZones: npcDefense
+        }, (response) => {
+            if (response.success) {
+                setPlayerHP(response.playerHP);
+                setNpcHP(response.npcHP);
+                setNotification({ show: true, message: response.message });
+                setTimeout(() => setNotification({ show: false, message: '' }), 3000);
+
+                // Сбрасываем выбор зон
+                setPlayerAttackZone(null);
+                setPlayerDefenseZones([]);
+                setNpcAttackZone(null);
+                setNpcDefenseZones([]);
+
+                if (response.playerHP <= 0 || response.npcHP <= 0) {
+                    setIsRoundActive(false);
+                    showNotification(response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!');
+                    setTimeout(onClose, 2000);
+                } else {
+                    setIsRoundActive(true);
+                    setTimeLeft(30);
+                }
+            } else {
+                setNotification({ show: true, message: 'Ошибка в бою' });
+                setTimeout(() => setNotification({ show: false, message: '' }), 3000);
+            }
+            setIsProcessing(false);
+        });
+    }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, onClose, isProcessing]);
+
+    // Проверка завершения боя
+    useEffect(() => {
+        if (playerHP <= 0 || npcHP <= 0) {
+            setIsRoundActive(false);
         }
-        return prev;
-      });
-    }
-  }, [isRoundActive, isProcessing]);
+    }, [playerHP, npcHP]);
 
-  // Завершение раунда
-  const handleRoundEnd = useCallback(() => {
-    if (!socket || isProcessing) return;
-
-    setIsProcessing(true);
-
-    // Генерируем действия NPC
-    const npcAttack = zones[Math.floor(Math.random() * zones.length)];
-    const npcDefense = [];
-    while (npcDefense.length < 2) {
-      const zone = zones[Math.floor(Math.random() * zones.length)];
-      if (!npcDefense.includes(zone)) npcDefense.push(zone);
-    }
-
-    setNpcAttackZone(npcAttack);
-    setNpcDefenseZones(npcDefense);
-
-    // Отправляем данные на сервер
-    socket.emit('fightRound', {
-      userId: user.userId,
-      npcId: npc.id,
-      playerAttackZone,
-      playerDefenseZones,
-      npcAttackZone: npcAttack,
-      npcDefenseZones: npcDefense
-    }, (response) => {
-      if (response.success) {
-        setPlayerHP(response.playerHP);
-        setNpcHP(response.npcHP);
-        setNotification({ show: true, message: response.message });
-        setTimeout(() => setNotification({ show: false, message: '' }), 3000);
-
-        // Сбрасываем выбор зон
-        setPlayerAttackZone(null);
-        setPlayerDefenseZones([]);
-        setNpcAttackZone(null);
-        setNpcDefenseZones([]);
-
-        if (response.playerHP <= 0 || response.npcHP <= 0) {
-          setIsRoundActive(false);
-          showNotification(response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!');
-          setTimeout(onClose, 2000);
-        } else {
-          setIsRoundActive(true);
-          setTimeLeft(30);
-        }
-      } else {
-        setNotification({ show: true, message: 'Ошибка в бою' });
-        setTimeout(() => setNotification({ show: false, message: '' }), 3000);
-      }
-      setIsProcessing(false);
-    });
-  }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, onClose, isProcessing]);
-
-  // Проверка завершения боя
-  useEffect(() => {
-    if (playerHP <= 0 || npcHP <= 0) {
-      setIsRoundActive(false);
-    }
-  }, [playerHP, npcHP]);
-
-  return (
-    <FightContainer theme={theme}>
-      <CloseButton theme={theme} onClick={onClose}><FaTimes /></CloseButton>
-      <TimerDisplay theme={theme}>
-        Время до конца раунда: {timeLeft} сек
-      </TimerDisplay>
-      <MannequinContainer>
-        <Mannequin>
-          <MannequinLabel theme={theme}>{user.name}</MannequinLabel>
-          <HPBar>
-            <HPFill hp={playerHP} />
-          </HPBar>
-          <ZoneGrid>
-            {zones.map((zone) => (
-              <Zone
-                key={zone}
-                className={zone}
-                theme={theme}
-                selected={playerAttackZone === zone || playerDefenseZones.includes(zone)}
-                isAttack={playerAttackZone === zone}
-                onClick={() => handleZoneClick(zone, true, playerAttackZone === zone || !playerAttackZone)}
-              >
-                {zone === 'head' ? 'Голова' : zone === 'back' ? 'Спина' : zone === 'belly' ? 'Живот' : 'Ноги'}
-              </Zone>
-            ))}
-          </ZoneGrid>
-        </Mannequin>
-        <Mannequin>
-          <MannequinLabel theme={theme}>{npc.name}</MannequinLabel>
-          <HPBar>
-            <HPFill hp={npcHP} />
-          </HPBar>
-          <ZoneGrid>
-            {zones.map((zone) => (
-              <Zone
-                key={zone}
-                className={zone}
-                theme={theme}
-                selected={npcAttackZone === zone || npcDefenseZones.includes(zone)}
-                isAttack={npcAttackZone === zone}
-              >
-                {zone === 'head' ? 'Голова' : zone === 'back' ? 'Спина' : zone === 'belly' ? 'Живот' : 'Ноги'}
-              </Zone>
-            ))}
-          </ZoneGrid>
-        </Mannequin>
-      </MannequinContainer>
-      <ActionButton
-        onClick={handleRoundEnd}
-        disabled={isProcessing || !playerAttackZone || playerDefenseZones.length !== 2}
-      >
-        {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Подтвердить ход'}
-      </ActionButton>
-      <Notification show={notification.show} theme={theme}>
-        {notification.message}
-      </Notification>
-    </FightContainer>
-  );
+    return (
+        <FightContainer theme={theme}>
+            <CloseButton theme={theme} onClick={onClose}><FaTimes /></CloseButton>
+            <TimerDisplay theme={theme}>
+                Время до конца раунда: {timeLeft} сек
+            </TimerDisplay>
+            <MannequinContainer>
+                <Mannequin>
+                    <MannequinLabel theme={theme}>{user.name}</MannequinLabel>
+                    <HPBar>
+                        <HPFill hp={playerHP} />
+                    </HPBar>
+                    <ZoneGrid>
+                        {zones.map((zone) => (
+                            <Zone
+                                key={zone}
+                                className={zone}
+                                theme={theme}
+                                selected={playerAttackZone === zone || playerDefenseZones.includes(zone)}
+                                isAttack={playerAttackZone === zone}
+                                onClick={() => handleZoneClick(zone, true, playerAttackZone === zone || !playerAttackZone)}
+                            >
+                                {zone === 'head' ? 'Голова' : zone === 'back' ? 'Спина' : zone === 'belly' ? 'Живот' : 'Ноги'}
+                            </Zone>
+                        ))}
+                    </ZoneGrid>
+                </Mannequin>
+                <Mannequin>
+                    <MannequinLabel theme={theme}>{npc.name}</MannequinLabel>
+                    <HPBar>
+                        <HPFill hp={npcHP} />
+                    </HPBar>
+                    <ZoneGrid>
+                        {zones.map((zone) => (
+                            <Zone
+                                key={zone}
+                                className={zone}
+                                theme={theme}
+                                selected={npcAttackZone === zone || npcDefenseZones.includes(zone)}
+                                isAttack={npcAttackZone === zone}
+                            >
+                                {zone === 'head' ? 'Голова' : zone === 'back' ? 'Спина' : zone === 'belly' ? 'Живот' : 'Ноги'}
+                            </Zone>
+                        ))}
+                    </ZoneGrid>
+                </Mannequin>
+            </MannequinContainer>
+            <ActionButton
+                onClick={handleRoundEnd}
+                disabled={isProcessing || !playerAttackZone || playerDefenseZones.length !== 2}
+            >
+                {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Подтвердить ход'}
+            </ActionButton>
+            <Notification show={notification.show} theme={theme}>
+                {notification.message}
+            </Notification>
+        </FightContainer>
+    );
 }
 
 export default Fight;

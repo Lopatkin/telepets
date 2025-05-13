@@ -13,6 +13,13 @@ import Fight from './Fight'; // Импортируем новую компоне
 import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 import { ClipLoader } from 'react-spinners';
 
+// Моковые данные NPC для локации "Лес"
+const forestNPCs = [
+  { id: 'npc_wolf', name: 'Волк', description: 'Дикий волк, опасный противник' },
+  { id: 'npc_bear', name: 'Медведь', description: 'Могучий медведь, сильный и выносливый' },
+  { id: 'npc_fox', name: 'Лиса', description: 'Хитрая лиса, быстрая и ловкая' }
+];
+
 function Actions({ theme, currentRoom, userId, socket, personalItems, user, onItemsUpdate }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
@@ -21,13 +28,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
   const [isProcessing, setIsProcessing] = useState(false); // Новое состояние для отслеживания обработки запроса
   const [selectedNPC, setSelectedNPC] = useState(null); // Состояние для выбранного NPC
   const [npcs, setNpcs] = useState([]); // Список NPC для охоты
-
-  // Моковые данные NPC для локации "Лес"
-  const forestNPCs = [
-    { id: 'npc_wolf', name: 'Волк', description: 'Дикий волк, опасный противник' },
-    { id: 'npc_bear', name: 'Медведь', description: 'Могучий медведь, сильный и выносливый' },
-    { id: 'npc_fox', name: 'Лиса', description: 'Хитрая лиса, быстрая и ловкая' }
-  ];
 
   // Подписываемся на событие items через onItemsUpdate
   useEffect(() => {

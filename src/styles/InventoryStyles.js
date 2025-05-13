@@ -1,5 +1,26 @@
 import styled, { keyframes } from 'styled-components';
 
+export const ItemContentWrapper = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;+  margin-bottom: 10px;
+`;
+
+export const ItemImage = styled.img`
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+`;
+
+export const ItemDetailsWrapper = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
 // Анимации
 export const fadeOutRight = keyframes`
   0% { opacity: 1; transform: translateX(0); }

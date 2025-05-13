@@ -564,159 +564,102 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                 </S.ActionButtons>
               </S.ItemCard>
             ))}
-            {activeTab === 'location' && !isShelter && currentRoom === 'Магазин "Всё на свете"' && user?.isHuman ? (
+            {activeTab === 'location' && (
               <S.ItemList subTab={activeTab}>
-                {shopItems.map(item => (
-                  <S.ItemCard
-                    key={item._id}
-                    theme={theme}
-                    isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-                  >
-                    {/* Новый стиль отображения, аналогичный личным предметам */}
-                    <S.ItemTitle theme={theme}>{item.name}</S.ItemTitle>
-                    <S.ItemContentWrapper>
-                      <S.ItemImage
-                        src={
-                          item.name === 'Ошейник' ? collarImage :
-                            item.name === 'Поводок' ? leashImage : defaultItemImage
-                        }
-                        alt={item.name}
-                      />
-                      <S.ItemDetailsWrapper>
-                        <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
-                        <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
-                        <S.WeightCostWrapper>
-                          <S.ItemDetail theme={theme}>Вес: {item.weight} кг</S.ItemDetail>
-                          <S.ItemDetail theme={theme}> | Стоимость: {item.cost} кредитов</S.ItemDetail>
-                        </S.WeightCostWrapper>
-                      </S.ItemDetailsWrapper>
-                    </S.ItemContentWrapper>
-                    <S.ItemEffect theme={theme}>Эффект: {item.effect}</S.ItemEffect>
-                    <S.ActionButtons>
-                      <S.PickupButton
-                        onClick={() => handleBuyItem(item)}
-                        disabled={isActionCooldown}
-                      >
-                        Купить за {item.cost} кредитов
-                        {isActionCooldown && <S.ProgressBar />}
-                      </S.PickupButton>
-                    </S.ActionButtons>
-                  </S.ItemCard>
-                ))}
-                {shopItems.length === 0 && (
-                  <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-                    В магазине нет товаров
-                  </div>
-                )}
-              </S.ItemList>
-            ) : activeTab === 'location' && !isShelter ? (
-              <S.ItemList subTab={activeTab}>
-                {groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
-                  <S.ItemCard
-                    key={item._id}
-                    theme={theme}
-                    isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-                  >
-                    {/* Новый стиль отображения, аналогичный личным предметам */}
-                    <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
-                    <S.ItemContentWrapper>
-                      <S.ItemImage
-                        src={
-                          item.name === 'Палка' ? stickImage :
-                            item.name === 'Доска' ? boardImage :
-                              item.name === 'Ошейник' ? collarImage :
-                                item.name === 'Мусор' ? garbageImage :
-                                  item.name === 'Поводок' ? leashImage :
-                                    item.name === 'Паспорт животного' ? passportImage : defaultItemImage
-                        }
-                        alt={item.name}
-                      />
-                      <S.ItemDetailsWrapper>
-                        <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
-                        <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
-                        <S.WeightCostWrapper>
-                          <S.ItemDetail theme={theme}>Вес: {item.weight} кг</S.ItemDetail>
-                          <S.ItemDetail theme={theme}> | Стоимость: {item.cost} кредитов</S.ItemDetail>
-                        </S.WeightCostWrapper>
-                      </S.ItemDetailsWrapper>
-                    </S.ItemContentWrapper>
-                    {item.name !== 'Паспорт животного' && (
+                {currentRoom === 'Магазин "Всё на свете"' && user?.isHuman ? (
+                  shopItems.map(item => (
+                    <S.ItemCard
+                      key={item._id}
+                      theme={theme}
+                      isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+                    >
+                      <S.ItemTitle theme={theme}>{item.name}</S.ItemTitle>
+                      <S.ItemContentWrapper>
+                        <S.ItemImage
+                          src={
+                            item.name === 'Ошейник' ? collarImage :
+                              item.name === 'Поводок' ? leashImage : defaultItemImage
+                          }
+                          alt={item.name}
+                        />
+                        <S.ItemDetailsWrapper>
+                          <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                          <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
+                          <S.WeightCostWrapper>
+                            <S.ItemDetail theme={theme}>Вес: {item.weight} кг</S.ItemDetail>
+                            <S.ItemDetail theme={theme}> | Стоимость: {item.cost} кредитов</S.ItemDetail>
+                          </S.WeightCostWrapper>
+                        </S.ItemDetailsWrapper>
+                      </S.ItemContentWrapper>
                       <S.ItemEffect theme={theme}>Эффект: {item.effect}</S.ItemEffect>
-                    )}
-                    <S.ActionButtons>
-                      <S.PickupButton
-                        onClick={() => handlePickupItem(item._id)}
-                        disabled={isActionCooldown}
-                      >
-                        Подобрать
-                        {isActionCooldown && <S.ProgressBar />}
-                      </S.PickupButton>
-                    </S.ActionButtons>
-                  </S.ItemCard>
-                ))}
-                {locationItems.length === 0 && (
-                  <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-                    На этой локации нет предметов
-                  </div>
+                      <S.ActionButtons>
+                        <S.PickupButton
+                          onClick={() => handleBuyItem(item)}
+                          disabled={isActionCooldown}
+                        >
+                          Купить за {item.cost} кредитов
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.PickupButton>
+                      </S.ActionButtons>
+                    </S.ItemCard>
+                  ))
+                ) : (
+                  activeLocationSubTab === 'items' &&
+                  groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
+                    <S.ItemCard
+                      key={item._id}
+                      theme={theme}
+                      isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
+                    >
+                      <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
+                      <S.ItemContentWrapper>
+                        <S.ItemImage
+                          src={
+                            item.name === 'Палка' ? stickImage :
+                              item.name === 'Доска' ? boardImage :
+                                item.name === 'Ошейник' ? collarImage :
+                                  item.name === 'Мусор' ? garbageImage :
+                                    item.name === 'Поводок' ? leashImage :
+                                      item.name === 'Паспорт животного' ? passportImage : defaultItemImage
+                          }
+                          alt={item.name}
+                        />
+                        <S.ItemDetailsWrapper>
+                          <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
+                          <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
+                          <S.WeightCostWrapper>
+                            <S.ItemDetail theme={theme}>Вес: {item.weight} кг</S.ItemDetail>
+                            <S.ItemDetail theme={theme}> | Стоимость: {item.cost} кредитов</S.ItemDetail>
+                          </S.WeightCostWrapper>
+                        </S.ItemDetailsWrapper>
+                      </S.ItemContentWrapper>
+                      {item.name !== 'Паспорт животного' && (
+                        <S.ItemEffect theme={theme}>Эффект: {item.effect}</S.ItemEffect>
+                      )}
+                      <S.ActionButtons>
+                        <S.PickupButton
+                          onClick={() => handlePickupItem(item._id)}
+                          disabled={isActionCooldown}
+                        >
+                          Подобрать
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.PickupButton>
+                      </S.ActionButtons>
+                    </S.ItemCard>
+                  ))
                 )}
+                {/* Единая проверка на отсутствие предметов */}
+                {((currentRoom === 'Магазин "Всё на свете"' && shopItems.length === 0) ||
+                  (activeLocationSubTab === 'items' && locationItems.length === 0)) && (
+                    <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
+                      На этой локации нет предметов
+                    </div>
+                  )}
               </S.ItemList>
-            ) : null}
-            {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && groupItemsByNameAndWeight(locationItems).map(({ item, count }) => (
-              <S.ItemCard
-                key={item._id}
-                theme={theme}
-                isAnimating={animatingItem && animatingItem.itemId === item._id.toString() ? animatingItem.action : null}
-              >
-                {/* Новый стиль отображения, аналогичный личным предметам */}
-                <S.ItemTitle theme={theme}>{item.name} <S.ItemCount theme={theme}>x{count}</S.ItemCount></S.ItemTitle>
-                <S.ItemContentWrapper>
-                  <S.ItemImage
-                    src={
-                      item.name === 'Палка' ? stickImage :
-                        item.name === 'Доска' ? boardImage :
-                          item.name === 'Ошейник' ? collarImage :
-                            item.name === 'Мусор' ? garbageImage :
-                              item.name === 'Поводок' ? leashImage :
-                                item.name === 'Паспорт животного' ? passportImage : defaultItemImage
-                    }
-                    alt={item.name}
-                  />
-                  <S.ItemDetailsWrapper>
-                    <S.ItemDetail theme={theme}>{item.description}</S.ItemDetail>
-                    <S.ItemDetail theme={theme}>Редкость: {item.rarity}</S.ItemDetail>
-                    <S.WeightCostWrapper>
-                      <S.ItemDetail theme={theme}>Вес: {item.weight} кг</S.ItemDetail>
-                      <S.ItemDetail theme={theme}> | Стоимость: {item.cost} кредитов</S.ItemDetail>
-                    </S.WeightCostWrapper>
-                  </S.ItemDetailsWrapper>
-                </S.ItemContentWrapper>
-                {item.name !== 'Паспорт животного' && (
-                  <S.ItemEffect theme={theme}>Эффект: {item.effect}</S.ItemEffect>
-                )}
-                <S.ActionButtons>
-                  <S.PickupButton
-                    onClick={() => handlePickupItem(item._id)}
-                    disabled={isActionCooldown}
-                  >
-                    Подобрать
-                    {isActionCooldown && <S.ProgressBar />}
-                  </S.PickupButton>
-                </S.ActionButtons>
-              </S.ItemCard>
-            ))}
+            )}
             {activeTab === 'personal' && tempPersonalItems.length === 0 && (
               <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
                 У вас пока нет предметов
-              </div>
-            )}
-            {activeTab === 'location' && !isShelter && locationItems.length === 0 && (
-              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-                На этой локации нет предметов
-              </div>
-            )}
-            {activeTab === 'location' && isShelter && activeLocationSubTab === 'items' && locationItems.length === 0 && (
-              <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
-                На этой локации нет предметов
               </div>
             )}
           </S.ItemList>

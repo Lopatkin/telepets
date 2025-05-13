@@ -183,8 +183,7 @@ export const ItemList = styled.div`
   padding: 5px;
   display: grid;
   gap: 15px;
-  ${props => props.subTab === 'personal' && `grid-template-columns: 1fr;`}
-  ${props => props.subTab === 'location' && `grid-template-columns: repeat(2, 1fr);`}
+  grid-template-columns: 1fr;
 `;
 
 export const ItemCard = styled.div`

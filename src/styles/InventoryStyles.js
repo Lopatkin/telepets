@@ -1,5 +1,19 @@
 import styled, { keyframes } from 'styled-components';
 
+export const ItemEffect = styled.p`
+  font-size: 12px;
+  margin: 5px 0 0 0;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+`;
+
+export const WeightCostWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
+`;
+
 export const ItemContentWrapper = styled.div`
   display: flex;
   align-items: flex-start;

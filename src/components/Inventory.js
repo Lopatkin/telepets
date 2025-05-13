@@ -486,8 +486,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                     src={item.name === 'Палка' ? stickImage : defaultItemImage}
                     alt={item.name}
                   />
-
-                  src\images\items\stick.jpg
                   <S.ItemDetailsWrapper>
                     {item.name === 'Паспорт животного' ? (
                       <>

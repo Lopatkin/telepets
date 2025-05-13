@@ -143,42 +143,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     // Оборачиваем zones в useMemo для стабильности
     const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-    // Таймер раунда
-    useEffect(() => {
-        if (!isRoundActive) return;
-
-        const timer = setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev <= 1) {
-                    handleRoundEnd();
-                    return 30;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [isRoundActive, handleRoundEnd]); // Добавляем handleRoundEnd в зависимости
-
-    // Обработка выбора зон игроком
-    const handleZoneClick = useCallback((zone, isPlayerMannequin, isAttack) => {
-        if (!isRoundActive || isProcessing) return;
-
-        if (isPlayerMannequin && isAttack) {
-            setPlayerAttackZone(zone);
-        } else if (isPlayerMannequin && !isAttack) {
-            setPlayerDefenseZones((prev) => {
-                if (prev.includes(zone)) {
-                    return prev.filter((z) => z !== zone);
-                }
-                if (prev.length < 2) {
-                    return [...prev, zone];
-                }
-                return prev;
-            });
-        }
-    }, [isRoundActive, isProcessing]);
-
     // Завершение раунда
     const handleRoundEnd = useCallback(() => {
         if (!socket || isProcessing) return;
@@ -232,6 +196,44 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
             setIsProcessing(false);
         });
     }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, onClose, isProcessing]);
+
+    // Таймер раунда
+    useEffect(() => {
+        if (!isRoundActive) return;
+
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    handleRoundEnd();
+                    return 30;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isRoundActive, handleRoundEnd]); // Добавляем handleRoundEnd в зависимости
+
+    // Обработка выбора зон игроком
+    const handleZoneClick = useCallback((zone, isPlayerMannequin, isAttack) => {
+        if (!isRoundActive || isProcessing) return;
+
+        if (isPlayerMannequin && isAttack) {
+            setPlayerAttackZone(zone);
+        } else if (isPlayerMannequin && !isAttack) {
+            setPlayerDefenseZones((prev) => {
+                if (prev.includes(zone)) {
+                    return prev.filter((z) => z !== zone);
+                }
+                if (prev.length < 2) {
+                    return [...prev, zone];
+                }
+                return prev;
+            });
+        }
+    }, [isRoundActive, isProcessing]);
+
+
 
     // Проверка завершения боя
     useEffect(() => {

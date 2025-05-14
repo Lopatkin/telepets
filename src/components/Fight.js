@@ -213,13 +213,14 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
     setIsProcessing(true);
 
-    const npcAttack = zones[Math.floor(Math.random() * zones.length)];
-    const npcDefense = [];
+    const npcAttack = zones[Math.floor(Math.random() * zones.length)]; // eslint-disable-line no-unused-vars
+    const npcDefense = []; // eslint-disable-line no-unused-vars
     while (npcDefense.length < 2) {
       const zone = zones[Math.floor(Math.random() * zones.length)];
       if (!npcDefense.includes(zone)) npcDefense.push(zone);
     }
 
+    // Set NPC zones for socket emission, but not used in rendering
     setNpcAttackZone(npcAttack);
     setNpcDefenseZones(npcDefense);
 
@@ -278,12 +279,10 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return () => clearInterval(timer);
   }, [isRoundActive, handleRoundEnd]);
 
-  // Обновляем handleZoneClick для выбора защиты на манекене игрока и атаки на манекене NPC
   const handleZoneClick = useCallback((zone, isPlayerMannequin) => {
     if (!isRoundActive || isProcessing) return;
 
     if (isPlayerMannequin) {
-      // Выбор зон защиты на манекене игрока
       setPlayerDefenseZones((prev) => {
         if (prev.includes(zone)) {
           return prev.filter((z) => z !== zone);
@@ -294,7 +293,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         return prev;
       });
     } else {
-      // Выбор зоны атаки на манекене NPC
       setPlayerAttackZone(zone);
     }
   }, [isRoundActive, isProcessing]);
@@ -331,7 +329,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
                 className={zone}
                 theme={theme}
                 selected={playerDefenseZones.includes(zone)}
-                isAttack={false} // Только защита на манекене игрока
+                isAttack={false}
                 onClick={() => handleZoneClick(zone, true)}
               >
                 {zone === 'head' ? 'Голова' : zone === 'back' ? 'Спина' : zone === 'belly' ? 'Живот' : 'Ноги'}
@@ -357,9 +355,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
                 key={zone}
                 className={zone}
                 theme={theme}
-                selected={playerAttackZone === zone} // Подсвечиваем только зону атаки игрока
+                selected={playerAttackZone === zone}
                 isAttack={playerAttackZone === zone}
-                onClick={() => handleZoneClick(zone, false)} // Кликабельно для атаки
+                onClick={() => handleZoneClick(zone, false)}
               >
                 {zone === 'head' ? 'Голова' : zone === 'back' ? 'Спина' : zone === 'belly' ? 'Живот' : 'Ноги'}
               </Zone>

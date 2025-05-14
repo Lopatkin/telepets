@@ -187,8 +187,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-  const displayName = !user.isHuman && user.name 
-    ? user.name 
+  const displayName = !user.isHuman && user.name
+    ? user.name
     : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim();
 
   const playerInitial = (user.firstName || user.name || 'И').charAt(0).toUpperCase();
@@ -222,10 +222,26 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return updatedMessage;
   };
 
+  // Обновляем handleRoundEnd для обработки случая без выбора зоны атаки
   const handleRoundEnd = useCallback(() => {
     if (!socket || isProcessing) return;
 
     setIsProcessing(true);
+
+    // Если игрок не выбрал зону атаки, добавляем лог "Вы не атаковали."
+    if (!playerAttackZone) {
+      setBattleLogs((prev) => [
+        `${new Date().toLocaleTimeString()}: Вы не атаковали.`,
+        ...prev
+      ]);
+      setHighlightNewLog(true);
+      setPlayerAttackZone(null);
+      setPlayerDefenseZones([]);
+      setIsRoundActive(true);
+      setTimeLeft(20);
+      setIsProcessing(false);
+      return;
+    }
 
     const npcAttack = zones[Math.floor(Math.random() * zones.length)];
     const npcDefense = [];

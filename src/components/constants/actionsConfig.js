@@ -149,7 +149,17 @@ const actionsConfig = {
         cooldownKey: 'hunt'
       },
     ],
-    animalActions: [],
+    animalActions: [
+      {
+        id: uuidv4(),
+        title: 'Охотиться',
+        modalTitle: 'Выбор цели',
+        description: 'Найти и сразиться с диким животным',
+        modalDescription: 'Выберите животное для охоты в лесу.',
+        buttonText: 'Начать бой',
+        cooldownKey: 'hunt'
+      },
+    ],
   },
   disposal: {
     humanActions: [

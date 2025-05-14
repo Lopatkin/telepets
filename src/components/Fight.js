@@ -63,7 +63,7 @@ const AvatarContainer = styled.div`
 `;
 
 const LargeAvatar = styled(Avatar)`
-  width: 72px; /* Увеличиваем в 3 раза (24px * 3) */
+  width: 72px;
   height: 72px;
   border-radius: 50%;
 `;
@@ -72,7 +72,7 @@ const LargeDefaultAvatar = styled(DefaultAvatar)`
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  font-size: 28px; /* Пропорциональный шрифт */
+  font-size: 28px;
 `;
 
 const HPBar = styled.div`
@@ -163,23 +163,21 @@ const Notification = styled.div`
   display: ${({ show }) => (show ? 'block' : 'none')};
 `;
 
-// Новый контейнер для логов боя
 const LogContainer = styled.div`
   width: 100%;
   max-width: 600px;
-  height: 150px; /* Фиксированная высота для окна логов */
+  height: 150px;
   background: ${({ theme }) => (theme === 'dark' ? '#2A2A2A' : '#f5f5f5')};
   border: 1px solid ${({ theme }) => (theme === 'dark' ? '#555' : '#ddd')};
   border-radius: 5px;
   margin-top: 10px;
   padding: 10px;
-  overflow-y: auto; /* Включаем прокрутку */
+  overflow-y: auto;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse; /* Новые логи сверху */
   gap: 5px;
 `;
 
-// Стили для отдельного лога
 const LogItem = styled.div`
   font-size: 0.9em;
   color: ${({ theme }) => (theme === 'dark' ? '#ccc' : '#333')};
@@ -197,17 +195,14 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const [isRoundActive, setIsRoundActive] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '' });
-  // Новое состояние для логов боя
   const [battleLogs, setBattleLogs] = useState([]);
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-  // Определяем отображаемое имя игрока
   const displayName = !user.isHuman && user.name 
     ? user.name 
     : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim();
 
-  // Определяем первую букву имени для дефолтного аватара
   const playerInitial = (user.firstName || user.name || 'И').charAt(0).toUpperCase();
   const npcInitial = (npc.name || 'N').charAt(0).toUpperCase();
 
@@ -240,8 +235,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         setPlayerHP(response.playerHP);
         setNpcHP(response.npcHP);
         setNotification({ show: true, message: response.message });
-        // Добавляем сообщение в логи боя
-        setBattleLogs((prev) => [...prev, response.message]);
+        // Добавляем лог с временной меткой в начало массива
+        setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: ${response.message}`, ...prev]);
         setTimeout(() => setNotification({ show: false, message: '' }), 3000);
 
         setPlayerAttackZone(null);
@@ -251,9 +246,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
         if (response.playerHP <= 0 || response.npcHP <= 0) {
           setIsRoundActive(false);
-          // Добавляем итоговое сообщение в логи
           const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
-          setBattleLogs((prev) => [...prev, finalMessage]);
+          // Добавляем итоговый лог с временной меткой в начало
+          setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: ${finalMessage}`, ...prev]);
           showNotification(finalMessage);
           setTimeout(onClose, 2000);
         } else {
@@ -262,8 +257,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         }
       } else {
         setNotification({ show: true, message: 'Ошибка в бою' });
-        // Добавляем сообщение об ошибке в логи
-        setBattleLogs((prev) => [...prev, 'Ошибка в бою']);
+        // Добавляем ошибку с временной меткой в начало
+        setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: Ошибка в бою`, ...prev]);
         setTimeout(() => setNotification({ show: false, message: '' }), 3000);
       }
       setIsProcessing(false);
@@ -377,7 +372,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       >
         {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Подтвердить ход'}
       </ActionButton>
-      {/* Окно с логами боя */}
       <LogContainer theme={theme}>
         {battleLogs.map((log, index) => (
           <LogItem key={index} theme={theme}>

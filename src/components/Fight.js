@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
-import { Avatar, DefaultAvatar } from '../styles/ChatStyles'; // Импортируем Avatar и DefaultAvatar
+import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 
 const FightContainer = styled.div`
   display: flex;
@@ -57,9 +57,22 @@ const MannequinLabel = styled.h3`
 `;
 
 const AvatarContainer = styled.div`
-  margin-bottom: 10px;
+  margin-bottom: 15px; /* Увеличиваем отступ для больших аватарок */
   display: flex;
   justify-content: center;
+`;
+
+const LargeAvatar = styled(Avatar)`
+  width: 96px; /* Увеличиваем в 3 раза (32px * 3) */
+  height: 96px;
+  border-radius: 50%;
+`;
+
+const LargeDefaultAvatar = styled(DefaultAvatar)`
+  width: 96px; /* Увеличиваем в 3 раза */
+  height: 96px;
+  border-radius: 50%;
+  font-size: 36px; /* Увеличиваем шрифт пропорционально */
 `;
 
 const HPBar = styled.div`
@@ -276,9 +289,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
           <MannequinLabel theme={theme}>{displayName}</MannequinLabel>
           <AvatarContainer>
             {user.photoUrl && user.photoUrl.trim() ? (
-              <Avatar src={user.photoUrl} alt="Player Avatar" />
+              <LargeAvatar src={user.photoUrl} alt="Player Avatar" />
             ) : (
-              <DefaultAvatar>{playerInitial}</DefaultAvatar>
+              <LargeDefaultAvatar>{playerInitial}</LargeDefaultAvatar>
             )}
           </AvatarContainer>
           <HPBar>
@@ -303,9 +316,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
           <MannequinLabel theme={theme}>{npc.name}</MannequinLabel>
           <AvatarContainer>
             {npc.photoUrl && npc.photoUrl.trim() ? (
-              <Avatar src={npc.photoUrl} alt="NPC Avatar" />
+              <LargeAvatar src={npc.photoUrl} alt="NPC Avatar" />
             ) : (
-              <DefaultAvatar>{npcInitial}</DefaultAvatar>
+              <LargeDefaultAvatar>{npcInitial}</LargeDefaultAvatar>
             )}
           </AvatarContainer>
           <HPBar>

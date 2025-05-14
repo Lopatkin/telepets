@@ -9,32 +9,24 @@ import actionsConfig from './constants/actionsConfig';
 import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from '../utils/WorkshopCrafting';
-import Fight from './Fight'; // Импортируем новую компоненту
+import Fight from './Fight';
 import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 import { ClipLoader } from 'react-spinners';
-
-// Моковые данные NPC для локации "Лес"
-const forestNPCs = [
-  { id: 'npc_wolf', name: 'Волк', description: 'Дикий волк, опасный противник' },
-  { id: 'npc_bear', name: 'Медведь', description: 'Могучий медведь, сильный и выносливый' },
-  { id: 'npc_fox', name: 'Лиса', description: 'Хитрая лиса, быстрая и ловкая' }
-];
+import { getActiveNPCs } from '../utils/npcData'; // Импортируем getActiveNPCs
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user, onItemsUpdate }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false); // Новое состояние для отслеживания обработки запроса
-  const [selectedNPC, setSelectedNPC] = useState(null); // Состояние для выбранного NPC
-  const [npcs, setNpcs] = useState([]); // Список NPC для охоты
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedNPC, setSelectedNPC] = useState(null);
+  const [npcs, setNpcs] = useState([]);
 
-  // Подписываемся на событие items через onItemsUpdate
   useEffect(() => {
     if (socket && onItemsUpdate) {
       console.log('Subscribing to items event in Actions');
       socket.on('items', onItemsUpdate);
-      // Запрашиваем предметы при монтировании
       console.log('Emitting getItems for user in Actions:', `user_${userId}`);
       socket.emit('getItems', { owner: `user_${userId}` });
       return () => {
@@ -44,20 +36,27 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
     }
   }, [socket, userId, onItemsUpdate]);
 
-  // Обновляем isLoading и логируем personalItems
   useEffect(() => {
     console.log('Received personalItems in Actions:', personalItems);
     setIsLoading(personalItems.length === 0);
   }, [personalItems]);
 
-  // Загружаем NPC при выборе действия "Охотиться"
+  // Загружаем NPC для действия "Охотиться" на локации "Лес"
   useEffect(() => {
-    if (selectedAction?.title === 'Охотиться' && socket) {
-      // Здесь можно отправить запрос на сервер для получения NPC
-      // Для примера используем моковые данные
-      setNpcs(forestNPCs);
+    if (selectedAction?.title === 'Охотиться' && currentRoom === 'Лес') {
+      const activeNPCs = getActiveNPCs('Лес');
+      // Преобразуем NPC в нужный формат и добавляем description
+      const formattedNPCs = activeNPCs.map(npc => ({
+        id: npc.userId,
+        name: npc.firstName,
+        description: npc.userId === 'npc_fox' ? 'Хитрая лисичка, быстрая и ловкая' : 'Маленький ёжик, осторожный и колючий'
+      }));
+      setNpcs(formattedNPCs);
+      console.log('Loaded NPCs for hunting:', formattedNPCs);
+    } else {
+      setNpcs([]);
     }
-  }, [selectedAction, socket]);
+  }, [selectedAction, currentRoom]);
 
   const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
     setNotification({ show: true, message });
@@ -111,9 +110,9 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
     }
 
     if (action.item) {
-      setIsProcessing(true); // Блокируем кнопку
+      setIsProcessing(true);
       socket.emit('addItem', { owner: `user_${userId}`, item: action.item }, (response) => {
-        setIsProcessing(false); // Разблокируем кнопку после ответа
+        setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
           showNotification(action.successMessage);
@@ -139,7 +138,6 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
         }
       });
     } else if (action.action === 'hunt') {
-      // Для охоты ничего не делаем, ждем выбора NPC
       return;
     } else if (action.systemMessage) {
       setIsProcessing(true);

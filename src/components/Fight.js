@@ -149,20 +149,6 @@ const CloseButton = styled.button`
   cursor: pointer;
 `;
 
-const Notification = styled.div`
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: ${({ theme }) => (theme === 'dark' ? '#333' : '#f0f0f0')};
-  color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
-  padding: 10px 20px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  display: ${({ show }) => (show ? 'block' : 'none')};
-`;
-
 const LogContainer = styled.div`
   width: 100%;
   max-width: 600px;
@@ -178,7 +164,6 @@ const LogContainer = styled.div`
   gap: 5px;
 `;
 
-// Обновляем LogItem для поддержки зеленой подсветки
 const LogItem = styled.div`
   font-size: 0.9em;
   color: ${({ theme }) => (theme === 'dark' ? '#ccc' : '#333')};
@@ -186,7 +171,7 @@ const LogItem = styled.div`
   background: ${({ isHighlighted }) => (isHighlighted ? 'rgba(0, 255, 0, 0.2)' : 'transparent')};
   padding: 2px 5px;
   border-radius: 3px;
-  transition: background 0.3s ease; /* Плавное исчезновение подсветки */
+  transition: background 0.3s ease;
 `;
 
 function Fight({ theme, socket, user, npc, onClose, showNotification }) {
@@ -197,15 +182,13 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const [timeLeft, setTimeLeft] = useState(20);
   const [isRoundActive, setIsRoundActive] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [notification, setNotification] = useState({ show: false, message: '' });
   const [battleLogs, setBattleLogs] = useState([]);
-  // Новое состояние для подсветки нового лога
   const [highlightNewLog, setHighlightNewLog] = useState(false);
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-  const displayName = !user.isHuman && user.name
-    ? user.name
+  const displayName = !user.isHuman && user.name 
+    ? user.name 
     : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim();
 
   const playerInitial = (user.firstName || user.name || 'И').charAt(0).toUpperCase();
@@ -213,7 +196,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   const timeProgress = useMemo(() => (timeLeft / 20) * 100, [timeLeft]);
 
-  // Таймер для подсветки нового лога в течение 3 секунд
   useEffect(() => {
     if (battleLogs.length === 0 || !highlightNewLog) return;
 
@@ -221,9 +203,10 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       setHighlightNewLog(false);
     }, 3000);
 
-    return () => clearTimeout(timer); // Очистка таймера при размонтировании
+    return () => clearTimeout(timer);
   }, [battleLogs, highlightNewLog]);
 
+  // Обновляем handleRoundEnd, убирая всплывающие уведомления
   const handleRoundEnd = useCallback(() => {
     if (!socket || isProcessing) return;
 
@@ -247,11 +230,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       if (response.success) {
         setPlayerHP(response.playerHP);
         setNpcHP(response.npcHP);
-        setNotification({ show: true, message: response.message });
-        // Добавляем лог и включаем подсветку
+        // Добавляем лог и включаем подсветку (всплывающее уведомление удалено)
         setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: ${response.message}`, ...prev]);
         setHighlightNewLog(true);
-        setTimeout(() => setNotification({ show: false, message: '' }), 3000);
 
         setPlayerAttackZone(null);
         setPlayerDefenseZones([]);
@@ -269,11 +250,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
           setTimeLeft(20);
         }
       } else {
-        setNotification({ show: true, message: 'Ошибка в бою' });
-        // Добавляем лог ошибки и включаем подсветку
+        // Добавляем лог ошибки и включаем подсветку (всплывающее уведомление удалено)
         setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: Ошибка в бою`, ...prev]);
         setHighlightNewLog(true);
-        setTimeout(() => setNotification({ show: false, message: '' }), 3000);
       }
       setIsProcessing(false);
     });
@@ -392,16 +371,12 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
           <LogItem
             key={index}
             theme={theme}
-            // Подсвечиваем только первый лог (новый) при highlightNewLog
             isHighlighted={index === 0 && highlightNewLog}
           >
             {log}
           </LogItem>
         ))}
       </LogContainer>
-      <Notification show={notification.show} theme={theme}>
-        {notification.message}
-      </Notification>
     </FightContainer>
   );
 }

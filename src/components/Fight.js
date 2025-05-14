@@ -178,10 +178,15 @@ const LogContainer = styled.div`
   gap: 5px;
 `;
 
+// Обновляем LogItem для поддержки зеленой подсветки
 const LogItem = styled.div`
   font-size: 0.9em;
   color: ${({ theme }) => (theme === 'dark' ? '#ccc' : '#333')};
   word-break: break-word;
+  background: ${({ isHighlighted }) => (isHighlighted ? 'rgba(0, 255, 0, 0.2)' : 'transparent')};
+  padding: 2px 5px;
+  border-radius: 3px;
+  transition: background 0.3s ease; /* Плавное исчезновение подсветки */
 `;
 
 function Fight({ theme, socket, user, npc, onClose, showNotification }) {
@@ -194,11 +199,13 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [battleLogs, setBattleLogs] = useState([]);
+  // Новое состояние для подсветки нового лога
+  const [highlightNewLog, setHighlightNewLog] = useState(false);
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-  const displayName = !user.isHuman && user.name 
-    ? user.name 
+  const displayName = !user.isHuman && user.name
+    ? user.name
     : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim();
 
   const playerInitial = (user.firstName || user.name || 'И').charAt(0).toUpperCase();
@@ -206,13 +213,22 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   const timeProgress = useMemo(() => (timeLeft / 20) * 100, [timeLeft]);
 
-  // Обновляем handleRoundEnd, убирая состояния npcAttackZone и npcDefenseZones
+  // Таймер для подсветки нового лога в течение 3 секунд
+  useEffect(() => {
+    if (battleLogs.length === 0 || !highlightNewLog) return;
+
+    const timer = setTimeout(() => {
+      setHighlightNewLog(false);
+    }, 3000);
+
+    return () => clearTimeout(timer); // Очистка таймера при размонтировании
+  }, [battleLogs, highlightNewLog]);
+
   const handleRoundEnd = useCallback(() => {
     if (!socket || isProcessing) return;
 
     setIsProcessing(true);
 
-    // Генерируем выбор NPC локально
     const npcAttack = zones[Math.floor(Math.random() * zones.length)];
     const npcDefense = [];
     while (npcDefense.length < 2) {
@@ -232,7 +248,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         setPlayerHP(response.playerHP);
         setNpcHP(response.npcHP);
         setNotification({ show: true, message: response.message });
+        // Добавляем лог и включаем подсветку
         setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: ${response.message}`, ...prev]);
+        setHighlightNewLog(true);
         setTimeout(() => setNotification({ show: false, message: '' }), 3000);
 
         setPlayerAttackZone(null);
@@ -241,7 +259,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         if (response.playerHP <= 0 || response.npcHP <= 0) {
           setIsRoundActive(false);
           const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
+          // Добавляем итоговый лог и включаем подсветку
           setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: ${finalMessage}`, ...prev]);
+          setHighlightNewLog(true);
           showNotification(finalMessage);
           setTimeout(onClose, 2000);
         } else {
@@ -250,7 +270,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         }
       } else {
         setNotification({ show: true, message: 'Ошибка в бою' });
+        // Добавляем лог ошибки и включаем подсветку
         setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: Ошибка в бою`, ...prev]);
+        setHighlightNewLog(true);
         setTimeout(() => setNotification({ show: false, message: '' }), 3000);
       }
       setIsProcessing(false);
@@ -277,7 +299,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     if (!isRoundActive || isProcessing) return;
 
     if (isPlayerMannequin) {
-      // Выбор зон защиты на манекене игрока
       setPlayerDefenseZones((prev) => {
         if (prev.includes(zone)) {
           return prev.filter((z) => z !== zone);
@@ -288,7 +309,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         return prev;
       });
     } else {
-      // Выбор зоны атаки на манекене NPC
       setPlayerAttackZone(zone);
     }
   }, [isRoundActive, isProcessing]);
@@ -369,7 +389,12 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       </ActionButton>
       <LogContainer theme={theme}>
         {battleLogs.map((log, index) => (
-          <LogItem key={index} theme={theme}>
+          <LogItem
+            key={index}
+            theme={theme}
+            // Подсвечиваем только первый лог (новый) при highlightNewLog
+            isHighlighted={index === 0 && highlightNewLog}
+          >
             {log}
           </LogItem>
         ))}

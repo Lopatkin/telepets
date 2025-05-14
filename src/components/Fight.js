@@ -206,7 +206,22 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return () => clearTimeout(timer);
   }, [battleLogs, highlightNewLog]);
 
-  // Обновляем handleRoundEnd, убирая всплывающие уведомления
+  // Функция для замены английских названий зон на русские в сообщениях
+  const replaceZoneNames = (message) => {
+    const zoneMap = {
+      head: 'Голова',
+      back: 'Спина',
+      belly: 'Живот',
+      legs: 'Ноги'
+    };
+    let updatedMessage = message;
+    Object.keys(zoneMap).forEach((zone) => {
+      const regex = new RegExp(`\\b${zone}\\b`, 'g');
+      updatedMessage = updatedMessage.replace(regex, zoneMap[zone]);
+    });
+    return updatedMessage;
+  };
+
   const handleRoundEnd = useCallback(() => {
     if (!socket || isProcessing) return;
 
@@ -230,8 +245,11 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       if (response.success) {
         setPlayerHP(response.playerHP);
         setNpcHP(response.npcHP);
-        // Добавляем лог и включаем подсветку (всплывающее уведомление удалено)
-        setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: ${response.message}`, ...prev]);
+        // Добавляем лог с заменой названий зон и включаем подсветку
+        setBattleLogs((prev) => [
+          `${new Date().toLocaleTimeString()}: ${replaceZoneNames(response.message)}`,
+          ...prev
+        ]);
         setHighlightNewLog(true);
 
         setPlayerAttackZone(null);
@@ -240,8 +258,11 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         if (response.playerHP <= 0 || response.npcHP <= 0) {
           setIsRoundActive(false);
           const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
-          // Добавляем итоговый лог и включаем подсветку
-          setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: ${finalMessage}`, ...prev]);
+          // Добавляем итоговый лог без замены зон (они не содержат зон)
+          setBattleLogs((prev) => [
+            `${new Date().toLocaleTimeString()}: ${finalMessage}`,
+            ...prev
+          ]);
           setHighlightNewLog(true);
           showNotification(finalMessage);
           setTimeout(onClose, 2000);
@@ -250,8 +271,11 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
           setTimeLeft(20);
         }
       } else {
-        // Добавляем лог ошибки и включаем подсветку (всплывающее уведомление удалено)
-        setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: Ошибка в бою`, ...prev]);
+        // Добавляем лог ошибки без замены зон
+        setBattleLogs((prev) => [
+          `${new Date().toLocaleTimeString()}: Ошибка в бою`,
+          ...prev
+        ]);
         setHighlightNewLog(true);
       }
       setIsProcessing(false);

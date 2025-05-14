@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 
-// Стили для контейнера боя, теперь на весь экран
 const FightContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -20,7 +19,6 @@ const FightContainer = styled.div`
   box-sizing: border-box;
 `;
 
-// Прогресс-бар для отображения времени раунда
 const TimeProgressBar = styled.div`
   width: 100%;
   height: 10px;
@@ -152,17 +150,15 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const [playerDefenseZones, setPlayerDefenseZones] = useState([]);
   const [npcAttackZone, setNpcAttackZone] = useState(null);
   const [npcDefenseZones, setNpcDefenseZones] = useState([]);
-  const [timeLeft, setTimeLeft] = useState(20); // Изменяем длительность раунда на 20 секунд
+  const [timeLeft, setTimeLeft] = useState(20);
   const [isRoundActive, setIsRoundActive] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '' });
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-  // Вычисляем прогресс для полоски времени (0–100%)
   const timeProgress = useMemo(() => (timeLeft / 20) * 100, [timeLeft]);
 
-  // Завершение раунда
   const handleRoundEnd = useCallback(() => {
     if (!socket || isProcessing) return;
 
@@ -203,7 +199,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
           setTimeout(onClose, 2000);
         } else {
           setIsRoundActive(true);
-          setTimeLeft(20); // Сбрасываем на 20 секунд
+          setTimeLeft(20);
         }
       } else {
         setNotification({ show: true, message: 'Ошибка в бою' });
@@ -213,7 +209,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     });
   }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, onClose, isProcessing]);
 
-  // Таймер раунда
   useEffect(() => {
     if (!isRoundActive) return;
 
@@ -221,7 +216,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           handleRoundEnd();
-          return 20; // Сбрасываем на 20 секунд
+          return 20;
         }
         return prev - 1;
       });
@@ -230,7 +225,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return () => clearInterval(timer);
   }, [isRoundActive, handleRoundEnd]);
 
-  // Обработка выбора зон игроком
   const handleZoneClick = useCallback((zone, isPlayerMannequin, isAttack) => {
     if (!isRoundActive || isProcessing) return;
 
@@ -249,7 +243,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     }
   }, [isRoundActive, isProcessing]);
 
-  // Проверка завершения боя
   useEffect(() => {
     if (playerHP <= 0 || npcHP <= 0) {
       setIsRoundActive(false);
@@ -264,7 +257,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       </TimeProgressBar>
       <MannequinContainer>
         <Mannequin>
-          <MannequinLabel theme={theme}>{user.name}</MannequinLabel>
+          <MannequinLabel theme={theme}>{user.name}</MannequinLabel> {/* Добавляем имя игрока */}
           <HPBar>
             <HPFill hp={playerHP} />
           </HPBar>

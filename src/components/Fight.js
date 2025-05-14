@@ -209,10 +209,10 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   // Функция для замены английских названий зон на русские в сообщениях
   const replaceZoneNames = (message) => {
     const zoneMap = {
-      head: 'Голова',
-      back: 'Спина',
-      belly: 'Живот',
-      legs: 'Ноги'
+      head: 'голову',
+      back: 'спину',
+      belly: 'живот',
+      legs: 'ноги'
     };
     let updatedMessage = message;
     Object.keys(zoneMap).forEach((zone) => {

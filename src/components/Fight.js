@@ -157,6 +157,11 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
+  // Определяем отображаемое имя игрока
+  const displayName = !user.isHuman && user.name 
+    ? user.name 
+    : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim(); // Используем firstName/lastName для людей
+
   const timeProgress = useMemo(() => (timeLeft / 20) * 100, [timeLeft]);
 
   const handleRoundEnd = useCallback(() => {
@@ -257,7 +262,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       </TimeProgressBar>
       <MannequinContainer>
         <Mannequin>
-          <MannequinLabel theme={theme}>{user.name}</MannequinLabel> {/* Добавляем имя игрока */}
+          <MannequinLabel theme={theme}>{displayName}</MannequinLabel> {/* Используем displayName вместо user.name */}
           <HPBar>
             <HPFill hp={playerHP} />
           </HPBar>

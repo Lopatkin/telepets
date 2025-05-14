@@ -12,7 +12,7 @@ import WorkshopCrafting from '../utils/WorkshopCrafting';
 import Fight from './Fight';
 import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 import { ClipLoader } from 'react-spinners';
-import { getActiveNPCs } from '../utils/npcData'; // Импортируем getActiveNPCs
+import { getActiveNPCs } from '../utils/npcData';
 
 function Actions({ theme, currentRoom, userId, socket, personalItems, user, onItemsUpdate }) {
   const [selectedAction, setSelectedAction] = useState(null);
@@ -45,11 +45,12 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
   useEffect(() => {
     if (selectedAction?.title === 'Охотиться' && currentRoom === 'Лес') {
       const activeNPCs = getActiveNPCs('Лес');
-      // Преобразуем NPC в нужный формат и добавляем description
+      // Преобразуем NPC в нужный формат, включая photoUrl
       const formattedNPCs = activeNPCs.map(npc => ({
         id: npc.userId,
         name: npc.firstName,
-        description: npc.userId === 'npc_fox' ? 'Хитрая лисичка, быстрая и ловкая' : 'Маленький ёжик, осторожный и колючий'
+        description: npc.userId === 'npc_fox' ? 'Хитрая лисичка, быстрая и ловкая' : 'Маленький ёжик, осторожный и колючий',
+        photoUrl: npc.photoUrl // Добавляем photoUrl
       }));
       setNpcs(formattedNPCs);
       console.log('Loaded NPCs for hunting:', formattedNPCs);

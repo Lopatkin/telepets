@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
+import { Avatar, DefaultAvatar } from '../styles/ChatStyles'; // Импортируем Avatar и DefaultAvatar
 
 const FightContainer = styled.div`
   display: flex;
@@ -53,6 +54,12 @@ const MannequinLabel = styled.h3`
   margin-bottom: 10px;
   font-size: 1.2em;
   text-align: center;
+`;
+
+const AvatarContainer = styled.div`
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
 `;
 
 const HPBar = styled.div`
@@ -160,7 +167,11 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   // Определяем отображаемое имя игрока
   const displayName = !user.isHuman && user.name 
     ? user.name 
-    : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim(); // Используем firstName/lastName для людей
+    : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim();
+
+  // Определяем первую букву имени для дефолтного аватара
+  const playerInitial = (user.firstName || user.name || 'И').charAt(0).toUpperCase();
+  const npcInitial = (npc.name || 'N').charAt(0).toUpperCase();
 
   const timeProgress = useMemo(() => (timeLeft / 20) * 100, [timeLeft]);
 
@@ -262,7 +273,14 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       </TimeProgressBar>
       <MannequinContainer>
         <Mannequin>
-          <MannequinLabel theme={theme}>{displayName}</MannequinLabel> {/* Используем displayName вместо user.name */}
+          <MannequinLabel theme={theme}>{displayName}</MannequinLabel>
+          <AvatarContainer>
+            {user.photoUrl && user.photoUrl.trim() ? (
+              <Avatar src={user.photoUrl} alt="Player Avatar" />
+            ) : (
+              <DefaultAvatar>{playerInitial}</DefaultAvatar>
+            )}
+          </AvatarContainer>
           <HPBar>
             <HPFill hp={playerHP} />
           </HPBar>
@@ -283,6 +301,13 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         </Mannequin>
         <Mannequin>
           <MannequinLabel theme={theme}>{npc.name}</MannequinLabel>
+          <AvatarContainer>
+            {npc.photoUrl && npc.photoUrl.trim() ? (
+              <Avatar src={npc.photoUrl} alt="NPC Avatar" />
+            ) : (
+              <DefaultAvatar>{npcInitial}</DefaultAvatar>
+            )}
+          </AvatarContainer>
           <HPBar>
             <HPFill hp={npcHP} />
           </HPBar>

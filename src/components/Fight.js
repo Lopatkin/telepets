@@ -174,7 +174,7 @@ const LogContainer = styled.div`
   padding: 10px;
   overflow-y: auto;
   display: flex;
-  flex-direction: column-reverse; /* Новые логи сверху */
+  flex-direction: column-reverse;
   gap: 5px;
 `;
 
@@ -235,7 +235,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         setPlayerHP(response.playerHP);
         setNpcHP(response.npcHP);
         setNotification({ show: true, message: response.message });
-        // Добавляем лог с временной меткой в начало массива
         setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: ${response.message}`, ...prev]);
         setTimeout(() => setNotification({ show: false, message: '' }), 3000);
 
@@ -247,7 +246,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         if (response.playerHP <= 0 || response.npcHP <= 0) {
           setIsRoundActive(false);
           const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
-          // Добавляем итоговый лог с временной меткой в начало
           setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: ${finalMessage}`, ...prev]);
           showNotification(finalMessage);
           setTimeout(onClose, 2000);
@@ -257,7 +255,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         }
       } else {
         setNotification({ show: true, message: 'Ошибка в бою' });
-        // Добавляем ошибку с временной меткой в начало
         setBattleLogs((prev) => [`${new Date().toLocaleTimeString()}: Ошибка в бою`, ...prev]);
         setTimeout(() => setNotification({ show: false, message: '' }), 3000);
       }
@@ -281,12 +278,12 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return () => clearInterval(timer);
   }, [isRoundActive, handleRoundEnd]);
 
-  const handleZoneClick = useCallback((zone, isPlayerMannequin, isAttack) => {
+  // Обновляем handleZoneClick для выбора защиты на манекене игрока и атаки на манекене NPC
+  const handleZoneClick = useCallback((zone, isPlayerMannequin) => {
     if (!isRoundActive || isProcessing) return;
 
-    if (isPlayerMannequin && isAttack) {
-      setPlayerAttackZone(zone);
-    } else if (isPlayerMannequin && !isAttack) {
+    if (isPlayerMannequin) {
+      // Выбор зон защиты на манекене игрока
       setPlayerDefenseZones((prev) => {
         if (prev.includes(zone)) {
           return prev.filter((z) => z !== zone);
@@ -296,6 +293,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         }
         return prev;
       });
+    } else {
+      // Выбор зоны атаки на манекене NPC
+      setPlayerAttackZone(zone);
     }
   }, [isRoundActive, isProcessing]);
 
@@ -330,9 +330,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
                 key={zone}
                 className={zone}
                 theme={theme}
-                selected={playerAttackZone === zone || playerDefenseZones.includes(zone)}
-                isAttack={playerAttackZone === zone}
-                onClick={() => handleZoneClick(zone, true, playerAttackZone === zone || !playerAttackZone)}
+                selected={playerDefenseZones.includes(zone)}
+                isAttack={false} // Только защита на манекене игрока
+                onClick={() => handleZoneClick(zone, true)}
               >
                 {zone === 'head' ? 'Голова' : zone === 'back' ? 'Спина' : zone === 'belly' ? 'Живот' : 'Ноги'}
               </Zone>
@@ -357,8 +357,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
                 key={zone}
                 className={zone}
                 theme={theme}
-                selected={npcAttackZone === zone || npcDefenseZones.includes(zone)}
-                isAttack={npcAttackZone === zone}
+                selected={playerAttackZone === zone} // Подсвечиваем только зону атаки игрока
+                isAttack={playerAttackZone === zone}
+                onClick={() => handleZoneClick(zone, false)} // Кликабельно для атаки
               >
                 {zone === 'head' ? 'Голова' : zone === 'back' ? 'Спина' : zone === 'belly' ? 'Живот' : 'Ноги'}
               </Zone>

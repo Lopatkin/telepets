@@ -189,8 +189,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const [npcHP, setNpcHP] = useState(100);
   const [playerAttackZone, setPlayerAttackZone] = useState(null);
   const [playerDefenseZones, setPlayerDefenseZones] = useState([]);
-  const [npcAttackZone, setNpcAttackZone] = useState(null);
-  const [npcDefenseZones, setNpcDefenseZones] = useState([]);
   const [timeLeft, setTimeLeft] = useState(20);
   const [isRoundActive, setIsRoundActive] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -208,21 +206,19 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   const timeProgress = useMemo(() => (timeLeft / 20) * 100, [timeLeft]);
 
+  // Обновляем handleRoundEnd, убирая состояния npcAttackZone и npcDefenseZones
   const handleRoundEnd = useCallback(() => {
     if (!socket || isProcessing) return;
 
     setIsProcessing(true);
 
-    const npcAttack = zones[Math.floor(Math.random() * zones.length)]; // eslint-disable-line no-unused-vars
-    const npcDefense = []; // eslint-disable-line no-unused-vars
+    // Генерируем выбор NPC локально
+    const npcAttack = zones[Math.floor(Math.random() * zones.length)];
+    const npcDefense = [];
     while (npcDefense.length < 2) {
       const zone = zones[Math.floor(Math.random() * zones.length)];
       if (!npcDefense.includes(zone)) npcDefense.push(zone);
     }
-
-    // Set NPC zones for socket emission, but not used in rendering
-    setNpcAttackZone(npcAttack);
-    setNpcDefenseZones(npcDefense);
 
     socket.emit('fightRound', {
       userId: user.userId,
@@ -241,8 +237,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
         setPlayerAttackZone(null);
         setPlayerDefenseZones([]);
-        setNpcAttackZone(null);
-        setNpcDefenseZones([]);
 
         if (response.playerHP <= 0 || response.npcHP <= 0) {
           setIsRoundActive(false);
@@ -283,6 +277,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     if (!isRoundActive || isProcessing) return;
 
     if (isPlayerMannequin) {
+      // Выбор зон защиты на манекене игрока
       setPlayerDefenseZones((prev) => {
         if (prev.includes(zone)) {
           return prev.filter((z) => z !== zone);
@@ -293,6 +288,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         return prev;
       });
     } else {
+      // Выбор зоны атаки на манекене NPC
       setPlayerAttackZone(zone);
     }
   }, [isRoundActive, isProcessing]);

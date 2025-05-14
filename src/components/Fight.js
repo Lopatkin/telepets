@@ -57,22 +57,22 @@ const MannequinLabel = styled.h3`
 `;
 
 const AvatarContainer = styled.div`
-  margin-bottom: 15px; /* Увеличиваем отступ для больших аватарок */
+  margin-bottom: 15px;
   display: flex;
   justify-content: center;
 `;
 
 const LargeAvatar = styled(Avatar)`
-  width: 96px; /* Увеличиваем в 3 раза (32px * 3) */
-  height: 96px;
+  width: 72px; /* Увеличиваем в 3 раза (24px * 3) */
+  height: 72px;
   border-radius: 50%;
 `;
 
 const LargeDefaultAvatar = styled(DefaultAvatar)`
-  width: 96px; /* Увеличиваем в 3 раза */
-  height: 96px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  font-size: 36px; /* Увеличиваем шрифт пропорционально */
+  font-size: 28px; /* Пропорциональный шрифт */
 `;
 
 const HPBar = styled.div`
@@ -163,6 +163,29 @@ const Notification = styled.div`
   display: ${({ show }) => (show ? 'block' : 'none')};
 `;
 
+// Новый контейнер для логов боя
+const LogContainer = styled.div`
+  width: 100%;
+  max-width: 600px;
+  height: 150px; /* Фиксированная высота для окна логов */
+  background: ${({ theme }) => (theme === 'dark' ? '#2A2A2A' : '#f5f5f5')};
+  border: 1px solid ${({ theme }) => (theme === 'dark' ? '#555' : '#ddd')};
+  border-radius: 5px;
+  margin-top: 10px;
+  padding: 10px;
+  overflow-y: auto; /* Включаем прокрутку */
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+`;
+
+// Стили для отдельного лога
+const LogItem = styled.div`
+  font-size: 0.9em;
+  color: ${({ theme }) => (theme === 'dark' ? '#ccc' : '#333')};
+  word-break: break-word;
+`;
+
 function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const [playerHP, setPlayerHP] = useState(100);
   const [npcHP, setNpcHP] = useState(100);
@@ -174,6 +197,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const [isRoundActive, setIsRoundActive] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '' });
+  // Новое состояние для логов боя
+  const [battleLogs, setBattleLogs] = useState([]);
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
@@ -215,6 +240,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         setPlayerHP(response.playerHP);
         setNpcHP(response.npcHP);
         setNotification({ show: true, message: response.message });
+        // Добавляем сообщение в логи боя
+        setBattleLogs((prev) => [...prev, response.message]);
         setTimeout(() => setNotification({ show: false, message: '' }), 3000);
 
         setPlayerAttackZone(null);
@@ -224,7 +251,10 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
         if (response.playerHP <= 0 || response.npcHP <= 0) {
           setIsRoundActive(false);
-          showNotification(response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!');
+          // Добавляем итоговое сообщение в логи
+          const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
+          setBattleLogs((prev) => [...prev, finalMessage]);
+          showNotification(finalMessage);
           setTimeout(onClose, 2000);
         } else {
           setIsRoundActive(true);
@@ -232,6 +262,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         }
       } else {
         setNotification({ show: true, message: 'Ошибка в бою' });
+        // Добавляем сообщение об ошибке в логи
+        setBattleLogs((prev) => [...prev, 'Ошибка в бою']);
         setTimeout(() => setNotification({ show: false, message: '' }), 3000);
       }
       setIsProcessing(false);
@@ -345,6 +377,14 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       >
         {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Подтвердить ход'}
       </ActionButton>
+      {/* Окно с логами боя */}
+      <LogContainer theme={theme}>
+        {battleLogs.map((log, index) => (
+          <LogItem key={index} theme={theme}>
+            {log}
+          </LogItem>
+        ))}
+      </LogContainer>
       <Notification show={notification.show} theme={theme}>
         {notification.message}
       </Notification>

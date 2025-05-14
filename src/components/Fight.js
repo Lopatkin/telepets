@@ -231,7 +231,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     // Если игрок не выбрал зону атаки, добавляем лог "Вы не атаковали."
     if (!playerAttackZone) {
       setBattleLogs((prev) => [
-        `${new Date().toLocaleTimeString()}: Вы не атаковали.`,
+        `${new Date().toLocaleTimeString()}: Вы не атаковали. ${npc.name} атаковал вас в ${replaceZoneNames(npcAttack)}.`,
         ...prev
       ]);
       setHighlightNewLog(true);

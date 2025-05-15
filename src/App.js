@@ -80,7 +80,7 @@ function App() {
       }));
       console.log('Updating personalItems:', updatedItems);
       setPersonalItems(updatedItems);
-      console.log('personalItems state after setPersonalItems:', updatedItems); // Новый лог
+      console.log('personalItems state after setPersonalItems:', updatedItems);
     }
   };
 
@@ -149,7 +149,8 @@ function App() {
               ...updatedUser,
               credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
-              freeRoam: updatedUser.freeRoam ?? false
+              freeRoam: updatedUser.freeRoam ?? false,
+              stats: updatedUser.stats || prevUser?.stats || { health: 100, attack: 10, defense: 10 } // Сохраняем stats
             };
             console.log('Updated user state after userUpdate:', newUser);
             console.log('freeRoam value after update:', newUser.freeRoam);
@@ -252,21 +253,6 @@ function App() {
     initializeSocket();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleItemsUpdate]);
-
-  // Добавляем эффект для повторного запроса getItems после обновления user
-  // useEffect(() => {
-  //   if (socket && user?.userId && isAuthenticated && isRegistered && personalItems.length === 0) {
-  //     console.log('Re-emitting getItems for user:', `user_${user.userId}`);
-  //     socket.emit('getItems', { owner: `user_${user.userId}` });
-  //   }
-  // }, [socket, user, isAuthenticated, isRegistered, personalItems.length]);
-
-  // useEffect(() => {
-  //   if (socket && user?.userId && isAuthenticated && isRegistered && activeTab === 'actions') {
-  //     console.log('Emitting getItems for user on actions tab:', `user_${user.userId}`);
-  //     socket.emit('getItems', { owner: `user_${user.userId}` });
-  //   }
-  // }, [socket, user, isAuthenticated, isRegistered, activeTab]);
 
   useEffect(() => {
     if (socket && user?.userId && isAuthenticated && isRegistered && personalItems.length === 0) {
@@ -384,8 +370,8 @@ function App() {
             currentRoom={currentRoom}
             theme={appliedTheme}
             socket={socket}
-            personalItems={personalItems} // Добавляем personalItems
-            onItemsUpdate={handleItemsUpdate} // Добавляем onItemsUpdate
+            personalItems={personalItems}
+            onItemsUpdate={handleItemsUpdate}
             pets={pets}
             isModalOpen={isActionModalOpen}
             setIsModalOpen={setIsActionModalOpen}

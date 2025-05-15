@@ -32,6 +32,20 @@ mongoose.connect(process.env.MONGODB_URI, {})
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err.message));
 
+// Функция для установки базовых параметров игрока
+const getBaseStats = (isHuman, animalType) => {
+  if (isHuman) {
+    return { health: 100, attack: 10, defense: 20 };
+  }
+  if (animalType === 'Кот') {
+    return { health: 30, attack: 5, defense: 5 };
+  }
+  if (animalType === 'Собака') {
+    return { health: 50, attack: 15, defense: 10 };
+  }
+  return { health: 100, attack: 10, defense: 10 }; // Дефолтные значения
+};
+
 // Схема пользователя
 const userSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
@@ -52,7 +66,21 @@ const userSchema = new mongoose.Schema({
   lastActivity: { type: Date, default: Date.now },
   owner: { type: String, default: null },
   freeRoam: { type: Boolean, default: false },
+  stats: { // Новое поле для параметров
+    health: { type: Number, default: 100 },
+    attack: { type: Number, default: 10 },
+    defense: { type: Number, default: 10 }
+  }
 });
+
+// Устанавливаем базовые параметры при создании или обновлении пользователя
+userSchema.pre('save', function (next) {
+  if (!this.stats || !this.stats.health) {
+    this.stats = getBaseStats(this.isHuman, this.animalType);
+  }
+  next();
+});
+
 const User = mongoose.model('User', userSchema);
 
 // Схема сообщений
@@ -145,13 +173,70 @@ io.on('connection', (socket) => {
     fightStates
   };
 
+  // Регистрируем обработчики
   registerUserHandlers(dependencies);
   registerRoomHandlers(dependencies);
   registerMessageHandlers(dependencies);
   registerInventoryHandlers(dependencies);
   registerAnimalHandlers(dependencies);
 
-  socket.on('fightRound', (data, callback) => {
+  // Обновляем отправку userUpdate для включения stats
+  socket.on('auth', async (userData) => {
+    try {
+      let user = await User.findOne({ userId: userData.userId });
+      if (!user) {
+        user = new User({
+          ...userData,
+          isRegistered: false,
+          lastActivity: new Date(),
+          stats: getBaseStats(userData.isHuman, userData.animalType)
+        });
+        await user.save();
+      } else {
+        user = await User.findOneAndUpdate(
+          { userId: userData.userId },
+          {
+            ...userData,
+            lastActivity: new Date(),
+            stats: getBaseStats(userData.isHuman, userData.animalType)
+          },
+          { new: true }
+        );
+      }
+
+      socket.userData = user;
+      activeSockets.set(user.userId, socket);
+
+      socket.emit('authSuccess', {
+        defaultRoom: user.lastRoom,
+        isRegistered: user.isRegistered
+      });
+
+      socket.emit('userUpdate', {
+        userId: user.userId,
+        firstName: user.firstName,
+        username: user.username,
+        lastName: user.lastName,
+        photoUrl: user.photoUrl,
+        isRegistered: user.isRegistered,
+        isHuman: user.isHuman,
+        animalType: user.animalType,
+        name: user.name,
+        credits: user.credits,
+        homeless: user.homeless,
+        onLeash: user.onLeash,
+        owner: user.owner,
+        ownerOnline: !!activeSockets.get(user.owner),
+        freeRoam: user.freeRoam,
+        stats: user.stats // Добавляем stats
+      });
+    } catch (err) {
+      console.error('Auth error:', err.message);
+      socket.emit('error', { message: 'Ошибка авторизации' });
+    }
+  });
+
+  socket.on('fightRound', async (data, callback) => {
     const { userId, npcId, playerAttackZone, playerDefenseZones, npcAttackZone, npcDefenseZones, playerAttack } = data;
 
     // Находим NPC в npcData
@@ -161,10 +246,17 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Находим пользователя
+    const user = await User.findOne({ userId });
+    if (!user || !user.stats) {
+      callback({ success: false, message: 'Игрок не найден или отсутствуют параметры' });
+      return;
+    }
+
     // Инициализация состояния боя
     if (!fightStates.has(userId)) {
       fightStates.set(userId, {
-        playerHP: 100,
+        playerHP: user.stats.health, // Используем здоровье игрока
         npcHP: npc.stats.health,
         npcId
       });
@@ -178,8 +270,8 @@ io.on('connection', (socket) => {
 
     // Проверяем атаку игрока
     if (playerAttackZone && !npcDefenseZones.includes(playerAttackZone)) {
-      const npcDefenseValue = Math.floor(Math.random() * (npc.stats.defense + 1)); // Случайное от 0 до defense
-      damageToNPC = Math.max(0, playerAttack - npcDefenseValue);
+      const npcDefenseValue = Math.floor(Math.random() * (npc.stats.defense + 1));
+      damageToNPC = Math.max(0, user.stats.attack - npcDefenseValue); // Используем атаку игрока
       message += `Вы ударили ${npcId.replace('npc_', '')} в ${playerAttackZone} и нанесли ${damageToNPC} урона! `;
     } else {
       message += `Ваш удар в ${playerAttackZone || 'неизвестную зону'} был заблокирован! `;
@@ -187,7 +279,8 @@ io.on('connection', (socket) => {
 
     // Проверяем атаку NPC
     if (npcAttackZone && !playerDefenseZones.includes(npcAttackZone)) {
-      damageToPlayer = npc.stats.attack;
+      const playerDefenseValue = Math.floor(Math.random() * (user.stats.defense + 1));
+      damageToPlayer = Math.max(0, npc.stats.attack - playerDefenseValue); // Используем защиту игрока
       message += `${npcId.replace('npc_', '')} ударил вас в ${npcAttackZone} и нанёс ${damageToPlayer} урона! `;
     } else {
       message += `Вы заблокировали удар в ${npcAttackZone}! `;
@@ -241,7 +334,8 @@ io.on('connection', (socket) => {
                     onLeash: animalUser.onLeash,
                     owner: animalUser.owner,
                     ownerOnline: false,
-                    homeless: animalUser.homeless
+                    homeless: animalUser.homeless,
+                    stats: animalUser.stats // Добавляем stats
                   });
                 }
               }

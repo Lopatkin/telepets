@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
-const npcDataCore = require('./npcDataCore');
+const npcDataCore = require('../src/utils/npcDataCore');
 const {
   isLovecParkTime,
   isLovecDachnyTime,

@@ -386,7 +386,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
                 key={zone}
                 className={zone}
                 theme={theme}
-                selected={playerAttackZone === null}
+                selected={playerAttackZone === zone}
                 isAttack={playerAttackZone === zone}
                 onClick={() => handleZoneClick(zone, false)}
               >

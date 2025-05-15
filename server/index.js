@@ -2,6 +2,14 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
+const npcDataCore = require('./npcDataCore');
+const {
+  isLovecParkTime,
+  isLovecDachnyTime,
+  isBabushkaTime,
+  isIraKatyaTime,
+  isZhannaTime
+} = require('../src/utils/npcUtils');
 
 const { registerUserHandlers } = require('./handlers/userHandlers');
 const { registerRoomHandlers } = require('./handlers/roomHandlers');
@@ -37,13 +45,13 @@ const userSchema = new mongoose.Schema({
   residence: String,
   animalType: String,
   name: String,
-  credits: { type: Number, default: 0, min: 0 }, // Переносим кредиты сюда
+  credits: { type: Number, default: 0, min: 0 },
   lastRoom: { type: String, default: 'Автобусная остановка' },
   homeless: { type: Boolean, default: true },
   onLeash: { type: Boolean, default: false },
   lastActivity: { type: Date, default: Date.now },
-  owner: { type: String, default: null }, // Добавляем поле owner для животных
-  freeRoam: { type: Boolean, default: false }, // Новое поле для свободного выгула
+  owner: { type: String, default: null },
+  freeRoam: { type: Boolean, default: false },
 });
 const User = mongoose.model('User', userSchema);
 
@@ -61,7 +69,7 @@ const messageSchema = new mongoose.Schema({
   room: String,
   timestamp: { type: Date, default: Date.now },
   animalText: String,
-  isSystem: { type: Boolean, default: false } // Добавляем поле для системных сообщений
+  isSystem: { type: Boolean, default: false }
 });
 const Message = mongoose.model('Message', messageSchema);
 
@@ -74,7 +82,7 @@ const itemSchema = new mongoose.Schema({
   cost: { type: Number },
   effect: { type: String },
   playerID: { type: String, required: false },
-  animalId: { type: String, required: false } // Новое поле для ID животного
+  animalId: { type: String, required: false }
 }, { timestamps: true });
 const Item = mongoose.model('Item', itemSchema);
 
@@ -94,10 +102,24 @@ const itemCache = new Map();
 const itemLocks = new Map();
 const fightStates = new Map();
 
+// Создаём npcData с условиями для сервера
+const npcData = Object.keys(npcDataCore).reduce((acc, room) => {
+  acc[room] = npcDataCore[room].map(npc => ({
+    ...npc,
+    condition: npc.condition ? eval(`({ isLovecParkTime, isLovecDachnyTime, isBabushkaTime, isIraKatyaTime, isZhannaTime }) => ${npc.condition}`) : undefined
+  }));
+  return acc;
+}, {});
+
+// Функция для получения активных NPC в комнате
+const getActiveNPCs = (room) => {
+  const npcs = npcData[room] || [];
+  return npcs.filter(npc => !npc.condition || npc.condition());
+};
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  // Передаем зависимости в обработчики
   const dependencies = {
     io,
     socket,
@@ -120,15 +142,21 @@ io.on('connection', (socket) => {
   registerInventoryHandlers(dependencies);
   registerAnimalHandlers(dependencies);
 
-  // Обработчик раунда боя
   socket.on('fightRound', (data, callback) => {
-    const { userId, npcId, playerAttackZone, playerDefenseZones, npcAttackZone, npcDefenseZones } = data;
+    const { userId, npcId, playerAttackZone, playerDefenseZones, npcAttackZone, npcDefenseZones, playerAttack } = data;
 
-    // Инициализация состояния боя, если его нет
+    // Находим NPC в npcData
+    const npc = Object.values(npcData).flat().find(n => n.userId === npcId);
+    if (!npc || !npc.stats) {
+      callback({ success: false, message: 'NPC не найден или отсутствуют параметры' });
+      return;
+    }
+
+    // Инициализация состояния боя
     if (!fightStates.has(userId)) {
       fightStates.set(userId, {
         playerHP: 100,
-        npcHP: 100,
+        npcHP: npc.stats.health,
         npcId
       });
     }
@@ -141,16 +169,17 @@ io.on('connection', (socket) => {
 
     // Проверяем атаку игрока
     if (playerAttackZone && !npcDefenseZones.includes(playerAttackZone)) {
-      damageToNPC = 10;
-      message += `Вы ударили ${npcId.replace('npc_', '')} в ${playerAttackZone}! `;
+      const npcDefenseValue = Math.floor(Math.random() * (npc.stats.defense + 1)); // Случайное от 0 до defense
+      damageToNPC = Math.max(0, playerAttack - npcDefenseValue);
+      message += `Вы ударили ${npcId.replace('npc_', '')} в ${playerAttackZone} и нанесли ${damageToNPC} урона! `;
     } else {
-      message += `Ваш удар в ${playerAttackZone} был заблокирован! `;
+      message += `Ваш удар в ${playerAttackZone || 'неизвестную зону'} был заблокирован! `;
     }
 
     // Проверяем атаку NPC
     if (npcAttackZone && !playerDefenseZones.includes(npcAttackZone)) {
-      damageToPlayer = 10;
-      message += `${npcId.replace('npc_', '')} ударил вас в ${npcAttackZone}! `;
+      damageToPlayer = npc.stats.attack;
+      message += `${npcId.replace('npc_', '')} ударил вас в ${npcAttackZone} и нанёс ${damageToPlayer} урона! `;
     } else {
       message += `Вы заблокировали удар в ${npcAttackZone}! `;
     }
@@ -182,14 +211,12 @@ io.on('connection', (socket) => {
 
         fightStates.delete(socket.userData.userId);
 
-        // Проверяем, есть ли животные, привязанные к этому пользователю
         const ownerKey = `user_${socket.userData.userId}`;
         Item.find({ owner: ownerKey, playerID: { $exists: true } })
           .then(animalItems => {
             animalItems.forEach(async (item) => {
               const animalSocket = activeSockets.get(item.playerID);
               if (animalSocket) {
-                // Получаем полные данные животного из базы
                 const animalUser = await User.findOne({ userId: item.playerID });
                 if (animalUser) {
                   animalSocket.emit('userUpdate', {
@@ -203,9 +230,9 @@ io.on('connection', (socket) => {
                     animalType: animalUser.animalType,
                     name: animalUser.name,
                     onLeash: animalUser.onLeash,
-                    owner: animalUser.owner, // Добавляем owner
-                    ownerOnline: false, // Владелец вышел из сети
-                    homeless: animalUser.homeless // Добавляем homeless
+                    owner: animalUser.owner,
+                    ownerOnline: false,
+                    homeless: animalUser.homeless
                   });
                 }
               }

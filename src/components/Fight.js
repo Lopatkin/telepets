@@ -176,7 +176,7 @@ const LogItem = styled.div`
 
 function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const [playerHP, setPlayerHP] = useState(100);
-  const [npcHP, setNpcHP] = useState(100);
+  const [npcHP, setNpcHP] = useState(npc.stats?.health || 100); // Используем здоровье NPC из stats
   const [playerAttackZone, setPlayerAttackZone] = useState(null);
   const [playerDefenseZones, setPlayerDefenseZones] = useState([]);
   const [timeLeft, setTimeLeft] = useState(20);
@@ -222,7 +222,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return updatedMessage;
   };
 
-  // Обновляем handleRoundEnd для корректной обработки логов при playerAttackZone === null
   const handleRoundEnd = useCallback(() => {
     if (!socket || isProcessing) return;
 
@@ -241,23 +240,20 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       playerAttackZone,
       playerDefenseZones,
       npcAttackZone: npcAttack,
-      npcDefenseZones: npcDefense
+      npcDefenseZones: npcDefense,
+      playerAttack: 10 // Фиксированная атака игрока (можно заменить на user.stats.attack, если добавите)
     }, (response) => {
       if (response.success) {
         setPlayerHP(response.playerHP);
         setNpcHP(response.npcHP);
-        // Обрабатываем лог: если playerAttackZone === null, извлекаем действие NPC
         let logMessage;
         if (playerAttackZone === null) {
-          // Разделяем сообщение по точке или восклицательному знаку с пробелом
           const sentences = response.message.split(/[.!]\s+/);
-          // Второе предложение — действие NPC, если есть
           const npcAction = sentences[1] ? replaceZoneNames(sentences[1]) : '';
           logMessage = `Вы не атаковали.${npcAction ? ' ' + npcAction : ''}`;
         } else {
           logMessage = replaceZoneNames(response.message);
         }
-        // Добавляем лог с обработанным сообщением и включаем подсветку
         setBattleLogs((prev) => [
           `${new Date().toLocaleTimeString()}: ${logMessage}`,
           ...prev
@@ -270,7 +266,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         if (response.playerHP <= 0 || response.npcHP <= 0) {
           setIsRoundActive(false);
           const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
-          // Добавляем итоговый лог без замены зон (они не содержат зон)
           setBattleLogs((prev) => [
             `${new Date().toLocaleTimeString()}: ${finalMessage}`,
             ...prev
@@ -283,7 +278,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
           setTimeLeft(20);
         }
       } else {
-        // Добавляем лог ошибки без замены зон
         setBattleLogs((prev) => [
           `${new Date().toLocaleTimeString()}: Ошибка в бою`,
           ...prev
@@ -351,7 +345,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
             )}
           </AvatarContainer>
           <HPBar>
-            <HPFill hp={playerHP} />
+            <HPFill hp={(playerHP / 100) * 100} /> {/* Нормализация для отображения */}
           </HPBar>
           <ZoneGrid>
             {zones.map((zone) => (
@@ -378,7 +372,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
             )}
           </AvatarContainer>
           <HPBar>
-            <HPFill hp={npcHP} />
+            <HPFill hp={(npcHP / npc.stats.health) * 100} /> {/* Нормализация для отображения */}
           </HPBar>
           <ZoneGrid>
             {zones.map((zone) => (

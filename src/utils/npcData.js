@@ -63,12 +63,21 @@ const imageMap = {
   'npc_bear': bearImg
 };
 
+// Маппинг строковых условий к функциям
+const conditionMap = {
+  isLovecParkTime,
+  isLovecDachnyTime,
+  isBabushkaTime,
+  isIraKatyaTime,
+  isZhannaTime
+};
+
 // Создаём npcData с photoUrl для клиента
 const npcData = Object.keys(npcDataCore).reduce((acc, room) => {
   acc[room] = npcDataCore[room].map(npc => ({
     ...npc,
     photoUrl: imageMap[npc.userId],
-    condition: npc.condition ? eval(npc.condition) : undefined // Преобразуем строку condition в функцию
+    condition: npc.condition ? conditionMap[npc.condition] : undefined // Используем conditionMap вместо eval
   }));
   return acc;
 }, {});

@@ -102,11 +102,20 @@ const itemCache = new Map();
 const itemLocks = new Map();
 const fightStates = new Map();
 
+// Маппинг строковых условий к функциям
+const conditionMap = {
+  isLovecParkTime,
+  isLovecDachnyTime,
+  isBabushkaTime,
+  isIraKatyaTime,
+  isZhannaTime
+};
+
 // Создаём npcData с условиями для сервера
 const npcData = Object.keys(npcDataCore).reduce((acc, room) => {
   acc[room] = npcDataCore[room].map(npc => ({
     ...npc,
-    condition: npc.condition ? eval(`({ isLovecParkTime, isLovecDachnyTime, isBabushkaTime, isIraKatyaTime, isZhannaTime }) => ${npc.condition}`) : undefined
+    condition: npc.condition ? conditionMap[npc.condition] : undefined
   }));
   return acc;
 }, {});

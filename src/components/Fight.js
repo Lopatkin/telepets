@@ -222,7 +222,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return updatedMessage;
   };
 
-  // Обновляем handleRoundEnd для обработки случая playerAttackZone === null
+  // Обновляем handleRoundEnd для корректной обработки логов при playerAttackZone === null
   const handleRoundEnd = useCallback(() => {
     if (!socket || isProcessing) return;
 
@@ -246,12 +246,12 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       if (response.success) {
         setPlayerHP(response.playerHP);
         setNpcHP(response.npcHP);
-        // Обрабатываем лог: если playerAttackZone === null, заменяем часть сообщения
+        // Обрабатываем лог: если playerAttackZone === null, извлекаем действие NPC
         let logMessage;
         if (playerAttackZone === null) {
-          // Разделяем сообщение на предложения
-          const sentences = response.message.split('. ');
-          // Предполагаем, что второе предложение — действие противника
+          // Разделяем сообщение по точке или восклицательному знаку с пробелом
+          const sentences = response.message.split(/[.!]\s+/);
+          // Второе предложение — действие NPC, если есть
           const npcAction = sentences[1] ? replaceZoneNames(sentences[1]) : '';
           logMessage = `Вы не атаковали.${npcAction ? ' ' + npcAction : ''}`;
         } else {

@@ -45,12 +45,20 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
   useEffect(() => {
     if (selectedAction?.title === 'Охотиться' && currentRoom === 'Лес') {
       const activeNPCs = getActiveNPCs('Лес');
-      // Преобразуем NPC в нужный формат, включая photoUrl
+      // Преобразуем NPC в нужный формат, включая photoUrl и stats
       const formattedNPCs = activeNPCs.map(npc => ({
         id: npc.userId,
         name: npc.firstName,
-        description: npc.userId === 'npc_fox' ? 'Хитрая лисичка, быстрая и ловкая' : 'Маленький ёжик, осторожный и колючий',
-        photoUrl: npc.photoUrl // Добавляем photoUrl
+        description: {
+          'npc_fox': 'Хитрая лисичка, быстрая и ловкая',
+          'npc_ezhik': 'Маленький ёжик, осторожный и колючий',
+          'npc_mouse': 'Проворная мышка, маленькая и шустрая',
+          'npc_wolf': 'Грозный волк, сильный и опасный',
+          'npc_boar': 'Мощный кабан, крепкий и агрессивный',
+          'npc_bear': 'Громадный медведь, невероятно сильный'
+        }[npc.userId] || 'Неизвестное существо',
+        photoUrl: npc.photoUrl,
+        stats: npc.stats // Сохраняем поле stats
       }));
       setNpcs(formattedNPCs);
       console.log('Loaded NPCs for hunting:', formattedNPCs);

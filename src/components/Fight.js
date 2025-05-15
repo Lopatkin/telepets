@@ -175,8 +175,8 @@ const LogItem = styled.div`
 `;
 
 function Fight({ theme, socket, user, npc, onClose, showNotification }) {
-  const [playerHP, setPlayerHP] = useState(user.stats?.health || 100); // Используем здоровье игрока
-  const [npcHP, setNpcHP] = useState(npc.stats?.health || 100);
+  const [playerHP, setPlayerHP] = useState(100);
+  const [npcHP, setNpcHP] = useState(npc.stats?.health || 100); // Используем здоровье NPC из stats
   const [playerAttackZone, setPlayerAttackZone] = useState(null);
   const [playerDefenseZones, setPlayerDefenseZones] = useState([]);
   const [timeLeft, setTimeLeft] = useState(20);
@@ -241,7 +241,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       playerDefenseZones,
       npcAttackZone: npcAttack,
       npcDefenseZones: npcDefense,
-      playerAttack: user.stats?.attack || 10 // Используем атаку игрока
+      playerAttack: 10 // Фиксированная атака игрока (можно заменить на user.stats.attack, если добавите)
     }, (response) => {
       if (response.success) {
         setPlayerHP(response.playerHP);
@@ -345,7 +345,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
             )}
           </AvatarContainer>
           <HPBar>
-            <HPFill hp={(playerHP / (user.stats?.health || 100)) * 100} /> {/* Нормализация для отображения */}
+            <HPFill hp={(playerHP / 100) * 100} /> {/* Нормализация для отображения */}
           </HPBar>
           <ZoneGrid>
             {zones.map((zone) => (
@@ -372,7 +372,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
             )}
           </AvatarContainer>
           <HPBar>
-            <HPFill hp={(npcHP / npc.stats.health) * 100} />
+            <HPFill hp={(npcHP / npc.stats.health) * 100} /> {/* Нормализация для отображения */}
           </HPBar>
           <ZoneGrid>
             {zones.map((zone) => (

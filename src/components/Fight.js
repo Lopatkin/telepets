@@ -187,8 +187,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-  const displayName = !user.isHuman && user.name
-    ? user.name
+  const displayName = !user.isHuman && user.name 
+    ? user.name 
     : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim();
 
   const playerInitial = (user.firstName || user.name || 'И').charAt(0).toUpperCase();
@@ -222,26 +222,11 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return updatedMessage;
   };
 
-  // Обновляем handleRoundEnd для обработки случая без выбора зоны атаки
+  // Обновляем handleRoundEnd для обработки случая playerAttackZone === null
   const handleRoundEnd = useCallback(() => {
     if (!socket || isProcessing) return;
 
     setIsProcessing(true);
-
-    // Если игрок не выбрал зону атаки, добавляем лог "Вы не атаковали."
-    if (!playerAttackZone) {
-      setBattleLogs((prev) => [
-        `${new Date().toLocaleTimeString()}: Вы не атаковали. ${npc.name} атаковал вас в ${replaceZoneNames(npcAttack)}.`,
-        ...prev
-      ]);
-      setHighlightNewLog(true);
-      setPlayerAttackZone(null);
-      setPlayerDefenseZones([]);
-      setIsRoundActive(true);
-      setTimeLeft(20);
-      setIsProcessing(false);
-      return;
-    }
 
     const npcAttack = zones[Math.floor(Math.random() * zones.length)];
     const npcDefense = [];
@@ -261,9 +246,20 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       if (response.success) {
         setPlayerHP(response.playerHP);
         setNpcHP(response.npcHP);
-        // Добавляем лог с заменой названий зон и включаем подсветку
+        // Обрабатываем лог: если playerAttackZone === null, заменяем часть сообщения
+        let logMessage;
+        if (playerAttackZone === null) {
+          // Разделяем сообщение на предложения
+          const sentences = response.message.split('. ');
+          // Предполагаем, что второе предложение — действие противника
+          const npcAction = sentences[1] ? replaceZoneNames(sentences[1]) : '';
+          logMessage = `Вы не атаковали.${npcAction ? ' ' + npcAction : ''}`;
+        } else {
+          logMessage = replaceZoneNames(response.message);
+        }
+        // Добавляем лог с обработанным сообщением и включаем подсветку
         setBattleLogs((prev) => [
-          `${new Date().toLocaleTimeString()}: ${replaceZoneNames(response.message)}`,
+          `${new Date().toLocaleTimeString()}: ${logMessage}`,
           ...prev
         ]);
         setHighlightNewLog(true);
@@ -390,7 +386,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
                 key={zone}
                 className={zone}
                 theme={theme}
-                selected={playerAttackZone === zone}
+                selected={playerAttackZone === null}
                 isAttack={playerAttackZone === zone}
                 onClick={() => handleZoneClick(zone, false)}
               >

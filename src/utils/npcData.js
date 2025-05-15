@@ -4,8 +4,8 @@ import {
   isBabushkaTime,
   isIraKatyaTime,
   isZhannaTime
-} from './npcUtils';
-import npcDataCore from '../../server/utils/npcDataCore';
+} from '/npcUtils';
+import npcDataCore from '/npcDataCore';
 
 // Импорты изображений NPC
 import belochkaImg from '../images/npc_belochka.jpg';

@@ -353,7 +353,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       }
       setIsProcessing(false);
     });
-  }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, isProcessing]);
+  }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, isProcessing, onClose]);
 
   useEffect(() => {
     if (!isRoundActive) return;

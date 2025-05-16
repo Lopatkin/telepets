@@ -181,25 +181,33 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
   };
 
   const handleComplete = () => {
+    const baseParams = isHuman
+      ? { health: 100, attack: 10, defense: 20 } // Параметры для человека
+      : animalType === 'Кошка'
+        ? { health: 30, attack: 5, defense: 5 } // Параметры для кошки
+        : { health: 50, attack: 15, defense: 10 }; // Параметры для собаки
+  
     const registrationData = isHuman
       ? {
-        userId: user.userId,
-        isHuman: true,
-        formerProfession: getRandomProfession(),
-        residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
-        isRegistered: true,
-      }
+          userId: user.userId,
+          isHuman: true,
+          formerProfession: getRandomProfession(),
+          residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
+          isRegistered: true,
+          ...baseParams // Добавляем базовые параметры
+        }
       : {
-        userId: user.userId,
-        isHuman: false,
-        animalType,
-        name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
-        residence: 'Город Туманный',
-        isRegistered: true,
-        photoUrl: selectedAvatar, // Добавляем выбранную аватарку для животного
-        owner: null // Добавляем поле owner для животных
-      };
-
+          userId: user.userId,
+          isHuman: false,
+          animalType,
+          name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
+          residence: 'Город Туманный',
+          isRegistered: true,
+          photoUrl: selectedAvatar,
+          owner: null,
+          ...baseParams // Добавляем базовые параметры
+        };
+  
     socket.emit('completeRegistration', registrationData, (response) => {
       if (response.success) {
         onRegistrationComplete('Автобусная остановка');

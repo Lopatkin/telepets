@@ -52,6 +52,10 @@ const userSchema = new mongoose.Schema({
   lastActivity: { type: Date, default: Date.now },
   owner: { type: String, default: null },
   freeRoam: { type: Boolean, default: false },
+  // Новые поля для параметров игрока
+  health: { type: Number, default: 100 },
+  attack: { type: Number, default: 10 },
+  defense: { type: Number, default: 20 }
 });
 const User = mongoose.model('User', userSchema);
 

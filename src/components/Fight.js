@@ -283,7 +283,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return updatedMessage;
   };
 
-  // Переместили handleRoundEnd выше handleAutoStrike
   const handleRoundEnd = useCallback((attackZone = playerAttackZone, defenseZones = playerDefenseZones) => {
     if (!socket || isProcessing) return;
 
@@ -365,13 +364,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     // Обновление состояния для визуальной обратной связи
     setPlayerAttackZone(randomAttackZone);
     setPlayerDefenseZones(randomDefenseZones);
-
-    // Добавление лога для отладки
-    setBattleLogs((prev) => [
-      `${new Date().toLocaleTimeString()}: Автоудар: атака в ${randomAttackZone}, защита в ${randomDefenseZones.join(', ')}`,
-      ...prev
-    ]);
-    setHighlightNewLog(true);
 
     // Передаём зоны напрямую в handleRoundEnd
     handleRoundEnd(randomAttackZone, randomDefenseZones);

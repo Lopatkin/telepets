@@ -252,7 +252,74 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     };
   }, [socket]);
 
-  const handleRoundEnd = useCallback(() => {
+  // Функция для получения текста надписи для защиты
+  const getDefenseInstruction = () => {
+    if (playerDefenseZones.length === 0) {
+      return 'Поставьте 2 защиты';
+    } else if (playerDefenseZones.length === 1) {
+      return 'Поставьте 1 защиту';
+    } else {
+      return 'Защита готова!';
+    }
+  };
+
+  // Функция для получения текста надписи для атаки
+  const getAttackInstruction = () => {
+    return playerAttackZone ? 'Вы готовы атаковать!' : 'Укажите место атаки';
+  };
+
+  // Функция для автоматического выбора зон и подтверждения хода
+  const handleAutoStrike = useCallback(() => {
+    if (!isRoundActive || isProcessing) return;
+
+    // Случайный выбор одной зоны для атаки
+    const randomAttackZone = zones[Math.floor(Math.random() * zones.length)];
+
+    // Случайный выбор двух зон для защиты
+    const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
+    const randomDefenseZones = shuffledZones.slice(0, 2);
+
+    // Обновление состояния для визуальной обратной связи
+    setPlayerAttackZone(randomAttackZone);
+    setPlayerDefenseZones(randomDefenseZones);
+
+    // Добавление лога для отладки
+    setBattleLogs((prev) => [
+      `${new Date().toLocaleTimeString()}: Автоудар: атака в ${randomAttackZone}, защита в ${randomDefenseZones.join(', ')}`,
+      ...prev
+    ]);
+    setHighlightNewLog(true);
+
+    // Передаём зоны напрямую в handleRoundEnd
+    handleRoundEnd(randomAttackZone, randomDefenseZones);
+  }, [isRoundActive, isProcessing, zones, handleRoundEnd]);
+
+  useEffect(() => {
+    if (battleLogs.length === 0 || !highlightNewLog) return;
+
+    const timer = setTimeout(() => {
+      setHighlightNewLog(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [battleLogs, highlightNewLog]);
+
+  const replaceZoneNames = (message) => {
+    const zoneMap = {
+      head: 'голову',
+      back: 'спину',
+      belly: 'живот',
+      legs: 'ноги'
+    };
+    let updatedMessage = message;
+    Object.keys(zoneMap).forEach((zone) => {
+      const regex = new RegExp(`\\b${zone}\\b`, 'g');
+      updatedMessage = updatedMessage.replace(regex, zoneMap[zone]);
+    });
+    return updatedMessage;
+  };
+
+  const handleRoundEnd = useCallback((attackZone = playerAttackZone, defenseZones = playerDefenseZones) => {
     if (!socket || isProcessing) return;
 
     setIsProcessing(true);
@@ -267,8 +334,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     socket.emit('fightRound', {
       userId: user.userId,
       npcId: npc.id,
-      playerAttackZone,
-      playerDefenseZones,
+      playerAttackZone: attackZone,
+      playerDefenseZones: defenseZones,
       npcAttackZone: npcAttack,
       npcDefenseZones: npcDefense,
       playerAttack: user.stats?.attack || 10,
@@ -278,7 +345,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         setPlayerHP(response.playerHP);
         setNpcHP(response.npcHP);
         let logMessage;
-        if (playerAttackZone === null) {
+        if (attackZone === null) {
           const sentences = response.message.split(/[.!]\s+/);
           const npcAction = sentences[1] ? replaceZoneNames(sentences[1]) : '';
           logMessage = `Вы не атаковали.${npcAction ? ' ' + npcAction : ''}`;
@@ -318,73 +385,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       setIsProcessing(false);
     });
   }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, isProcessing, onClose]);
-
-  // Функция для получения текста надписи для защиты
-  const getDefenseInstruction = () => {
-    if (playerDefenseZones.length === 0) {
-      return 'Поставьте 2 защиты';
-    } else if (playerDefenseZones.length === 1) {
-      return 'Поставьте 1 защиту';
-    } else {
-      return 'Защита готова!';
-    }
-  };
-
-  // Функция для получения текста надписи для атаки
-  const getAttackInstruction = () => {
-    return playerAttackZone ? 'Вы готовы атаковать!' : 'Укажите место атаки';
-  };
-
-  // Функция для автоматического выбора зон и подтверждения хода
-  const handleAutoStrike = useCallback(() => {
-    if (!isRoundActive || isProcessing) return;
-
-    // Случайный выбор одной зоны для атаки
-    const randomAttackZone = zones[Math.floor(Math.random() * zones.length)];
-
-    // Случайный выбор двух зон для защиты
-    const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
-    const randomDefenseZones = shuffledZones.slice(0, 2);
-
-    // Обновление состояния
-    setPlayerAttackZone(randomAttackZone);
-    setPlayerDefenseZones(randomDefenseZones);
-
-    // Добавление лога для отладки
-    setBattleLogs((prev) => [
-      `${new Date().toLocaleTimeString()}: Автоудар: атака в ${randomAttackZone}, защита в ${randomDefenseZones.join(', ')}`,
-      ...prev
-    ]);
-    setHighlightNewLog(true);
-
-    // Автоматическое подтверждение хода
-    handleRoundEnd();
-  }, [isRoundActive, isProcessing, zones, handleRoundEnd]);
-
-  useEffect(() => {
-    if (battleLogs.length === 0 || !highlightNewLog) return;
-
-    const timer = setTimeout(() => {
-      setHighlightNewLog(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [battleLogs, highlightNewLog]);
-
-  const replaceZoneNames = (message) => {
-    const zoneMap = {
-      head: 'голову',
-      back: 'спину',
-      belly: 'живот',
-      legs: 'ноги'
-    };
-    let updatedMessage = message;
-    Object.keys(zoneMap).forEach((zone) => {
-      const regex = new RegExp(`\\b${zone}\\b`, 'g');
-      updatedMessage = updatedMessage.replace(regex, zoneMap[zone]);
-    });
-    return updatedMessage;
-  };
 
   useEffect(() => {
     if (!isRoundActive) return;
@@ -505,7 +505,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         </Mannequin>
       </MannequinContainer>
       <ActionButton
-        onClick={handleRoundEnd}
+        onClick={() => handleRoundEnd()}
         disabled={isProcessing || !playerAttackZone || playerDefenseZones.length !== 2}
       >
         {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Подтвердить ход'}

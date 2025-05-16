@@ -166,6 +166,11 @@ const ActionButton = styled.button`
   }
 `;
 
+const AutoStrikeButton = styled(ActionButton)`
+  background: #28a745; /* Зелёный цвет для отличия от основной кнопки */
+  margin-top: 10px;
+`;
+
 const CloseButton = styled.button`
   position: absolute;
   top: 10px;
@@ -262,6 +267,29 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const getAttackInstruction = () => {
     return playerAttackZone ? 'Вы готовы атаковать!' : 'Укажите место атаки';
   };
+
+  // Функция для автоматического выбора зон
+  const handleAutoStrike = useCallback(() => {
+    if (!isRoundActive || isProcessing) return;
+
+    // Случайный выбор одной зоны для атаки
+    const randomAttackZone = zones[Math.floor(Math.random() * zones.length)];
+
+    // Случайный выбор двух зон для защиты
+    const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
+    const randomDefenseZones = shuffledZones.slice(0, 2);
+
+    // Обновление состояния
+    setPlayerAttackZone(randomAttackZone);
+    setPlayerDefenseZones(randomDefenseZones);
+
+    // Добавление лога для отладки
+    setBattleLogs((prev) => [
+      `${new Date().toLocaleTimeString()}: Автоудар: атака в ${randomAttackZone}, защита в ${randomDefenseZones.join(', ')}`,
+      ...prev
+    ]);
+    setHighlightNewLog(true);
+  }, [isRoundActive, isProcessing, zones]);
 
   useEffect(() => {
     if (battleLogs.length === 0 || !highlightNewLog) return;
@@ -479,6 +507,12 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       >
         {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Подтвердить ход'}
       </ActionButton>
+      <AutoStrikeButton
+        onClick={handleAutoStrike}
+        disabled={!isRoundActive || isProcessing}
+      >
+        Автоудар
+      </AutoStrikeButton>
       <LogContainer theme={theme}>
         {battleLogs.map((log, index) => (
           <LogItem

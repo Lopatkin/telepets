@@ -10,6 +10,7 @@ const InstructionLabel = styled.div`
   font-size: 0.9em;
   color: ${({ theme, isReady }) => (isReady ? '#28a745' : theme === 'dark' ? '#aaa' : '#666')};
   text-align: center;
+  transition: color 0.3s ease; /* Плавный переход цвета */
 `;
 
 const FightContainer = styled.div`

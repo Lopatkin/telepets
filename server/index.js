@@ -52,11 +52,13 @@ const userSchema = new mongoose.Schema({
   lastActivity: { type: Date, default: Date.now },
   owner: { type: String, default: null },
   freeRoam: { type: Boolean, default: false },
-  // Новое поле stats вместо отдельных health, attack, defense
   stats: {
     health: { type: Number },
     attack: { type: Number },
-    defense: { type: Number }
+    defense: { type: Number },
+    energy: { type: Number }, // Новое поле
+    mood: { type: Number }, // Новое поле
+    satiety: { type: Number } // Новое поле
   }
 });
 const User = mongoose.model('User', userSchema);

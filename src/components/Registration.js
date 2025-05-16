@@ -182,10 +182,10 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
 
   const handleComplete = () => {
     const baseStats = isHuman
-      ? { health: 100, attack: 10, defense: 20 } // Параметры для человека
+      ? { health: 100, attack: 10, defense: 20, energy: 100, mood: 100, satiety: 100 } // Параметры для человека
       : animalType === 'Кошка'
-        ? { health: 30, attack: 5, defense: 5 } // Параметры для кошки
-        : { health: 50, attack: 15, defense: 10 }; // Параметры для собаки
+        ? { health: 30, attack: 5, defense: 5, energy: 100, mood: 100, satiety: 100 } // Параметры для кошки
+        : { health: 50, attack: 15, defense: 10, energy: 100, mood: 100, satiety: 100 }; // Параметры для собаки
   
     const registrationData = isHuman
       ? {
@@ -194,7 +194,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
           formerProfession: getRandomProfession(),
           residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
           isRegistered: true,
-          stats: baseStats // Отправляем объект stats
+          stats: baseStats // Отправляем обновленный объект stats
         }
       : {
           userId: user.userId,
@@ -205,7 +205,7 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
           isRegistered: true,
           photoUrl: selectedAvatar,
           owner: null,
-          stats: baseStats // Отправляем объект stats
+          stats: baseStats // Отправляем обновленный объект stats
         };
   
     console.log('Отправляем registrationData на сервер:', registrationData); // Логирование для отладки

@@ -78,7 +78,8 @@ function registerUserHandlers({
             ownerOnline,
             homeless: user.homeless,
             credits: user.credits || 0,
-            freeRoam: user.freeRoam || false
+            freeRoam: user.freeRoam || false,
+            stats: user.stats // Отправляем stats с новыми полями
         });
         console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 
@@ -189,21 +190,21 @@ function registerUserHandlers({
                 name,
                 photoUrl,
                 owner,
-                stats, // Теперь принимаем объект stats
+                stats, // Объект stats теперь включает energy, mood, satiety
                 isRegistered
             } = data;
-
+    
             console.log('Получены данные регистрации:', data); // Логирование для отладки
-
+    
             const updateData = {
                 isRegistered: isRegistered || true,
                 isHuman,
                 residence,
                 homeless: isHuman ? false : true,
                 lastActivity: new Date(),
-                stats // Сохраняем объект stats
+                stats // Сохраняем объект stats с новыми полями
             };
-
+    
             if (isHuman) {
                 updateData.formerProfession = formerProfession;
             } else {
@@ -212,21 +213,21 @@ function registerUserHandlers({
                 updateData.photoUrl = photoUrl || socket.userData.photoUrl || '';
                 updateData.owner = owner;
             }
-
+    
             const user = await User.findOneAndUpdate(
                 { userId },
                 { $set: updateData },
                 { new: true, upsert: true }
             );
-
+    
             if (!user) {
                 socket.emit('error', { message: 'Пользователь не найден' });
                 if (callback) callback({ success: false, message: 'Пользователь не найден' });
                 return;
             }
-
+    
             console.log('Обновлённый пользователь:', user); // Логирование для отладки
-
+    
             socket.userData = {
                 userId: user.userId,
                 firstName: user.firstName,
@@ -239,18 +240,18 @@ function registerUserHandlers({
                 owner: user.owner,
                 homeless: user.homeless
             };
-
+    
             const defaultRoom = 'Автобусная остановка';
             socket.join(defaultRoom);
             userCurrentRoom.set(user.userId, defaultRoom);
-
+    
             if (!roomUsers[defaultRoom]) roomUsers[defaultRoom] = new Set();
             roomUsers[defaultRoom].forEach(u => {
                 if (u.userId === user.userId) {
                     roomUsers[defaultRoom].delete(u);
                 }
             });
-
+    
             roomUsers[defaultRoom].add({
                 userId: user.userId,
                 firstName: user.firstName,
@@ -263,10 +264,10 @@ function registerUserHandlers({
                 owner: user.owner,
                 homeless: user.homeless
             });
-
+    
             io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
             console.log(`Пользователь ${user.userId} присоединился к комнате после регистрации: ${defaultRoom}`);
-
+    
             try {
                 const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
                 socket.emit('messageHistory', messages);
@@ -274,7 +275,7 @@ function registerUserHandlers({
                 console.error('Ошибка при загрузке сообщений после регистрации:', err.message, err.stack);
                 socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
             }
-
+    
             socket.emit('userUpdate', {
                 userId: user.userId,
                 firstName: user.firstName,
@@ -290,11 +291,11 @@ function registerUserHandlers({
                 credits: user.credits || 0,
                 onLeash: user.onLeash,
                 freeRoam: user.freeRoam || false,
-                stats: user.stats // Отправляем объект stats
+                stats: user.stats // Отправляем stats с новыми полями
             });
-
+    
             console.log('Отправлен userUpdate с параметрами:', { stats: user.stats });
-
+    
             if (callback) callback({ success: true, defaultRoom });
         } catch (err) {
             console.error('Ошибка при завершении регистрации:', err.message, err.stack);

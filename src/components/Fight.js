@@ -4,11 +4,11 @@ import { FaTimes } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 
-// Добавление нового компонента для надписей
+// Обновление стилей InstructionLabel с условным цветом
 const InstructionLabel = styled.div`
   margin-top: 10px;
   font-size: 0.9em;
-  color: ${({ theme }) => (theme === 'dark' ? '#aaa' : '#666')};
+  color: ${({ theme, isReady }) => (isReady ? '#28a745' : theme === 'dark' ? '#aaa' : '#666')};
   text-align: center;
 `;
 
@@ -395,8 +395,10 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
               </Zone>
             ))}
           </ZoneGrid>
-          {/* Динамическая надпись для защиты */}
-          <InstructionLabel theme={theme}>{getDefenseInstruction()}</InstructionLabel>
+          {/* Динамическая надпись для защиты с условным цветом */}
+          <InstructionLabel theme={theme} isReady={playerDefenseZones.length === 2}>
+            {getDefenseInstruction()}
+          </InstructionLabel>
         </Mannequin>
         <Mannequin>
           <MannequinLabel theme={theme}>{npc.name}</MannequinLabel>
@@ -424,8 +426,10 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
               </Zone>
             ))}
           </ZoneGrid>
-          {/* Динамическая надпись для атаки */}
-          <InstructionLabel theme={theme}>{getAttackInstruction()}</InstructionLabel>
+          {/* Динамическая надпись для атаки с условным цветом */}
+          <InstructionLabel theme={theme} isReady={!!playerAttackZone}>
+            {getAttackInstruction()}
+          </InstructionLabel>
         </Mannequin>
       </MannequinContainer>
       <ActionButton

@@ -268,7 +268,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return playerAttackZone ? 'Вы готовы атаковать!' : 'Укажите место атаки';
   };
 
-  // Функция для автоматического выбора зон
+  // Функция для автоматического выбора зон и подтверждения хода
   const handleAutoStrike = useCallback(() => {
     if (!isRoundActive || isProcessing) return;
 
@@ -289,7 +289,10 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       ...prev
     ]);
     setHighlightNewLog(true);
-  }, [isRoundActive, isProcessing, zones]);
+
+    // Автоматическое подтверждение хода
+    handleRoundEnd();
+  }, [isRoundActive, isProcessing, zones, handleRoundEnd]);
 
   useEffect(() => {
     if (battleLogs.length === 0 || !highlightNewLog) return;
@@ -511,7 +514,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
         onClick={handleAutoStrike}
         disabled={!isRoundActive || isProcessing}
       >
-        Автоудар
+        {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Автоудар'}
       </AutoStrikeButton>
       <LogContainer theme={theme}>
         {battleLogs.map((log, index) => (

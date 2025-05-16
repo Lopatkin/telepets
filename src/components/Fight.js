@@ -268,42 +268,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return playerAttackZone ? 'Вы готовы атаковать!' : 'Укажите место атаки';
   };
 
-  // Функция для автоматического выбора зон и подтверждения хода
-  const handleAutoStrike = useCallback(() => {
-    if (!isRoundActive || isProcessing) return;
-
-    // Случайный выбор одной зоны для атаки
-    const randomAttackZone = zones[Math.floor(Math.random() * zones.length)];
-
-    // Случайный выбор двух зон для защиты
-    const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
-    const randomDefenseZones = shuffledZones.slice(0, 2);
-
-    // Обновление состояния для визуальной обратной связи
-    setPlayerAttackZone(randomAttackZone);
-    setPlayerDefenseZones(randomDefenseZones);
-
-    // Добавление лога для отладки
-    setBattleLogs((prev) => [
-      `${new Date().toLocaleTimeString()}: Автоудар: атака в ${randomAttackZone}, защита в ${randomDefenseZones.join(', ')}`,
-      ...prev
-    ]);
-    setHighlightNewLog(true);
-
-    // Передаём зоны напрямую в handleRoundEnd
-    handleRoundEnd(randomAttackZone, randomDefenseZones);
-  }, [isRoundActive, isProcessing, zones, handleRoundEnd]);
-
-  useEffect(() => {
-    if (battleLogs.length === 0 || !highlightNewLog) return;
-
-    const timer = setTimeout(() => {
-      setHighlightNewLog(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [battleLogs, highlightNewLog]);
-
   const replaceZoneNames = (message) => {
     const zoneMap = {
       head: 'голову',
@@ -319,6 +283,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return updatedMessage;
   };
 
+  // Переместили handleRoundEnd выше handleAutoStrike
   const handleRoundEnd = useCallback((attackZone = playerAttackZone, defenseZones = playerDefenseZones) => {
     if (!socket || isProcessing) return;
 
@@ -386,21 +351,41 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     });
   }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, isProcessing, onClose]);
 
+  // Функция для автоматического выбора зон и подтверждения хода
+  const handleAutoStrike = useCallback(() => {
+    if (!isRoundActive || isProcessing) return;
+
+    // Случайный выбор одной зоны для атаки
+    const randomAttackZone = zones[Math.floor(Math.random() * zones.length)];
+
+    // Случайный выбор двух зон для защиты
+    const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
+    const randomDefenseZones = shuffledZones.slice(0, 2);
+
+    // Обновление состояния для визуальной обратной связи
+    setPlayerAttackZone(randomAttackZone);
+    setPlayerDefenseZones(randomDefenseZones);
+
+    // Добавление лога для отладки
+    setBattleLogs((prev) => [
+      `${new Date().toLocaleTimeString()}: Автоудар: атака в ${randomAttackZone}, защита в ${randomDefenseZones.join(', ')}`,
+      ...prev
+    ]);
+    setHighlightNewLog(true);
+
+    // Передаём зоны напрямую в handleRoundEnd
+    handleRoundEnd(randomAttackZone, randomDefenseZones);
+  }, [isRoundActive, isProcessing, zones, handleRoundEnd]);
+
   useEffect(() => {
-    if (!isRoundActive) return;
+    if (battleLogs.length === 0 || !highlightNewLog) return;
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          handleRoundEnd();
-          return 20;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const timer = setTimeout(() => {
+      setHighlightNewLog(false);
+    }, 3000);
 
-    return () => clearInterval(timer);
-  }, [isRoundActive, handleRoundEnd]);
+    return () => clearTimeout(timer);
+  }, [battleLogs, highlightNewLog]);
 
   const handleZoneClick = useCallback((zone, isPlayerMannequin) => {
     if (!isRoundActive || isProcessing) return;
@@ -425,6 +410,22 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       setIsRoundActive(false);
     }
   }, [playerHP, npcHP]);
+
+  useEffect(() => {
+    if (!isRoundActive) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          handleRoundEnd();
+          return 20;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isRoundActive, handleRoundEnd]);
 
   return (
     <FightContainer theme={theme}>

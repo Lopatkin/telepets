@@ -252,73 +252,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     };
   }, [socket]);
 
-  // Функция для получения текста надписи для защиты
-  const getDefenseInstruction = () => {
-    if (playerDefenseZones.length === 0) {
-      return 'Поставьте 2 защиты';
-    } else if (playerDefenseZones.length === 1) {
-      return 'Поставьте 1 защиту';
-    } else {
-      return 'Защита готова!';
-    }
-  };
-
-  // Функция для получения текста надписи для атаки
-  const getAttackInstruction = () => {
-    return playerAttackZone ? 'Вы готовы атаковать!' : 'Укажите место атаки';
-  };
-
-  // Функция для автоматического выбора зон и подтверждения хода
-  const handleAutoStrike = useCallback(() => {
-    if (!isRoundActive || isProcessing) return;
-
-    // Случайный выбор одной зоны для атаки
-    const randomAttackZone = zones[Math.floor(Math.random() * zones.length)];
-
-    // Случайный выбор двух зон для защиты
-    const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
-    const randomDefenseZones = shuffledZones.slice(0, 2);
-
-    // Обновление состояния
-    setPlayerAttackZone(randomAttackZone);
-    setPlayerDefenseZones(randomDefenseZones);
-
-    // Добавление лога для отладки
-    setBattleLogs((prev) => [
-      `${new Date().toLocaleTimeString()}: Автоудар: атака в ${randomAttackZone}, защита в ${randomDefenseZones.join(', ')}`,
-      ...prev
-    ]);
-    setHighlightNewLog(true);
-
-    // Автоматическое подтверждение хода
-    handleRoundEnd();
-  }, [isRoundActive, isProcessing, zones, handleRoundEnd]);
-
-  useEffect(() => {
-    if (battleLogs.length === 0 || !highlightNewLog) return;
-
-    const timer = setTimeout(() => {
-      setHighlightNewLog(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [battleLogs, highlightNewLog]);
-
-  const replaceZoneNames = (message) => {
-    const zoneMap = {
-      head: 'голову',
-      back: 'спину',
-      belly: 'живот',
-      legs: 'ноги'
-    };
-    let updatedMessage = message;
-    Object.keys(zoneMap).forEach((zone) => {
-      const regex = new RegExp(`\\b${zone}\\b`, 'g');
-      updatedMessage = updatedMessage.replace(regex, zoneMap[zone]);
-    });
-    return updatedMessage;
-  };
-
   const handleRoundEnd = useCallback(() => {
     if (!socket || isProcessing) return;
 
@@ -385,6 +318,73 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       setIsProcessing(false);
     });
   }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, isProcessing, onClose]);
+
+  // Функция для получения текста надписи для защиты
+  const getDefenseInstruction = () => {
+    if (playerDefenseZones.length === 0) {
+      return 'Поставьте 2 защиты';
+    } else if (playerDefenseZones.length === 1) {
+      return 'Поставьте 1 защиту';
+    } else {
+      return 'Защита готова!';
+    }
+  };
+
+  // Функция для получения текста надписи для атаки
+  const getAttackInstruction = () => {
+    return playerAttackZone ? 'Вы готовы атаковать!' : 'Укажите место атаки';
+  };
+
+  // Функция для автоматического выбора зон и подтверждения хода
+  const handleAutoStrike = useCallback(() => {
+    if (!isRoundActive || isProcessing) return;
+
+    // Случайный выбор одной зоны для атаки
+    const randomAttackZone = zones[Math.floor(Math.random() * zones.length)];
+
+    // Случайный выбор двух зон для защиты
+    const shuffledZones = [...zones].sort(() => Math.random() - 0.5);
+    const randomDefenseZones = shuffledZones.slice(0, 2);
+
+    // Обновление состояния
+    setPlayerAttackZone(randomAttackZone);
+    setPlayerDefenseZones(randomDefenseZones);
+
+    // Добавление лога для отладки
+    setBattleLogs((prev) => [
+      `${new Date().toLocaleTimeString()}: Автоудар: атака в ${randomAttackZone}, защита в ${randomDefenseZones.join(', ')}`,
+      ...prev
+    ]);
+    setHighlightNewLog(true);
+
+    // Автоматическое подтверждение хода
+    handleRoundEnd();
+  }, [isRoundActive, isProcessing, zones, handleRoundEnd]);
+
+  useEffect(() => {
+    if (battleLogs.length === 0 || !highlightNewLog) return;
+
+    const timer = setTimeout(() => {
+      setHighlightNewLog(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [battleLogs, highlightNewLog]);
+
+  const replaceZoneNames = (message) => {
+    const zoneMap = {
+      head: 'голову',
+      back: 'спину',
+      belly: 'живот',
+      legs: 'ноги'
+    };
+    let updatedMessage = message;
+    Object.keys(zoneMap).forEach((zone) => {
+      const regex = new RegExp(`\\b${zone}\\b`, 'g');
+      updatedMessage = updatedMessage.replace(regex, zoneMap[zone]);
+    });
+    return updatedMessage;
+  };
 
   useEffect(() => {
     if (!isRoundActive) return;

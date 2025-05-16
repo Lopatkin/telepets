@@ -4,15 +4,6 @@ import { FaTimes } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 
-// Обновление стилей InstructionLabel с условным цветом
-const InstructionLabel = styled.div`
-  margin-top: 10px;
-  font-size: 0.9em;
-  color: ${({ theme, isReady }) => (isReady ? '#28a745' : theme === 'dark' ? '#aaa' : '#666')};
-  text-align: center;
-  transition: color 0.3s ease; /* Плавный переход цвета */
-`;
-
 const FightContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -84,6 +75,15 @@ const LargeDefaultAvatar = styled(DefaultAvatar)`
   font-size: 28px;
 `;
 
+const StatsDisplay = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 10px;
+  font-size: 0.9em;
+  color: ${({ theme }) => (theme === 'dark' ? '#ccc' : '#333')};
+`;
+
 const HPBar = styled.div`
   width: 100%;
   height: 20px;
@@ -91,13 +91,24 @@ const HPBar = styled.div`
   border-radius: 5px;
   overflow: hidden;
   margin-bottom: 10px;
+  position: relative;
 `;
 
 const HPFill = styled.div`
-  width: ${({ hp }) => hp}%;
+  width: ${({ hpPercentage }) => hpPercentage}%;
   height: 100%;
-  background: ${({ hp }) => (hp > 50 ? 'green' : hp > 20 ? 'orange' : 'red')};
+  background: ${({ hpPercentage }) => (hpPercentage > 50 ? 'green' : hpPercentage > 20 ? 'orange' : 'red')};
   transition: width 0.3s;
+`;
+
+const HPText = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.8em;
+  color: #fff;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
 `;
 
 const ZoneGrid = styled.div`
@@ -125,6 +136,14 @@ const Zone = styled.div`
   &.back { grid-area: back; }
   &.belly { grid-area: belly; }
   &.legs { grid-area: legs; }
+`;
+
+const InstructionLabel = styled.div`
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: ${({ theme, isReady }) => (isReady ? '#28a745' : theme === 'dark' ? '#aaa' : '#666')};
+  text-align: center;
+  transition: color 0.3s ease;
 `;
 
 const ActionButton = styled.button`
@@ -184,7 +203,7 @@ const LogItem = styled.div`
 `;
 
 function Fight({ theme, socket, user, npc, onClose, showNotification }) {
-  const [playerHP, setPlayerHP] = useState(100);
+  const [playerHP, setPlayerHP] = useState(user.stats?.health || 100);
   const [npcHP, setNpcHP] = useState(npc.stats?.health || 100);
   const [playerAttackZone, setPlayerAttackZone] = useState(null);
   const [playerDefenseZones, setPlayerDefenseZones] = useState([]);
@@ -196,14 +215,37 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-  const displayName = !user.isHuman && user.name 
-    ? user.name 
+  const displayName = !user.isHuman && user.name
+    ? user.name
     : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim();
 
   const playerInitial = (user.firstName || user.name || 'И').charAt(0).toUpperCase();
   const npcInitial = (npc.name || 'N').charAt(0).toUpperCase();
 
   const timeProgress = useMemo(() => (timeLeft / 20) * 100, [timeLeft]);
+
+  // Вычисляем процент здоровья для прогресс-баров
+  const playerHPPercentage = (playerHP / (user.stats?.health || 100)) * 100;
+  const npcHPPercentage = (npcHP / (npc.stats?.health || 100)) * 100;
+
+  // Параметры NPC по умолчанию, если они отсутствуют
+  const npcStats = {
+    attack: npc.stats?.attack || 10,
+    defense: npc.stats?.defense || 20
+  };
+
+  // Обработка обновления здоровья игрока от сервера
+  useEffect(() => {
+    socket.on('userUpdate', (updatedUser) => {
+      if (updatedUser.stats?.health) {
+        setPlayerHP(updatedUser.stats.health);
+      }
+    });
+
+    return () => {
+      socket.off('userUpdate');
+    };
+  }, [socket]);
 
   // Функция для получения текста надписи для защиты
   const getDefenseInstruction = () => {
@@ -231,17 +273,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
     return () => clearTimeout(timer);
   }, [battleLogs, highlightNewLog]);
 
-  useEffect(() => {
-    if (battleLogs.length === 0 || !highlightNewLog) return;
-
-    const timer = setTimeout(() => {
-      setHighlightNewLog(false);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [battleLogs, highlightNewLog]);
-
-  // Функция для замены английских названий зон на русские в сообщениях
   const replaceZoneNames = (message) => {
     const zoneMap = {
       head: 'голову',
@@ -276,7 +307,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       playerDefenseZones,
       npcAttackZone: npcAttack,
       npcDefenseZones: npcDefense,
-      playerAttack: 10 // Фиксированная атака игрока (можно заменить на user.stats.attack, если добавите)
+      playerAttack: user.stats?.attack || 10,
+      playerDefense: user.stats?.defense || 20
     }, (response) => {
       if (response.success) {
         setPlayerHP(response.playerHP);
@@ -321,7 +353,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       }
       setIsProcessing(false);
     });
-  }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, onClose, isProcessing]);
+  }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, isProcessing]);
 
   useEffect(() => {
     if (!isRoundActive) return;
@@ -379,8 +411,13 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
               <LargeDefaultAvatar>{playerInitial}</LargeDefaultAvatar>
             )}
           </AvatarContainer>
+          <StatsDisplay theme={theme}>
+            <span>Атака: {user.stats?.attack || 10}</span>
+            <span>Защита: {user.stats?.defense || 20}</span>
+          </StatsDisplay>
           <HPBar>
-            <HPFill hp={(playerHP / 100) * 100} />
+            <HPFill hpPercentage={playerHPPercentage} />
+            <HPText>{Math.round(playerHP)}/{user.stats?.health || 100}</HPText>
           </HPBar>
           <ZoneGrid>
             {zones.map((zone) => (
@@ -396,7 +433,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
               </Zone>
             ))}
           </ZoneGrid>
-          {/* Динамическая надпись для защиты с условным цветом */}
           <InstructionLabel theme={theme} isReady={playerDefenseZones.length === 2}>
             {getDefenseInstruction()}
           </InstructionLabel>
@@ -410,8 +446,13 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
               <LargeDefaultAvatar>{npcInitial}</LargeDefaultAvatar>
             )}
           </AvatarContainer>
+          <StatsDisplay theme={theme}>
+            <span>Атака: {npcStats.attack}</span>
+            <span>Защита: {npcStats.defense}</span>
+          </StatsDisplay>
           <HPBar>
-            <HPFill hp={(npcHP / npc.stats.health) * 100} />
+            <HPFill hpPercentage={npcHPPercentage} />
+            <HPText>{Math.round(npcHP)}/{npc.stats?.health || 100}</HPText>
           </HPBar>
           <ZoneGrid>
             {zones.map((zone) => (
@@ -427,7 +468,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
               </Zone>
             ))}
           </ZoneGrid>
-          {/* Динамическая надпись для атаки с условным цветом */}
           <InstructionLabel theme={theme} isReady={!!playerAttackZone}>
             {getAttackInstruction()}
           </InstructionLabel>

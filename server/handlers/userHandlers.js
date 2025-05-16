@@ -189,9 +189,7 @@ function registerUserHandlers({
                 name,
                 photoUrl,
                 owner,
-                health, // Новое поле
-                attack, // Новое поле
-                defense, // Новое поле
+                stats, // Теперь принимаем объект stats
                 isRegistered
             } = data;
 
@@ -203,9 +201,7 @@ function registerUserHandlers({
                 residence,
                 homeless: isHuman ? false : true,
                 lastActivity: new Date(),
-                health, // Добавляем health
-                attack, // Добавляем attack
-                defense // Добавляем defense
+                stats // Сохраняем объект stats
             };
 
             if (isHuman) {
@@ -294,12 +290,10 @@ function registerUserHandlers({
                 credits: user.credits || 0,
                 onLeash: user.onLeash,
                 freeRoam: user.freeRoam || false,
-                health: user.health, // Добавляем health
-                attack: user.attack, // Добавляем attack
-                defense: user.defense // Добавляем defense
+                stats: user.stats // Отправляем объект stats
             });
 
-            console.log('Отправлен userUpdate с параметрами:', { health: user.health, attack: user.attack, defense: user.defense });
+            console.log('Отправлен userUpdate с параметрами:', { stats: user.stats });
 
             if (callback) callback({ success: true, defaultRoom });
         } catch (err) {

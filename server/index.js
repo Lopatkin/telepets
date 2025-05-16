@@ -52,10 +52,12 @@ const userSchema = new mongoose.Schema({
   lastActivity: { type: Date, default: Date.now },
   owner: { type: String, default: null },
   freeRoam: { type: Boolean, default: false },
-  // Удаляем значения по умолчанию, чтобы они задавались при регистрации
-  health: { type: Number },
-  attack: { type: Number },
-  defense: { type: Number }
+  // Новое поле stats вместо отдельных health, attack, defense
+  stats: {
+    health: { type: Number },
+    attack: { type: Number },
+    defense: { type: Number }
+  }
 });
 const User = mongoose.model('User', userSchema);
 

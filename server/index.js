@@ -52,10 +52,10 @@ const userSchema = new mongoose.Schema({
   lastActivity: { type: Date, default: Date.now },
   owner: { type: String, default: null },
   freeRoam: { type: Boolean, default: false },
-  // Новые поля для параметров игрока
-  health: { type: Number, default: 100 },
-  attack: { type: Number, default: 10 },
-  defense: { type: Number, default: 20 }
+  // Удаляем значения по умолчанию, чтобы они задавались при регистрации
+  health: { type: Number },
+  attack: { type: Number },
+  defense: { type: Number }
 });
 const User = mongoose.model('User', userSchema);
 

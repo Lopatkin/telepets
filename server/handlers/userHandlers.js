@@ -177,42 +177,72 @@ function registerUserHandlers({
         if (callback) callback({ success: true });
     });
 
+    // Модификация обработчика completeRegistration для учета health, attack, defense
     socket.on('completeRegistration', async (data, callback) => {
         try {
+            const {
+                userId,
+                isHuman,
+                formerProfession,
+                residence,
+                animalType,
+                name,
+                photoUrl,
+                owner,
+                health, // Новое поле
+                attack, // Новое поле
+                defense, // Новое поле
+                isRegistered
+            } = data;
+
+            console.log('Получены данные регистрации:', data); // Логирование для отладки
+
+            const updateData = {
+                isRegistered: isRegistered || true,
+                isHuman,
+                residence,
+                homeless: isHuman ? false : true,
+                lastActivity: new Date(),
+                health, // Добавляем health
+                attack, // Добавляем attack
+                defense // Добавляем defense
+            };
+
+            if (isHuman) {
+                updateData.formerProfession = formerProfession;
+            } else {
+                updateData.animalType = animalType;
+                updateData.name = name;
+                updateData.photoUrl = photoUrl || socket.userData.photoUrl || '';
+                updateData.owner = owner;
+            }
+
             const user = await User.findOneAndUpdate(
-                { userId: data.userId },
-                {
-                    isRegistered: true,
-                    isHuman: data.isHuman,
-                    formerProfession: data.formerProfession,
-                    residence: data.residence,
-                    animalType: data.animalType,
-                    name: data.name,
-                    photoUrl: data.photoUrl || socket.userData.photoUrl || '',
-                    homeless: data.isHuman ? false : true,
-                    owner: data.isHuman ? undefined : data.owner
-                },
-                { new: true }
+                { userId },
+                { $set: updateData },
+                { new: true, upsert: true }
             );
+
             if (!user) {
-                socket.emit('error', { message: 'User not found' });
-                if (callback) callback({ success: false });
+                socket.emit('error', { message: 'Пользователь не найден' });
+                if (callback) callback({ success: false, message: 'Пользователь не найден' });
                 return;
             }
-            console.log('Registration completed for user:', user.userId, 'with photoUrl:', user.photoUrl);
 
-            if (!data.isHuman && data.photoUrl) {
-                socket.userData.photoUrl = data.photoUrl;
-                console.log('Updated socket.userData.photoUrl for animal:', socket.userData.photoUrl);
-            }
-            if (!data.isHuman && data.name) {
-                socket.userData.name = data.name;
-            }
-            if (!data.isHuman && data.owner !== undefined) {
-                socket.userData.owner = data.owner;
-            }
+            console.log('Обновлённый пользователь:', user); // Логирование для отладки
 
-            socket.userData.homeless = user.homeless;
+            socket.userData = {
+                userId: user.userId,
+                firstName: user.firstName,
+                username: user.username,
+                lastName: user.lastName,
+                photoUrl: user.photoUrl,
+                name: user.name,
+                isHuman: user.isHuman,
+                animalType: user.animalType,
+                owner: user.owner,
+                homeless: user.homeless
+            };
 
             const defaultRoom = 'Автобусная остановка';
             socket.join(defaultRoom);
@@ -239,13 +269,13 @@ function registerUserHandlers({
             });
 
             io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
-            console.log(`User ${user.userId} joined room after registration: ${defaultRoom}`);
+            console.log(`Пользователь ${user.userId} присоединился к комнате после регистрации: ${defaultRoom}`);
 
             try {
                 const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
                 socket.emit('messageHistory', messages);
             } catch (err) {
-                console.error('Error fetching messages after registration:', err.message, err.stack);
+                console.error('Ошибка при загрузке сообщений после регистрации:', err.message, err.stack);
                 socket.emit('error', { message: 'Ошибка при загрузке сообщений' });
             }
 
@@ -260,15 +290,22 @@ function registerUserHandlers({
                 animalType: user.animalType,
                 name: user.name,
                 owner: user.owner,
-                homeless: user.homeless
+                homeless: user.homeless,
+                credits: user.credits || 0,
+                onLeash: user.onLeash,
+                freeRoam: user.freeRoam || false,
+                health: user.health, // Добавляем health
+                attack: user.attack, // Добавляем attack
+                defense: user.defense // Добавляем defense
             });
-            console.log('Sent userUpdate with photoUrl:', user.photoUrl);
 
-            if (callback) callback({ success: true });
+            console.log('Отправлен userUpdate с параметрами:', { health: user.health, attack: user.attack, defense: user.defense });
+
+            if (callback) callback({ success: true, defaultRoom });
         } catch (err) {
-            console.error('Registration error:', err.message, err.stack);
-            socket.emit('error', { message: 'Registration failed' });
-            if (callback) callback({ success: false });
+            console.error('Ошибка при завершении регистрации:', err.message, err.stack);
+            socket.emit('error', { message: 'Не удалось завершить регистрацию' });
+            if (callback) callback({ success: false, message: 'Не удалось завершить регистрацию' });
         }
     });
 

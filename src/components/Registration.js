@@ -208,9 +208,13 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
           ...baseParams // Добавляем базовые параметры
         };
   
+    console.log('Отправляем registrationData на сервер:', registrationData); // Логирование для отладки
+  
     socket.emit('completeRegistration', registrationData, (response) => {
       if (response.success) {
         onRegistrationComplete('Автобусная остановка');
+      } else {
+        console.error('Ошибка регистрации:', response.message); // Логирование ошибки
       }
     });
   };

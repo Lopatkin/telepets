@@ -4,6 +4,14 @@ import { FaTimes } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 
+// Добавление нового компонента для надписей
+const InstructionLabel = styled.div`
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: ${({ theme }) => (theme === 'dark' ? '#aaa' : '#666')};
+  text-align: center;
+`;
+
 const FightContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -187,8 +195,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-  const displayName = !user.isHuman && user.name 
-    ? user.name 
+  const displayName = !user.isHuman && user.name
+    ? user.name
     : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim();
 
   const playerInitial = (user.firstName || user.name || 'И').charAt(0).toUpperCase();
@@ -345,7 +353,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
             )}
           </AvatarContainer>
           <HPBar>
-            <HPFill hp={(playerHP / 100) * 100} /> {/* Нормализация для отображения */}
+            <HPFill hp={(playerHP / 100) * 100} />
           </HPBar>
           <ZoneGrid>
             {zones.map((zone) => (
@@ -361,6 +369,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
               </Zone>
             ))}
           </ZoneGrid>
+          {/* Добавление надписи под манекеном игрока */}
+          <InstructionLabel theme={theme}>Поставьте 2 защиты</InstructionLabel>
         </Mannequin>
         <Mannequin>
           <MannequinLabel theme={theme}>{npc.name}</MannequinLabel>
@@ -372,7 +382,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
             )}
           </AvatarContainer>
           <HPBar>
-            <HPFill hp={(npcHP / npc.stats.health) * 100} /> {/* Нормализация для отображения */}
+            <HPFill hp={(npcHP / npc.stats.health) * 100} />
           </HPBar>
           <ZoneGrid>
             {zones.map((zone) => (
@@ -388,6 +398,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
               </Zone>
             ))}
           </ZoneGrid>
+          {/* Добавление надписи под манекеном противника */}
+          <InstructionLabel theme={theme}>Укажите место атаки</InstructionLabel>
         </Mannequin>
       </MannequinContainer>
       <ActionButton

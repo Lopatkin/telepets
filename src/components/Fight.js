@@ -184,7 +184,7 @@ const LogItem = styled.div`
 
 function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const [playerHP, setPlayerHP] = useState(100);
-  const [npcHP, setNpcHP] = useState(npc.stats?.health || 100); // Используем здоровье NPC из stats
+  const [npcHP, setNpcHP] = useState(npc.stats?.health || 100);
   const [playerAttackZone, setPlayerAttackZone] = useState(null);
   const [playerDefenseZones, setPlayerDefenseZones] = useState([]);
   const [timeLeft, setTimeLeft] = useState(20);
@@ -195,14 +195,40 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
-  const displayName = !user.isHuman && user.name
-    ? user.name
+  const displayName = !user.isHuman && user.name 
+    ? user.name 
     : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim();
 
   const playerInitial = (user.firstName || user.name || 'И').charAt(0).toUpperCase();
   const npcInitial = (npc.name || 'N').charAt(0).toUpperCase();
 
   const timeProgress = useMemo(() => (timeLeft / 20) * 100, [timeLeft]);
+
+  // Функция для получения текста надписи для защиты
+  const getDefenseInstruction = () => {
+    if (playerDefenseZones.length === 0) {
+      return 'Поставьте 2 защиты';
+    } else if (playerDefenseZones.length === 1) {
+      return 'Поставьте 1 защиту';
+    } else {
+      return 'Защита готова!';
+    }
+  };
+
+  // Функция для получения текста надписи для атаки
+  const getAttackInstruction = () => {
+    return playerAttackZone ? 'Вы готовы атаковать!' : 'Укажите место атаки';
+  };
+
+  useEffect(() => {
+    if (battleLogs.length === 0 || !highlightNewLog) return;
+
+    const timer = setTimeout(() => {
+      setHighlightNewLog(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [battleLogs, highlightNewLog]);
 
   useEffect(() => {
     if (battleLogs.length === 0 || !highlightNewLog) return;
@@ -369,8 +395,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
               </Zone>
             ))}
           </ZoneGrid>
-          {/* Добавление надписи под манекеном игрока */}
-          <InstructionLabel theme={theme}>Поставьте 2 защиты</InstructionLabel>
+          {/* Динамическая надпись для защиты */}
+          <InstructionLabel theme={theme}>{getDefenseInstruction()}</InstructionLabel>
         </Mannequin>
         <Mannequin>
           <MannequinLabel theme={theme}>{npc.name}</MannequinLabel>
@@ -398,8 +424,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
               </Zone>
             ))}
           </ZoneGrid>
-          {/* Добавление надписи под манекеном противника */}
-          <InstructionLabel theme={theme}>Укажите место атаки</InstructionLabel>
+          {/* Динамическая надпись для атаки */}
+          <InstructionLabel theme={theme}>{getAttackInstruction()}</InstructionLabel>
         </Mannequin>
       </MannequinContainer>
       <ActionButton

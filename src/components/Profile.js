@@ -230,8 +230,8 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
   const [diaryEntries, setDiaryEntries] = useState([]);
 
   const photoUrl = user?.photoUrl || '';
-  const displayName = !user.isHuman && user.name
-    ? user.name
+  const displayName = !user.isHuman && user.name 
+    ? user.name 
     : `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim();
   const username = user?.username || '';
   const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
@@ -282,19 +282,19 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
     const room = rooms[Math.floor(Math.random() * rooms.length)];
     const intro = introPhrases[Math.floor(Math.random() * introPhrases.length)];
     const availableActions = getAvailableActions(room);
-    const action = availableActions.length > 0
+    const action = availableActions.length > 0 
       ? availableActions[Math.floor(Math.random() * availableActions.length)]
       : 'Ничего не делал';
     const effect = actionHandlers[action]?.successMessage || 'Ничего особенного не произошло.';
     const reaction = reactions[Math.floor(Math.random() * reactions.length)];
-
+    
     // Добавление предмета, если действие связано с предметом
     if (actionHandlers[action]?.item && socket) {
       socket.emit('addItem', { owner: `user_${user.userId}`, item: actionHandlers[action].item });
     }
 
     return `${intro}${room}. ${action}. ${effect} ${reaction}`;
-  }, [socket, user?.userId, user?.isHuman, getAvailableActions, introPhrases, reactions]); // Добавляем недостающие зависимости
+  }, [socket, user?.userId, getAvailableActions, introPhrases, reactions]); // Удаляем user.isHuman из зависимостей
 
   // Обработка оффлайн-событий
   useEffect(() => {
@@ -302,14 +302,14 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
       const lastActivity = new Date(user.lastActivity);
       const now = new Date();
       const hoursOffline = Math.floor((now - lastActivity) / (1000 * 60 * 60));
-
+      
       const newEntries = [];
       for (let i = 0; i < hoursOffline; i++) {
         if (Math.random() * 100 < freeWill) {
           newEntries.push(generateEvent());
         }
       }
-
+      
       if (newEntries.length > 0) {
         setDiaryEntries(prev => [...newEntries, ...prev]);
       }

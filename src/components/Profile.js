@@ -266,7 +266,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
     const configKey = roomToConfigKey[room] || 'home';
     const actions = actionsConfig[configKey]?.[user.isHuman ? 'humanActions' : 'animalActions'] || [];
     return actions.map(action => action.title);
-  }, [user?.isHuman]);
+  }, [user?.isHuman, roomToConfigKey]); // Добавляем roomToConfigKey в зависимости
 
   // Обработчик изменения ползунка
   const handleFreeWillChange = (e) => {

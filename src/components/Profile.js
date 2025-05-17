@@ -252,21 +252,21 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
     'Пойдёт.'
   ], []);
 
-  // Маппинг локаций для actionsConfig
-  const roomToConfigKey = {
+  // Маппинг локаций для actionsConfig с мемоизацией
+  const roomToConfigKey = useMemo(() => ({
     'Автобусная остановка': 'busStop',
     'Лес': 'forest',
     'Полигон утилизации': 'disposal',
     'Мастерская': 'workshop',
     'Приют для животных "Кошкин дом"': 'shelter'
-  };
+  }), []); // Пустой массив зависимостей, так как объект статический
 
   // Получение доступных действий для локации с мемоизацией
   const getAvailableActions = useCallback((room) => {
     const configKey = roomToConfigKey[room] || 'home';
     const actions = actionsConfig[configKey]?.[user.isHuman ? 'humanActions' : 'animalActions'] || [];
     return actions.map(action => action.title);
-  }, [user?.isHuman, roomToConfigKey]); // Добавляем roomToConfigKey в зависимости
+  }, [user?.isHuman, roomToConfigKey]);
 
   // Обработчик изменения ползунка
   const handleFreeWillChange = (e) => {

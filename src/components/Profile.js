@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import actionsConfig from './constants/actionsConfig';
 import { rooms } from './constants/rooms';
@@ -277,8 +277,8 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
     }
   };
 
-  // Генерация события
-  const generateEvent = () => {
+  // Генерация события с мемоизацией
+  const generateEvent = useCallback(() => {
     const room = rooms[Math.floor(Math.random() * rooms.length)];
     const intro = introPhrases[Math.floor(Math.random() * introPhrases.length)];
     const availableActions = getAvailableActions(room);
@@ -294,7 +294,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
     }
 
     return `${intro}${room}. ${action}. ${effect} ${reaction}`;
-  };
+  }, [socket, user?.userId, user?.isHuman]); // Зависимости для useCallback
 
   // Обработка оффлайн-событий
   useEffect(() => {
@@ -317,7 +317,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
       // Обновляем lastActivity
       socket.emit('updateLastActivity', { userId: user.userId });
     }
-  }, [socket, user, freeWill]);
+  }, [socket, user, freeWill, generateEvent]); // Добавляем generateEvent в зависимости
 
   // Загрузка сохраненного значения freeWill
   useEffect(() => {

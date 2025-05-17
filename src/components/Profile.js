@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import actionsConfig from './constants/actionsConfig';
-import { rooms } from '../components/constants/rooms';
+import { rooms } from '../rooms';
 
 const ProfileContainer = styled.div`
   padding: 20px;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import actionsConfig from './constants/actionsConfig';
 import { rooms } from './constants/rooms';
@@ -236,21 +236,21 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
   const username = user?.username || '';
   const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
 
-  // Вступительные фразы для выбора локации
-  const introPhrases = [
+  // Вступительные фразы для выбора локации с мемоизацией
+  const introPhrases = useMemo(() => [
     'Решил пойти в ',
     'Пошёл в ',
     'Сходил в ',
     'Подумал, не плохо было бы сходить в '
-  ];
+  ], []);
 
-  // Реакции
-  const reactions = [
+  // Реакции с мемоизацией
+  const reactions = useMemo(() => [
     'Хорошо.',
     'Нравится.',
     'Ну и ладно.',
     'Пойдёт.'
-  ];
+  ], []);
 
   // Маппинг локаций для actionsConfig
   const roomToConfigKey = {
@@ -261,12 +261,12 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
     'Приют для животных "Кошкин дом"': 'shelter'
   };
 
-  // Получение доступных действий для локации
-  const getAvailableActions = (room) => {
+  // Получение доступных действий для локации с мемоизацией
+  const getAvailableActions = useCallback((room) => {
     const configKey = roomToConfigKey[room] || 'home';
     const actions = actionsConfig[configKey]?.[user.isHuman ? 'humanActions' : 'animalActions'] || [];
     return actions.map(action => action.title);
-  };
+  }, [user?.isHuman]);
 
   // Обработчик изменения ползунка
   const handleFreeWillChange = (e) => {
@@ -294,7 +294,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
     }
 
     return `${intro}${room}. ${action}. ${effect} ${reaction}`;
-  }, [socket, user?.userId, getAvailableActions, introPhrases, reactions]); // Удаляем user.isHuman из зависимостей
+  }, [socket, user?.userId, getAvailableActions, introPhrases, reactions]);
 
   // Обработка оффлайн-событий
   useEffect(() => {

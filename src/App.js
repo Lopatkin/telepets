@@ -422,6 +422,7 @@ function App() {
             telegramTheme={telegramTheme}
             onThemeChange={handleThemeChange}
             progressValues={{ health: 50, mood: 50, fullness: 50 }}
+            socket={socket} // Добавляем socket
           />
         )}
       </Content>

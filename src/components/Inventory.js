@@ -34,7 +34,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
 
   useEffect(() => {
-    console.log('Received personalItems in Inventory:', personalItems);
+    // console.log('Received personalItems in Inventory:', personalItems);
     setTempPersonalItems(personalItems);
   }, [personalItems]);
 
@@ -80,7 +80,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   };
 
   const groupItemsByNameAndWeight = (items) => {
-    console.log('Grouping items:', items);
+    // console.log('Grouping items:', items);
     const grouped = items.reduce((acc, item) => {
       const key = item.name === 'Паспорт животного' && item.animalId
         ? `${item.name}_${item.weight}_${item.animalId}`
@@ -144,15 +144,15 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   ], []);
 
   useEffect(() => {
-    console.log('Inventory props:', { userId, currentRoom, user, personalItems });
+    // console.log('Inventory props:', { userId, currentRoom, user, personalItems });
   }, [userId, currentRoom, user, personalItems]);
 
   useEffect(() => {
     if (!socket || !userId) return;
 
-    console.log('Emitting getItems for location:', locationOwnerKey);
+    // console.log('Emitting getItems for location:', locationOwnerKey);
     socket.emit('getItems', { owner: locationOwnerKey });
-    console.log('Emitting getItems for user:', userOwnerKey);
+    // console.log('Emitting getItems for user:', userOwnerKey);
     socket.emit('getItems', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
@@ -169,7 +169,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
     socket.on('items', (data) => {
       const { owner, items } = data;
-      console.log('Received items event:', data);
+      // console.log('Received items event:', data);
       if (owner === locationOwnerKey) {
         setLocationItems(items.map(item => ({
           ...item,

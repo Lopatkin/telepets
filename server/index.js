@@ -294,17 +294,55 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Добавление обработчика getUser
+  socket.on('getUser', async (data, callback) => {
+    const { userId } = data;
+    console.log(`Received getUser for user ${userId}`);
+
+    const user = await User.findOne({ userId });
+    if (user) {
+      console.log(`Sending user data for ${userId}:`, user);
+      callback({
+        success: true,
+        user: {
+          userId: user.userId,
+          firstName: user.firstName,
+          username: user.username,
+          lastName: user.lastName,
+          photoUrl: user.photoUrl,
+          isRegistered: user.isRegistered,
+          isHuman: user.isHuman,
+          animalType: user.animalType,
+          name: user.name,
+          owner: user.owner,
+          homeless: user.homeless,
+          credits: user.credits || 0,
+          onLeash: user.onLeash,
+          freeRoam: user.freeRoam || false,
+          stats: user.stats
+        }
+      });
+    } else {
+      console.log(`User ${userId} not found for getUser`);
+      callback({ success: false, message: 'Пользователь не найден' });
+    }
+  });
+
   // Новый обработчик для завершения боя
   socket.on('endFight', async (data) => {
     const { userId } = data;
+    console.log(`Received endFight for user ${userId}`);
+
     if (fightStates.has(userId)) {
       fightStates.delete(userId);
       console.log(`Fight state cleared for user ${userId}`);
+    } else {
+      console.log(`No active fight state found for user ${userId}`);
     }
 
-    // Отправляем актуальные данные пользователя
     const user = await User.findOne({ userId });
     if (user) {
+      console.log(`Sending userUpdate for user ${userId} with stats:`, user.stats);
       socket.emit('userUpdate', {
         userId: user.userId,
         firstName: user.firstName,
@@ -322,6 +360,8 @@ io.on('connection', (socket) => {
         freeRoam: user.freeRoam || false,
         stats: user.stats
       });
+    } else {
+      console.log(`User ${userId} not found for userUpdate`);
     }
   });
 

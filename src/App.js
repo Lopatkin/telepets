@@ -151,7 +151,7 @@ function App() {
               credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
               freeRoam: updatedUser.freeRoam ?? false,
-              stats: updatedUser.stats || prevUser?.stats || {} // Полностью обновляем stats
+              stats: { ...prevUser?.stats, ...updatedUser.stats } // Полное обновление stats
             };
             console.log('Updated user state after userUpdate:', newUser); // Логирование нового состояния
             return newUser;
@@ -184,7 +184,7 @@ function App() {
         socketRef.current.on('items', handleItemsUpdate);
         socketRef.current.on('itemAction', (data) => {
           const { action, owner, item, itemId, itemIds } = data;
-          console.log('Received itemAction:', data);
+          // console.log('Received itemAction:', data);
           if (owner === `user_${user?.userId}`) {
             if (action === 'add') {
               setPersonalItems(prev => [...prev, { ...item, _id: item._id.toString() }]);

@@ -25,19 +25,19 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
 
   useEffect(() => {
     if (socket && onItemsUpdate) {
-      console.log('Subscribing to items event in Actions');
+      // console.log('Subscribing to items event in Actions');
       socket.on('items', onItemsUpdate);
-      console.log('Emitting getItems for user in Actions:', `user_${userId}`);
+      // console.log('Emitting getItems for user in Actions:', `user_${userId}`);
       socket.emit('getItems', { owner: `user_${userId}` });
       return () => {
-        console.log('Unsubscribing from items event in Actions');
+        // console.log('Unsubscribing from items event in Actions');
         socket.off('items', onItemsUpdate);
       };
     }
   }, [socket, userId, onItemsUpdate]);
 
   useEffect(() => {
-    console.log('Received personalItems in Actions:', personalItems);
+    // console.log('Received personalItems in Actions:', personalItems);
     setIsLoading(personalItems.length === 0);
   }, [personalItems]);
 
@@ -77,7 +77,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
       showNotification('Действие недоступно, подождите');
       return;
     }
-    console.log('Selected action:', action.title, 'personalItems:', personalItems);
+    // console.log('Selected action:', action.title, 'personalItems:', personalItems);
     setSelectedAction(action);
   }, [cooldowns, showNotification, personalItems]);
 

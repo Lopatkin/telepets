@@ -141,18 +141,19 @@ function App() {
           setTelegramTheme('light');
         }
 
+        // Улучшение обработки userUpdate для надежного обновления stats
         socketRef.current.on('userUpdate', (updatedUser) => {
-          console.log('Received userUpdate from server:', updatedUser);
+          console.log('Received userUpdate from server:', updatedUser); // Усиленное логирование
           setUser(prevUser => {
             const newUser = {
               ...prevUser,
               ...updatedUser,
               credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
-              freeRoam: updatedUser.freeRoam ?? false
+              freeRoam: updatedUser.freeRoam ?? false,
+              stats: updatedUser.stats || prevUser?.stats || {} // Полностью обновляем stats
             };
-            console.log('Updated user state after userUpdate:', newUser);
-            console.log('freeRoam value after update:', newUser.freeRoam);
+            console.log('Updated user state after userUpdate:', newUser); // Логирование нового состояния
             return newUser;
           });
           if (updatedUser.isRegistered !== undefined) {

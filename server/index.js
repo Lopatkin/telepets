@@ -226,16 +226,56 @@ io.on('connection', (socket) => {
       { $set: { 'stats.health': fight.playerHP } }
     );
 
+    // Получаем обновленного пользователя из базы данных
+    const updatedUser = await User.findOne({ userId });
+
+    // Отправляем событие userUpdate клиенту
+    socket.emit('userUpdate', {
+      userId: updatedUser.userId,
+      firstName: updatedUser.firstName,
+      username: updatedUser.username,
+      lastName: updatedUser.lastName,
+      photoUrl: updatedUser.photoUrl,
+      isRegistered: updatedUser.isRegistered,
+      isHuman: updatedUser.isHuman,
+      animalType: updatedUser.animalType,
+      name: updatedUser.name,
+      owner: updatedUser.owner,
+      homeless: updatedUser.homeless,
+      credits: updatedUser.credits || 0,
+      onLeash: updatedUser.onLeash,
+      freeRoam: updatedUser.freeRoam || false,
+      stats: updatedUser.stats // Отправляем полный объект stats
+    });
+
     // Проверяем завершение боя
     if (fight.playerHP <= 0 || fight.npcHP <= 0) {
       fightStates.delete(userId);
-      // Если игрок проиграл, устанавливаем здоровье 1
       if (fight.playerHP <= 0) {
         fight.playerHP = 1;
         await User.updateOne(
           { userId },
           { $set: { 'stats.health': 1 } }
         );
+        // Отправляем userUpdate после установки здоровья 1
+        const finalUser = await User.findOne({ userId });
+        socket.emit('userUpdate', {
+          userId: finalUser.userId,
+          firstName: finalUser.firstName,
+          username: finalUser.username,
+          lastName: finalUser.lastName,
+          photoUrl: finalUser.photoUrl,
+          isRegistered: finalUser.isRegistered,
+          isHuman: finalUser.isHuman,
+          animalType: finalUser.animalType,
+          name: finalUser.name,
+          owner: finalUser.owner,
+          homeless: finalUser.homeless,
+          credits: finalUser.credits || 0,
+          onLeash: finalUser.onLeash,
+          freeRoam: finalUser.freeRoam || false,
+          stats: finalUser.stats
+        });
         message += 'Вы проиграли бой!';
       } else {
         message += 'Вы победили!';

@@ -207,7 +207,7 @@ const LogItem = styled.div`
   transition: background 0.3s ease;
 `;
 
-function Fight({ theme, socket, user, npc, onClose, showNotification }) {
+function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser }) {
   const [playerHP, setPlayerHP] = useState(user.stats?.health || 100);
   const [npcHP, setNpcHP] = useState(npc.stats?.health || 100);
   const [playerAttackZone, setPlayerAttackZone] = useState(null);
@@ -228,7 +228,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       socket.emit('getUser', { userId: user.userId }, (response) => {
         if (response.success && response.user) {
           console.log('Received user data on fight close:', response.user);
-          updateUser(response.user);
+          updateUser(response.user); // Передаем данные в App.js
         } else {
           console.error('Failed to fetch user data on fight close:', response.message);
         }

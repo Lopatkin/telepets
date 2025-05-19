@@ -22,6 +22,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedNPC, setSelectedNPC] = useState(null);
   const [npcs, setNpcs] = useState([]);
+  const [modalContent, setModalContent] = useState(null); // Добавляем состояние для modalContent
 
   useEffect(() => {
     if (socket && onItemsUpdate) {
@@ -301,17 +302,15 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
       {selectedNPC && (
         <ModalOverlay onClick={handleCloseModal}>
           <ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
-            {isModalOpen && modalContent.type === 'fight' && (
-              <Fight
-                theme={theme}
-                socket={socket}
-                user={user}
-                npc={modalContent.npc}
-                onClose={closeActionModal}
-                showNotification={showNotification}
-                updateUser={updateUser}
-              />
-            )}
+            <Fight
+              theme={theme}
+              socket={socket}
+              user={user}
+              npc={selectedNPC} // Используем selectedNPC напрямую
+              onClose={handleCloseModal}
+              showNotification={showNotification}
+              updateUser={updateUser} // Передаем updateUser
+            />
           </ModalContent>
         </ModalOverlay>
       )}

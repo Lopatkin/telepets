@@ -65,6 +65,19 @@ function App() {
 
   const bouncingBallContainerRef = useRef(null);
 
+  const updateUser = useCallback((updatedUser) => {
+    console.log('Updating user state from child component:', updatedUser);
+    setUser(prevUser => {
+      const newUser = {
+        ...prevUser,
+        ...updatedUser,
+        stats: { ...prevUser?.stats, ...updatedUser.stats }
+      };
+      console.log('Updated user state:', newUser);
+      return newUser;
+    });
+  }, []);
+
   const closeActionModal = () => {
     console.log('Closing action modal');
     setIsActionModalOpen(false);
@@ -141,9 +154,27 @@ function App() {
           setTelegramTheme('light');
         }
 
+        socketRef.current.on('connect', () => {
+          console.log('Socket connected, requesting user data');
+          socketRef.current.emit('getUser', { userId: user?.userId }, (response) => {
+            if (response.success && response.user) {
+              console.log('Received user data on connect:', response.user);
+              updateUser(response.user);
+              setIsRegistered(response.user.isRegistered);
+            }
+          });
+        });
+
+        socketRef.current.on('getUser', (response) => {
+          if (response.success && response.user) {
+            console.log('Received getUser response:', response.user);
+            updateUser(response.user);
+          }
+        });
+
         // Улучшение обработки userUpdate для надежного обновления stats
         socketRef.current.on('userUpdate', (updatedUser) => {
-          console.log('Received userUpdate from server:', updatedUser); // Усиленное логирование
+          console.log('Received userUpdate from server:', updatedUser);
           setUser(prevUser => {
             const newUser = {
               ...prevUser,
@@ -151,9 +182,9 @@ function App() {
               credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
               freeRoam: updatedUser.freeRoam ?? false,
-              stats: { ...prevUser?.stats, ...updatedUser.stats } // Полное обновление stats
+              stats: { ...prevUser?.stats, ...updatedUser.stats }
             };
-            console.log('Updated user state after userUpdate:', newUser); // Логирование нового состояния
+            console.log('Updated user state after userUpdate:', newUser);
             return newUser;
           });
           if (updatedUser.isRegistered !== undefined) {

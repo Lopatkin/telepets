@@ -328,7 +328,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Новый обработчик для завершения боя
+  // Улучшенный обработчик endFight
   socket.on('endFight', async (data) => {
     const { userId } = data;
     console.log(`Received endFight for user ${userId}`);
@@ -342,24 +342,29 @@ io.on('connection', (socket) => {
 
     const user = await User.findOne({ userId });
     if (user) {
-      console.log(`Sending userUpdate for user ${userId} with stats:`, user.stats);
-      socket.emit('userUpdate', {
-        userId: user.userId,
-        firstName: user.firstName,
-        username: user.username,
-        lastName: user.lastName,
-        photoUrl: user.photoUrl,
-        isRegistered: user.isRegistered,
-        isHuman: user.isHuman,
-        animalType: user.animalType,
-        name: user.name,
-        owner: user.owner,
-        homeless: user.homeless,
-        credits: user.credits || 0,
-        onLeash: user.onLeash,
-        freeRoam: user.freeRoam || false,
-        stats: user.stats
-      });
+      console.log(`Preparing userUpdate for user ${userId} with stats:`, user.stats);
+      try {
+        socket.emit('userUpdate', {
+          userId: user.userId,
+          firstName: user.firstName,
+          username: user.username,
+          lastName: user.lastName,
+          photoUrl: user.photoUrl,
+          isRegistered: user.isRegistered,
+          isHuman: user.isHuman,
+          animalType: user.animalType,
+          name: user.name,
+          owner: user.owner,
+          homeless: user.homeless,
+          credits: user.credits || 0,
+          onLeash: user.onLeash,
+          freeRoam: user.freeRoam || false,
+          stats: user.stats
+        });
+        console.log(`Sent userUpdate for user ${userId}`);
+      } catch (error) {
+        console.error(`Failed to send userUpdate for user ${userId}:`, error.message);
+      }
     } else {
       console.log(`User ${userId} not found for userUpdate`);
     }

@@ -14,7 +14,7 @@ import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constant
 import { ClipLoader } from 'react-spinners';
 import { getActiveNPCs } from '../utils/npcData';
 
-function Actions({ theme, currentRoom, userId, socket, personalItems, user, onItemsUpdate }) {
+function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, pets, isModalOpen, setIsModalOpen, user, updateUser }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
@@ -301,14 +301,17 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
       {selectedNPC && (
         <ModalOverlay onClick={handleCloseModal}>
           <ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
-            <Fight
-              theme={theme}
-              socket={socket}
-              user={user}
-              npc={selectedNPC}
-              onClose={handleCloseModal}
-              showNotification={showNotification}
-            />
+            {isModalOpen && modalContent.type === 'fight' && (
+              <Fight
+                theme={theme}
+                socket={socket}
+                user={user}
+                npc={modalContent.npc}
+                onClose={closeActionModal}
+                showNotification={showNotification}
+                updateUser={updateUser}
+              />
+            )}
           </ModalContent>
         </ModalOverlay>
       )}

@@ -225,18 +225,17 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
       socket.emit('endFight', { userId: user.userId });
       console.log('Sent endFight for user:', user.userId);
 
-      // Резервный запрос данных пользователя
       socket.emit('getUser', { userId: user.userId }, (response) => {
         if (response.success && response.user) {
           console.log('Received user data on fight close:', response.user);
-          // Данные будут обновлены через userUpdate, но это резервный механизм
+          updateUser(response.user);
         } else {
           console.error('Failed to fetch user data on fight close:', response.message);
         }
       });
     }
     onClose();
-  }, [socket, user, onClose]);
+  }, [socket, user, onClose, updateUser]);
 
   const displayName = !user.isHuman && user.name
     ? user.name

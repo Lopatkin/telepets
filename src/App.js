@@ -65,6 +65,7 @@ function App() {
 
   const bouncingBallContainerRef = useRef(null);
 
+  // Callback для обновления состояния user из дочерних компонентов
   const updateUser = useCallback((updatedUser) => {
     console.log('Updating user state from child component:', updatedUser);
     setUser(prevUser => {
@@ -154,17 +155,7 @@ function App() {
           setTelegramTheme('light');
         }
 
-        socketRef.current.on('connect', () => {
-          console.log('Socket connected, requesting user data');
-          socketRef.current.emit('getUser', { userId: user?.userId }, (response) => {
-            if (response.success && response.user) {
-              console.log('Received user data on connect:', response.user);
-              updateUser(response.user);
-              setIsRegistered(response.user.isRegistered);
-            }
-          });
-        });
-
+        // Добавляем обработчик для всех ответов getUser
         socketRef.current.on('getUser', (response) => {
           if (response.success && response.user) {
             console.log('Received getUser response:', response.user);
@@ -269,12 +260,33 @@ function App() {
         console.error('Server error:', message);
       });
 
+      // Добавляем запрос getUser при подключении
+      socketRef.current.on('connect', () => {
+        console.log('Socket connected, requesting user data');
+        if (user?.userId) {
+          socketRef.current.emit('getUser', { userId: user.userId }, (response) => {
+            if (response.success && response.user) {
+              console.log('Received user data on connect:', response.user);
+              updateUser(response.user);
+              setIsRegistered(response.user.isRegistered);
+            }
+          });
+        }
+      });
+
       return () => {
         if (socketRef.current) {
+          socketRef.current.off('connect');
+          socketRef.current.off('getUser');
           socketRef.current.off('userUpdate');
           socketRef.current.off('leashStatus');
           socketRef.current.off('items');
           socketRef.current.off('itemAction');
+          socketRef.current.off('disconnect');
+          socketRef.current.off('connect_error');
+          socketRef.current.off('authSuccess');
+          socketRef.current.off('forceRoomChange');
+          socketRef.current.off('error');
           socketRef.current.disconnect();
           console.log('Socket disconnected on unmount');
         }
@@ -282,8 +294,7 @@ function App() {
     };
 
     initializeSocket();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [handleItemsUpdate]);
+  }, [handleItemsUpdate, updateUser, user?.userId]); // Добавляем зависимости
 
   // Добавляем эффект для повторного запроса getItems после обновления user
   // useEffect(() => {
@@ -416,12 +427,13 @@ function App() {
             currentRoom={currentRoom}
             theme={appliedTheme}
             socket={socket}
-            personalItems={personalItems} // Добавляем personalItems
-            onItemsUpdate={handleItemsUpdate} // Добавляем onItemsUpdate
+            personalItems={personalItems}
+            onItemsUpdate={handleItemsUpdate}
             pets={pets}
             isModalOpen={isActionModalOpen}
             setIsModalOpen={setIsActionModalOpen}
             user={user}
+            updateUser={updateUser} // Передаем updateUser
           />
         )}
         {activeTab === 'housing' && socket && (
@@ -435,6 +447,7 @@ function App() {
             closeActionModal={closeActionModal}
             setIsModalOpen={setIsActionModalOpen}
             user={user}
+            updateUser={updateUser} // Передаем updateUser
           />
         )}
         {activeTab === 'map' && canAccessMap && (

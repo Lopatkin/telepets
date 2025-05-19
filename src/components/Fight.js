@@ -230,7 +230,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
   const timeProgress = useMemo(() => (timeLeft / 20) * 100, [timeLeft]);
 
   // Вычисляем процент здоровья для прогресс-баров
-  const playerHPPercentage = (playerHP / (user.stats?.health || 100)) * 100;
+  const playerHPPercentage = (playerHP / (user.stats?.maxHealth || 100)) * 100;
   const npcHPPercentage = (npcHP / (npc.stats?.health || 100)) * 100;
 
   // Параметры NPC по умолчанию, если они отсутствуют
@@ -441,7 +441,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
           </StatsDisplay>
           <HPBar>
             <HPFill hpPercentage={playerHPPercentage} />
-            <HPText>{Math.round(playerHP)}/{user.stats?.health || 100}</HPText>
+            <HPText>{Math.round(playerHP)}/{user.stats?.maxHealth || 100}</HPText>
           </HPBar>
           <ZoneGrid>
             {zones.map((zone) => (

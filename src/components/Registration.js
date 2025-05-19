@@ -182,39 +182,72 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
 
   const handleComplete = () => {
     const baseStats = isHuman
-      ? { health: 100, attack: 10, defense: 20, energy: 100, mood: 100, satiety: 100 } // Параметры для человека
+      ? {
+        health: 100,
+        attack: 10,
+        defense: 20,
+        energy: 100,
+        mood: 100,
+        satiety: 100,
+        maxHealth: 100, // Максимальное здоровье для человека
+        maxEnergy: 100,
+        maxMood: 100,
+        maxSatiety: 100
+      }
       : animalType === 'Кошка'
-        ? { health: 30, attack: 5, defense: 5, energy: 100, mood: 100, satiety: 100 } // Параметры для кошки
-        : { health: 50, attack: 15, defense: 10, energy: 100, mood: 100, satiety: 100 }; // Параметры для собаки
-  
+        ? {
+          health: 30,
+          attack: 5,
+          defense: 5,
+          energy: 100,
+          mood: 100,
+          satiety: 100,
+          maxHealth: 30, // Максимальное здоровье для кошки
+          maxEnergy: 100,
+          maxMood: 100,
+          maxSatiety: 100
+        }
+        : {
+          health: 50,
+          attack: 15,
+          defense: 10,
+          energy: 100,
+          mood: 100,
+          satiety: 100,
+          maxHealth: 50, // Максимальное здоровье для собаки
+          maxEnergy: 100,
+          maxMood: 100,
+          maxSatiety: 100
+        };
+
     const registrationData = isHuman
       ? {
-          userId: user.userId,
-          isHuman: true,
-          formerProfession: getRandomProfession(),
-          residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
-          isRegistered: true,
-          stats: baseStats // Отправляем обновленный объект stats
-        }
+        userId: user.userId,
+        isHuman: true,
+        formerProfession: getRandomProfession(),
+        residence: `Город Туманный, ${getRandomStreet()}, дом ${getRandomNumber(1, 42)}, квартира ${getRandomNumber(1, 20)}`,
+        isRegistered: true,
+        stats: baseStats // Отправляем stats с максимальными значениями
+      }
       : {
-          userId: user.userId,
-          isHuman: false,
-          animalType,
-          name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
-          residence: 'Город Туманный',
-          isRegistered: true,
-          photoUrl: selectedAvatar,
-          owner: null,
-          stats: baseStats // Отправляем обновленный объект stats
-        };
-  
-    console.log('Отправляем registrationData на сервер:', registrationData); // Логирование для отладки
-  
+        userId: user.userId,
+        isHuman: false,
+        animalType,
+        name: animalType === 'Кошка' ? 'Бездомный кот' : 'Бездомная собака',
+        residence: 'Город Туманный',
+        isRegistered: true,
+        photoUrl: selectedAvatar,
+        owner: null,
+        stats: baseStats // Отправляем stats с максимальными значениями
+      };
+
+    console.log('Отправляем registrationData на сервер:', registrationData);
+
     socket.emit('completeRegistration', registrationData, (response) => {
       if (response.success) {
         onRegistrationComplete('Автобусная остановка');
       } else {
-        console.error('Ошибка регистрации:', response.message); // Логирование ошибки
+        console.error('Ошибка регистрации:', response.message);
       }
     });
   };

@@ -146,8 +146,8 @@ const ThemeLabel = styled.span`
 function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, progressValues }) {
   const photoUrl = user?.photoUrl || '';
   // Для животных используем поле name, для людей — firstName и lastName
-  const displayName = !user.isHuman && user.name 
-    ? user.name 
+  const displayName = !user.isHuman && user.name
+    ? user.name
     : `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim();
   const username = user?.username || '';
   const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
@@ -166,23 +166,23 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
         <ProgressWidget theme={theme}>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Энергия</ProgressLabel>
-            <ProgressBar value={progressValues.energy || 0} max="100" type="energy" />
-            <ProgressValue theme={theme}>{progressValues.energy || 0}%</ProgressValue>
+            <ProgressBar value={user.stats.energy || 0} max={user.stats.maxEnergy || 100} type="energy" />
+            <ProgressValue theme={theme}>{user.stats.energy || 0}%</ProgressValue>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
-            <ProgressBar value={progressValues.health || 0} max="100" type="health" />
-            <ProgressValue theme={theme}>{progressValues.health || 0}%</ProgressValue>
+            <ProgressBar value={user.stats.health || 0} max={user.stats.maxHealth || 100} type="health" />
+            <ProgressValue theme={theme}>{user.stats.health || 0}%</ProgressValue>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Настроение</ProgressLabel>
-            <ProgressBar value={progressValues.mood || 0} max="100" type="mood" />
-            <ProgressValue theme={theme}>{progressValues.mood || 0}%</ProgressValue>
+            <ProgressBar value={user.stats.mood || 0} max={user.stats.maxMood || 100} type="mood" />
+            <ProgressValue theme={theme}>{user.stats.mood || 0}%</ProgressValue>
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Сытость</ProgressLabel>
-            <ProgressBar value={progressValues.fullness || 0} max="100" type="fullness" />
-            <ProgressValue theme={theme}>{progressValues.fullness || 0}%</ProgressValue>
+            <ProgressBar value={user.stats.satiety || 0} max={user.stats.maxSatiety || 100} type="fullness" />
+            <ProgressValue theme={theme}>{user.stats.satiety || 0}%</ProgressValue>
           </ProgressBarContainer>
         </ProgressWidget>
       )}

@@ -58,7 +58,11 @@ const userSchema = new mongoose.Schema({
     defense: { type: Number },
     energy: { type: Number },
     mood: { type: Number },
-    satiety: { type: Number }
+    satiety: { type: Number },
+    maxHealth: { type: Number }, // Новое поле для максимального здоровья
+    maxEnergy: { type: Number, default: 100 }, // Максимальная энергия
+    maxMood: { type: Number, default: 100 }, // Максимальное настроение
+    maxSatiety: { type: Number, default: 100 } // Максимальная сытость
   }
 });
 const User = mongoose.model('User', userSchema);
@@ -176,10 +180,10 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Инициализация состояния боя
+    // Инициализация состояния боя с использованием maxHealth
     if (!fightStates.has(userId)) {
       fightStates.set(userId, {
-        playerHP: user.stats.health, // Используем текущее здоровье игрока
+        playerHP: Math.min(user.stats.health, user.stats.maxHealth), // Используем текущее здоровье, ограниченное максимальным
         npcHP: npc.stats.health,
         npcId
       });
@@ -193,7 +197,7 @@ io.on('connection', (socket) => {
 
     // Проверяем атаку игрока
     if (playerAttackZone && !npcDefenseZones.includes(playerAttackZone)) {
-      const npcDefenseValue = Math.floor(Math.random() * (npc.stats.defense + 1)); // Случайное от 0 до defense
+      const npcDefenseValue = Math.floor(Math.random() * (npc.stats.defense + 1));
       damageToNPC = Math.max(0, playerAttack - npcDefenseValue);
       message += `Вы ударили ${npcId.replace('npc_', '')} в ${playerAttackZone} и нанесли ${damageToNPC} урона! `;
     } else {
@@ -202,7 +206,7 @@ io.on('connection', (socket) => {
 
     // Проверяем атаку NPC
     if (npcAttackZone && !playerDefenseZones.includes(npcAttackZone)) {
-      const playerDefenseValue = Math.floor(Math.random() * (playerDefense + 1)); // Учитываем защиту игрока
+      const playerDefenseValue = Math.floor(Math.random() * (playerDefense + 1));
       damageToPlayer = Math.max(0, npc.stats.attack - playerDefenseValue);
       message += `${npcId.replace('npc_', '')} ударил вас в ${npcAttackZone} и нанёс ${damageToPlayer} урона! `;
     } else {
@@ -213,6 +217,9 @@ io.on('connection', (socket) => {
     fight.playerHP = Math.max(0, fight.playerHP - damageToPlayer);
     fight.npcHP = Math.max(0, fight.npcHP - damageToNPC);
 
+    // Ограничиваем здоровье максимальным значением
+    fight.playerHP = Math.min(fight.playerHP, user.stats.maxHealth);
+
     // Обновляем здоровье игрока в базе данных
     await User.updateOne(
       { userId },
@@ -222,7 +229,7 @@ io.on('connection', (socket) => {
     // Проверяем завершение боя
     if (fight.playerHP <= 0 || fight.npcHP <= 0) {
       fightStates.delete(userId);
-      // Если игрок проиграл, устанавливаем здоровье 1, чтобы избежать смерти
+      // Если игрок проиграл, устанавливаем здоровье 1
       if (fight.playerHP <= 0) {
         fight.playerHP = 1;
         await User.updateOne(

@@ -165,129 +165,133 @@ io.on('connection', (socket) => {
 
   // Модификация fightRound для использования актуального здоровья
   socket.on('fightRound', async (data, callback) => {
-    const {
-      userId,
-      npcId,
-      playerAttackZone,
-      playerDefenseZones,
-      npcAttackZone,
-      npcDefenseZones,
-      playerAttack,
-      playerDefense
-    } = data;
+    const { userId, npcId, playerAttackZone, playerDefenseZones, npcAttackZone, npcDefenseZones, playerAttack, playerDefense } = data;
 
-    console.log(`Received fightRound for user ${userId} vs NPC ${npcId}`);
-
-    let fight = fightStates.get(userId);
-    if (!fight) {
-      console.log(`No active fight found for user ${userId}, initializing new fight`);
-      const user = await User.findOne({ userId });
-      const npc = npcs.find(n => n.userId === npcId);
-      if (!user || !npc) {
-        console.error(`User ${userId} or NPC ${npcId} not found`);
-        return callback({ success: false, message: 'User or NPC not found' });
-      }
-      fight = {
-        userId,
-        npcId,
-        playerHP: user.stats.health,
-        npcHP: npc.stats.health,
-        playerMaxHP: user.stats.maxHealth || 100,
-        npcMaxHP: npc.stats.health || 100
-      };
-      fightStates.set(userId, fight);
+    // Находим пользователя в базе данных
+    const user = await User.findOne({ userId });
+    if (!user || !user.stats) {
+      callback({ success: false, message: 'Пользователь не найден или отсутствуют параметры' });
+      return;
     }
+
+    // Находим NPC в npcData
+    const npc = Object.values(npcData).flat().find(n => n.userId === npcId);
+    if (!npc || !npc.stats) {
+      callback({ success: false, message: 'NPC не найден или отсутствуют параметры' });
+      return;
+    }
+
+    // Инициализация состояния боя с актуальным здоровьем
+    if (!fightStates.has(userId)) {
+      fightStates.set(userId, {
+        playerHP: Math.min(user.stats.health, user.stats.maxHealth), // Всегда используем текущее здоровье
+        npcHP: npc.stats.health,
+        npcId
+      });
+    } else {
+      // Обновляем playerHP до актуального значения из базы данных
+      const fight = fightStates.get(userId);
+      fight.playerHP = Math.min(user.stats.health, user.stats.maxHealth);
+    }
+
+    const fight = fightStates.get(userId);
 
     let message = '';
-    let playerDamage = 0;
-    let npcDamage = 0;
+    let damageToPlayer = 0;
+    let damageToNPC = 0;
 
-    // Проверяем, атаковал ли игрок
-    if (playerAttackZone) {
-      const isBlocked = npcDefenseZones.includes(playerAttackZone);
-      const damage = isBlocked ? Math.floor(playerAttack * 0.5) : playerAttack;
-      fight.npcHP -= damage;
-      npcDamage = damage;
-      message += `Игрок атаковал ${playerAttackZone} и нанес ${damage} урона. `;
+    // Проверяем атаку игрока
+    if (playerAttackZone && !npcDefenseZones.includes(playerAttackZone)) {
+      const npcDefenseValue = Math.floor(Math.random() * (npc.stats.defense + 1));
+      damageToNPC = Math.max(0, playerAttack - npcDefenseValue);
+      message += `Вы ударили ${npcId.replace('npc_', '')} в ${playerAttackZone} и нанесли ${damageToNPC} урона! `;
     } else {
-      message += `Игрок не атаковал. `;
+      message += `Ваш удар в ${playerAttackZone || 'неизвестную зону'} был заблокирован! `;
     }
 
-    // NPC атакует
-    const isPlayerBlocked = playerDefenseZones.includes(npcAttackZone);
-    const npcAttackValue = npcs.find(n => n.userId === npcId)?.stats.attack || 10;
-    const damageToPlayer = isPlayerBlocked ? Math.floor(npcAttackValue * 0.5) : npcAttackValue;
-    fight.playerHP -= damageToPlayer;
-    playerDamage = damageToPlayer;
-    message += `NPC атаковал ${npcAttackZone} и нанес ${damageToPlayer} урона.`;
-
-    // Ограничиваем здоровье игрока минимальным значением 0
-    if (fight.playerHP < 0) {
-      fight.playerHP = 0;
+    // Проверяем атаку NPC
+    if (npcAttackZone && !playerDefenseZones.includes(npcAttackZone)) {
+      const playerDefenseValue = Math.floor(Math.random() * (playerDefense + 1));
+      damageToPlayer = Math.max(0, npc.stats.attack - playerDefenseValue);
+      message += `${npcId.replace('npc_', '')} ударил вас в ${npcAttackZone} и нанёс ${damageToPlayer} урона! `;
+    } else {
+      message += `Вы заблокировали удар в ${npcAttackZone}! `;
     }
 
-    // Ограничиваем здоровье NPC минимальным значением 0
-    if (fight.npcHP < 0) {
-      fight.npcHP = 0;
-    }
+    // Обновляем HP
+    fight.playerHP = Math.max(0, fight.playerHP - damageToPlayer);
+    fight.npcHP = Math.max(0, fight.npcHP - damageToNPC);
+
+    // Ограничиваем здоровье максимальным значением
+    fight.playerHP = Math.min(fight.playerHP, user.stats.maxHealth);
 
     // Обновляем здоровье игрока в базе данных
-    const user = await User.findOne({ userId });
-    if (user) {
-      user.stats.health = fight.playerHP;
-      await user.save();
-      console.log(`Updated user ${userId} health to ${user.stats.health}`);
-    } else {
-      console.error(`User ${userId} not found for health update`);
-    }
+    await User.updateOne(
+      { userId },
+      { $set: { 'stats.health': fight.playerHP } }
+    );
+
+    // Получаем обновленного пользователя
+    const updatedUser = await User.findOne({ userId });
+
+    // Отправляем userUpdate
+    socket.emit('userUpdate', {
+      userId: updatedUser.userId,
+      firstName: updatedUser.firstName,
+      username: updatedUser.username,
+      lastName: updatedUser.lastName,
+      photoUrl: updatedUser.photoUrl,
+      isRegistered: updatedUser.isRegistered,
+      isHuman: updatedUser.isHuman,
+      animalType: updatedUser.animalType,
+      name: updatedUser.name,
+      owner: updatedUser.owner,
+      homeless: updatedUser.homeless,
+      credits: updatedUser.credits || 0,
+      onLeash: updatedUser.onLeash,
+      freeRoam: updatedUser.freeRoam || false,
+      stats: updatedUser.stats
+    });
 
     // Проверяем завершение боя
-    let fightEnded = false;
-    if (fight.playerHP <= 0) {
-      message = `Игрок проиграл! ${message}`;
-      fightEnded = true;
-    } else if (fight.npcHP <= 0) {
-      message = `Игрок победил! ${message}`;
-      fightEnded = true;
+    if (fight.playerHP <= 0 || fight.npcHP <= 0) {
+      fightStates.delete(userId);
+      if (fight.playerHP <= 0) {
+        fight.playerHP = 1;
+        await User.updateOne(
+          { userId },
+          { $set: { 'stats.health': 1 } }
+        );
+        const finalUser = await User.findOne({ userId });
+        socket.emit('userUpdate', {
+          userId: finalUser.userId,
+          firstName: finalUser.firstName,
+          username: finalUser.username,
+          lastName: finalUser.lastName,
+          photoUrl: finalUser.photoUrl,
+          isRegistered: finalUser.isRegistered,
+          isHuman: finalUser.isHuman,
+          animalType: finalUser.animalType,
+          name: finalUser.name,
+          owner: finalUser.owner,
+          homeless: finalUser.homeless,
+          credits: finalUser.credits || 0,
+          onLeash: finalUser.onLeash,
+          freeRoam: finalUser.freeRoam || false,
+          stats: finalUser.stats
+        });
+        message += 'Вы проиграли бой!';
+      } else {
+        message += 'Вы победили!';
+      }
     }
 
-    // Отправляем результат раунда
     callback({
       success: true,
       playerHP: fight.playerHP,
       npcHP: fight.npcHP,
       message
     });
-
-    // Если бой завершился, очищаем состояние и отправляем userUpdate
-    if (fightEnded) {
-      fightStates.delete(userId);
-      console.log(`Fight ended for user ${userId}, cleared fight state`);
-      if (user) {
-        try {
-          socket.emit('userUpdate', {
-            userId: user.userId,
-            firstName: user.firstName,
-            username: user.username,
-            lastName: user.lastName,
-            photoUrl: user.photoUrl,
-            isRegistered: user.isRegistered,
-            isHuman: user.isHuman,
-            animalType: user.animalType,
-            name: user.name,
-            owner: user.owner,
-            homeless: user.homeless,
-            credits: user.credits || 0,
-            onLeash: user.onLeash,
-            freeRoam: user.freeRoam || false,
-            stats: user.stats
-          });
-          console.log(`Sent userUpdate for user ${userId} after fight`);
-        } catch (error) {
-          console.error(`Failed to send userUpdate for user ${userId}:`, error.message);
-        }
-      }
-    }
   });
 
   // Добавление обработчика getUser

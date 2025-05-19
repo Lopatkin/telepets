@@ -163,6 +163,7 @@ io.on('connection', (socket) => {
   registerInventoryHandlers(dependencies);
   registerAnimalHandlers(dependencies);
 
+  // Модификация fightRound для использования актуального здоровья
   socket.on('fightRound', async (data, callback) => {
     const { userId, npcId, playerAttackZone, playerDefenseZones, npcAttackZone, npcDefenseZones, playerAttack, playerDefense } = data;
 
@@ -180,13 +181,17 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Инициализация состояния боя с использованием maxHealth
+    // Инициализация состояния боя с актуальным здоровьем
     if (!fightStates.has(userId)) {
       fightStates.set(userId, {
-        playerHP: Math.min(user.stats.health, user.stats.maxHealth), // Используем текущее здоровье, ограниченное максимальным
+        playerHP: Math.min(user.stats.health, user.stats.maxHealth), // Всегда используем текущее здоровье
         npcHP: npc.stats.health,
         npcId
       });
+    } else {
+      // Обновляем playerHP до актуального значения из базы данных
+      const fight = fightStates.get(userId);
+      fight.playerHP = Math.min(user.stats.health, user.stats.maxHealth);
     }
 
     const fight = fightStates.get(userId);
@@ -226,10 +231,10 @@ io.on('connection', (socket) => {
       { $set: { 'stats.health': fight.playerHP } }
     );
 
-    // Получаем обновленного пользователя из базы данных
+    // Получаем обновленного пользователя
     const updatedUser = await User.findOne({ userId });
 
-    // Отправляем событие userUpdate клиенту
+    // Отправляем userUpdate
     socket.emit('userUpdate', {
       userId: updatedUser.userId,
       firstName: updatedUser.firstName,
@@ -245,7 +250,7 @@ io.on('connection', (socket) => {
       credits: updatedUser.credits || 0,
       onLeash: updatedUser.onLeash,
       freeRoam: updatedUser.freeRoam || false,
-      stats: updatedUser.stats // Отправляем полный объект stats
+      stats: updatedUser.stats
     });
 
     // Проверяем завершение боя
@@ -257,7 +262,6 @@ io.on('connection', (socket) => {
           { userId },
           { $set: { 'stats.health': 1 } }
         );
-        // Отправляем userUpdate после установки здоровья 1
         const finalUser = await User.findOne({ userId });
         socket.emit('userUpdate', {
           userId: finalUser.userId,
@@ -288,6 +292,37 @@ io.on('connection', (socket) => {
       npcHP: fight.npcHP,
       message
     });
+  });
+
+  // Новый обработчик для завершения боя
+  socket.on('endFight', async (data) => {
+    const { userId } = data;
+    if (fightStates.has(userId)) {
+      fightStates.delete(userId);
+      console.log(`Fight state cleared for user ${userId}`);
+    }
+
+    // Отправляем актуальные данные пользователя
+    const user = await User.findOne({ userId });
+    if (user) {
+      socket.emit('userUpdate', {
+        userId: user.userId,
+        firstName: user.firstName,
+        username: user.username,
+        lastName: user.lastName,
+        photoUrl: user.photoUrl,
+        isRegistered: user.isRegistered,
+        isHuman: user.isHuman,
+        animalType: user.animalType,
+        name: user.name,
+        owner: user.owner,
+        homeless: user.homeless,
+        credits: user.credits || 0,
+        onLeash: user.onLeash,
+        freeRoam: user.freeRoam || false,
+        stats: user.stats
+      });
+    }
   });
 
   socket.on('disconnect', (reason) => {

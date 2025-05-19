@@ -220,6 +220,14 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   const zones = useMemo(() => ['head', 'back', 'belly', 'legs'], []);
 
+  const handleClose = useCallback(() => {
+    if (socket && user?.userId) {
+      socket.emit('endFight', { userId: user.userId });
+      console.log('Sent endFight for user:', user.userId);
+    }
+    onClose();
+  }, [socket, user, onClose]);
+
   const displayName = !user.isHuman && user.name
     ? user.name
     : `${user?.firstName || 'Игрок'} ${user?.lastName || ''}`.trim();
@@ -421,7 +429,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification }) {
 
   return (
     <FightContainer theme={theme}>
-      <CloseButton theme={theme} onClick={onClose}><FaTimes /></CloseButton>
+      <CloseButton theme={theme} onClick={handleClose}><FaTimes /></CloseButton>
       <TimeProgressBar theme={theme}>
         <TimeProgressFill progress={timeProgress} />
       </TimeProgressBar>

@@ -72,15 +72,15 @@ function App() {
 
   const handleItemsUpdate = (data) => {
     const { owner, items } = data;
-    console.log('handleItemsUpdate:', { owner, items });
+    // console.log('handleItemsUpdate:', { owner, items });
     if (owner === `user_${user?.userId}`) {
       const updatedItems = items.map(item => ({
         ...item,
         _id: item._id.toString(),
       }));
-      console.log('Updating personalItems:', updatedItems);
+      // console.log('Updating personalItems:', updatedItems);
       setPersonalItems(updatedItems);
-      console.log('personalItems state after setPersonalItems:', updatedItems); // Новый лог
+      // console.log('personalItems state after setPersonalItems:', updatedItems); // Новый лог
     }
   };
 
@@ -363,7 +363,7 @@ function App() {
     user.freeRoam ||
     (!isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline)
   );
-  console.log('canAccessMap:', canAccessMap, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline);
+  // console.log('canAccessMap:', canAccessMap, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline);
 
   return (
     <AppContainer>

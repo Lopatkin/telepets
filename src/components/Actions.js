@@ -221,7 +221,7 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
         <ActionGrid>
           {availableActions.length > 0 ? (
             availableActions.map((action) => {
-              console.log('Rendering action:', action.title, 'cooldownKey:', action.cooldownKey);
+              // console.log('Rendering action:', action.title, 'cooldownKey:', action.cooldownKey);
               return (
                 <ActionCard
                   key={action.id}

@@ -52,7 +52,6 @@ const userSchema = new mongoose.Schema({
   lastActivity: { type: Date, default: Date.now },
   owner: { type: String, default: null },
   freeRoam: { type: Boolean, default: false },
-  freeWill: { type: Number, default: 50, min: 0, max: 100 }, // Новое поле
   stats: {
     health: { type: Number },
     attack: { type: Number },
@@ -242,44 +241,6 @@ io.on('connection', (socket) => {
       npcHP: fight.npcHP,
       message
     });
-  });
-
-
-  socket.on('updateFreeWill', async ({ userId, freeWill }) => {
-    try {
-      await User.updateOne(
-        { userId },
-        { $set: { freeWill } }
-      );
-      socket.emit('freeWillUpdate', { freeWill });
-    } catch (error) {
-      console.error('Error updating freeWill:', error);
-      socket.emit('error', { message: 'Ошибка при обновлении свободы воли' });
-    }
-  });
-
-  socket.on('getFreeWill', async ({ userId }) => {
-    try {
-      const user = await User.findOne({ userId });
-      if (user) {
-        socket.emit('freeWillUpdate', { freeWill: user.freeWill });
-      }
-    } catch (error) {
-      console.error('Error fetching freeWill:', error);
-      socket.emit('error', { message: 'Ошибка при получении свободы воли' });
-    }
-  });
-
-  socket.on('updateLastActivity', async ({ userId }) => {
-    try {
-      await User.updateOne(
-        { userId },
-        { $set: { lastActivity: new Date() } }
-      );
-    } catch (error) {
-      console.error('Error updating lastActivity:', error);
-      socket.emit('error', { message: 'Ошибка при обновлении времени активности' });
-    }
   });
 
   socket.on('disconnect', (reason) => {

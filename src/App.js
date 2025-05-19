@@ -84,7 +84,7 @@ function App() {
     setIsActionModalOpen(false);
   };
 
-  const handleItemsUpdate = (data) => {
+  const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
     // console.log('handleItemsUpdate:', { owner, items });
     if (owner === `user_${user?.userId}`) {
@@ -94,9 +94,9 @@ function App() {
       }));
       // console.log('Updating personalItems:', updatedItems);
       setPersonalItems(updatedItems);
-      // console.log('personalItems state after setPersonalItems:', updatedItems); // Новый лог
+      // console.log('personalItems state after setPersonalItems:', updatedItems);
     }
-  };
+  }, [user?.userId]);
 
   useEffect(() => {
     const initializeSocket = () => {

@@ -14,7 +14,7 @@ import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constant
 import { ClipLoader } from 'react-spinners';
 import { getActiveNPCs } from '../utils/npcData';
 
-function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, pets, isModalOpen, setIsModalOpen, user, updateUser }) {
+function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user, updateUser }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
@@ -22,7 +22,6 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedNPC, setSelectedNPC] = useState(null);
   const [npcs, setNpcs] = useState([]);
-  const [modalContent, setModalContent] = useState(null); // Добавляем состояние для modalContent
 
   useEffect(() => {
     if (socket && onItemsUpdate) {

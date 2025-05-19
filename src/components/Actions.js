@@ -79,7 +79,9 @@ function Actions({ theme, currentRoom, userId, socket, personalItems, user, onIt
     }
     // console.log('Selected action:', action.title, 'personalItems:', personalItems);
     setSelectedAction(action);
-  }, [cooldowns, showNotification, personalItems]);
+    // }, [cooldowns, showNotification, personalItems]);
+  }, [cooldowns, showNotification]);
+
 
   const handleCloseModal = useCallback(() => {
     setSelectedAction(null);

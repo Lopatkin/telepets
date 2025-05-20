@@ -391,6 +391,7 @@ function registerUserHandlers({
         }
     });
 
+    
     // Добавляем новый обработчик для обновления свободы воли
     socket.on('updateFreeWill', async ({ userId, freeWill }, callback) => {
         try {

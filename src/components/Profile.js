@@ -41,9 +41,9 @@ const FreeWillWrapper = styled.div`
 
 // Новый контейнер для блока логов
 const LogWrapper = styled.div`
-    width: 100%;
-    padding: 10 10px; // Отступы 10px слева и справа
-    margin: 20px 0 0 0; // Сохраняем отступ сверху
+    width: 90%;
+    padding: 10px; // Отступы 10px слева и справа
+    margin: 20px; // Сохраняем отступ сверху
   `;
 
 const SliderLabel = styled.label`
@@ -67,8 +67,8 @@ const SaveIcon = styled(FaSave)`
 `;
 
 const LogContainer = styled.div`
-  width: 100%;
-  margin: 20px 0 0 0; // Убрал auto для центрирования, теперь ширина 100%
+  width: 90%;
+  margin: 20px; // Убрал auto для центрирования, теперь ширина 100%
   height: 200px;
   background: ${props => props.theme === 'dark' ? '#333' : '#f9f9f9'};
   border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ccc'};

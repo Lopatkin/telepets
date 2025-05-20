@@ -42,12 +42,8 @@ const FreeWillWrapper = styled.div`
 // Новый контейнер для блока логов
 const LogWrapper = styled.div`
     width: 100%;
-    padding: 10px 20px; // Увеличены отступы по бокам до 20px
-    background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
-    border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 20px 0; // Убраны боковые отступы, только сверху и снизу
+    padding: 0 20px; // Отступы 20px по бокам
+    margin: 20px 0; // Отступы только сверху и снизу
 `;
 
 const SliderLabel = styled.label`
@@ -72,9 +68,16 @@ const SaveIcon = styled(FaSave)`
 `;
 
 const LogContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  width: 90%;
+  margin: 20px; // Убрал auto для центрирования, теперь ширина 100%
+  height: 200px;
+  background: ${props => props.theme === 'dark' ? '#333' : '#f9f9f9'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ccc'};
+  border-radius: 8px;
+  padding: 10px;
+  overflow-y: auto;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  font-size: 14px;
 `;
 
 const ProgressWidget = styled.div`

@@ -31,22 +31,22 @@ const FreeWillContainer = styled.div`
 `;
 
 const FreeWillWrapper = styled.div`
-  width: 100%;
-  max-width: 300px;
-  padding: 15px;
-  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
-  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
-`;
+    width: 100%;
+    max-width: 300px;
+    padding: 15px;
+    background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+    border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 20px auto 0; // Центрирование с помощью auto
+  `;
 
 // Новый контейнер для блока логов
 const LogWrapper = styled.div`
-width: 100%;
-max-width: 300px;
-margin-top: 20px; // Отступ сверху для разделения блоков
-`;
+    width: 100%;
+    max-width: 300px;
+    margin: 20px auto 0; // Центрирование с помощью auto
+  `;
 
 const SliderLabel = styled.label`
   font-size: 16px;

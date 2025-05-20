@@ -31,15 +31,15 @@ const FreeWillContainer = styled.div`
 
 const FreeWillWrapper = styled.div`
     width: 100%;
-    padding: 10px 30px; // Увеличены отступы по бокам до 20px
+    padding: 10px 20px; // Увеличены отступы по бокам до 20px
     background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
     border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 10px 10px; // Убраны боковые отступы, только сверху и снизу
+    margin: 20px 0; // Убраны боковые отступы, только сверху и снизу
 `;
 
-// Новый контейнер для блока логов
+// Обновление стилей для LogWrapper
 const LogWrapper = styled.div`
     width: 100%;
     padding: 0 20px; // Отступы 20px по бокам

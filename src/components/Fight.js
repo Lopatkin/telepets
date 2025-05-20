@@ -208,7 +208,7 @@ const LogItem = styled.div`
 `;
 
 function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser }) {
-  const [playerHP, setPlayerHP] = useState(user.stats?.health || 100);
+  const [playerHP, setPlayerHP] = useState(user.stats?.health ?? 0);
   const [npcHP, setNpcHP] = useState(npc.stats?.health || 100);
   const [playerAttackZone, setPlayerAttackZone] = useState(null);
   const [playerDefenseZones, setPlayerDefenseZones] = useState([]);
@@ -228,12 +228,12 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
       socket.emit('getUser', { userId: user.userId }, (response) => {
         if (response.success && response.user) {
           console.log('Received user data on fight close:', response.user);
-          updateUser(response.user); // Передаем данные в App.js
-          onClose(); // Закрываем бой только после получения данных
+          setPlayerHP(response.user.stats.health);
+          updateUser(response.user);
         } else {
           console.error('Failed to fetch user data on fight close:', response.message);
-          onClose(); // Закрываем даже в случае ошибки, чтобы избежать зависания
         }
+        onClose();
       });
     } else {
       onClose();
@@ -356,11 +356,16 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           ]);
           setHighlightNewLog(true);
           showNotification(finalMessage);
-          socket.once('userUpdate', (updatedUser) => {
-            console.log('Received userUpdate before closing fight:', updatedUser);
-            setPlayerHP(updatedUser.stats.health);
-            updateUser(updatedUser);
-            setTimeout(onClose, 1000);
+          // Запрашиваем актуальные данные пользователя перед закрытием
+          socket.emit('getUser', { userId: user.userId }, (getUserResponse) => {
+            if (getUserResponse.success && getUserResponse.user) {
+              console.log('Received user data on fight end:', getUserResponse.user);
+              setPlayerHP(getUserResponse.user.stats.health);
+              updateUser(getUserResponse.user);
+            } else {
+              console.error('Failed to fetch user data on fight end:', getUserResponse.message);
+            }
+            setTimeout(onClose, 1000); // Закрываем бой после получения данных
           });
         } else {
           setIsRoundActive(true);

@@ -198,12 +198,11 @@ function registerUserHandlers({
 
             // Определяем максимальные значения в зависимости от типа персонажа
             const maxStats = isHuman
-                ? { maxHealth: 100, maxEnergy: 100, maxMood: 100, maxSatiety: 100 }
+                ? { maxHealth: 100, maxEnergy: 100, maxMood: 100, maxSatiety: 100, freeWill: 100 }
                 : animalType === 'Кошка'
-                    ? { maxHealth: 30, maxEnergy: 100, maxMood: 100, maxSatiety: 100 }
-                    : { maxHealth: 50, maxEnergy: 100, maxMood: 100, maxSatiety: 100 };
+                    ? { maxHealth: 30, maxEnergy: 100, maxMood: 100, maxSatiety: 100, freeWill: 100 }
+                    : { maxHealth: 50, maxEnergy: 100, maxMood: 100, maxSatiety: 100, freeWill: 100 };
 
-            // Обновляем stats, ограничивая текущие значения максимальными
             const updatedStats = {
                 health: Math.min(stats.health, maxStats.maxHealth),
                 attack: stats.attack,
@@ -211,8 +210,8 @@ function registerUserHandlers({
                 energy: Math.min(stats.energy, maxStats.maxEnergy),
                 mood: Math.min(stats.mood, maxStats.maxMood),
                 satiety: Math.min(stats.satiety, maxStats.maxSatiety),
-                freedomOfWill: 0, // Инициализируем свободу воли значением 0
-                ...maxStats // Добавляем максимальные значения
+                freeWill: Math.min(stats.freeWill || 0, maxStats.freeWill), // Добавляем freeWill
+                ...maxStats
             };
 
             const updateData = {
@@ -392,13 +391,12 @@ function registerUserHandlers({
     });
 
 
-    // Добавляем новый обработчик для обновления свободы воли
-    // Добавляем новый обработчик для обновления свободы воли
-    socket.on('updateFreedomOfWill', async ({ userId, freedomOfWill }, callback) => {
+    /// Добавление обработчика для обновления freeWill
+    socket.on('updateFreeWill', async ({ userId, freeWill }, callback) => {
         try {
             const user = await User.findOneAndUpdate(
                 { userId },
-                { $set: { 'stats.freedomOfWill': freedomOfWill } },
+                { $set: { 'stats.freeWill': Math.min(Math.max(freeWill, 0), 100) } },
                 { new: true }
             );
 
@@ -427,7 +425,7 @@ function registerUserHandlers({
 
             callback({ success: true });
         } catch (err) {
-            console.error('Ошибка при обновлении свободы воли:', err.message);
+            console.error('Ошибка при обновлении freeWill:', err.message);
             callback({ success: false, message: 'Ошибка сервера' });
         }
     });

@@ -1,57 +1,60 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import { useState } from 'react';
-import { FaPalette, FaUser, FaBook } from 'react-icons/fa';
+import { FaUser, FaBook, FaPalette } from 'react-icons/fa';
 
-// Новые стили для вкладок и ползунка
+// Стили для вкладок
 const TabsContainer = styled.div`
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 20px;
   margin-bottom: 20px;
 `;
 
 const TabButton = styled.button`
-  background: ${props => props.active ? '#007AFF' : (props.theme === 'dark' ? '#444' : '#ddd')};
-  color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#333')};
+  background: ${props => props.active ? '#007AFF' : 'none'};
+  color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#666')};
   border: none;
-  padding: 8px; // Уменьшаем padding для компактности
-  border-radius: 5px;
+  padding: 8px;
+  border-radius: 4px;
   cursor: pointer;
+  font-size: 24px;
   display: flex;
   align-items: center;
-  justify-content: center; // Центрируем иконку
-  font-size: 20px; // Увеличиваем размер иконки
-  width: 40px; // Фиксируем ширину кнопки
-  height: 40px; // Фиксируем высоту кнопки
-  transition: background 0.2s;
+  justify-content: center;
 `;
 
-const SliderContainer = styled.div`
+const DiaryContainer = styled.div`
+  width: 100%;
+  max-width: 300px;
+  padding: 15px;
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  margin-bottom: 20px;
 `;
 
 const SliderLabel = styled.label`
-  font-size: 16px;
+  font-size: 18px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  width: 120px;
+  text-align: center;
 `;
 
 const Slider = styled.input.attrs({ type: 'range' })`
-  width: 140px;
+  width: 100%;
 `;
 
 const SaveButton = styled.button`
-  padding: 8px 16px;
+  padding: 10px;
   background: #007AFF;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   transition: background 0.2s;
 
   &:hover {
@@ -201,10 +204,9 @@ const ThemeLabel = styled.span`
   font-size: 16px;
 `;
 
-function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, socket }) {
-  const [activeTab, setActiveTab] = useState('parameters');
-  const [freedomOfWill, setFreedomOfWill] = useState(user.stats.freedomOfWill || 0);
-
+function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, progressValues, socket }) {
+  const [activeTab, setActiveTab] = useState('stats');
+  const [freeWill, setFreeWill] = useState(user.stats.freeWill || 0);
   const photoUrl = user?.photoUrl || '';
   const displayName = !user.isHuman && user.name
     ? user.name
@@ -212,42 +214,93 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, soc
   const username = user?.username || '';
   const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
 
-  // Обработчик для сохранения значения свободы воли
-  const handleSaveFreedomOfWill = () => {
-    socket.emit('updateFreedomOfWill', { userId: user.userId, freedomOfWill }, (response) => {
-      if (response.success) {
-        console.log('Свобода воли сохранена:', freedomOfWill);
-      } else {
-        console.error('Ошибка при сохранении свободы воли:', response.message);
-      }
-    });
+  const handleSaveFreeWill = () => {
+    if (socket) {
+      socket.emit('updateFreeWill', { userId: user.userId, freeWill }, (response) => {
+        if (response.success) {
+          console.log('FreeWill updated:', freeWill);
+        } else {
+          console.error('Failed to update freeWill:', response.message);
+        }
+      });
+    }
   };
 
   return (
     <ProfileContainer theme={theme}>
       <TabsContainer>
         <TabButton
-          active={activeTab === 'interface'}
+          active={activeTab === 'stats'}
+          onClick={() => setActiveTab('stats')}
           theme={theme}
-          onClick={() => setActiveTab('interface')}
         >
-          <FaPalette /> Интерфейс
-        </TabButton>
-        <TabButton
-          active={activeTab === 'parameters'}
-          theme={theme}
-          onClick={() => setActiveTab('parameters')}
-        >
-          <FaUser /> Параметры
+          <FaUser />
         </TabButton>
         <TabButton
           active={activeTab === 'diary'}
-          theme={theme}
           onClick={() => setActiveTab('diary')}
+          theme={theme}
         >
-          <FaBook /> Дневник
+          <FaBook />
+        </TabButton>
+        <TabButton
+          active={activeTab === 'interface'}
+          onClick={() => setActiveTab('interface')}
+          theme={theme}
+        >
+          <FaPalette />
         </TabButton>
       </TabsContainer>
+
+      {activeTab === 'stats' && (
+        <>
+          {photoUrl ? (
+            <Avatar src={photoUrl} alt={`${displayName}'s avatar`} />
+          ) : (
+            <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
+          )}
+          <Name theme={theme}>{displayName}</Name>
+          {username && <Username theme={theme}>@{username}</Username>}
+          <Info theme={theme}>ID: {user.userId}</Info>
+          {progressValues && (
+            <ProgressWidget theme={theme}>
+              <ProgressBarContainer>
+                <ProgressLabel theme={theme}>Энергия</ProgressLabel>
+                <ProgressBar value={user.stats.energy || 0} max={user.stats.maxEnergy || 100} type="energy" />
+                <ProgressValue theme={theme}>{user.stats.energy || 0}%</ProgressValue>
+              </ProgressBarContainer>
+              <ProgressBarContainer>
+                <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
+                <ProgressBar value={user.stats.health || 0} max={user.stats.maxHealth || 100} type="health" />
+                <ProgressValue theme={theme}>{user.stats.health || 0}%</ProgressValue>
+              </ProgressBarContainer>
+              <ProgressBarContainer>
+                <ProgressLabel theme={theme}>Настроение</ProgressLabel>
+                <ProgressBar value={user.stats.mood || 0} max={user.stats.maxMood || 100} type="mood" />
+                <ProgressValue theme={theme}>{user.stats.mood || 0}%</ProgressValue>
+              </ProgressBarContainer>
+              <ProgressBarContainer>
+                <ProgressLabel theme={theme}>Сытость</ProgressLabel>
+                <ProgressBar value={user.stats.satiety || 0} max={user.stats.maxSatiety || 100} type="fullness" />
+                <ProgressValue theme={theme}>{user.stats.satiety || 0}%</ProgressValue>
+              </ProgressBarContainer>
+            </ProgressWidget>
+          )}
+        </>
+      )}
+
+      {activeTab === 'diary' && (
+        <DiaryContainer theme={theme}>
+          <SliderLabel theme={theme}>Свобода воли</SliderLabel>
+          <Slider
+            value={freeWill}
+            onChange={(e) => setFreeWill(Number(e.target.value))}
+            min={0}
+            max={100}
+          />
+          <SaveButton onClick={handleSaveFreeWill}>Сохранить</SaveButton>
+        </DiaryContainer>
+      )}
 
       {activeTab === 'interface' && (
         <ThemeOptions theme={theme}>
@@ -267,57 +320,6 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, soc
             <ThemeLabel>{telegramTheme === 'dark' ? 'Светлая' : 'Тёмная'}</ThemeLabel>
           </ThemeOption>
         </ThemeOptions>
-      )}
-
-      {activeTab === 'parameters' && (
-        <>
-          {photoUrl ? (
-            <Avatar src={photoUrl} alt={`${displayName}'s avatar`} />
-          ) : (
-            <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
-          )}
-          <Name theme={theme}>{displayName}</Name>
-          {username && <Username theme={theme}>@{username}</Username>}
-          <Info theme={theme}>ID: {user.userId}</Info>
-          <ProgressWidget theme={theme}>
-            <ProgressBarContainer>
-              <ProgressLabel theme={theme}>Энергия</ProgressLabel>
-              <ProgressBar value={user.stats.energy || 0} max={user.stats.maxEnergy || 100} type="energy" />
-              <ProgressValue theme={theme}>{user.stats.energy || 0}%</ProgressValue>
-            </ProgressBarContainer>
-            <ProgressBarContainer>
-              <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
-              <ProgressBar value={user.stats.health || 0} max={user.stats.maxHealth || 100} type="health" />
-              <ProgressValue theme={theme}>{user.stats.health || 0}%</ProgressValue>
-            </ProgressBarContainer>
-            <ProgressBarContainer>
-              <ProgressLabel theme={theme}>Настроение</ProgressLabel>
-              <ProgressBar value={user.stats.mood || 0} max={user.stats.maxMood || 100} type="mood" />
-              <ProgressValue theme={theme}>{user.stats.mood || 0}%</ProgressValue>
-            </ProgressBarContainer>
-            <ProgressBarContainer>
-              <ProgressLabel theme={theme}>Сытость</ProgressLabel>
-              <ProgressBar value={user.stats.satiety || 0} max={user.stats.maxSatiety || 100} type="fullness" />
-              <ProgressValue theme={theme}>{user.stats.satiety || 0}%</ProgressValue>
-            </ProgressBarContainer>
-          </ProgressWidget>
-        </>
-      )}
-
-      {activeTab === 'diary' && (
-        <ProgressWidget theme={theme}>
-          <SliderContainer>
-            <SliderLabel theme={theme}>Свобода воли</SliderLabel>
-            <Slider
-              min="0"
-              max="100"
-              value={freedomOfWill}
-              onChange={(e) => setFreedomOfWill(Number(e.target.value))}
-            />
-            <ProgressValue theme={theme}>{freedomOfWill}%</ProgressValue>
-          </SliderContainer>
-          <SaveButton onClick={handleSaveFreedomOfWill}>Сохранить</SaveButton>
-        </ProgressWidget>
       )}
     </ProfileContainer>
   );

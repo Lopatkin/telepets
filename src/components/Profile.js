@@ -224,6 +224,14 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
   const [freeWill, setFreeWill] = useState(user.stats.freeWill || 0);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  const photoUrl = user?.photoUrl || '';
+  const displayName = !user.isHuman && user.name
+    ? user.name
+    : `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim();
+  const username = user?.username || '';
+  const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
+
+
   const handleSaveFreeWill = () => {
     if (socket) {
       socket.emit('updateFreeWill', { userId: user.userId, freeWill }, (response) => {

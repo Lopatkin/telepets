@@ -15,13 +15,15 @@ const TabButton = styled.button`
   background: ${props => props.active ? '#007AFF' : (props.theme === 'dark' ? '#444' : '#ddd')};
   color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#333')};
   border: none;
-  padding: 8px 16px;
+  padding: 8px; // Уменьшаем padding для компактности
   border-radius: 5px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 16px;
+  justify-content: center; // Центрируем иконку
+  font-size: 20px; // Увеличиваем размер иконки
+  width: 40px; // Фиксируем ширину кнопки
+  height: 40px; // Фиксируем высоту кнопки
   transition: background 0.2s;
 `;
 
@@ -204,13 +206,13 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, soc
   const [freeWill, setFreeWill] = useState(user.stats.freeWill || 0);
 
   const photoUrl = user?.photoUrl || '';
-  // Для животных используем поле name, для людей — firstName и lastName
   const displayName = !user.isHuman && user.name
     ? user.name
     : `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim();
   const username = user?.username || '';
   const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
 
+  // Обработчик для сохранения значения свободы воли
   const handleSaveFreeWill = () => {
     socket.emit('updateFreeWill', { userId: user.userId, freeWill }, (response) => {
       if (response.success) {
@@ -229,21 +231,21 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, soc
           theme={theme}
           onClick={() => setActiveTab('interface')}
         >
-          <FaPalette /> Интерфейс
+          <FaPalette />
         </TabButton>
         <TabButton
           active={activeTab === 'parameters'}
           theme={theme}
           onClick={() => setActiveTab('parameters')}
         >
-          <FaUser /> Параметры
+          <FaUser />
         </TabButton>
         <TabButton
           active={activeTab === 'diary'}
           theme={theme}
           onClick={() => setActiveTab('diary')}
         >
-          <FaBook /> Дневник
+          <FaBook />
         </TabButton>
       </TabsContainer>
 
@@ -320,5 +322,3 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, soc
     </ProfileContainer>
   );
 }
-
-export default Profile;

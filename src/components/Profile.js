@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { FaUser, FaBook, FaPalette, FaSave } from 'react-icons/fa';
 
 // Стили для вкладок
-// Стили для вкладок
 const TabsContainer = styled.div`
   display: flex;
   justify-content: center;
@@ -32,7 +31,7 @@ const FreeWillContainer = styled.div`
 
 const FreeWillWrapper = styled.div`
     width: 100%;
-    padding: 15px 10px; // Отступы 10px слева и справа
+    padding: 10px 10px; // Отступы 10px слева и справа
     background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
     border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     border-radius: 8px;
@@ -40,10 +39,22 @@ const FreeWillWrapper = styled.div`
     margin: 20px 0 0 0; // Убрал auto для центрирования, теперь ширина 100%
   `;
 
+const LogContainer = styled.div`
+width: 100%;
+height: 200px;
+background: ${props => props.theme === 'dark' ? '#333' : '#f9f9f9'};
+border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ccc'};
+border-radius: 8px;
+padding: 10px;
+overflow-y: auto;
+color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+font-size: 14px;
+`;
+
 // Новый контейнер для блока логов
 const LogWrapper = styled.div`
     width: 100%;
-    padding: 10px; // Отступы 10px слева и справа
+    padding: 10 10px; // Отступы 10px слева и справа
     margin: 20px 0 0 0; // Сохраняем отступ сверху
   `;
 
@@ -65,19 +76,6 @@ const SaveIcon = styled(FaSave)`
   border-radius: 4px;
   background: ${props => props.success ? '#32CD32' : 'transparent'};
   transition: background 0.3s;
-`;
-
-const LogContainer = styled.div`
-  width: 100%;
-  max-width: 300px;
-  height: 200px;
-  background: ${props => props.theme === 'dark' ? '#333' : '#f9f9f9'};
-  border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ccc'};
-  border-radius: 8px;
-  padding: 10px;
-  overflow-y: auto;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  font-size: 14px;
 `;
 
 const ProgressWidget = styled.div`

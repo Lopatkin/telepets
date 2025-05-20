@@ -322,3 +322,5 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, soc
     </ProfileContainer>
   );
 }
+
+export default Profile;

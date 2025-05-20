@@ -31,25 +31,26 @@ const FreeWillContainer = styled.div`
 
 const FreeWillWrapper = styled.div`
     width: 100%;
-    padding: 10px 10px; // Отступы 10px слева и справа
+    padding: 10px 20px; // Увеличены отступы по бокам до 20px
     background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
     border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 20px 0 0 0; // Убрал auto для центрирования, теперь ширина 100%
-  `;
+    margin: 20px 0; // Убраны боковые отступы, только сверху и снизу
+`;
 
 // Новый контейнер для блока логов
 const LogWrapper = styled.div`
-    width: 90%;
-    padding: 10px; // Отступы 10px слева и справа
-    margin: 20px; // Сохраняем отступ сверху
-  `;
+    width: 100%;
+    padding: 0 20px; // Отступы 20px по бокам
+    margin: 20px 0; // Отступы только сверху и снизу
+`;
 
 const SliderLabel = styled.label`
   font-size: 16px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  width: 100px;
+  width: 120px; // Увеличена ширина для предотвращения переноса текста
+  flex-shrink: 0; // Запрещаем сжатие, чтобы текст не переносился
 `;
 
 const Slider = styled.input.attrs({ type: 'range' })`

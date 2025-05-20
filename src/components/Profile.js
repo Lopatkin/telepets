@@ -24,19 +24,19 @@ const TabButton = styled.button`
   justify-content: center;
 `;
 
-// const DiaryContainer = styled.div`
-//     width: 100%;
-//     max-width: 300px;
-//     padding: 15px;
-//     background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
-//     border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
-//     border-radius: 8px;
-//     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-//     margin-top: 20px;
-//     display: flex;
-//     flex-direction: column;
-//     gap: 15px; // Увеличен отступ между элементами
-//   `;
+const DiaryContainer = styled.div`
+    width: 100%;
+    max-width: 300px;
+    padding: 15px;
+    background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+    border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; // Увеличен отступ между элементами
+  `;
 
   const FreeWillContainer = styled.div`
   display: flex;
@@ -328,7 +328,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
       )}
 
       {activeTab === 'diary' && (
-        <>
+        <DiaryContainer>
           <FreeWillWrapper theme={theme}>
             <FreeWillContainer>
               <SliderLabel theme={theme}>Свобода воли</SliderLabel>
@@ -351,7 +351,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
               <p>Логи пока недоступны</p>
             </LogContainer>
           </LogWrapper>
-        </>
+        </DiaryContainer>
       )}
 
       {activeTab === 'interface' && (

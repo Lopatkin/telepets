@@ -356,12 +356,11 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           ]);
           setHighlightNewLog(true);
           showNotification(finalMessage);
-          // Ждем userUpdate перед закрытием
           socket.once('userUpdate', (updatedUser) => {
             console.log('Received userUpdate before closing fight:', updatedUser);
             setPlayerHP(updatedUser.stats.health);
             updateUser(updatedUser);
-            setTimeout(onClose, 1000); // Уменьшаем задержку, так как данные уже получены
+            setTimeout(onClose, 1000);
           });
         } else {
           setIsRoundActive(true);
@@ -376,7 +375,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
       }
       setIsProcessing(false);
     });
-  }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, onClose, updateUser]);
+  }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, onClose, updateUser, isProcessing]);
 
   // Функция для автоматического выбора зон и подтверждения хода
   const handleAutoStrike = useCallback(() => {

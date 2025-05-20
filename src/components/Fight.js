@@ -229,12 +229,15 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
         if (response.success && response.user) {
           console.log('Received user data on fight close:', response.user);
           updateUser(response.user); // Передаем данные в App.js
+          onClose(); // Закрываем бой только после получения данных
         } else {
           console.error('Failed to fetch user data on fight close:', response.message);
+          onClose(); // Закрываем даже в случае ошибки, чтобы избежать зависания
         }
       });
+    } else {
+      onClose();
     }
-    onClose();
   }, [socket, user, onClose, updateUser]);
 
   const displayName = !user.isHuman && user.name
@@ -259,15 +262,17 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
   // Обработка обновления здоровья игрока от сервера
   useEffect(() => {
     socket.on('userUpdate', (updatedUser) => {
-      if (updatedUser.stats?.health) {
+      if (updatedUser.stats?.health !== undefined) {
+        console.log('Received userUpdate in Fight.js:', updatedUser.stats.health);
         setPlayerHP(updatedUser.stats.health);
+        updateUser(updatedUser); // Передаем обновление в App.js
       }
     });
 
     return () => {
       socket.off('userUpdate');
     };
-  }, [socket]);
+  }, [socket, updateUser]);
 
   // Функция для получения текста надписи для защиты
   const getDefenseInstruction = () => {
@@ -351,7 +356,13 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           ]);
           setHighlightNewLog(true);
           showNotification(finalMessage);
-          setTimeout(onClose, 2000);
+          // Ждем userUpdate перед закрытием
+          socket.once('userUpdate', (updatedUser) => {
+            console.log('Received userUpdate before closing fight:', updatedUser);
+            setPlayerHP(updatedUser.stats.health);
+            updateUser(updatedUser);
+            setTimeout(onClose, 1000); // Уменьшаем задержку, так как данные уже получены
+          });
         } else {
           setIsRoundActive(true);
           setTimeLeft(20);
@@ -365,7 +376,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
       }
       setIsProcessing(false);
     });
-  }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, isProcessing, onClose]);
+  }, [socket, user, npc, playerAttackZone, playerDefenseZones, zones, showNotification, onClose, updateUser]);
 
   // Функция для автоматического выбора зон и подтверждения хода
   const handleAutoStrike = useCallback(() => {

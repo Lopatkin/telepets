@@ -38,10 +38,22 @@ const DiaryContainer = styled.div`
     gap: 15px; // Увеличен отступ между элементами
   `;
 
-const FreeWillContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
+const FreeWillWrapper = styled.div`
+  width: 100%;
+  max-width: 300px;
+  padding: 15px;
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+`;
+
+// Новый контейнер для блока логов
+const LogWrapper = styled.div`
+width: 100%;
+max-width: 300px;
+margin-top: 20px; // Отступ сверху для разделения блоков
 `;
 
 const SliderLabel = styled.label`
@@ -310,26 +322,30 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
       )}
 
       {activeTab === 'diary' && (
-        <DiaryContainer theme={theme}>
-          <FreeWillContainer>
-            <SliderLabel theme={theme}>Свобода воли</SliderLabel>
-            <Slider
-              value={freeWill}
-              onChange={(e) => setFreeWill(Number(e.target.value))}
-              min={0}
-              max={100}
-            />
-            <SaveIcon
-              theme={theme}
-              success={saveSuccess}
-              onClick={handleSaveFreeWill}
-            />
-          </FreeWillContainer>
-          <LogContainer theme={theme}>
-            {/* Здесь будут отображаться записи логов в будущем */}
-            <p>Логи пока недоступны</p>
-          </LogContainer>
-        </DiaryContainer>
+        <>
+          <FreeWillWrapper theme={theme}>
+            <FreeWillContainer>
+              <SliderLabel theme={theme}>Свобода воли</SliderLabel>
+              <Slider
+                value={freeWill}
+                onChange={(e) => setFreeWill(Number(e.target.value))}
+                min={0}
+                max={100}
+              />
+              <SaveIcon
+                theme={theme}
+                success={saveSuccess}
+                onClick={handleSaveFreeWill}
+              />
+            </FreeWillContainer>
+          </FreeWillWrapper>
+          <LogWrapper theme={theme}>
+            <LogContainer theme={theme}>
+              {/* Здесь будут отображаться записи логов в будущем */}
+              <p>Логи пока недоступны</p>
+            </LogContainer>
+          </LogWrapper>
+        </>
       )}
 
       {activeTab === 'interface' && (

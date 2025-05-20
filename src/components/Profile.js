@@ -203,7 +203,7 @@ const ThemeLabel = styled.span`
 
 function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, socket }) {
   const [activeTab, setActiveTab] = useState('parameters');
-  const [freeWill, setFreeWill] = useState(user.stats.freeWill || 0);
+  const [freedomOfWill, setFreedomOfWill] = useState(user.stats.freedomOfWill || 0);
 
   const photoUrl = user?.photoUrl || '';
   const displayName = !user.isHuman && user.name
@@ -213,10 +213,10 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, soc
   const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
 
   // Обработчик для сохранения значения свободы воли
-  const handleSaveFreeWill = () => {
-    socket.emit('updateFreeWill', { userId: user.userId, freeWill }, (response) => {
+  const handleSaveFreedomOfWill = () => {
+    socket.emit('updateFreedomOfWill', { userId: user.userId, freedomOfWill }, (response) => {
       if (response.success) {
-        console.log('Свобода воли сохранена:', freeWill);
+        console.log('Свобода воли сохранена:', freedomOfWill);
       } else {
         console.error('Ошибка при сохранении свободы воли:', response.message);
       }
@@ -231,21 +231,21 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, soc
           theme={theme}
           onClick={() => setActiveTab('interface')}
         >
-          <FaPalette />
+          <FaPalette /> Интерфейс
         </TabButton>
         <TabButton
           active={activeTab === 'parameters'}
           theme={theme}
           onClick={() => setActiveTab('parameters')}
         >
-          <FaUser />
+          <FaUser /> Параметры
         </TabButton>
         <TabButton
           active={activeTab === 'diary'}
           theme={theme}
           onClick={() => setActiveTab('diary')}
         >
-          <FaBook />
+          <FaBook /> Дневник
         </TabButton>
       </TabsContainer>
 
@@ -311,12 +311,12 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, soc
             <Slider
               min="0"
               max="100"
-              value={freeWill}
-              onChange={(e) => setFreeWill(Number(e.target.value))}
+              value={freedomOfWill}
+              onChange={(e) => setFreedomOfWill(Number(e.target.value))}
             />
-            <ProgressValue theme={theme}>{freeWill}%</ProgressValue>
+            <ProgressValue theme={theme}>{freedomOfWill}%</ProgressValue>
           </SliderContainer>
-          <SaveButton onClick={handleSaveFreeWill}>Сохранить</SaveButton>
+          <SaveButton onClick={handleSaveFreedomOfWill}>Сохранить</SaveButton>
         </ProgressWidget>
       )}
     </ProfileContainer>

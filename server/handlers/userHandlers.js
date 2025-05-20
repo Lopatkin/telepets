@@ -211,7 +211,7 @@ function registerUserHandlers({
                 energy: Math.min(stats.energy, maxStats.maxEnergy),
                 mood: Math.min(stats.mood, maxStats.maxMood),
                 satiety: Math.min(stats.satiety, maxStats.maxSatiety),
-                freeWill: 0, // Инициализируем свободу воли значением 0
+                freedomOfWill: 0, // Инициализируем свободу воли значением 0
                 ...maxStats // Добавляем максимальные значения
             };
 
@@ -391,13 +391,14 @@ function registerUserHandlers({
         }
     });
 
-    
+
     // Добавляем новый обработчик для обновления свободы воли
-    socket.on('updateFreeWill', async ({ userId, freeWill }, callback) => {
+    // Добавляем новый обработчик для обновления свободы воли
+    socket.on('updateFreedomOfWill', async ({ userId, freedomOfWill }, callback) => {
         try {
             const user = await User.findOneAndUpdate(
                 { userId },
-                { $set: { 'stats.freeWill': freeWill } },
+                { $set: { 'stats.freedomOfWill': freedomOfWill } },
                 { new: true }
             );
 

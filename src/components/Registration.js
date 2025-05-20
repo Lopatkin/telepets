@@ -193,8 +193,8 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
         maxEnergy: 100,
         maxMood: 100,
         maxSatiety: 100,
-        freeWill: 0 // Добавляем свободу воли
-      }
+        freedomOfWill: 0 // Добавляем свободу воли
+              }
       : animalType === 'Кошка'
         ? {
           health: 30,
@@ -207,8 +207,8 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
           maxEnergy: 100,
           maxMood: 100,
           maxSatiety: 100,
-          freeWill: 0 // Добавляем свободу воли
-        }
+          freedomOfWill: 0 // Добавляем свободу воли
+                  }
         : {
           health: 50,
           attack: 15,
@@ -220,8 +220,8 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
           maxEnergy: 100,
           maxMood: 100,
           maxSatiety: 100,
-          freeWill: 0 // Добавляем свободу воли
-        };
+          freedomOfWill: 0 // Добавляем свободу воли
+                  };
 
     const registrationData = isHuman
       ? {

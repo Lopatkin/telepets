@@ -219,7 +219,7 @@ io.on('connection', (socket) => {
     }
 
     // Обновляем HP
-    fight.playerHP = Math.max(0, fight.playerHP - damageToPlayer);
+    fight.playerHP = fight.playerHP - damageToPlayer; // Убрано Math.max(0, ...)
     fight.npcHP = Math.max(0, fight.npcHP - damageToNPC);
 
     // Ограничиваем здоровье максимальным значением
@@ -257,10 +257,10 @@ io.on('connection', (socket) => {
     if (fight.playerHP <= 0 || fight.npcHP <= 0) {
       fightStates.delete(userId);
       if (fight.playerHP <= 0) {
-        fight.playerHP = 1;
+        fight.playerHP = 0; // Устанавливаем здоровье на 0 вместо 1
         await User.updateOne(
           { userId },
-          { $set: { 'stats.health': 1 } }
+          { $set: { 'stats.health': 0 } } // Обновляем здоровье в базе данных на 0
         );
         const finalUser = await User.findOne({ userId });
         socket.emit('userUpdate', {
@@ -332,14 +332,14 @@ io.on('connection', (socket) => {
   socket.on('endFight', async (data) => {
     const { userId } = data;
     console.log(`Received endFight for user ${userId}`); // Лог получения события
-  
+
     if (fightStates.has(userId)) {
       fightStates.delete(userId);
       console.log(`Fight state cleared for user ${userId}`); // Лог очистки состояния
     } else {
       console.log(`No active fight state found for user ${userId}`); // Лог отсутствия состояния
     }
-  
+
     const user = await User.findOne({ userId });
     if (user) {
       console.log(`Preparing userUpdate for user ${userId} with stats:`, user.stats); // Лог перед отправкой

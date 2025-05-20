@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FaUser, FaBook, FaPalette } from 'react-icons/fa';
+import { FaUser, FaBook, FaPalette, FaSave } from 'react-icons/fa';
 
+// Стили для вкладок
 // Стили для вкладок
 const TabsContainer = styled.div`
   display: flex;
@@ -37,29 +38,43 @@ const DiaryContainer = styled.div`
   gap: 10px;
 `;
 
+const FreeWillContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
 const SliderLabel = styled.label`
-  font-size: 18px;
+  font-size: 16px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  text-align: center;
+  width: 100px;
 `;
 
 const Slider = styled.input.attrs({ type: 'range' })`
-  width: 100%;
+  flex: 1;
 `;
 
-const SaveButton = styled.button`
-  padding: 10px;
-  background: #007AFF;
-  color: white;
-  border: none;
-  border-radius: 5px;
+const SaveIcon = styled(FaSave)`
+  font-size: 20px;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   cursor: pointer;
-  font-size: 16px;
-  transition: background 0.2s;
+  padding: 5px;
+  border-radius: 4px;
+  background: ${props => props.success ? '#32CD32' : 'transparent'};
+  transition: background 0.3s;
+`;
 
-  &:hover {
-    background: #005BBB;
-  }
+const LogContainer = styled.div`
+  width: 100%;
+  max-width: 300px;
+  height: 200px;
+  background: ${props => props.theme === 'dark' ? '#333' : '#f9f9f9'};
+  border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ccc'};
+  border-radius: 8px;
+  padding: 10px;
+  overflow-y: auto;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  font-size: 14px;
 `;
 
 const ProgressWidget = styled.div`
@@ -207,18 +222,15 @@ const ThemeLabel = styled.span`
 function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, progressValues, socket }) {
   const [activeTab, setActiveTab] = useState('stats');
   const [freeWill, setFreeWill] = useState(user.stats.freeWill || 0);
-  const photoUrl = user?.photoUrl || '';
-  const displayName = !user.isHuman && user.name
-    ? user.name
-    : `${user?.firstName || 'User'} ${user?.lastName || ''}`.trim();
-  const username = user?.username || '';
-  const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleSaveFreeWill = () => {
     if (socket) {
       socket.emit('updateFreeWill', { userId: user.userId, freeWill }, (response) => {
         if (response.success) {
           console.log('FreeWill updated:', freeWill);
+          setSaveSuccess(true);
+          setTimeout(() => setSaveSuccess(false), 1000); // Сбрасываем эффект через 1 секунду
         } else {
           console.error('Failed to update freeWill:', response.message);
         }
@@ -291,14 +303,24 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
 
       {activeTab === 'diary' && (
         <DiaryContainer theme={theme}>
-          <SliderLabel theme={theme}>Свобода воли</SliderLabel>
-          <Slider
-            value={freeWill}
-            onChange={(e) => setFreeWill(Number(e.target.value))}
-            min={0}
-            max={100}
-          />
-          <SaveButton onClick={handleSaveFreeWill}>Сохранить</SaveButton>
+          <FreeWillContainer>
+            <SliderLabel theme={theme}>Свобода воли</SliderLabel>
+            <Slider
+              value={freeWill}
+              onChange={(e) => setFreeWill(Number(e.target.value))}
+              min={0}
+              max={100}
+            />
+            <SaveIcon
+              theme={theme}
+              success={saveSuccess}
+              onClick={handleSaveFreeWill}
+            />
+          </FreeWillContainer>
+          <LogContainer theme={theme}>
+            {/* Здесь будут отображаться записи логов в будущем */}
+            <p>Логи пока недоступны</p>
+          </LogContainer>
         </DiaryContainer>
       )}
 

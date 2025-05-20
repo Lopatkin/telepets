@@ -36,7 +36,7 @@ const FreeWillWrapper = styled.div`
     border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 20px 0; // Убраны боковые отступы, только сверху и снизу
+    margin: 10px 10px; // Убраны боковые отступы, только сверху и снизу
 `;
 
 // Новый контейнер для блока логов

@@ -74,18 +74,18 @@ const SaveIcon = styled(FaSave)`
   transition: background 0.3s;
 `;
 
-const LogContainer = styled.div`
-  width: 90%;
-  margin: 20px; // Убрал auto для центрирования, теперь ширина 100%
-  height: 200px;
-  background: ${props => props.theme === 'dark' ? '#333' : '#f9f9f9'};
-  border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ccc'};
-  border-radius: 8px;
-  padding: 10px;
-  overflow-y: auto;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  font-size: 14px;
-`;
+// const LogContainer = styled.div`
+//   width: 90%;
+//   margin: 20px; // Убрал auto для центрирования, теперь ширина 100%
+//   height: 200px;
+//   background: ${props => props.theme === 'dark' ? '#333' : '#f9f9f9'};
+//   border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ccc'};
+//   border-radius: 8px;
+//   padding: 10px;
+//   overflow-y: auto;
+//   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+//   font-size: 14px;
+// `;
 
 const ProgressWidget = styled.div`
   width: 100%;
@@ -338,10 +338,8 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
             </FreeWillContainer>
           </FreeWillWrapper>
           <LogWrapper theme={theme}>
-            <LogContainer theme={theme}>
-              {/* Здесь будут отображаться записи логов в будущем */}
-              <p>Логи пока недоступны</p>
-            </LogContainer>
+             {/* Здесь будут отображаться записи логов в будущем */}
+             <p>Логи пока недоступны</p>
           </LogWrapper>
         </>
       )}

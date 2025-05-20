@@ -1,5 +1,61 @@
 import React from 'react';
 import styled from 'styled-components';
+import { useState } from 'react';
+import { FaPalette, FaUser, FaBook } from 'react-icons/fa';
+
+// Новые стили для вкладок и ползунка
+const TabsContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+`;
+
+const TabButton = styled.button`
+  background: ${props => props.active ? '#007AFF' : (props.theme === 'dark' ? '#444' : '#ddd')};
+  color: ${props => props.active ? 'white' : (props.theme === 'dark' ? '#ccc' : '#333')};
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  transition: background 0.2s;
+`;
+
+const SliderContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+`;
+
+const SliderLabel = styled.label`
+  font-size: 16px;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  width: 120px;
+`;
+
+const Slider = styled.input.attrs({ type: 'range' })`
+  width: 140px;
+`;
+
+const SaveButton = styled.button`
+  padding: 8px 16px;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #005BBB;
+  }
+`;
 
 const ProgressWidget = styled.div`
   width: 100%;
@@ -143,7 +199,10 @@ const ThemeLabel = styled.span`
   font-size: 16px;
 `;
 
-function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, progressValues }) {
+function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, socket }) {
+  const [activeTab, setActiveTab] = useState('parameters');
+  const [freeWill, setFreeWill] = useState(user.stats.freeWill || 0);
+
   const photoUrl = user?.photoUrl || '';
   // Для животных используем поле name, для людей — firstName и lastName
   const displayName = !user.isHuman && user.name
@@ -152,57 +211,112 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
   const username = user?.username || '';
   const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
 
+  const handleSaveFreeWill = () => {
+    socket.emit('updateFreeWill', { userId: user.userId, freeWill }, (response) => {
+      if (response.success) {
+        console.log('Свобода воли сохранена:', freeWill);
+      } else {
+        console.error('Ошибка при сохранении свободы воли:', response.message);
+      }
+    });
+  };
+
   return (
     <ProfileContainer theme={theme}>
-      {photoUrl ? (
-        <Avatar src={photoUrl} alt={`${displayName}'s avatar`} />
-      ) : (
-        <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
+      <TabsContainer>
+        <TabButton
+          active={activeTab === 'interface'}
+          theme={theme}
+          onClick={() => setActiveTab('interface')}
+        >
+          <FaPalette /> Интерфейс
+        </TabButton>
+        <TabButton
+          active={activeTab === 'parameters'}
+          theme={theme}
+          onClick={() => setActiveTab('parameters')}
+        >
+          <FaUser /> Параметры
+        </TabButton>
+        <TabButton
+          active={activeTab === 'diary'}
+          theme={theme}
+          onClick={() => setActiveTab('diary')}
+        >
+          <FaBook /> Дневник
+        </TabButton>
+      </TabsContainer>
+
+      {activeTab === 'interface' && (
+        <ThemeOptions theme={theme}>
+          <ThemeTitle theme={theme}>Тема оформления</ThemeTitle>
+          <ThemeOption theme={theme}>
+            <ThemeRadio
+              checked={selectedTheme === 'telegram'}
+              onChange={() => onThemeChange('telegram')}
+            />
+            <ThemeLabel>Тема как в Telegram ({telegramTheme === 'dark' ? 'тёмная' : 'светлая'})</ThemeLabel>
+          </ThemeOption>
+          <ThemeOption theme={theme}>
+            <ThemeRadio
+              checked={selectedTheme === (telegramTheme === 'dark' ? 'light' : 'dark')}
+              onChange={() => onThemeChange(telegramTheme === 'dark' ? 'light' : 'dark')}
+            />
+            <ThemeLabel>{telegramTheme === 'dark' ? 'Светлая' : 'Тёмная'}</ThemeLabel>
+          </ThemeOption>
+        </ThemeOptions>
       )}
-      <Name theme={theme}>{displayName}</Name>
-      {username && <Username theme={theme}>@{username}</Username>}
-      <Info theme={theme}>ID: {user.userId}</Info>
-      {progressValues && (
+
+      {activeTab === 'parameters' && (
+        <>
+          {photoUrl ? (
+            <Avatar src={photoUrl} alt={`${displayName}'s avatar`} />
+          ) : (
+            <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
+          )}
+          <Name theme={theme}>{displayName}</Name>
+          {username && <Username theme={theme}>@{username}</Username>}
+          <Info theme={theme}>ID: {user.userId}</Info>
+          <ProgressWidget theme={theme}>
+            <ProgressBarContainer>
+              <ProgressLabel theme={theme}>Энергия</ProgressLabel>
+              <ProgressBar value={user.stats.energy || 0} max={user.stats.maxEnergy || 100} type="energy" />
+              <ProgressValue theme={theme}>{user.stats.energy || 0}%</ProgressValue>
+            </ProgressBarContainer>
+            <ProgressBarContainer>
+              <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
+              <ProgressBar value={user.stats.health || 0} max={user.stats.maxHealth || 100} type="health" />
+              <ProgressValue theme={theme}>{user.stats.health || 0}%</ProgressValue>
+            </ProgressBarContainer>
+            <ProgressBarContainer>
+              <ProgressLabel theme={theme}>Настроение</ProgressLabel>
+              <ProgressBar value={user.stats.mood || 0} max={user.stats.maxMood || 100} type="mood" />
+              <ProgressValue theme={theme}>{user.stats.mood || 0}%</ProgressValue>
+            </ProgressBarContainer>
+            <ProgressBarContainer>
+              <ProgressLabel theme={theme}>Сытость</ProgressLabel>
+              <ProgressBar value={user.stats.satiety || 0} max={user.stats.maxSatiety || 100} type="fullness" />
+              <ProgressValue theme={theme}>{user.stats.satiety || 0}%</ProgressValue>
+            </ProgressBarContainer>
+          </ProgressWidget>
+        </>
+      )}
+
+      {activeTab === 'diary' && (
         <ProgressWidget theme={theme}>
-          <ProgressBarContainer>
-            <ProgressLabel theme={theme}>Энергия</ProgressLabel>
-            <ProgressBar value={user.stats.energy || 0} max={user.stats.maxEnergy || 100} type="energy" />
-            <ProgressValue theme={theme}>{user.stats.energy || 0}%</ProgressValue>
-          </ProgressBarContainer>
-          <ProgressBarContainer>
-            <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
-            <ProgressBar value={user.stats.health || 0} max={user.stats.maxHealth || 100} type="health" />
-            <ProgressValue theme={theme}>{user.stats.health || 0}%</ProgressValue>
-          </ProgressBarContainer>
-          <ProgressBarContainer>
-            <ProgressLabel theme={theme}>Настроение</ProgressLabel>
-            <ProgressBar value={user.stats.mood || 0} max={user.stats.maxMood || 100} type="mood" />
-            <ProgressValue theme={theme}>{user.stats.mood || 0}%</ProgressValue>
-          </ProgressBarContainer>
-          <ProgressBarContainer>
-            <ProgressLabel theme={theme}>Сытость</ProgressLabel>
-            <ProgressBar value={user.stats.satiety || 0} max={user.stats.maxSatiety || 100} type="fullness" />
-            <ProgressValue theme={theme}>{user.stats.satiety || 0}%</ProgressValue>
-          </ProgressBarContainer>
+          <SliderContainer>
+            <SliderLabel theme={theme}>Свобода воли</SliderLabel>
+            <Slider
+              min="0"
+              max="100"
+              value={freeWill}
+              onChange={(e) => setFreeWill(Number(e.target.value))}
+            />
+            <ProgressValue theme={theme}>{freeWill}%</ProgressValue>
+          </SliderContainer>
+          <SaveButton onClick={handleSaveFreeWill}>Сохранить</SaveButton>
         </ProgressWidget>
       )}
-      <ThemeOptions theme={theme}>
-        <ThemeTitle theme={theme}>Тема оформления</ThemeTitle>
-        <ThemeOption theme={theme}>
-          <ThemeRadio
-            checked={selectedTheme === 'telegram'}
-            onChange={() => onThemeChange('telegram')}
-          />
-          <ThemeLabel>Тема как в Telegram ({telegramTheme === 'dark' ? 'тёмная' : 'светлая'})</ThemeLabel>
-        </ThemeOption>
-        <ThemeOption theme={theme}>
-          <ThemeRadio
-            checked={selectedTheme === (telegramTheme === 'dark' ? 'light' : 'dark')}
-            onChange={() => onThemeChange(telegramTheme === 'dark' ? 'light' : 'dark')}
-          />
-          <ThemeLabel>{telegramTheme === 'dark' ? 'Светлая' : 'Тёмная'}</ThemeLabel>
-        </ThemeOption>
-      </ThemeOptions>
     </ProfileContainer>
   );
 }

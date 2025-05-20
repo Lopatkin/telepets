@@ -211,6 +211,7 @@ function registerUserHandlers({
                 energy: Math.min(stats.energy, maxStats.maxEnergy),
                 mood: Math.min(stats.mood, maxStats.maxMood),
                 satiety: Math.min(stats.satiety, maxStats.maxSatiety),
+                freeWill: 0, // Инициализируем свободу воли значением 0
                 ...maxStats // Добавляем максимальные значения
             };
 
@@ -387,6 +388,45 @@ function registerUserHandlers({
         } catch (err) {
             console.error('Error fetching pets:', err);
             socket.emit('error', { message: 'Ошибка при загрузке питомцев' });
+        }
+    });
+
+    // Добавляем новый обработчик для обновления свободы воли
+    socket.on('updateFreeWill', async ({ userId, freeWill }, callback) => {
+        try {
+            const user = await User.findOneAndUpdate(
+                { userId },
+                { $set: { 'stats.freeWill': freeWill } },
+                { new: true }
+            );
+
+            if (!user) {
+                callback({ success: false, message: 'Пользователь не найден' });
+                return;
+            }
+
+            socket.emit('userUpdate', {
+                userId: user.userId,
+                firstName: user.firstName,
+                username: user.username,
+                lastName: user.lastName,
+                photoUrl: user.photoUrl,
+                isRegistered: user.isRegistered,
+                isHuman: user.isHuman,
+                animalType: user.animalType,
+                name: user.name,
+                owner: user.owner,
+                homeless: user.homeless,
+                credits: user.credits || 0,
+                onLeash: user.onLeash,
+                freeRoam: user.freeRoam || false,
+                stats: user.stats
+            });
+
+            callback({ success: true });
+        } catch (err) {
+            console.error('Ошибка при обновлении свободы воли:', err.message);
+            callback({ success: false, message: 'Ошибка сервера' });
         }
     });
 

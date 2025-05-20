@@ -62,7 +62,8 @@ const userSchema = new mongoose.Schema({
     maxHealth: { type: Number }, // Новое поле для максимального здоровья
     maxEnergy: { type: Number, default: 100 }, // Максимальная энергия
     maxMood: { type: Number, default: 100 }, // Максимальное настроение
-    maxSatiety: { type: Number, default: 100 } // Максимальная сытость
+    maxSatiety: { type: Number, default: 100 }, // Максимальная сытость
+    freeWill: { type: Number, default: 0 } // Новое поле для свободы воли
   }
 });
 const User = mongoose.model('User', userSchema);

@@ -192,7 +192,8 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
         maxHealth: 100, // Максимальное здоровье для человека
         maxEnergy: 100,
         maxMood: 100,
-        maxSatiety: 100
+        maxSatiety: 100,
+        freeWill: 0 // Добавляем свободу воли
       }
       : animalType === 'Кошка'
         ? {
@@ -205,7 +206,8 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
           maxHealth: 30, // Максимальное здоровье для кошки
           maxEnergy: 100,
           maxMood: 100,
-          maxSatiety: 100
+          maxSatiety: 100,
+          freeWill: 0 // Добавляем свободу воли
         }
         : {
           health: 50,
@@ -217,7 +219,8 @@ const Registration = ({ user, theme, socket, onRegistrationComplete }) => {
           maxHealth: 50, // Максимальное здоровье для собаки
           maxEnergy: 100,
           maxMood: 100,
-          maxSatiety: 100
+          maxSatiety: 100,
+          freeWill: 0 // Добавляем свободу воли
         };
 
     const registrationData = isHuman

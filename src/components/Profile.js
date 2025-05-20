@@ -31,7 +31,7 @@ const FreeWillContainer = styled.div`
 
 const FreeWillWrapper = styled.div`
     width: 100%;
-    padding: 10px 20px; // Увеличены отступы по бокам до 20px
+    padding: 10px 30px; // Увеличены отступы по бокам до 20px
     background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
     border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     border-radius: 8px;

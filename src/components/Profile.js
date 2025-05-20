@@ -43,7 +43,7 @@ const FreeWillWrapper = styled.div`
 // Новый контейнер для блока логов
 const LogWrapper = styled.div`
     width: 100%;
-    padding: 0 10px; // Отступы 10px слева и справа
+    padding: 10px; // Отступы 10px слева и справа
     margin: 20px 0 0 0; // Сохраняем отступ сверху
   `;
 

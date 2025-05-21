@@ -29,6 +29,7 @@ const AppContainer = styled.div`
   display: flex;
   flex-direction: column;
   position: relative;
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
 `;
 
 const Content = styled.div`

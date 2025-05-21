@@ -149,7 +149,7 @@ const ProgressBar = styled.progress`
 `;
 
 const ProfileContainer = styled.div`
-  padding: 20px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;

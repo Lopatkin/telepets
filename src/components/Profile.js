@@ -30,17 +30,16 @@ const FreeWillContainer = styled.div`
 `;
 
 const FreeWillWrapper = styled.div`
-    width: calc(100% - 40px); // Полная ширина с отступами 20px с каждой стороны
-    max-width: 800px; // Максимальная ширина для больших экранов
-    margin: 20px auto; // Центрирование по горизонтали
-    padding: 15px; // Увеличенные отступы для единообразия
+    width: calc(100% - 40px);
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 15px;
     background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
     border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
-// Обновление стилей для LogWrapper
 const LogWrapper = styled.div`
     width: calc(100% - 40px);
     max-width: 800px;
@@ -64,25 +63,12 @@ const LogEntry = styled.div`
     }
 `;
 
-// const LogContainer = styled.div`
-//   width: 90%;
-//   margin: 20px; // Убрал auto для центрирования, теперь ширина 100%
-//   height: 200px;
-//   background: ${props => props.theme === 'dark' ? '#333' : '#f9f9f9'};
-//   border: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ccc'};
-//   border-radius: 8px;
-//   padding: 10px;
-//   overflow-y: auto;
-//   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-//   font-size: 14px;
-// `;
-
 const SliderLabel = styled.label`
     font-size: 16px;
     color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-    width: 120px; // Увеличено для "Свобода воли"
-    white-space: nowrap; // Запрещаем перенос текста
-    text-align: left; // Выравнивание текста
+    width: 120px;
+    white-space: nowrap;
+    text-align: left;
 `;
 
 const Slider = styled.input.attrs({ type: 'range' })`
@@ -98,8 +84,6 @@ const SaveIcon = styled(FaSave)`
   background: ${props => props.success ? '#32CD32' : 'transparent'};
   transition: background 0.3s;
 `;
-
-
 
 const ProgressWidget = styled.div`
   width: 100%;
@@ -269,10 +253,14 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
     }
   };
 
-  // Форматирование времени для отображения
+  // Форматирование даты и времени для отображения
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
-    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day}.${month} ${hours}:${minutes}`;
   };
 
   return (
@@ -360,7 +348,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
             {user.diary && user.diary.length > 0 ? (
               user.diary
                 .slice()
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) // Сортировка от новых к старым
+                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) // Сортировка от старых к новым
                 .map((entry, index) => (
                   <LogEntry key={index} theme={theme}>
                     {formatTimestamp(entry.timestamp)}: {entry.message}

@@ -55,12 +55,17 @@ const LogWrapper = styled.div`
 `;
 
 const LogEntry = styled.div`
-    padding: 10px;
+    padding: 10px 15px; // Добавляем отступ слева
+    text-align: left; // Прижимаем к левому краю
     border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     font-size: 14px;
     &:last-child {
         border-bottom: none;
     }
+`;
+
+const Timestamp = styled.span`
+    font-weight: bold; // Выделяем дату и время жирным
 `;
 
 const SliderLabel = styled.label`
@@ -348,10 +353,10 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
             {user.diary && user.diary.length > 0 ? (
               user.diary
                 .slice()
-                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)) // Сортировка от старых к новым
+                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
                 .map((entry, index) => (
                   <LogEntry key={index} theme={theme}>
-                    {formatTimestamp(entry.timestamp)}: {entry.message}
+                    <Timestamp>{formatTimestamp(entry.timestamp)}</Timestamp>: {entry.message}
                   </LogEntry>
                 ))
             ) : (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaUser, FaBook, FaPalette, FaSave } from 'react-icons/fa';
 
@@ -41,7 +41,7 @@ const FreeWillWrapper = styled.div`
 `;
 
 const LogWrapper = styled.div`
-    width: calc(100% - 40px);
+    width: calc(100% - 20px);
     max-width: 800px;
     margin: 20px auto;
     padding: 15px;

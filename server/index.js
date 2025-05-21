@@ -52,6 +52,10 @@ const userSchema = new mongoose.Schema({
   lastActivity: { type: Date, default: Date.now },
   owner: { type: String, default: null },
   freeRoam: { type: Boolean, default: false },
+  diary: [{ // Новое поле для логов
+    timestamp: { type: Date, default: Date.now },
+    message: { type: String, required: true }
+  }],
   stats: {
     health: { type: Number },
     attack: { type: Number },

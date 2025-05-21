@@ -29,10 +29,45 @@ function registerUserHandlers({
                 photoUrl: userData.photoUrl || '',
                 isRegistered: false,
                 lastRoom: 'Полигон утилизации',
-                owner: userData.owner || null
+                owner: userData.owner || null,
+                diary: [] // Инициализируем пустой diary
             });
             await user.save();
             console.log('New user created:', user.userId);
+        }
+
+        // Расчёт времени отсутствия и добавление записей в diary
+        const now = new Date();
+        const lastActivity = user.lastActivity || now;
+        const hoursPassed = Math.floor((now - lastActivity) / (1000 * 60 * 60)); // Кол-во полных часов
+
+        if (hoursPassed > 0) {
+            const diaryEntries = [];
+            for (let i = 0; i < hoursPassed; i++) {
+                // Генерируем случайное время в пределах часа
+                const randomMinutes = Math.floor(Math.random() * 60);
+                const entryTime = new Date(lastActivity.getTime() + (i * 60 * 60 * 1000) + (randomMinutes * 60 * 1000));
+                diaryEntries.push({
+                    timestamp: entryTime,
+                    message: 'Пока ничего не произошло'
+                });
+            }
+            // Добавляем записи в diary
+            await User.updateOne(
+                { userId: user.userId },
+                {
+                    $push: { diary: { $each: diaryEntries } },
+                    $set: { lastActivity: now } // Обновляем lastActivity
+                }
+            );
+            user = await User.findOne({ userId: user.userId }); // Обновляем user после изменений
+            console.log(`Added ${diaryEntries.length} diary entries for user ${user.userId}`);
+        } else {
+            // Обновляем lastActivity, если не прошло полного часа
+            await User.updateOne(
+                { userId: user.userId },
+                { $set: { lastActivity: now } }
+            );
         }
 
         socket.userData = {
@@ -79,7 +114,8 @@ function registerUserHandlers({
             homeless: user.homeless,
             credits: user.credits || 0,
             freeRoam: user.freeRoam || false,
-            stats: user.stats // Отправляем stats с новыми полями
+            stats: user.stats,
+            diary: user.diary // Отправляем diary клиенту
         });
         console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 

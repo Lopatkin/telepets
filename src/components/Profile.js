@@ -42,15 +42,26 @@ const FreeWillWrapper = styled.div`
 
 // Обновление стилей для LogWrapper
 const LogWrapper = styled.div`
-    width: calc(100% - 40px); // Полная ширина с отступами 20px с каждой стороны
-    max-width: 800px; // Максимальная ширина для больших экранов
-    margin: 20px auto; // Центрирование по горизонтали
-    padding: 15px; // Увеличенные отступы для единообразия
+    width: calc(100% - 40px);
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 15px;
     background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
     border: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+    max-height: 300px;
+    overflow-y: auto;
+`;
+
+const LogEntry = styled.div`
+    padding: 10px;
+    border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
+    font-size: 14px;
+    &:last-child {
+        border-bottom: none;
+    }
 `;
 
 // const LogContainer = styled.div`
@@ -244,19 +255,24 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
   const username = user?.username || '';
   const defaultAvatarLetter = (user?.firstName || user?.name || 'U').charAt(0).toUpperCase();
 
-
   const handleSaveFreeWill = () => {
     if (socket) {
       socket.emit('updateFreeWill', { userId: user.userId, freeWill }, (response) => {
         if (response.success) {
           console.log('FreeWill updated:', freeWill);
           setSaveSuccess(true);
-          setTimeout(() => setSaveSuccess(false), 1000); // Сбрасываем эффект через 1 секунду
+          setTimeout(() => setSaveSuccess(false), 1000);
         } else {
           console.error('Failed to update freeWill:', response.message);
         }
       });
     }
+  };
+
+  // Форматирование времени для отображения
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
   };
 
   return (
@@ -341,8 +357,18 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
             </FreeWillContainer>
           </FreeWillWrapper>
           <LogWrapper theme={theme}>
-             {/* Здесь будут отображаться записи логов в будущем */}
-             <p>Логи пока недоступны</p>
+            {user.diary && user.diary.length > 0 ? (
+              user.diary
+                .slice()
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)) // Сортировка от новых к старым
+                .map((entry, index) => (
+                  <LogEntry key={index} theme={theme}>
+                    {formatTimestamp(entry.timestamp)}: {entry.message}
+                  </LogEntry>
+                ))
+            ) : (
+              <p>Логи пока отсутствуют</p>
+            )}
           </LogWrapper>
         </>
       )}

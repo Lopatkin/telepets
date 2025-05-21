@@ -164,6 +164,7 @@ function App() {
         });
 
         // Улучшение обработки userUpdate для надежного обновления stats
+        // В useEffect для инициализации сокета обновляем обработчик userUpdate
         socketRef.current.on('userUpdate', (updatedUser) => {
           console.log('Received userUpdate from server:', updatedUser);
           setUser(prevUser => {
@@ -173,7 +174,8 @@ function App() {
               credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
               freeRoam: updatedUser.freeRoam ?? false,
-              stats: { ...prevUser?.stats, ...updatedUser.stats }
+              stats: { ...prevUser?.stats, ...updatedUser.stats },
+              diary: updatedUser.diary || prevUser?.diary || [] // Добавляем diary
             };
             console.log('Updated user state after userUpdate:', newUser);
             return newUser;

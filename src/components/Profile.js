@@ -268,6 +268,13 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
     return `${day}.${month} ${hours}:${minutes}`;
   };
 
+  useEffect(() => {
+    if (activeTab === 'diary') {
+      const logWrapper = document.querySelector('#logWrapper');
+      if (logWrapper) logWrapper.scrollTop = logWrapper.scrollHeight;
+    }
+  }, [activeTab, user.diary]);
+
   return (
     <ProfileContainer theme={theme}>
       <TabsContainer>
@@ -349,7 +356,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
               />
             </FreeWillContainer>
           </FreeWillWrapper>
-          <LogWrapper theme={theme}>
+          <LogWrapper id="logWrapper" theme={theme}>
             {user.diary && user.diary.length > 0 ? (
               user.diary
                 .slice()

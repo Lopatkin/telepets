@@ -41,7 +41,7 @@ const FreeWillWrapper = styled.div`
 `;
 
 const LogWrapper = styled.div`
-    width: calc(100% - 20px);
+    width: calc(100% - 40px);
     max-width: 800px;
     margin: 20px auto;
     padding: 15px;
@@ -55,8 +55,8 @@ const LogWrapper = styled.div`
 `;
 
 const LogEntry = styled.div`
-    padding: 10px 15px; // Добавляем отступ слева
-    text-align: left; // Прижимаем к левому краю
+    padding: 8px 10px; // Уменьшаем отступы: 8px сверху/снизу, 10px слева/справа
+    text-align: left;
     border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     font-size: 14px;
     &:last-child {

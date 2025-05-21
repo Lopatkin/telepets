@@ -155,7 +155,7 @@ const ProfileContainer = styled.div`
   align-items: center;
   text-align: center;
   background: ${props => props.theme === 'dark' ? '#1A1A1A' : '#f5f5f5'};
-  height: 90%;
+  height: 95%;
 `;
 
 const Avatar = styled.img`

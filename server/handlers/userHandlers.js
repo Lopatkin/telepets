@@ -1,5 +1,34 @@
 const { rooms } = require('../../src/components/constants/rooms.js');
 
+const walkMessages = [
+    'Увидел стаю голубей, мирно клюющих крошки на площади.',
+    'Заметил уличного музыканта, играющего на скрипке.',
+    'Нашёл старую монетку на тротуаре.',
+    'Понаблюдал за детьми, играющими в парке.',
+    'Прошёл мимо кафе с ароматом свежесваренного кофе.',
+    'Услышал, как кто-то громко обсуждает последние новости.',
+    'Споткнулся о бордюр, но успел удержать равновесие.',
+    'Заметил яркий граффити на стене заброшенного здания.',
+    'Увидел, как собака радостно бегает за фрисби.',
+    'Прошёл мимо цветочного ларька с яркими букетами.',
+    'Случайно подслушал забавный разговор двух прохожих.',
+    'Нашёл потерянную перчатку на скамейке.',
+    'Понаблюдал за белкой, прыгающей по веткам в парке.',
+    'Увидел, как старик кормит уток у пруда.',
+    'Заметил яркий воздушный шар, пролетающий над городом.',
+    'Прошёл мимо уличного художника, рисующего портреты.',
+    'Услышал звон церковных колоколов вдалеке.',
+    'Заметил кошку, лениво греющуюся на солнце.',
+    'Нашёл объявление о пропавшем котёнке на столбе.',
+    'Увидел, как кто-то выгуливает огромного пса.'
+];
+
+// Функция для получения случайного сообщения
+const getRandomWalkMessage = () => {
+    const randomIndex = Math.floor(Math.random() * walkMessages.length);
+    return walkMessages[randomIndex];
+};
+
 function registerUserHandlers({
     io,
     socket,
@@ -49,7 +78,7 @@ function registerUserHandlers({
                 const entryTime = new Date(lastActivity.getTime() + (i * 60 * 60 * 1000) + (randomMinutes * 60 * 1000));
                 diaryEntries.push({
                     timestamp: entryTime,
-                    message: 'Пока ничего не произошло'
+                    message: getRandomWalkMessage() // Используем случайное сообщение
                 });
             }
             // Добавляем записи в diary
@@ -214,7 +243,7 @@ function registerUserHandlers({
         if (callback) callback({ success: true });
     });
 
-    // Модификация обработчика completeRegistration для учета health, attack, defense
+    // Остальной код остаётся без изменений
     socket.on('completeRegistration', async (data, callback) => {
         try {
             const {
@@ -232,7 +261,6 @@ function registerUserHandlers({
 
             console.log('Получены данные регистрации:', data);
 
-            // Определяем максимальные значения в зависимости от типа персонажа
             const maxStats = isHuman
                 ? { maxHealth: 100, maxEnergy: 100, maxMood: 100, maxSatiety: 100, freeWill: 100 }
                 : animalType === 'Кошка'
@@ -246,7 +274,7 @@ function registerUserHandlers({
                 energy: Math.min(stats.energy, maxStats.maxEnergy),
                 mood: Math.min(stats.mood, maxStats.maxMood),
                 satiety: Math.min(stats.satiety, maxStats.maxSatiety),
-                freeWill: Math.min(stats.freeWill || 0, maxStats.freeWill), // Добавляем freeWill
+                freeWill: Math.min(stats.freeWill || 0, maxStats.freeWill),
                 ...maxStats
             };
 
@@ -256,7 +284,7 @@ function registerUserHandlers({
                 residence,
                 homeless: isHuman ? false : true,
                 lastActivity: new Date(),
-                stats: updatedStats // Сохраняем обновленный объект stats
+                stats: updatedStats
             };
 
             if (isHuman) {
@@ -280,7 +308,7 @@ function registerUserHandlers({
                 return;
             }
 
-            console.log('Обновлённый пользователь:', user); // Логирование для отладки
+            console.log('Обновлённый пользователь:', user);
 
             socket.userData = {
                 userId: user.userId,
@@ -345,7 +373,7 @@ function registerUserHandlers({
                 credits: user.credits || 0,
                 onLeash: user.onLeash,
                 freeRoam: user.freeRoam || false,
-                stats: user.stats // Отправляем stats с максимальными значениями
+                stats: user.stats
             });
 
             console.log('Отправлен userUpdate с параметрами:', { stats: user.stats });
@@ -426,8 +454,6 @@ function registerUserHandlers({
         }
     });
 
-
-    /// Добавление обработчика для обновления freeWill
     socket.on('updateFreeWill', async ({ userId, freeWill }, callback) => {
         try {
             const user = await User.findOneAndUpdate(

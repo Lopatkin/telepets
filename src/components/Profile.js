@@ -55,7 +55,7 @@ const LogWrapper = styled.div`
 `;
 
 const LogEntry = styled.div`
-    padding: 8px 10px; // Уменьшаем отступы: 8px сверху/снизу, 10px слева/справа
+    padding: 8px 5px; // Уменьшаем отступы: 8px сверху/снизу, 10px слева/справа
     text-align: left;
     border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     font-size: 14px;

@@ -72,25 +72,38 @@ function registerUserHandlers({
 
         if (hoursPassed > 0) {
             const diaryEntries = [];
+            const freeWill = user.stats?.freeWill || 0; // Получаем freeWill, по умолчанию 0
             for (let i = 0; i < hoursPassed; i++) {
-                // Генерируем случайное время в пределах часа
-                const randomMinutes = Math.floor(Math.random() * 60);
-                const entryTime = new Date(lastActivity.getTime() + (i * 60 * 60 * 1000) + (randomMinutes * 60 * 1000));
-                diaryEntries.push({
-                    timestamp: entryTime,
-                    message: getRandomWalkMessage() // Используем случайное сообщение
-                });
-            }
-            // Добавляем записи в diary
-            await User.updateOne(
-                { userId: user.userId },
-                {
-                    $push: { diary: { $each: diaryEntries } },
-                    $set: { lastActivity: now } // Обновляем lastActivity
+                // Генерируем случайное число от 0 до 100
+                const chance = Math.random() * 100;
+                if (chance <= freeWill) { // Создаём запись, если шанс меньше или равен freeWill
+                    // Генерируем случайное время в пределах часа
+                    const randomMinutes = Math.floor(Math.random() * 60);
+                    const entryTime = new Date(lastActivity.getTime() + (i * 60 * 60 * 1000) + (randomMinutes * 60 * 1000));
+                    diaryEntries.push({
+                        timestamp: entryTime,
+                        message: getRandomWalkMessage() // Используем случайное сообщение
+                    });
                 }
-            );
+            }
+            // Добавляем записи в diary, если они есть
+            if (diaryEntries.length > 0) {
+                await User.updateOne(
+                    { userId: user.userId },
+                    {
+                        $push: { diary: { $each: diaryEntries } },
+                        $set: { lastActivity: now } // Обновляем lastActivity
+                    }
+                );
+                console.log(`Added ${diaryEntries.length} diary entries for user ${user.userId}`);
+            } else {
+                // Обновляем lastActivity, даже если записей нет
+                await User.updateOne(
+                    { userId: user.userId },
+                    { $set: { lastActivity: now } }
+                );
+            }
             user = await User.findOne({ userId: user.userId }); // Обновляем user после изменений
-            console.log(`Added ${diaryEntries.length} diary entries for user ${user.userId}`);
         } else {
             // Обновляем lastActivity, если не прошло полного часа
             await User.updateOne(

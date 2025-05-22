@@ -1,43 +1,73 @@
 const { rooms } = require('../../src/components/constants/rooms.js');
 
-// Заменяем константу walkMessages на три отдельных массива для разных типов игроков
+// Заменяем массивы сообщений на новые с эффектами на параметры
 const humanMessages = [
-    'Прогулялся по парку, размышляя о жизни.',
-    'Зашёл в кафе и выпил чашку кофе.',
-    'Поболтал с уличным торговцем о погоде.',
-    'Помог старушке донести сумку до дома.',
-    'Увидел афишу нового фильма в кинотеатре.',
-    'Прочитал объявление о местном фестивале.',
-    'Сфотографировал красивый закат на телефон.',
-    'Понаблюдал за уличными артистами на площади.',
-    'Купил свежую булочку в пекарне.',
-    'Погладил дружелюбную собаку прохожего.'
+    { message: 'Поел в кафе, наслаждаясь вкусным обедом.', effect: { satiety: 10 } },
+    { message: 'Прогулялся по парку, дыша свежим воздухом.', effect: { mood: 5, energy: -5 } },
+    { message: 'Помог старушке донести тяжёлые сумки.', effect: { mood: 10, energy: -10 } },
+    { message: 'Случайно наступил в лужу, промочив обувь.', effect: { mood: -5 } },
+    { message: 'Посетил местный музей, вдохновившись экспонатами.', effect: { mood: 10 } },
+    { message: 'Поболтал с друзьями в баре.', effect: { mood: 10, satiety: 5 } },
+    { message: 'Попал под лёгкий дождь без зонта.', effect: { mood: -5, health: -5 } },
+    { message: 'Сфотографировал красивый закат.', effect: { mood: 5 } },
+    { message: 'Купил свежие фрукты на рынке.', effect: { satiety: 5 } },
+    { message: 'Задержался на работе, решая срочные дела.', effect: { energy: -10, mood: -5 } },
+    { message: 'Погладил дружелюбную собаку прохожего.', effect: { mood: 5 } },
+    { message: 'Прочитал интересную книгу в кафе.', effect: { mood: 5, energy: -5 } },
+    { message: 'Увидел уличное представление и аплодировал артистам.', effect: { mood: 10 } },
+    { message: 'Споткнулся о бордюр, слегка ушибся.', effect: { health: -5, mood: -5 } },
+    { message: 'Подарил цветы случайному прохожему.', effect: { mood: 10 } },
+    { message: 'Провёл время на спортивной площадке.', effect: { health: 5, energy: -10 } },
+    { message: 'Попробовал новый десерт в кондитерской.', effect: { satiety: 10, mood: 5 } },
+    { message: 'Устал от долгой прогулки по городу.', effect: { energy: -10 } },
+    { message: 'Нашёл потерянный кошелёк и вернул владельцу.', effect: { mood: 15 } },
+    { message: 'Поскользнулся на мокром асфальте.', effect: { health: -10, mood: -5 } }
 ];
 
 const catMessages = [
-    'Погнался за бабочкой в парке, но не поймал.',
-    'Залез на дерево и наблюдал за птицами.',
-    'Лениво грелся на тёплой крыше.',
-    'Нашёл укромный уголок и вздремнул.',
-    'Поиграл с листочком, который гонял ветер.',
-    'Попытался поймать солнечный зайчик.',
-    'Тёрся о ноги прохожего, выпрашивая еду.',
-    'Исследовал мусорный бак в поисках вкусного.',
-    'Устроил засаду на голубя, но он улетел.',
-    'Ловко запрыгнул на высокий забор.'
+    { message: 'Погнался за бабочкой, но не поймал.', effect: { energy: -5, mood: 5 } },
+    { message: 'Залез на дерево и застрял, пришлось спускаться.', effect: { energy: -10, mood: -5 } },
+    { message: 'Лениво грелся на тёплой крыше.', effect: { energy: 10, mood: 5 } },
+    { message: 'Нашёл укромный уголок и вздремнул.', effect: { energy: 15, satiety: -5 } },
+    { message: 'Поиграл с листочком, который гонял ветер.', effect: { mood: 5, energy: -5 } },
+    { message: 'Попытался поймать солнечный зайчик.', effect: { energy: -5, mood: 10 } },
+    { message: 'Тёрся о ноги прохожего, выпросив еду.', effect: { satiety: 10, mood: 5 } },
+    { message: 'Исследовал мусорный бак и нашёл вкусное.', effect: { satiety: 15, health: -5 } },
+    { message: 'Устроил засаду на голубя, но он улетел.', effect: { mood: -5, energy: -5 } },
+    { message: 'Ловко запрыгнул на высокий забор.', effect: { energy: -5, mood: 5 } },
+    { message: 'Поскользнулся, прыгая с забора.', effect: { health: -5, mood: -5 } },
+    { message: 'Повалялся в солнечном пятне на траве.', effect: { mood: 10, energy: 5 } },
+    { message: 'Поймал мышь и гордо её съел.', effect: { satiety: 10, mood: 10 } },
+    { message: 'Попал под дождь, промокнув до нитки.', effect: { health: -5, mood: -10 } },
+    { message: 'Играл с клубком шерсти, найденным на улице.', effect: { mood: 5, energy: -5 } },
+    { message: 'Заточил когти о старое дерево.', effect: { mood: 5 } },
+    { message: 'Увидел собаку и спрятался в кустах.', effect: { mood: -5, energy: -5 } },
+    { message: 'Нашёл миску с молоком у дома.', effect: { satiety: 15, mood: 5 } },
+    { message: 'Поранился о колючку в траве.', effect: { health: -10, mood: -5 } },
+    { message: 'Наблюдал за птицами с подоконника.', effect: { mood: 5 } }
 ];
 
 const dogMessages = [
-    'Побегал за мячом, который бросил прохожий.',
-    'Понюхал все кусты в парке.',
-    'Весело тявкнул на пробегающую кошку.',
-    'Нашёл старую кость и погрыз её.',
-    'Повалялся в траве, наслаждаясь солнцем.',
-    'Радостно поприветствовал другого пса.',
-    'Побегал за своим хвостом от скуки.',
-    'Копал яму в поисках чего-то интересного.',
-    'Увидел белку и попытался её догнать.',
-    'Лизнул руку доброму прохожему.'
+    { message: 'Побегал за мячом, который бросил прохожий.', effect: { energy: -10, mood: 10 } },
+    { message: 'Понюхал все кусты в парке.', effect: { mood: 5, energy: -5 } },
+    { message: 'Весело тявкнул на пробегающую кошку.', effect: { mood: 5, energy: -5 } },
+    { message: 'Нашёл старую кость и погрыз её.', effect: { satiety: 10, mood: 5 } },
+    { message: 'Повалялся в траве, наслаждаясь солнцем.', effect: { energy: 5, mood: 10 } },
+    { message: 'Радостно поприветствовал другого пса.', effect: { mood: 10 } },
+    { message: 'Побегал за своим хвостом от скуки.', effect: { energy: -5, mood: 5 } },
+    { message: 'Копал яму и испачкался в грязи.', effect: { mood: 5, health: -5 } },
+    { message: 'Попытался догнать белку, но не успел.', effect: { energy: -10, mood: -5 } },
+    { message: 'Лизнул руку доброму прохожему.', effect: { mood: 10 } },
+    { message: 'Нашёл лужу и весело в ней поплескался.', effect: { mood: 10, health: -5 } },
+    { message: 'Отдохнул в тени под деревом.', effect: { energy: 10, mood: 5 } },
+    { message: 'Съел кусок хлеба, брошенный прохожим.', effect: { satiety: 10, mood: 5 } },
+    { message: 'Устал от долгого бега по парку.', effect: { energy: -15 } },
+    { message: 'Поранился о острый камень на тропинке.', effect: { health: -10, mood: -5 } },
+    { message: 'Играл с палкой, найденной в парке.', effect: { mood: 5, energy: -5 } },
+    { message: 'Попал под дождь, весь промок.', effect: { health: -5, mood: -10 } },
+    { message: 'Погрыз старый ботинок, найденный на улице.', effect: { mood: 5, satiety: 5 } },
+    { message: 'Споткнулся, бегая по неровной дороге.', effect: { health: -5, mood: -5 } },
+    { message: 'Получил ласку от прохожего.', effect: { mood: 10 } }
 ];
 
 // Функция для получения случайного сообщения в зависимости от типа игрока
@@ -85,12 +115,19 @@ function registerUserHandlers({
 
         // В функции registerUserHandlers, замените блок кода, связанный с созданием записей в diary, на следующий:
         // Расчёт времени отсутствия и добавление записей в diary
+        // В функции registerUserHandlers, замените блок кода, связанный с созданием записей в diary, на следующий:
         const now = new Date();
         const lastActivity = user.lastActivity || now;
         const hoursPassed = Math.floor((now - lastActivity) / (1000 * 60 * 60)); // Кол-во полных часов
 
         if (hoursPassed > 0) {
             const diaryEntries = [];
+            const statUpdates = { // Объект для накопления изменений параметров
+                'stats.health': 0,
+                'stats.energy': 0,
+                'stats.mood': 0,
+                'stats.satiety': 0
+            };
             const freeWill = user.stats?.freeWill || 0; // Получаем freeWill, по умолчанию 0
             for (let i = 0; i < hoursPassed; i++) {
                 // Генерируем случайное число от 0 до 100
@@ -99,22 +136,41 @@ function registerUserHandlers({
                     // Генерируем случайное время в пределах часа
                     const randomMinutes = Math.floor(Math.random() * 60);
                     const entryTime = new Date(lastActivity.getTime() + (i * 60 * 60 * 1000) + (randomMinutes * 60 * 1000));
+                    const entry = getRandomWalkMessage(user);
                     diaryEntries.push({
                         timestamp: entryTime,
-                        message: getRandomWalkMessage(user) // Используем сообщение в зависимости от типа игрока
+                        message: entry.message
                     });
+                    // Накапливаем изменения параметров
+                    if (entry.effect.health) statUpdates['stats.health'] += entry.effect.health;
+                    if (entry.effect.energy) statUpdates['stats.energy'] += entry.effect.energy;
+                    if (entry.effect.mood) statUpdates['stats.mood'] += entry.effect.mood;
+                    if (entry.effect.satiety) statUpdates['stats.satiety'] += entry.effect.satiety;
                 }
             }
-            // Добавляем записи в diary, если они есть
+            // Добавляем записи в diary и обновляем параметры, если есть изменения
             if (diaryEntries.length > 0) {
                 await User.updateOne(
                     { userId: user.userId },
                     {
-                        $push: { diary: { $each: diaryEntries } },
-                        $set: { lastActivity: now } // Обновляем lastActivity
+                        $push: { diary: { $each: diaryEntries, $slice: -100 } }, // Ограничиваем diary до 100 записей
+                        $set: { lastActivity: now },
+                        $inc: statUpdates // Применяем изменения к параметрам
                     }
                 );
-                console.log(`Added ${diaryEntries.length} diary entries for user ${user.userId}`);
+                // Ограничиваем параметры максимальными и минимальными значениями
+                await User.updateOne(
+                    { userId: user.userId },
+                    {
+                        $set: {
+                            'stats.health': { $min: ['$stats.maxHealth', { $max: [0, { $add: ['$stats.health', statUpdates['stats.health']] }] }] },
+                            'stats.energy': { $min: ['$stats.maxEnergy', { $max: [0, { $add: ['$stats.energy', statUpdates['stats.energy']] }] }] },
+                            'stats.mood': { $min: ['$stats.maxMood', { $max: [0, { $add: ['$stats.mood', statUpdates['stats.mood']] }] }] },
+                            'stats.satiety': { $min: ['$stats.maxSatiety', { $max: [0, { $add: ['$stats.satiety', statUpdates['stats.satiety']] }] }] }
+                        }
+                    }
+                );
+                console.log(`Added ${diaryEntries.length} diary entries and updated stats for user ${user.userId}`);
             } else {
                 // Обновляем lastActivity, даже если записей нет
                 await User.updateOne(

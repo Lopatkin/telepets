@@ -214,6 +214,26 @@ const roomSpecificMessages = {
                 { message: 'Заключил выгодную сделку, настроение на высоте!', effect: { mood: 10 } }
             ]
         },
+        // Новый блок для дома
+        myhome: {
+            tragic: [
+                { message: 'Лежал на диване, чувствуя пустоту.', effect: { mood: -5, energy: 5 } },
+                { message: 'Смотрел в потолок, не зная, чем заняться.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Поел остатки холодной еды из холодильника.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Сидел у окна, глядя на дождь.', effect: { mood: -3 } }
+            ],
+            good: [
+                { message: 'Приготовил вкусный ужин, настроение улучшилось.', effect: { satiety: 10, mood: 5 } },
+                { message: 'Смотрел фильм, уютно устроившись на диване.', effect: { mood: 5, energy: 5 } }
+            ],
+            happy: [
+                { message: 'Устроил домашнюю вечеринку, было весело!', effect: { mood: 10, energy: -5 } },
+                { message: 'Танцевал под любимую музыку дома.', effect: { mood: 10, energy: -3 } }
+            ]
+        }
+        // Добавьте сообщения для остальных комнат из rooms.js
         // Добавьте аналогичные сообщения для остальных комнат из rooms.js
         // Для примера пропустим остальные, чтобы не увеличивать объём
     },
@@ -254,6 +274,25 @@ const roomSpecificMessages = {
                 { message: 'Играл с пробкой от бутылки, весело!', effect: { mood: 8, energy: -3 } }
             ]
         },
+        // Новый блок для дома
+        myhome: {
+            tragic: [
+                { message: 'Лежал в углу дома, чувствуя себя никому не нужным.', effect: { mood: -5 } },
+                { message: 'Спрятался под кроватью, боясь шума.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Грыз пустую миску, еды нет.', effect: { satiety: -5, mood: -3 } },
+                { message: 'Смотрел в окно, но ничего интересного.', effect: { mood: -3 } }
+            ],
+            good: [
+                { message: 'Вздремнул на мягком диване, уютно.', effect: { energy: 10, mood: 5 } },
+                { message: 'Нашёл кусочек еды на кухне.', effect: { satiety: 5, mood: 5 } }
+            ],
+            happy: [
+                { message: 'Носился по дому, играя с клубком шерсти!', effect: { mood: 10, energy: -5 } },
+                { message: 'Мурлыкал, лёжа на тёплом подоконнике.', effect: { mood: 8, energy: 5 } }
+            ]
+        }
         // Добавьте для остальных комнат
     },
     dog: {
@@ -293,12 +332,29 @@ const roomSpecificMessages = {
                 { message: 'Получил целую тарелку вкусностей!', effect: { satiety: 15, mood: 10 } }
             ]
         },
+        // Новый блок для дома
+        myhome: {
+            tragic: [
+                { message: 'Скулил у двери, чувствуя одиночество.', effect: { mood: -5 } },
+                { message: 'Лежал на холодном полу, без сил.', effect: { health: -5, mood: -5 } }
+            ],
+            sad: [
+                { message: 'Грыз пустую миску, еды нет.', effect: { satiety: -5, mood: -3 } },
+                { message: 'Смотрел на пустой двор через окно.', effect: { mood: -3 } }
+            ],
+            good: [
+                { message: 'Повалялся на мягком ковре, уютно.', effect: { energy: 5, mood: 5 } },
+                { message: 'Нашёл старую кость на кухне.', effect: { satiety: 5, mood: 5 } }
+            ],
+            happy: [
+                { message: 'Носился по дому, играя с мячиком!', effect: { mood: 10, energy: -5 } },
+                { message: 'Вилял хвостом, поев вкусной еды из миски!', effect: { satiety: 10, mood: 8 } }
+            ]
+        }
         // Добавьте для остальных комнат
     }
 };
 
-// Функция для получения случайного сообщения в зависимости от типа игрока
-// Функция для получения случайного сообщения в зависимости от типа игрока и общего состояния
 // Функция для получения случайного сообщения
 const getRandomWalkMessage = (user) => {
     // Рассчитываем общее состояние
@@ -319,13 +375,16 @@ const getRandomWalkMessage = (user) => {
     // Определяем тип игрока
     const playerType = user.isHuman ? 'human' : user.animalType === 'Кошка' ? 'cat' : 'dog';
 
-    // Проверяем, есть ли специфичные сообщения для текущей комнаты
+    // Проверяем, находится ли игрок дома (комната начинается с myhome_)
     const room = user.lastRoom || 'Полигон утилизации';
     let messages;
-    if (roomSpecificMessages[playerType] && roomSpecificMessages[playerType][room] && roomSpecificMessages[playerType][room][messageCategory]) {
+    if (room.startsWith('myhome_') && roomSpecificMessages[playerType]?.myhome?.[messageCategory]) {
+        messages = roomSpecificMessages[playerType].myhome[messageCategory];
+    } else if (roomSpecificMessages[playerType]?.[room]?.[messageCategory]) {
+        // Используем сообщения для конкретной комнаты
         messages = roomSpecificMessages[playerType][room][messageCategory];
     } else {
-        // Используем общие сообщения, если нет специфичных для комнаты
+        // Используем общие сообщения, если нет специфичных
         messages = user.isHuman ? humanMessages[messageCategory] : user.animalType === 'Кошка' ? catMessages[messageCategory] : dogMessages[messageCategory];
     }
 

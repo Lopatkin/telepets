@@ -155,13 +155,156 @@ const dogMessages = {
     ]
 };
 
+// Аналогично для catMessages и dogMessages (оставляем без изменений для примера)
+
+// Новые сообщения, специфичные для комнат
+const roomSpecificMessages = {
+    human: {
+        'Автобусная остановка': {
+            tragic: [
+                { message: 'Ждал автобус, но он так и не пришёл.', effect: { mood: -5, energy: -5 } },
+                { message: 'Смотрел на проезжающие машины, чувствуя себя потерянным.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Сел на скамейку, но холод пробирает до костей.', effect: { health: -3, mood: -3 } },
+                { message: 'Прочитал объявление на остановке, ничего интересного.', effect: { mood: -3 } }
+            ],
+            good: [
+                { message: 'Поболтал с попутчиком на остановке, стало веселее.', effect: { mood: 5 } },
+                { message: 'Увидел смешной стикер на столбе, улыбнулся.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Поймал попутку и доехал с ветерком!', effect: { mood: 8, energy: -3 } },
+                { message: 'Увидел яркий закат с остановки, настроение взлетело!', effect: { mood: 10 } }
+            ]
+        },
+        'Бар "У бобра" (18+)': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'Бизнес центр "Альбион"': {
+            tragic: [
+                { message: 'Заблудился в коридорах офиса, всё бесит.', effect: { mood: -5, energy: -5 } },
+                { message: 'Сидел в холле, чувствуя себя лишним.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Пытался найти работу, но все заняты.', effect: { mood: -3 } },
+                { message: 'Пил кофе из автомата, невкусный.', effect: { satiety: 3, mood: -3 } }
+            ],
+            good: [
+                { message: 'Поболтал с менеджером, возможно, есть шанс на работу.', effect: { mood: 5 } },
+                { message: 'Нашёл уютное кафе в бизнес-центре.', effect: { satiety: 5, mood: 3 } }
+            ],
+            happy: [
+                { message: 'Получил предложение о работе, день удался!', effect: { mood: 10 } },
+                { message: 'Заключил выгодную сделку, настроение на высоте!', effect: { mood: 10 } }
+            ]
+        },
+        // Добавьте аналогичные сообщения для остальных комнат из rooms.js
+        // Для примера пропустим остальные, чтобы не увеличивать объём
+    },
+    cat: {
+        'Автобусная остановка': {
+            tragic: [
+                { message: 'Спрятался под скамейкой, дрожа от холода.', effect: { health: -5, mood: -5 } },
+                { message: 'Мяукал на остановке, но никто не заметил.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Гнался за голубем, но он улетел.', effect: { energy: -5, mood: -3 } },
+                { message: 'Лежал на асфальте, чувствуя одиночество.', effect: { mood: -5 } }
+            ],
+            good: [
+                { message: 'Нашёл кусочек хлеба у остановки.', effect: { satiety: 5, mood: 3 } },
+                { message: 'Грелся на тёплом асфальте.', effect: { energy: 5, mood: 5 } }
+            ],
+            happy: [
+                { message: 'Играл с листочком, унесённым ветром.', effect: { mood: 8, energy: -3 } },
+                { message: 'Получил ласку от прохожего на остановке.', effect: { mood: 10 } }
+            ]
+        },
+        'Бар "У бобра" (18+)': {
+            tragic: [
+                { message: 'Спрятался под столом, напуганный шумом.', effect: { mood: -5 } },
+                { message: 'Промок в луже пива, шерсть липкая.', effect: { health: -5, mood: -5 } }
+            ],
+            sad: [
+                { message: 'Пытался стащить еду, но прогнали.', effect: { mood: -5 } },
+                { message: 'Сидел в углу, наблюдая за пьяными.', effect: { mood: -3 } }
+            ],
+            good: [
+                { message: 'Нашёл кусочек рыбы под столом.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Мурлыкал, сидя у тёплой батареи.', effect: { mood: 5, energy: 3 } }
+            ],
+            happy: [
+                { message: 'Тёрся о ноги доброго посетителя, получил вкусняшку!', effect: { satiety: 10, mood: 8 } },
+                { message: 'Играл с пробкой от бутылки, весело!', effect: { mood: 8, energy: -3 } }
+            ]
+        },
+        // Добавьте для остальных комнат
+    },
+    dog: {
+        'Автобусная остановка': {
+            tragic: [
+                { message: 'Скулил на остановке, никто не подошёл.', effect: { mood: -5 } },
+                { message: 'Лежал на холодном асфальте, дрожа.', effect: { health: -5, mood: -5 } }
+            ],
+            sad: [
+                { message: 'Понюхал мусорку, но ничего съедобного.', effect: { mood: -3 } },
+                { message: 'Погнался за голубем, но не догнал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Нашёл косточку у скамейки, вкуснятина!', effect: { satiety: 5, mood: 5 } },
+                { message: 'Вилял хвостом, встретив доброго человека.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Носился по остановке, полный энергии!', effect: { mood: 8, energy: -5 } },
+                { message: 'Получил ласку и вкусняшку от прохожего!', effect: { satiety: 10, mood: 10 } }
+            ]
+        },
+        'Бар "У бобра" (18+)': {
+            tragic: [
+                { message: 'Спрятался под столом, напуганный шумом.', effect: { mood: -5 } },
+                { message: 'Скулил, когда кто-то наступил на хвост.', effect: { health: -5, mood: -5 } }
+            ],
+            sad: [
+                { message: 'Попытался стащить еду, но получил шлепок.', effect: { mood: -5 } },
+                { message: 'Лежал у входа, чувствуя себя ненужным.', effect: { mood: -3 } }
+            ],
+            good: [
+                { message: 'Нашёл кусок мяса под барной стойкой.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Тявкал от радости, когда погладили.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Играл с посетителями, виляя хвостом!', effect: { mood: 10, energy: -5 } },
+                { message: 'Получил целую тарелку вкусностей!', effect: { satiety: 15, mood: 10 } }
+            ]
+        },
+        // Добавьте для остальных комнат
+    }
+};
+
 // Функция для получения случайного сообщения в зависимости от типа игрока
 // Функция для получения случайного сообщения в зависимости от типа игрока и общего состояния
+// Функция для получения случайного сообщения
 const getRandomWalkMessage = (user) => {
-    // Рассчитываем общее состояние как среднее значение параметров
+    // Рассчитываем общее состояние
     const overallState = (user.stats.health + user.stats.energy + user.stats.mood + user.stats.satiety) / 4;
 
-    // Определяем категорию сообщений в зависимости от общего состояния
+    // Определяем категорию сообщений
     let messageCategory;
     if (overallState < 25) {
         messageCategory = 'tragic';
@@ -173,8 +316,18 @@ const getRandomWalkMessage = (user) => {
         messageCategory = 'happy';
     }
 
-    // Выбираем массив сообщений в зависимости от типа игрока
-    const messages = user.isHuman ? humanMessages[messageCategory] : user.animalType === 'Кошка' ? catMessages[messageCategory] : dogMessages[messageCategory];
+    // Определяем тип игрока
+    const playerType = user.isHuman ? 'human' : user.animalType === 'Кошка' ? 'cat' : 'dog';
+
+    // Проверяем, есть ли специфичные сообщения для текущей комнаты
+    const room = user.lastRoom || 'Полигон утилизации';
+    let messages;
+    if (roomSpecificMessages[playerType] && roomSpecificMessages[playerType][room] && roomSpecificMessages[playerType][room][messageCategory]) {
+        messages = roomSpecificMessages[playerType][room][messageCategory];
+    } else {
+        // Используем общие сообщения, если нет специфичных для комнаты
+        messages = user.isHuman ? humanMessages[messageCategory] : user.animalType === 'Кошка' ? catMessages[messageCategory] : dogMessages[messageCategory];
+    }
 
     const randomIndex = Math.floor(Math.random() * messages.length);
     return messages[randomIndex];

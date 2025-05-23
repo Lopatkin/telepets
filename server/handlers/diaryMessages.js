@@ -413,7 +413,7 @@ const roomSpecificMessages = {
                 { message: 'Смотрел на барную атмосферу, кайфую.', effect: { mood: 8 } }
             ]
         },
-        'шаблон': {
+        'Бизнес центр "Альбион"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -431,7 +431,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Вокзал': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -449,7 +449,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'ЖК Сфера': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -467,7 +467,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Завод': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -485,7 +485,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Кофейня "Ляля-Фа"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -503,7 +503,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Лес': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -521,7 +521,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Мастерская': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -539,7 +539,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Парк': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -557,7 +557,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Полигон утилизации': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -575,7 +575,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Приют для животных "Кошкин дом"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -593,7 +593,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Район Дачный': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -611,7 +611,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Магазин "Всё на свете"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -629,7 +629,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Под мостом': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -928,7 +928,7 @@ const roomSpecificMessages = {
                 { message: 'Мурлыкал у стойки, все в восторге.', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Бизнес центр "Альбион"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -946,7 +946,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Вокзал': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -964,7 +964,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'ЖК Сфера': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -982,7 +982,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Завод': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1000,7 +1000,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Кофейня "Ляля-Фа"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1018,7 +1018,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Лес': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1036,7 +1036,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Мастерская': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1054,7 +1054,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Парк': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1072,7 +1072,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Полигон утилизации': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1090,7 +1090,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Приют для животных "Кошкин дом"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1108,7 +1108,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Район Дачный': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1126,7 +1126,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Магазин "Всё на свете"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1144,7 +1144,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Под мостом': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1443,7 +1443,7 @@ const roomSpecificMessages = {
                 { message: 'Вилял хвостом у стойки, все в восторге.', effect: { mood: 10 } }
               ]
         },
-        'шаблон': {
+        'Бизнес центр "Альбион"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1461,7 +1461,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Вокзал': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1479,7 +1479,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'ЖК Сфера': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1497,7 +1497,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Завод': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1515,7 +1515,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Кофейня "Ляля-Фа"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1533,7 +1533,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Лес': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1551,7 +1551,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Мастерская': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1569,7 +1569,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Парк': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1587,7 +1587,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Полигон утилизации': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1605,7 +1605,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Приют для животных "Кошкин дом"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1623,7 +1623,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Район Дачный': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1641,7 +1641,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Магазин "Всё на свете"': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
@@ -1659,7 +1659,7 @@ const roomSpecificMessages = {
                 { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
-        'шаблон': {
+        'Под мостом': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }

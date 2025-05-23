@@ -220,6 +220,10 @@ function Header({ user, room, theme, socket }) {
       {showProgress && (
         <ProgressModal theme={theme}>
           <ProgressBarContainer>
+            <ProgressLabel theme={theme}>Энергия</ProgressLabel>
+            <ProgressBar value={progressValues.energy} max={user?.stats?.maxEnergy || 100} type="energy" />
+          </ProgressBarContainer>
+          <ProgressBarContainer>
             <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
             <ProgressBar value={progressValues.health} max={user?.stats?.maxHealth || 100} type="health" />
           </ProgressBarContainer>
@@ -230,10 +234,6 @@ function Header({ user, room, theme, socket }) {
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Сытость</ProgressLabel>
             <ProgressBar value={progressValues.fullness} max={user?.stats?.maxSatiety || 100} type="fullness" />
-          </ProgressBarContainer>
-          <ProgressBarContainer>
-            <ProgressLabel theme={theme}>Энергия</ProgressLabel>
-            <ProgressBar value={progressValues.energy} max={user?.stats?.maxEnergy || 100} type="energy" />
           </ProgressBarContainer>
         </ProgressModal>
       )}

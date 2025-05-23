@@ -1,78 +1,181 @@
 const { rooms } = require('../../src/components/constants/rooms.js');
 
 // Заменяем массивы сообщений на новые с эффектами на параметры
-const humanMessages = [
-    { message: 'Поел в кафе, наслаждаясь вкусным обедом.', effect: { satiety: 10 } },
-    { message: 'Прогулялся по парку, дыша свежим воздухом.', effect: { mood: 5, energy: -5 } },
-    { message: 'Помог старушке донести тяжёлые сумки.', effect: { mood: 10, energy: -10 } },
-    { message: 'Случайно наступил в лужу, промочив обувь.', effect: { mood: -5 } },
-    { message: 'Посетил местный музей, вдохновившись экспонатами.', effect: { mood: 10 } },
-    { message: 'Поболтал с друзьями в баре.', effect: { mood: 10, satiety: 5 } },
-    { message: 'Попал под лёгкий дождь без зонта.', effect: { mood: -5, health: -5 } },
-    { message: 'Сфотографировал красивый закат.', effect: { mood: 5 } },
-    { message: 'Купил свежие фрукты на рынке.', effect: { satiety: 5 } },
-    { message: 'Задержался на работе, решая срочные дела.', effect: { energy: -10, mood: -5 } },
-    { message: 'Погладил дружелюбную собаку прохожего.', effect: { mood: 5 } },
-    { message: 'Прочитал интересную книгу в кафе.', effect: { mood: 5, energy: -5 } },
-    { message: 'Увидел уличное представление и аплодировал артистам.', effect: { mood: 10 } },
-    { message: 'Споткнулся о бордюр, слегка ушибся.', effect: { health: -5, mood: -5 } },
-    { message: 'Подарил цветы случайному прохожему.', effect: { mood: 10 } },
-    { message: 'Провёл время на спортивной площадке.', effect: { health: 5, energy: -10 } },
-    { message: 'Попробовал новый десерт в кондитерской.', effect: { satiety: 10, mood: 5 } },
-    { message: 'Устал от долгой прогулки по городу.', effect: { energy: -10 } },
-    { message: 'Нашёл потерянный кошелёк и вернул владельцу.', effect: { mood: 15 } },
-    { message: 'Поскользнулся на мокром асфальте.', effect: { health: -10, mood: -5 } }
-];
+// Заменяем массивы сообщений на новые с учётом общего состояния игрока
+const humanMessages = {
+    tragic: [ // Общее состояние < 25
+        { message: 'Сидел на скамейке, глядя в пустоту.', effect: { mood: -5 } },
+        { message: 'Пытался найти смысл в этом сером дне.', effect: { mood: -5 } },
+        { message: 'Промок под дождём, чувствуя холод внутри.', effect: { health: -5, mood: -5 } },
+        { message: 'Забыл поесть, желудок сводит от голода.', effect: { satiety: -10 } },
+        { message: 'Устал тащиться по улице без цели.', effect: { energy: -10, mood: -5 } },
+        { message: 'Смотрел на прохожих, чувствуя одиночество.', effect: { mood: -5 } },
+        { message: 'Споткнулся и упал, всё тело болит.', effect: { health: -10, mood: -5 } },
+        { message: 'Сидел в тишине, слыша только свои мысли.', effect: { mood: -5 } },
+        { message: 'Потерял кошелёк, теперь всё ещё хуже.', effect: { mood: -10 } },
+        { message: 'Просто лёг на траву, не в силах идти дальше.', effect: { energy: -10 } }
+    ],
+    sad: [ // Общее состояние 26–50
+        { message: 'Пошёл в кафе, но еда не принесла радости.', effect: { satiety: 5, mood: -3 } },
+        { message: 'Прогулялся, но всё кажется таким серым.', effect: { energy: -5 } },
+        { message: 'О, ещё один дождливый день, как мило.', effect: { mood: -5, health: -3 } },
+        { message: 'Помог прохожему, но кто поможет мне?', effect: { mood: 3, energy: -5 } },
+        { message: 'Сфотографировал закат. Ну и что?', effect: { mood: 2 } },
+        { message: 'Купил булку, но она оказалась чёрствой.', effect: { satiety: 3, mood: -3 } },
+        { message: 'Поболтал с кем-то, но разговор был пустой.', effect: { mood: -3 } },
+        { message: 'Сидел в парке, глядя на счастливых людей.', effect: { mood: -5 } },
+        { message: 'Устал от всего этого шума вокруг.', effect: { energy: -5, mood: -3 } },
+        { message: 'Нашёл монетку. Похоже, это мой лучший момент за день.', effect: { mood: 3 } }
+    ],
+    good: [ // Общее состояние 51–75
+        { message: 'Поел вкусный обед в кафе, настроение поднялось.', effect: { satiety: 10, mood: 5 } },
+        { message: 'Прогулялся по парку, наслаждаясь солнцем.', effect: { mood: 5, energy: -5 } },
+        { message: 'Помог старушке, приятно чувствовать себя полезным.', effect: { mood: 8, energy: -5 } },
+        { message: 'Сфотографировал красивый пейзаж.', effect: { mood: 5 } },
+        { message: 'Поболтал с друзьями, было весело.', effect: { mood: 8 } },
+        { message: 'Купил свежие фрукты на рынке.', effect: { satiety: 5, mood: 3 } },
+        { message: 'Посмотрел уличное представление, впечатлён.', effect: { mood: 5 } },
+        { message: 'Побегал в парке, чувствуя прилив сил.', effect: { health: 5, energy: -5 } },
+        { message: 'Нашёл интересную книгу в магазине.', effect: { mood: 5 } },
+        { message: 'Улыбнулся прохожему, и он ответил тем же.', effect: { mood: 5 } }
+    ],
+    happy: [ // Общее состояние > 76
+        { message: 'Танцевал под музыку уличного артиста, это было круто!', effect: { mood: 10, energy: -5 } },
+        { message: 'Съел невероятный десерт в кафе, жизнь прекрасна!', effect: { satiety: 10, mood: 8 } },
+        { message: 'Прогулялся по парку, вдыхая аромат цветов.', effect: { mood: 8, energy: -3 } },
+        { message: 'Помог прохожему и получил массу благодарности.', effect: { mood: 10 } },
+        { message: 'Сфотографировал радугу после дождя.', effect: { mood: 8 } },
+        { message: 'Поболтал с друзьями, смеялись до слёз!', effect: { mood: 10, energy: -3 } },
+        { message: 'Нашёл идеальный кофе, день удался!', effect: { satiety: 5, mood: 5 } },
+        { message: 'Побегал на закате, чувствуя себя живым.', effect: { health: 8, energy: -5 } },
+        { message: 'Увидел смешного щенка и не смог сдержать улыбку.', effect: { mood: 8 } },
+        { message: 'Танцевал под дождём, как в кино!', effect: { mood: 10, health: -3 } }
+    ]
+};
 
-const catMessages = [
-    { message: 'Погнался за бабочкой, но не поймал.', effect: { energy: -5, mood: 5 } },
-    { message: 'Залез на дерево и застрял, пришлось спускаться.', effect: { energy: -10, mood: -5 } },
-    { message: 'Лениво грелся на тёплой крыше.', effect: { energy: 10, mood: 5 } },
-    { message: 'Нашёл укромный уголок и вздремнул.', effect: { energy: 15, satiety: -5 } },
-    { message: 'Поиграл с листочком, который гонял ветер.', effect: { mood: 5, energy: -5 } },
-    { message: 'Попытался поймать солнечный зайчик.', effect: { energy: -5, mood: 10 } },
-    { message: 'Тёрся о ноги прохожего, выпросив еду.', effect: { satiety: 10, mood: 5 } },
-    { message: 'Исследовал мусорный бак и нашёл вкусное.', effect: { satiety: 15, health: -5 } },
-    { message: 'Устроил засаду на голубя, но он улетел.', effect: { mood: -5, energy: -5 } },
-    { message: 'Ловко запрыгнул на высокий забор.', effect: { energy: -5, mood: 5 } },
-    { message: 'Поскользнулся, прыгая с забора.', effect: { health: -5, mood: -5 } },
-    { message: 'Повалялся в солнечном пятне на траве.', effect: { mood: 10, energy: 5 } },
-    { message: 'Поймал мышь и гордо её съел.', effect: { satiety: 10, mood: 10 } },
-    { message: 'Попал под дождь, промокнув до нитки.', effect: { health: -5, mood: -10 } },
-    { message: 'Играл с клубком шерсти, найденным на улице.', effect: { mood: 5, energy: -5 } },
-    { message: 'Заточил когти о старое дерево.', effect: { mood: 5 } },
-    { message: 'Увидел собаку и спрятался в кустах.', effect: { mood: -5, energy: -5 } },
-    { message: 'Нашёл миску с молоком у дома.', effect: { satiety: 15, mood: 5 } },
-    { message: 'Поранился о колючку в траве.', effect: { health: -10, mood: -5 } },
-    { message: 'Наблюдал за птицами с подоконника.', effect: { mood: 5 } }
-];
+const catMessages = {
+    tragic: [ // Общее состояние < 25
+        { message: 'Лежал в углу, чувствуя себя никому не нужным.', effect: { mood: -5 } },
+        { message: 'Пытался поймать мышь, но сил не хватило.', effect: { energy: -10, mood: -5 } },
+        { message: 'Промок под дождём, шерсть вся мокрая.', effect: { health: -5, mood: -5 } },
+        { message: 'Не нашёл еды, желудок урчит.', effect: { satiety: -10 } },
+        { message: 'Спрятался в коробке, чтобы никто не видел.', effect: { mood: -5 } },
+        { message: 'Упал с забора, теперь всё болит.', effect: { health: -10, mood: -5 } },
+        { message: 'Мяукал в пустоту, но никто не ответил.', effect: { mood: -5 } },
+        { message: 'Свернулся клубком, пытаясь забыться.', effect: { energy: -5 } },
+        { message: 'Увидел собаку и забился в угол.', effect: { mood: -10 } },
+        { message: 'Лежал на холодной земле, дрожа.', effect: { health: -5, mood: -5 } }
+    ],
+    sad: [ // Общее состояние 26–50
+        { message: 'Погнался за бабочкой, но зачем это всё?', effect: { energy: -5, mood: -3 } },
+        { message: 'Грелся на крыше, но радости это не принесло.', effect: { energy: 5, mood: -3 } },
+        { message: 'Нашёл старую еду, но она невкусная.', effect: { satiety: 5, mood: -3 } },
+        { message: 'Спал в коробке, но всё равно устал.', effect: { energy: 5, mood: -3 } },
+        { message: 'Смотрел на птиц, но они всё равно улетели.', effect: { mood: -5 } },
+        { message: 'Поскользнулся на мокрой крыше, еле удержался.', effect: { health: -3, mood: -3 } },
+        { message: 'Тёрся о ноги прохожего, но он меня прогнал.', effect: { mood: -5 } },
+        { message: 'Поиграл с листочком, но быстро надоело.', effect: { energy: -5, mood: -3 } },
+        { message: 'Сидел на заборе, глядя на серый мир.', effect: { mood: -5 } },
+        { message: 'Нашёл лужу и промок, как же всё достало.', effect: { health: -3, mood: -5 } }
+    ],
+    good: [ // Общее состояние 51–75
+        { message: 'Погнался за бабочкой, было весело.', effect: { energy: -5, mood: 5 } },
+        { message: 'Грелся на тёплой крыше, мурлыча.', effect: { energy: 5, mood: 5 } },
+        { message: 'Нашёл вкусный кусочек рыбы у дома.', effect: { satiety: 10, mood: 3 } },
+        { message: 'Вздремнул в укромном уголке.', effect: { energy: 10 } },
+        { message: 'Поиграл с солнечным зайчиком.', effect: { energy: -5, mood: 5 } },
+        { message: 'Ловко запрыгнул на забор, чувствуя себя ловким.', effect: { health: 3, energy: -3 } },
+        { message: 'Тёрся о ноги прохожего, получил ласку.', effect: { mood: 5, satiety: 5 } },
+        { message: 'Повалялся в траве, наслаждаясь солнцем.', effect: { mood: 5, energy: 3 } },
+        { message: 'Поймал муху, было забавно.', effect: { mood: 5, energy: -3 } },
+        { message: 'Наблюдал за птицами с подоконника.', effect: { mood: 5 } }
+    ],
+    happy: [ // Общее состояние > 76
+        { message: 'Носился за бабочкой, как настоящий охотник!', effect: { energy: -5, mood: 10 } },
+        { message: 'Грелся на крыше, мурлыча от счастья.', effect: { energy: 8, mood: 8 } },
+        { message: 'Нашёл миску с молоком, объелся!', effect: { satiety: 15, mood: 5 } },
+        { message: 'Спал в тёплой коробке, мечтая о приключениях.', effect: { energy: 10, mood: 5 } },
+        { message: 'Играл с листочком, прыгая от радости.', effect: { energy: -5, mood: 8 } },
+        { message: 'Запрыгнул на дерево, чувствуя себя королём!', effect: { health: 5, energy: -5 } },
+        { message: 'Тёрся о прохожего, получил вкусняшку!', effect: { satiety: 10, mood: 8 } },
+        { message: 'Наблюдал за птицами, мурлыча от удовольствия.', effect: { mood: 8 } },
+        { message: 'Поймал мышь и гордо её съел.', effect: { satiety: 10, mood: 10 } },
+        { message: 'Катался в траве, наслаждаясь свободой.', effect: { mood: 10, energy: -3 } }
+    ]
+};
 
-const dogMessages = [
-    { message: 'Побегал за мячом, который бросил прохожий.', effect: { energy: -10, mood: 10 } },
-    { message: 'Понюхал все кусты в парке.', effect: { mood: 5, energy: -5 } },
-    { message: 'Весело тявкнул на пробегающую кошку.', effect: { mood: 5, energy: -5 } },
-    { message: 'Нашёл старую кость и погрыз её.', effect: { satiety: 10, mood: 5 } },
-    { message: 'Повалялся в траве, наслаждаясь солнцем.', effect: { energy: 5, mood: 10 } },
-    { message: 'Радостно поприветствовал другого пса.', effect: { mood: 10 } },
-    { message: 'Побегал за своим хвостом от скуки.', effect: { energy: -5, mood: 5 } },
-    { message: 'Копал яму и испачкался в грязи.', effect: { mood: 5, health: -5 } },
-    { message: 'Попытался догнать белку, но не успел.', effect: { energy: -10, mood: -5 } },
-    { message: 'Лизнул руку доброму прохожему.', effect: { mood: 10 } },
-    { message: 'Нашёл лужу и весело в ней поплескался.', effect: { mood: 10, health: -5 } },
-    { message: 'Отдохнул в тени под деревом.', effect: { energy: 10, mood: 5 } },
-    { message: 'Съел кусок хлеба, брошенный прохожим.', effect: { satiety: 10, mood: 5 } },
-    { message: 'Устал от долгого бега по парку.', effect: { energy: -15 } },
-    { message: 'Поранился о острый камень на тропинке.', effect: { health: -10, mood: -5 } },
-    { message: 'Играл с палкой, найденной в парке.', effect: { mood: 5, energy: -5 } },
-    { message: 'Попал под дождь, весь промок.', effect: { health: -5, mood: -10 } },
-    { message: 'Погрыз старый ботинок, найденный на улице.', effect: { mood: 5, satiety: 5 } },
-    { message: 'Споткнулся, бегая по неровной дороге.', effect: { health: -5, mood: -5 } },
-    { message: 'Получил ласку от прохожего.', effect: { mood: 10 } }
-];
+const dogMessages = {
+    tragic: [ // Общее состояние < 25
+        { message: 'Лежал в углу, скуля от одиночества.', effect: { mood: -5 } },
+        { message: 'Пытался найти еду, но всё пусто.', effect: { satiety: -10 } },
+        { message: 'Промок под дождём, дрожа от холода.', effect: { health: -5, mood: -5 } },
+        { message: 'Устал бродить без цели.', effect: { energy: -10, mood: -5 } },
+        { message: 'Спрятался под скамейкой, боясь всего.', effect: { mood: -5 } },
+        { message: 'Поранился о мусор, лапа болит.', effect: { health: -10, mood: -5 } },
+        { message: 'Скулил, глядя на пустую миску.', effect: { satiety: -5, mood: -5 } },
+        { message: 'Лёг на холодную землю, сил нет.', effect: { energy: -10 } },
+        { message: 'Увидел кошку, но даже не погнался.', effect: { mood: -5 } },
+        { message: 'Сидел под деревом, чувствуя тоску.', effect: { mood: -5 } }
+    ],
+    sad: [ // Общее состояние 26–50
+        { message: 'Погнался за белкой, но она всё равно сбежала.', effect: { energy: -5, mood: -3 } },
+        { message: 'Понюхал кусты, но ничего интересного.', effect: { energy: -3, mood: -3 } },
+        { message: 'Нашёл кость, но она оказалась старой.', effect: { satiety: 5, mood: -3 } },
+        { message: 'Повалялся в траве, но настроение не улучшилось.', effect: { energy: 3, mood: -3 } },
+        { message: 'Тявкнул на прохожего, но он не обратил внимания.', effect: { mood: -5 } },
+        { message: 'Промок в луже, теперь всё раздражает.', effect: { health: -3, mood: -5 } },
+        { message: 'Копал яму, но зачем это всё?', effect: { energy: -5, mood: -3 } },
+        { message: 'Лизнул руку прохожего, но он ушёл.', effect: { mood: -5 } },
+        { message: 'Сидел на обочине, глядя на проходящих.', effect: { mood: -5 } },
+        { message: 'Устал бегать, всё бесполезно.', effect: { energy: -5 } }
+    ],
+    good: [ // Общее состояние 51–75
+        { message: 'Побегал за мячом, было весело.', effect: { energy: -5, mood: 5 } },
+        { message: 'Понюхал кусты, нашёл интересный запах.', effect: { mood: 5, energy: -3 } },
+        { message: 'Нашёл вкусную кость и погрыз её.', effect: { satiety: 10, mood: 3 } },
+        { message: 'Повалялся в траве, наслаждаясь солнцем.', effect: { energy: 5, mood: 5 } },
+        { message: 'Радостно тявкнул на другого пса.', effect: { mood: 5 } },
+        { message: 'Играл с палкой, чувствуя себя активным.', effect: { energy: -5, mood: 5 } },
+        { message: 'Получил ласку от прохожего.', effect: { mood: 5 } },
+        { message: 'Побегал по парку, лапы в деле.', effect: { energy: -5, health: 3 } },
+        { message: 'Нашёл кусок хлеба, вкусный сюрприз!', effect: { satiety: 5, mood: 3 } },
+        { message: 'Лизнул руку доброму человеку.', effect: { mood: 5 } }
+    ],
+    happy: [ // Общее состояние > 76
+        { message: 'Носился за мячом, как чемпион!', effect: { energy: -5, mood: 10 } },
+        { message: 'Понюхал цветы, жизнь прекрасна!', effect: { mood: 8, energy: -3 } },
+        { message: 'Нашёл огромную кость, пир на весь день!', effect: { satiety: 15, mood: 5 } },
+        { message: 'Повалялся в траве, виляя хвостом от счастья.', effect: { energy: 5, mood: 8 } },
+        { message: 'Играл с другим псом, веселье на максимум!', effect: { mood: 10, energy: -5 } },
+        { message: 'Побегал за белкой, полон энергии!', effect: { energy: -5, mood: 8 } },
+        { message: 'Получил вкусняшку от прохожего!', effect: { satiety: 10, mood: 5 } },
+        { message: 'Тявкал от радости, встретив друга.', effect: { mood: 8 } },
+        { message: 'Плескался в луже, как щенок!', effect: { mood: 10, health: -3 } },
+        { message: 'Гонялся за бабочкой, полный восторг!', effect: { energy: -5, mood: 10 } }
+    ]
+};
 
 // Функция для получения случайного сообщения в зависимости от типа игрока
+// Функция для получения случайного сообщения в зависимости от типа игрока и общего состояния
 const getRandomWalkMessage = (user) => {
-    const messages = user.isHuman ? humanMessages : user.animalType === 'Кошка' ? catMessages : dogMessages;
+    // Рассчитываем общее состояние как среднее значение параметров
+    const overallState = (user.stats.health + user.stats.energy + user.stats.mood + user.stats.satiety) / 4;
+
+    // Определяем категорию сообщений в зависимости от общего состояния
+    let messageCategory;
+    if (overallState < 25) {
+        messageCategory = 'tragic';
+    } else if (overallState <= 50) {
+        messageCategory = 'sad';
+    } else if (overallState <= 75) {
+        messageCategory = 'good';
+    } else {
+        messageCategory = 'happy';
+    }
+
+    // Выбираем массив сообщений в зависимости от типа игрока
+    const messages = user.isHuman ? humanMessages[messageCategory] : user.animalType === 'Кошка' ? catMessages[messageCategory] : dogMessages[messageCategory];
+
     const randomIndex = Math.floor(Math.random() * messages.length);
     return messages[randomIndex];
 };
@@ -159,7 +262,7 @@ function registerUserHandlers({
                 await User.updateOne(
                     { userId: user.userId },
                     {
-                        $push: { diary: { $each: diaryEntries, $slice: -500 } }, // Ограничиваем diary до 500 записей
+                        $push: { diary: { $each: diaryEntries, $slice: -100 } }, // Ограничиваем diary до 100 записей
                         $set: {
                             lastActivity: now,
                             'stats.health': updatedStats.health,

@@ -1,3 +1,4 @@
+// Обновление импорта и логики для отображения реальных параметров из user.stats
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaCoins } from 'react-icons/fa';
@@ -106,12 +107,14 @@ const ProgressBar = styled.progress`
     ${props => props.type === 'health' && `background-color: #FF0000;`}
     ${props => props.type === 'mood' && `background-color: #007AFF;`}
     ${props => props.type === 'fullness' && `background-color: #32CD32;`}
+    ${props => props.type === 'energy' && `background-color: #FFA500;`}
     border-radius: 4px;
   }
   &::-moz-progress-bar {
     ${props => props.type === 'health' && `background-color: #FF0000;`}
     ${props => props.type === 'mood' && `background-color: #007AFF;`}
     ${props => props.type === 'fullness' && `background-color: #32CD32;`}
+    ${props => props.type === 'energy' && `background-color: #FFA500;`}
     border-radius: 4px;
   }
 `;
@@ -130,7 +133,7 @@ const CreditsText = styled.span`
 
 function Header({ user, room, theme, socket }) {
   const [showProgress, setShowProgress] = useState(false);
-  const [credits, setCredits] = useState(0);
+  const [credits, setCredits] = useState(user?.credits || 0);
 
   const roomName = room
     ? (room.startsWith('myhome_') ? 'Мой дом' : room)
@@ -140,10 +143,12 @@ function Header({ user, room, theme, socket }) {
   const firstName = user?.firstName || 'User';
   const defaultAvatarLetter = firstName.charAt(0).toUpperCase();
 
+  // Используем реальные параметры из user.stats
   const progressValues = {
-    health: 50,
-    mood: 50,
-    fullness: 50
+    health: user?.stats?.health || 0,
+    mood: user?.stats?.mood || 0,
+    fullness: user?.stats?.satiety || 0,
+    energy: user?.stats?.energy || 0,
   };
 
   useEffect(() => {
@@ -161,11 +166,9 @@ function Header({ user, room, theme, socket }) {
       setCredits(newCredits);
     };
 
-    // Подписываемся на оба события
     socket.on('userUpdate', handleUserUpdate);
     socket.on('creditsUpdate', handleCreditsUpdate);
 
-    // Запрашиваем начальные кредиты
     socket.emit('getCredits', {}, (response) => {
       if (response?.success) {
         console.log('Initial credits received:', response.credits);
@@ -177,12 +180,11 @@ function Header({ user, room, theme, socket }) {
       socket.off('userUpdate', handleUserUpdate);
       socket.off('creditsUpdate', handleCreditsUpdate);
     };
-    // }, [socket, user]);
   }, [socket, user?.userId]);
 
-
+  // Обновляем расчёт среднего значения с учётом энергии
   const averageValue = Math.round(
-    (progressValues.health + progressValues.mood + progressValues.fullness) / 3
+    (progressValues.health + progressValues.mood + progressValues.fullness + progressValues.energy) / 4
   );
 
   const toggleProgressModal = (e) => {
@@ -219,15 +221,19 @@ function Header({ user, room, theme, socket }) {
         <ProgressModal theme={theme}>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
-            <ProgressBar value={progressValues.health} max="100" type="health" />
+            <ProgressBar value={progressValues.health} max={user?.stats?.maxHealth || 100} type="health" />
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Настроение</ProgressLabel>
-            <ProgressBar value={progressValues.mood} max="100" type="mood" />
+            <ProgressBar value={progressValues.mood} max={user?.stats?.maxMood || 100} type="mood" />
           </ProgressBarContainer>
           <ProgressBarContainer>
             <ProgressLabel theme={theme}>Сытость</ProgressLabel>
-            <ProgressBar value={progressValues.fullness} max="100" type="fullness" />
+            <ProgressBar value={progressValues.fullness} max={user?.stats?.maxSatiety || 100} type="fullness" />
+          </ProgressBarContainer>
+          <ProgressBarContainer>
+            <ProgressLabel theme={theme}>Энергия</ProgressLabel>
+            <ProgressBar value={progressValues.energy} max={user?.stats?.maxEnergy || 100} type="energy" />
           </ProgressBarContainer>
         </ProgressModal>
       )}

@@ -113,17 +113,18 @@ function registerUserHandlers({
             console.log('New user created:', user.userId);
         }
 
+        // В функции registerUserHandlers, замените блок кода, связанный с созданием записей в diary, на следующий:
         const now = new Date();
         const lastActivity = user.lastActivity || now;
         const hoursPassed = Math.floor((now - lastActivity) / (1000 * 60 * 60)); // Кол-во полных часов
 
         if (hoursPassed > 0) {
             const diaryEntries = [];
-            const statUpdates = { // Объект для накопления изменений параметров
-                'stats.health': 0,
-                'stats.energy': 0,
-                'stats.mood': 0,
-                'stats.satiety': 0
+            const statUpdates = {
+                health: 0,
+                energy: 0,
+                mood: 0,
+                satiety: 0
             };
             const freeWill = user.stats?.freeWill || 0; // Получаем freeWill, по умолчанию 0
             for (let i = 0; i < hoursPassed; i++) {
@@ -139,37 +140,61 @@ function registerUserHandlers({
                         message: entry.message
                     });
                     // Накапливаем изменения параметров
-                    if (entry.effect.health) statUpdates['stats.health'] += entry.effect.health;
-                    if (entry.effect.energy) statUpdates['stats.energy'] += entry.effect.energy;
-                    if (entry.effect.mood) statUpdates['stats.mood'] += entry.effect.mood;
-                    if (entry.effect.satiety) statUpdates['stats.satiety'] += entry.effect.satiety;
+                    if (entry.effect.health) statUpdates.health += entry.effect.health;
+                    if (entry.effect.energy) statUpdates.energy += entry.effect.energy;
+                    if (entry.effect.mood) statUpdates.mood += entry.effect.mood;
+                    if (entry.effect.satiety) statUpdates.satiety += entry.effect.satiety;
                 }
             }
             // Добавляем записи в diary и обновляем параметры, если есть изменения
             if (diaryEntries.length > 0) {
+                // Ограничиваем параметры минимальными (0) и максимальными значениями
+                const updatedStats = {
+                    health: Math.min(Math.max(user.stats.health + statUpdates.health, 0), user.stats.maxHealth),
+                    energy: Math.min(Math.max(user.stats.energy + statUpdates.energy, 0), user.stats.maxEnergy),
+                    mood: Math.min(Math.max(user.stats.mood + statUpdates.mood, 0), user.stats.maxMood),
+                    satiety: Math.min(Math.max(user.stats.satiety + statUpdates.satiety, 0), user.stats.maxSatiety)
+                };
+
                 await User.updateOne(
                     { userId: user.userId },
                     {
                         $push: { diary: { $each: diaryEntries, $slice: -100 } }, // Ограничиваем diary до 100 записей
-                        $set: { lastActivity: now },
-                        $inc: statUpdates // Применяем изменения к параметрам
-                    }
-                );
-                // Ограничиваем параметры максимальными и минимальными значениями
-                await User.updateOne(
-                    { userId: user.userId },
-                    {
                         $set: {
-                            'stats.health': { $min: ['$stats.maxHealth', { $max: [0, { $add: ['$stats.health', statUpdates['stats.health']] }] }] },
-                            'stats.energy': { $min: ['$stats.maxEnergy', { $max: [0, { $add: ['$stats.energy', statUpdates['stats.energy']] }] }] },
-                            'stats.mood': { $min: ['$stats.maxMood', { $max: [0, { $add: ['$stats.mood', statUpdates['stats.mood']] }] }] },
-                            'stats.satiety': { $min: ['$stats.maxSatiety', { $max: [0, { $add: ['$stats.satiety', statUpdates['stats.satiety']] }] }] }
+                            lastActivity: now,
+                            'stats.health': updatedStats.health,
+                            'stats.energy': updatedStats.energy,
+                            'stats.mood': updatedStats.mood,
+                            'stats.satiety': updatedStats.satiety
                         }
                     }
                 );
-                console.log(`Added ${diaryEntries.length} diary entries and updated stats for user ${user.userId}`);
+                console.log(`Added ${diaryEntries.length} diary entries and updated stats for user ${user.userId}:`, updatedStats);
+
+                // Обновляем user после изменений
+                user = await User.findOne({ userId: user.userId });
+
+                // Отправляем userUpdate клиенту
+                socket.emit('userUpdate', {
+                    userId: user.userId,
+                    firstName: user.firstName,
+                    username: user.username,
+                    lastName: user.lastName,
+                    photoUrl: user.photoUrl,
+                    isRegistered: user.isRegistered,
+                    isHuman: user.isHuman,
+                    animalType: user.animalType,
+                    name: user.name,
+                    owner: user.owner,
+                    homeless: user.homeless,
+                    credits: user.credits || 0,
+                    onLeash: user.onLeash,
+                    freeRoam: user.freeRoam || false,
+                    stats: user.stats,
+                    diary: user.diary
+                });
             } else {
-                // Обновляем lastActivity, даже если записей нет
+                // Обновляем lastActivity, если записей нет
                 await User.updateOne(
                     { userId: user.userId },
                     { $set: { lastActivity: now } }

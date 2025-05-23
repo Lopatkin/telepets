@@ -286,6 +286,352 @@ const roomSpecificMessages = {
         'Бар "У бобра" (18+)': {
             tragic: [
                 { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } },
+                { message: 'Выпил горький эль, но настроение чуть поднялось.', effect: { mood: 2, satiety: 5, health: -2 } },
+                { message: 'Поболтал с незнакомцем, стало немного легче.', effect: { mood: 3, satiety: 2 } },
+                { message: 'Съел солёные орешки, но голова закружилась.', effect: { satiety: 5, health: -3 } },
+                { message: 'Смотрел на бармена, мечтая о лучшем дне.', effect: { mood: 2 } },
+                { message: 'Заказал дешёвый коктейль, вкус не впечатлил.', effect: { satiety: 3, mood: 2, health: -2 } },
+                { message: 'Слушал музыку в баре, но мысли всё равно мрачные.', effect: { mood: 3 } },
+                { message: 'Кто-то угостил пивом, это немного утешило.', effect: { satiety: 5, mood: 3, health: -2 } },
+                { message: 'Сидел в углу, но барная атмосфера чуть отвлекла.', effect: { mood: 2 } },
+                { message: 'Попробовал закуску, но желудок недоволен.', effect: { satiety: 4, health: -3 } },
+                { message: 'Смотрел на танцующих, мечтая о радости.', effect: { mood: 2 } },
+                { message: 'Выпил воды, но всё равно тоскливо.', effect: { satiety: 3, mood: 1 } },
+                { message: 'Кто-то рассказал анекдот, слегка улыбнулся.', effect: { mood: 3 } },
+                { message: 'Съел чипсы, но дым в баре раздражает.', effect: { satiety: 4, health: -2 } },
+                { message: 'Слушал старый джаз, это немного успокоило.', effect: { mood: 3 } },
+                { message: 'Бармен налил шот, но радости мало.', effect: { satiety: 3, mood: 2, health: -2 } },
+                { message: 'Поболтал с пьяным соседом, стало чуть веселее.', effect: { mood: 3 } },
+                { message: 'Нашёл мелочь в кармане, заказал сок.', effect: { satiety: 4, mood: 2 } },
+                { message: 'Смотрел на барный декор, отвлёкся от мыслей.', effect: { mood: 2 } },
+                { message: 'Съел кусок пиццы, но пересолено.', effect: { satiety: 5, health: -2 } },
+                { message: 'Кто-то похлопал по плечу, стало теплее.', effect: { mood: 3 } },
+                { message: 'Выпил лимонад, но грусть не уходит.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Слушал гитару уличного музыканта через окно.', effect: { mood: 3 } },
+                { message: 'Попробовал сырные палочки, но дым в глазах.', effect: { satiety: 4, health: -2 } },
+                { message: 'Поболтал о погоде с барменом, немного легче.', effect: { mood: 2 } },
+                { message: 'Нашёл конфету в кармане, мелочь, а приятно.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Смотрел на огоньки в баре, чуть отвлёкся.', effect: { mood: 2 } },
+                { message: 'Выпил травяной чай, но всё равно грустно.', effect: { satiety: 3, mood: 1 } },
+                { message: 'Кто-то угостил орешками, это мило.', effect: { satiety: 4, mood: 3 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } },
+                { message: 'Съел хот-дог, но всё ещё грустно.', effect: { satiety: 6, mood: 2, health: -2 } },
+                { message: 'Слушал разговоры за стойкой, немного отвлёкся.', effect: { mood: 3 } },
+                { message: 'Заказал сок, но дым в баре мешает.', effect: { satiety: 4, health: -2 } },
+                { message: 'Пошутил с соседом по стойке, стало легче.', effect: { mood: 4 } },
+                { message: 'Попробовал картошку фри, но она жирная.', effect: { satiety: 5, health: -3 } },
+                { message: 'Слушал живую музыку, настроение чуть поднялось.', effect: { mood: 3 } },
+                { message: 'Кто-то угостил коктейлем, это приятно.', effect: { satiety: 5, mood: 4, health: -2 } },
+                { message: 'Смотрел на барную стойку, задумался о жизни.', effect: { mood: 2 } },
+                { message: 'Съел пару оливок, но всё ещё тоскливо.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Поболтал с барменом о футболе, стало веселее.', effect: { mood: 4 } },
+                { message: 'Выпил лимонад, лёгкое облегчение.', effect: { satiety: 4, mood: 3 } },
+                { message: 'Смотрел на танцующих, но сам не решился.', effect: { mood: 2 } },
+                { message: 'Съел кусок пиццы, но пересолено.', effect: { satiety: 5, health: -2 } },
+                { message: 'Кто-то рассказал анекдот, улыбнулся.', effect: { mood: 4 } },
+                { message: 'Попробовал сырные палочки, вкусненько.', effect: { satiety: 5, mood: 3, health: -2 } },
+                { message: 'Слушал старый рок, немного взбодрился.', effect: { mood: 3 } },
+                { message: 'Выпил травяной чай, стало спокойнее.', effect: { satiety: 3, mood: 3 } },
+                { message: 'Пошутил с посетителем, посмеялись вместе.', effect: { mood: 4 } },
+                { message: 'Съел чипсы, но дым раздражает горло.', effect: { satiety: 4, health: -2 } },
+                { message: 'Смотрел на огоньки в баре, задумался.', effect: { mood: 2 } },
+                { message: 'Кто-то угостил орешками, мелочь, а приятно.', effect: { satiety: 4, mood: 3 } },
+                { message: 'Слушал бармена, его истории интересные.', effect: { mood: 3 } },
+                { message: 'Выпил газировку, стало чуть легче.', effect: { satiety: 4, mood: 2 } },
+                { message: 'Смотрел на вывеску бара, отвлёкся.', effect: { mood: 2 } },
+                { message: 'Попробовал крекеры, но всё ещё грустно.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Поболтал о жизни с незнакомцем.', effect: { mood: 3 } },
+                { message: 'Съел солёные орешки, но голова побаливает.', effect: { satiety: 4, health: -2 } },
+                { message: 'Слушал музыку, немного расслабился.', effect: { mood: 3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } },
+                { message: 'Попробовал новый коктейль, вкус огонь!', effect: { satiety: 6, mood: 6, health: -2 } },
+                { message: 'Танцевал под ритмичную музыку, кайф!', effect: { mood: 6, energy: -3 } },
+                { message: 'Съел вкусную пиццу, настроение на высоте.', effect: { satiety: 8, mood: 5, health: -2 } },
+                { message: 'Поболтал с весёлой компанией, зарядили.', effect: { mood: 6 } },
+                { message: 'Выпил крафтовое пиво, отличный вкус.', effect: { satiety: 5, mood: 5, health: -2 } },
+                { message: 'Слушал живую музыку, душа поёт.', effect: { mood: 6 } },
+                { message: 'Съел сырные палочки, объедение!', effect: { satiety: 6, mood: 5, health: -2 } },
+                { message: 'Пошутил с соседом по стойке, посмеялись.', effect: { mood: 5 } },
+                { message: 'Заказал лимонад, освежает.', effect: { satiety: 4, mood: 4 } },
+                { message: 'Смотрел на барный декор, атмосферно.', effect: { mood: 5 } },
+                { message: 'Попробовал картошку фри, хрустящая.', effect: { satiety: 5, mood: 4, health: -2 } },
+                { message: 'Слушал анекдоты, настроение поднялось.', effect: { mood: 6 } },
+                { message: 'Кто-то угостил шотом, вечер удался.', effect: { satiety: 3, mood: 5, health: -2 } },
+                { message: 'Танцевал с незнакомкой, было весело.', effect: { mood: 6, energy: -3 } },
+                { message: 'Съел хот-дог, сытно и вкусно.', effect: { satiety: 7, mood: 5, health: -2 } },
+                { message: 'Поболтал о музыке с барменом.', effect: { mood: 5 } },
+                { message: 'Выпил фруктовый коктейль, настроение лучше.', effect: { satiety: 5, mood: 5, health: -2 } },
+                { message: 'Смотрел на танцпол, заряжает.', effect: { mood: 5 } },
+                { message: 'Съел орешки, хрустящее удовольствие.', effect: { satiety: 4, mood: 4 } },
+                { message: 'Слушал джаз, расслабляет.', effect: { mood: 5 } },
+                { message: 'Попробовал новый снэк, понравилось.', effect: { satiety: 5, mood: 4, health: -2 } },
+                { message: 'Пошутил с компанией, все ржали.', effect: { mood: 6 } },
+                { message: 'Выпил газировку, бодрит.', effect: { satiety: 4, mood: 4 } },
+                { message: 'Смотрел на барные огоньки, уютно.', effect: { mood: 5 } },
+                { message: 'Съел кусок пиццы, просто класс.', effect: { satiety: 6, mood: 5, health: -2 } },
+                { message: 'Поболтал с барменом о жизни.', effect: { mood: 5 } },
+                { message: 'Выпил травяной чай, расслабляет.', effect: { satiety: 3, mood: 4 } },
+                { message: 'Кто-то угостил чипсами, приятно.', effect: { satiety: 4, mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } },
+                { message: 'Попробовал авторский коктейль, взрыв вкуса!', effect: { satiety: 8, mood: 10, health: -2 } },
+                { message: 'Танцевал под хиты, энергия бьёт ключом!', effect: { mood: 10, energy: -3 } },
+                { message: 'Съел вкуснейший бургер, счастье полное.', effect: { satiety: 10, mood: 8, health: -2 } },
+                { message: 'Поболтал с весёлой толпой, ржал до слёз.', effect: { mood: 10 } },
+                { message: 'Выпил крафтовое пиво, вечер идеальный.', effect: { satiety: 6, mood: 8, health: -2 } },
+                { message: 'Слушал живую группу, мурашки по коже.', effect: { mood: 10 } },
+                { message: 'Съел пиццу, лучшая в городе!', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Танцевал с друзьями, это было эпично.', effect: { mood: 10, energy: -3 } },
+                { message: 'Попробовал десерт, сладкий рай.', effect: { satiety: 7, mood: 8, health: -2 } },
+                { message: 'Пошутил с барменом, все ржали.', effect: { mood: 10 } },
+                { message: 'Выпил коктейль, настроение на миллион.', effect: { satiety: 6, mood: 8, health: -2 } },
+                { message: 'Смотрел на танцпол, сам зажёг!', effect: { mood: 8, energy: -3 } },
+                { message: 'Съел сырные палочки, объедение.', effect: { satiety: 7, mood: 8, health: -2 } },
+                { message: 'Пел в караоке, звезда вечера!', effect: { mood: 10 } },
+                { message: 'Выпил фруктовый шот, полный восторг.', effect: { satiety: 5, mood: 8, health: -2 } },
+                { message: 'Танцевал с незнакомцем, весело!', effect: { mood: 10, energy: -3 } },
+                { message: 'Съел хот-дог, сытно и вкусно.', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Слушал рок, это мой вечер!', effect: { mood: 8 } },
+                { message: 'Попробовал чипсы с соусом, кайф.', effect: { satiety: 6, mood: 8, health: -2 } },
+                { message: 'Поболтал с компанией, все свои.', effect: { mood: 10 } },
+                { message: 'Выпил лимонад, свежесть и радость.', effect: { satiety: 5, mood: 8 } },
+                { message: 'Смотрел на барные огоньки, душа поёт.', effect: { mood: 8 } },
+                { message: 'Съел орешки, хрустящее счастье.', effect: { satiety: 5, mood: 8 } },
+                { message: 'Танцевал под джаз, полный релакс.', effect: { mood: 8, energy: -3 } },
+                { message: 'Попробовал новый снэк, супер!', effect: { satiety: 6, mood: 8, health: -2 } },
+                { message: 'Пошутил с соседом, ржали до упаду.', effect: { mood: 10 } },
+                { message: 'Выпил газировку, бодрость и радость.', effect: { satiety: 5, mood: 8 } },
+                { message: 'Смотрел на барную атмосферу, кайфую.', effect: { mood: 8 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
                 { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
             ],
             sad: [
@@ -455,19 +801,365 @@ const roomSpecificMessages = {
         'Бар "У бобра" (18+)': {
             tragic: [
                 { message: 'Спрятался под столом, напуганный шумом.', effect: { mood: -5 } },
-                { message: 'Промок в луже пива, шерсть липкая.', effect: { health: -5, mood: -5 } }
+                { message: 'Промок в луже пива, шерсть липкая.', effect: { health: -5, mood: -5 } },
+                { message: 'Нашёл крошку хлеба, но шум пугает.', effect: { satiety: 3, mood: 2, health: -2 } },
+                { message: 'Мяукал под стойкой, но никто не заметил.', effect: { mood: 2 } },
+                { message: 'Съел кусочек сыра, но всё ещё грустно.', effect: { satiety: 4, mood: 2, health: -2 } },
+                { message: 'Лежал в углу, вдыхая сигаретный дым.', effect: { health: -3, mood: 1 } },
+                { message: 'Нашёл орешек, но шум давит.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Смотрел на людей, чувствуя одиночество.', effect: { mood: 2 } },
+                { message: 'Тёрся о стул, но никто не погладил.', effect: { mood: 2 } },
+                { message: 'Нашёл кусочек рыбы, но дым раздражает.', effect: { satiety: 4, health: -2, mood: 2 } },
+                { message: 'Спрятался за ящиком, но всё равно страшно.', effect: { mood: 2 } },
+                { message: 'Съел крошку пиццы, но радости мало.', effect: { satiety: 3, mood: 2, health: -2 } },
+                { message: 'Слушал музыку, но шум пугает.', effect: { mood: 2 } },
+                { message: 'Нашёл лужицу молока, чуть лучше.', effect: { satiety: 4, mood: 3 } },
+                { message: 'Лежал у батареи, но дым в глазах.', effect: { health: -2, mood: 2 } },
+                { message: 'Съел кусочек колбасы, но всё тоскливо.', effect: { satiety: 4, mood: 2, health: -2 } },
+                { message: 'Мяукал, но никто не обратил внимания.', effect: { mood: 2 } },
+                { message: 'Нашёл оливку, но она невкусная.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Смотрел на огоньки, слегка отвлёкся.', effect: { mood: 3 } },
+                { message: 'Тёрся о чьи-то ноги, но прогнали.', effect: { mood: 2 } },
+                { message: 'Съел крошку хлеба, но дым мешает.', effect: { satiety: 3, health: -2, mood: 2 } },
+                { message: 'Лежал в углу, мечтая о тишине.', effect: { mood: 2 } },
+                { message: 'Нашёл кусочек мяса, но шум раздражает.', effect: { satiety: 4, mood: 2, health: -2 } },
+                { message: 'Смотрел на танцующих, но не до веселья.', effect: { mood: 2 } },
+                { message: 'Нашёл каплю соуса, слегка утешило.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Мяукал у двери, но никто не помог.', effect: { mood: 2 } },
+                { message: 'Съел кусочек сыра, но дым в горле.', effect: { satiety: 4, health: -2, mood: 2 } },
+                { message: 'Лежал у стойки, но всё тоскливо.', effect: { mood: 2 } },
+                { message: 'Нашёл крошку пиццы, но радости нет.', effect: { satiety: 3, mood: 2, health: -2 } },
+                { message: 'Смотрел на бармена, мечтая о ласке.', effect: { mood: 2 } }
             ],
             sad: [
                 { message: 'Пытался стащить еду, но прогнали.', effect: { mood: -5 } },
-                { message: 'Сидел в углу, наблюдая за пьяными.', effect: { mood: -3 } }
+                { message: 'Сидел в углу, наблюдая за пьяными.', effect: { mood: -3 } },
+                { message: 'Нашёл кусочек хлеба, но настроение не лучше.', effect: { satiety: 4, mood: 2, health: -2 } },
+                { message: 'Тёрся о ноги посетителя, слегка погладили.', effect: { mood: 3 } },
+                { message: 'Съел орешек, но дым раздражает.', effect: { satiety: 3, health: -2, mood: 2 } },
+                { message: 'Смотрел на танцпол, но не до веселья.', effect: { mood: 2 } },
+                { message: 'Нашёл крошку сыра, чуть повеселел.', effect: { satiety: 4, mood: 3, health: -2 } },
+                { message: 'Мурлыкал у батареи, но шум мешает.', effect: { mood: 3, health: -2 } },
+                { message: 'Съел кусочек колбасы, но всё тоскливо.', effect: { satiety: 4, mood: 2, health: -2 } },
+                { message: 'Смотрел на огоньки, немного отвлёкся.', effect: { mood: 3 } },
+                { message: 'Нашёл каплю молока, слегка лучше.', effect: { satiety: 4, mood: 3 } },
+                { message: 'Тёрся о стул, но никто не заметил.', effect: { mood: 2 } },
+                { message: 'Съел крошку пиццы, но дым в глазах.', effect: { satiety: 3, health: -2, mood: 2 } },
+                { message: 'Лежал у стойки, мечтая о тишине.', effect: { mood: 2 } },
+                { message: 'Нашёл кусочек рыбы, настроение чуть лучше.', effect: { satiety: 5, mood: 3, health: -2 } },
+                { message: 'Мяукал, но шум заглушает.', effect: { mood: 2 } },
+                { message: 'Съел оливку, но не то.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Смотрел на бармена, надеясь на еду.', effect: { mood: 2 } },
+                { message: 'Нашёл крошку хлеба, но радости мало.', effect: { satiety: 3, mood: 2, health: -2 } },
+                { message: 'Тёрся о ноги, получил лёгкую ласку.', effect: { mood: 3 } },
+                { message: 'Съел кусочек мяса, но дым мешает.', effect: { satiety: 4, health: -2, mood: 2 } },
+                { message: 'Лежал у батареи, слегка согрелся.', effect: { mood: 3, health: -2 } },
+                { message: 'Нашёл каплю соуса, чуть повеселел.', effect: { satiety: 3, mood: 3 } },
+                { message: 'Смотрел на танцующих, но не до веселья.', effect: { mood: 2 } },
+                { message: 'Съел крошку сыра, но шум раздражает.', effect: { satiety: 4, health: -2, mood: 2 } },
+                { message: 'Мяукал у двери, надеясь на ласку.', effect: { mood: 2 } },
+                { message: 'Нашёл кусочек хлеба, но всё тоскливо.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Смотрел на огоньки, слегка успокоился.', effect: { mood: 3 } },
+                { message: 'Съел орешек, но дым в горле.', effect: { satiety: 3, health: -2, mood: 2 } },
+                { message: 'Тёрся о стойку, мечтая о еде.', effect: { mood: 2 } }
             ],
             good: [
                 { message: 'Нашёл кусочек рыбы под столом.', effect: { satiety: 5, mood: 5 } },
-                { message: 'Мурлыкал, сидя у тёплой батареи.', effect: { mood: 5, energy: 3 } }
+                { message: 'Мурлыкал, сидя у тёплой батареи.', effect: { mood: 5, energy: 3 } },
+                { message: 'Съел кусочек колбасы, объедение!', effect: { satiety: 6, mood: 5, health: -2 } },
+                { message: 'Тёрся о ноги посетителя, получил ласку.', effect: { mood: 6 } },
+                { message: 'Нашёл крошку пиццы, вкуснятина.', effect: { satiety: 5, mood: 5, health: -2 } },
+                { message: 'Играл с пробкой, весело.', effect: { mood: 5, energy: -3 } },
+                { message: 'Съел орешек, хрустящее удовольствие.', effect: { satiety: 4, mood: 5 } },
+                { message: 'Мурлыкал под музыку, уютно.', effect: { mood: 5 } },
+                { message: 'Нашёл каплю молока, настроение лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Смотрел на огоньки, завораживает.', effect: { mood: 5 } },
+                { message: 'Съел кусочек сыра, просто класс.', effect: { satiety: 5, mood: 5, health: -2 } },
+                { message: 'Тёрся о бармена, получил ласку.', effect: { mood: 6 } },
+                { message: 'Нашёл крошку хлеба, сытно.', effect: { satiety: 4, mood: 5 } },
+                { message: 'Играл с ниткой, весело.', effect: { mood: 5, energy: -3 } },
+                { message: 'Съел кусочек мяса, вкуснятина.', effect: { satiety: 6, mood: 5, health: -2 } },
+                { message: 'Мурлыкал у стойки, все умилялись.', effect: { mood: 6 } },
+                { message: 'Нашёл оливку, забавно.', effect: { satiety: 4, mood: 5 } },
+                { message: 'Смотрел на танцующих, настроение поднялось.', effect: { mood: 5 } },
+                { message: 'Съел крошку пиццы, сытно.', effect: { satiety: 5, mood: 5, health: -2 } },
+                { message: 'Тёрся о ноги, получил вкусняшку.', effect: { satiety: 5, mood: 6 } },
+                { message: 'Играл с бумажкой, весело.', effect: { mood: 5, energy: -3 } },
+                { message: 'Съел кусочек колбасы, объедение.', effect: { satiety: 6, mood: 5, health: -2 } },
+                { message: 'Мурлыкал под джаз, расслабляет.', effect: { mood: 5 } },
+                { message: 'Нашёл каплю соуса, вкусно.', effect: { satiety: 4, mood: 5 } },
+                { message: 'Смотрел на барный декор, уютно.', effect: { mood: 5 } },
+                { message: 'Съел орешек, хрустящее удовольствие.', effect: { satiety: 4, mood: 5 } },
+                { message: 'Тёрся о стойку, все улыбались.', effect: { mood: 6 } },
+                { message: 'Нашёл кусочек сыра, настроение лучше.', effect: { satiety: 5, mood: 5, health: -2 } },
+                { message: 'Играл с пробкой, весело.', effect: { mood: 5, energy: -3 } },
+                { message: 'Съел крошку хлеба, сытно.', effect: { satiety: 4, mood: 5 } }
             ],
             happy: [
                 { message: 'Тёрся о ноги доброго посетителя, получил вкусняшку!', effect: { satiety: 10, mood: 8 } },
-                { message: 'Играл с пробкой от бутылки, весело!', effect: { mood: 8, energy: -3 } }
+                { message: 'Играл с пробкой от бутылки, весело!', effect: { mood: 8, energy: -3 } },
+                { message: 'Съел кусок рыбы, мурлыкаю от счастья!', effect: { satiety: 10, mood: 8, health: -2 } },
+                { message: 'Мурлыкал под живую музыку, кайф!', effect: { mood: 8 } },
+                { message: 'Нашёл миску с молоком, райское наслаждение!', effect: { satiety: 10, mood: 8 } },
+                { message: 'Играл с бумажкой, прыгая от радости.', effect: { mood: 8, energy: -3 } },
+                { message: 'Съел кусок колбасы, объедение!', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Тёрся о бармена, все умилялись.', effect: { mood: 10 } },
+                { message: 'Нашёл кусок мяса, счастье полное.', effect: { satiety: 10, mood: 8, health: -2 } },
+                { message: 'Мурлыкал у батареи, полный релакс.', effect: { mood: 8, energy: 3 } },
+                { message: 'Съел сыр, вкуснятина!', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Играл с ниткой, весело!', effect: { mood: 8, energy: -3 } },
+                { message: 'Нашёл крошку пиццы, объедение.', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Тёрся о ноги, получил много ласки.', effect: { mood: 10 } },
+                { message: 'Съел орешек, хрустящее счастье.', effect: { satiety: 6, mood: 8 } },
+                { message: 'Мурлыкал под джаз, душа поёт.', effect: { mood: 8 } },
+                { message: 'Нашёл каплю соуса, вкусно!', effect: { satiety: 6, mood: 8 } },
+                { message: 'Играл с пробкой, полный восторг.', effect: { mood: 8, energy: -3 } },
+                { message: 'Съел кусок хлеба, сытно и радостно.', effect: { satiety: 6, mood: 8, health: -2 } },
+                { message: 'Тёрся о стойку, все улыбались.', effect: { mood: 10 } },
+                { message: 'Нашёл кусок сыра, мурлыкаю!', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Играл с бумажкой, весело!', effect: { mood: 8, energy: -3 } },
+                { message: 'Съел кусок мяса, счастье!', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Мурлыкал под музыку, кайфую.', effect: { mood: 8 } },
+                { message: 'Нашёл оливку, забавно и вкусно.', effect: { satiety: 6, mood: 8 } },
+                { message: 'Тёрся о ноги, получил вкусняшку.', effect: { satiety: 8, mood: 10 } },
+                { message: 'Съел крошку пиццы, объедение.', effect: { satiety: 6, mood: 8, health: -2 } },
+                { message: 'Играл с ниткой, полный восторг.', effect: { mood: 8, energy: -3 } },
+                { message: 'Съел кусок колбасы, мурлыкаю.', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Мурлыкал у стойки, все в восторге.', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
         myhome: {
@@ -619,6 +1311,370 @@ const roomSpecificMessages = {
                 { message: 'Играл с обрывком газеты.', effect: { energy: -3, mood: 4 } },
                 { message: 'Вилял хвостом, греясь на солнце.', effect: { health: 3, mood: 4 } },
                 { message: 'Смотрел на голубей, весело воркующих.', effect: { mood: 4 } }
+            ]
+        },
+        'Бар "У бобра" (18+)': {
+            tragic: [
+                { message: 'Спрятался под столом, напуганный шумом.', effect: { mood: -5 } },
+                { message: 'Скулил, когда кто-то наступил на хвост.', effect: { health: -5, mood: -5 } },
+                { message: 'Нашёл крошку хлеба, но шум пугает.', effect: { satiety: 3, mood: 2, health: -2 } },
+                { message: 'Скулил у стойки, но никто не заметил.', effect: { mood: 2 } },
+                { message: 'Съел кусочек сыра, но всё тоскливо.', effect: { satiety: 4, mood: 2, health: -2 } },
+                { message: 'Лежал у двери, вдыхая сигаретный дым.', effect: { health: -3, mood: 1 } },
+                { message: 'Нашёл орешек, но шум раздражает.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Смотрел на людей, чувствуя одиночество.', effect: { mood: 2 } },
+                { message: 'Вилял хвостом, но никто не погладил.', effect: { mood: 2 } },
+                { message: 'Нашёл кусочек мяса, но дым мешает.', effect: { satiety: 4, health: -2, mood: 2 } },
+                { message: 'Спрятался за ящиком, но всё равно страшно.', effect: { mood: 2 } },
+                { message: 'Съел крошку пиццы, но радости мало.', effect: { satiety: 3, mood: 2, health: -2 } },
+                { message: 'Слушал музыку, но шум пугает.', effect: { mood: 2 } },
+                { message: 'Нашёл каплю соуса, чуть лучше.', effect: { satiety: 4, mood: 3 } },
+                { message: 'Лежал у батареи, но дым в глазах.', effect: { health: -2, mood: 2 } },
+                { message: 'Съел кусочек колбасы, но всё тоскливо.', effect: { satiety: 4, mood: 2, health: -2 } },
+                { message: 'Скулил, но никто не обратил внимания.', effect: { mood: 2 } },
+                { message: 'Нашёл оливку, но она невкусная.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Смотрел на огоньки, слегка отвлёкся.', effect: { mood: 3 } },
+                { message: 'Вилял хвостом, но прогнали.', effect: { mood: 2 } },
+                { message: 'Съел крошку хлеба, но дым мешает.', effect: { satiety: 3, health: -2, mood: 2 } },
+                { message: 'Лежал в углу, мечтая о тишине.', effect: { mood: 2 } },
+                { message: 'Нашёл кусочек мяса, но шум раздражает.', effect: { satiety: 4, mood: 2, health: -2 } },
+                { message: 'Смотрел на танцующих, но не до веселья.', effect: { mood: 2 } },
+                { message: 'Нашёл каплю соуса, слегка утешило.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Скулил у двери, но никто не помог.', effect: { mood: 2 } },
+                { message: 'Съел кусочек сыра, но дым в горле.', effect: { satiety: 4, health: -2, mood: 2 } },
+                { message: 'Лежал у стойки, но всё тоскливо.', effect: { mood: 2 } },
+                { message: 'Нашёл крошку пиццы, но радости нет.', effect: { satiety: 3, mood: 2, health: -2 } },
+                { message: 'Смотрел на бармена, мечтая о ласке.', effect: { mood: 2 } }
+              ],
+              sad: [
+                { message: 'Попытался стащить еду, но получил шлепок.', effect: { mood: -5 } },
+                { message: 'Лежал у входа, чувствуя себя ненужным.', effect: { mood: -3 } },
+                { message: 'Нашёл кусочек хлеба, но настроение не лучше.', effect: { satiety: 4, mood: 2, health: -2 } },
+                { message: 'Вилял хвостом, слегка погладили.', effect: { mood: 3 } },
+                { message: 'Съел орешек, но дым раздражает.', effect: { satiety: 3, health: -2, mood: 2 } },
+                { message: 'Смотрел на танцпол, но не до веселья.', effect: { mood: 2 } },
+                { message: 'Нашёл крошку сыра, чуть повеселел.', effect: { satiety: 4, mood: 3, health: -2 } },
+                { message: 'Лежал у батареи, но шум мешает.', effect: { mood: 3, health: -2 } },
+                { message: 'Съел кусочек колбасы, но всё тоскливо.', effect: { satiety: 4, mood: 2, health: -2 } },
+                { message: 'Смотрел на огоньки, немного отвлёкся.', effect: { mood: 3 } },
+                { message: 'Нашёл каплю молока, слегка лучше.', effect: { satiety: 4, mood: 3 } },
+                { message: 'Вилял хвостом, но никто не заметил.', effect: { mood: 2 } },
+                { message: 'Съел крошку пиццы, но дым в глазах.', effect: { satiety: 3, health: -2, mood: 2 } },
+                { message: 'Лежал у стойки, мечтая о тишине.', effect: { mood: 2 } },
+                { message: 'Нашёл кусочек мяса, настроение чуть лучше.', effect: { satiety: 5, mood: 3, health: -2 } },
+                { message: 'Скулил, но шум заглушает.', effect: { mood: 2 } },
+                { message: 'Съел оливку, но не то.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Смотрел на бармена, надеясь на еду.', effect: { mood: 2 } },
+                { message: 'Нашёл крошку хлеба, но радости мало.', effect: { satiety: 3, mood: 2, health: -2 } },
+                { message: 'Вилял хвостом, получил лёгкую ласку.', effect: { mood: 3 } },
+                { message: 'Съел кусочек мяса, но дым мешает.', effect: { satiety: 4, health: -2, mood: 2 } },
+                { message: 'Лежал у батареи, слегка согрелся.', effect: { mood: 3, health: -2 } },
+                { message: 'Нашёл каплю соуса, чуть повеселел.', effect: { satiety: 3, mood: 3 } },
+                { message: 'Sмотрел на танцующих, но не до веселья.', effect: { mood: 2 } },
+                { message: 'Съел крошку сыра, но шум раздражает.', effect: { satiety: 4, health: -2, mood: 2 } },
+                { message: 'Скулил у двери, надеясь на ласку.', effect: { mood: 2 } },
+                { message: 'Нашёл кусочек хлеба, но всё тоскливо.', effect: { satiety: 3, mood: 2 } },
+                { message: 'Смотрел на огоньки, слегка успокоился.', effect: { mood: 3 } },
+                { message: 'Съел орешек, но дым в горле.', effect: { satiety: 3, health: -2, mood: 2 } },
+                { message: 'Вилял хвостом у стойки, мечтая о еде.', effect: { mood: 2 } }
+              ],
+              good: [
+                { message: 'Нашёл кусок мяса под барной стойкой.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Тявкал от радости, когда погладили.', effect: { mood: 5 } },
+                { message: 'Съел кусочек колбасы, объедение!', effect: { satiety: 6, mood: 5, health: -2 } },
+                { message: 'Вилял хвостом, получил ласку.', effect: { mood: 6 } },
+                { message: 'Нашёл крошку пиццы, вкуснятина.', effect: { satiety: 5, mood: 5, health: -2 } },
+                { message: 'Играл с пробкой, весело.', effect: { mood: 5, energy: -3 } },
+                { message: 'Съел орешек, хрустящее удовольствие.', effect: { satiety: 4, mood: 5 } },
+                { message: 'Тявкал под музыку, весело.', effect: { mood: 5 } },
+                { message: 'Нашёл каплю соуса, настроение лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Смотрел на огоньки, завораживает.', effect: { mood: 5 } },
+                { message: 'Съел кусочек сыра, просто класс.', effect: { satiety: 5, mood: 5, health: -2 } },
+                { message: 'Вилял хвостом у бармена, получил ласку.', effect: { mood: 6 } },
+                { message: 'Нашёл крошку хлеба, сытно.', effect: { satiety: 4, mood: 5 } },
+                { message: 'Играл с бумажкой, весело.', effect: { mood: 5, energy: -3 } },
+                { message: 'Съел кусочек мяса, вкуснятина.', effect: { satiety: 6, mood: 5, health: -2 } },
+                { message: 'Тявкал у стойки, все умилялись.', effect: { mood: 6 } },
+                { message: 'Нашёл оливку, забавно.', effect: { satiety: 4, mood: 5 } },
+                { message: 'Смотрел на танцующих, настроение поднялось.', effect: { mood: 5 } },
+                { message: 'Съел крошку пиццы, сытно.', effect: { satiety: 5, mood: 5, health: -2 } },
+                { message: 'Вилял хвостом, получил вкусняшку.', effect: { satiety: 5, mood: 6 } },
+                { message: 'Играл с ниткой, весело.', effect: { mood: 5, energy: -3 } },
+                { message: 'Съел кусочек колбасы, объедение.', effect: { satiety: 6, mood: 5, health: -2 } },
+                { message: 'Тявкал под джаз, расслабляет.', effect: { mood: 5 } },
+                { message: 'Нашёл каплю соуса, вкусно.', effect: { satiety: 4, mood: 5 } },
+                { message: 'Смотрел на барный декор, уютно.', effect: { mood: 5 } },
+                { message: 'Съел орешек, хрустящее удовольствие.', effect: { satiety: 4, mood: 5 } },
+                { message: 'Вилял хвостом у стойки, все улыбались.', effect: { mood: 6 } },
+                { message: 'Нашёл кусочек сыра, настроение лучше.', effect: { satiety: 5, mood: 5, health: -2 } },
+                { message: 'Играл с пробкой, весело.', effect: { mood: 5, energy: -3 } },
+                { message: 'Съел крошку хлеба, сытно.', effect: { satiety: 4, mood: 5 } }
+              ],
+              happy: [
+                { message: 'Играл с посетителями, виляя хвостом!', effect: { mood: 10, energy: -5 } },
+                { message: 'Получил целую тарелку вкусностей!', effect: { satiety: 15, mood: 10 } },
+                { message: 'Съел кусок мяса, виляю хвостом от счастья!', effect: { satiety: 10, mood: 8, health: -2 } },
+                { message: 'Тявкал под живую музыку, кайф!', effect: { mood: 8 } },
+                { message: 'Нашёл кость, райское наслаждение!', effect: { satiety: 10, mood: 8 } },
+                { message: 'Играл с бумажкой, прыгая от радости.', effect: { mood: 8, energy: -3 } },
+                { message: 'Съел кусок колбасы, объедение!', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Вилял хвостом у бармена, все умилялись.', effect: { mood: 10 } },
+                { message: 'Нашёл кусок мяса, счастье полное.', effect: { satiety: 10, mood: 8, health: -2 } },
+                { message: 'Тявкал у батареи, полный релакс.', effect: { mood: 8, energy: 3 } },
+                { message: 'Съел сыр, вкуснятина!', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Играл с ниткой, весело!', effect: { mood: 8, energy: -3 } },
+                { message: 'Нашёл крошку пиццы, объедение.', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Вилял хвостом, получил много ласки.', effect: { mood: 10 } },
+                { message: 'Съел орешек, хрустящее счастье.', effect: { satiety: 6, mood: 8 } },
+                { message: 'Тявкал под джаз, душа поёт.', effect: { mood: 8 } },
+                { message: 'Нашёл каплю соуса, вкусно!', effect: { satiety: 6, mood: 8 } },
+                { message: 'Играл с пробкой, полный восторг.', effect: { mood: 8, energy: -3 } },
+                { message: 'Съел кусок хлеба, сытно и радостно.', effect: { satiety: 6, mood: 8, health: -2 } },
+                { message: 'Вилял хвостом у стойки, все улыбались.', effect: { mood: 10 } },
+                { message: 'Нашёл кусок сыра, тявкаю от радости!', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Играл с бумажкой, весело!', effect: { mood: 8, energy: -3 } },
+                { message: 'Съел кусок мяса, счастье!', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Тявкал под музыку, кайфую.', effect: { mood: 8 } },
+                { message: 'Нашёл оливку, забавно и вкусно.', effect: { satiety: 6, mood: 8 } },
+                { message: 'Вилял хвостом, получил вкусняшку.', effect: { satiety: 8, mood: 10 } },
+                { message: 'Съел крошку пиццы, объедение.', effect: { satiety: 6, mood: 8, health: -2 } },
+                { message: 'Играл с ниткой, полный восторг.', effect: { mood: 8, energy: -3 } },
+                { message: 'Съел кусок колбасы, тявкаю.', effect: { satiety: 8, mood: 8, health: -2 } },
+                { message: 'Вилял хвостом у стойки, все в восторге.', effect: { mood: 10 } }
+              ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
+            ]
+        },
+        'шаблон': {
+            tragic: [
+                { message: 'Сидел за стойкой, но выпивка не помогла.', effect: { mood: -5, satiety: 3 } },
+                { message: 'Слушал пьяные разговоры, чувствуя тоску.', effect: { mood: -5 } }
+            ],
+            sad: [
+                { message: 'Выпил дешёвого пива, настроение не улучшилось.', effect: { satiety: 5, mood: -3 } },
+                { message: 'Попытался танцевать, но быстро устал.', effect: { energy: -5, mood: -3 } }
+            ],
+            good: [
+                { message: 'Угостили коктейлем, вечер стал лучше.', effect: { satiety: 5, mood: 5 } },
+                { message: 'Пошутил с барменом, посмеялись вместе.', effect: { mood: 5 } }
+            ],
+            happy: [
+                { message: 'Танцевал всю ночь, это было круто!', effect: { mood: 10, energy: -5 } },
+                { message: 'Пел караоке с незнакомцами, полный кайф!', effect: { mood: 10 } }
             ]
         },
         myhome: {

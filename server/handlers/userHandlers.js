@@ -262,7 +262,7 @@ function registerUserHandlers({
                 await User.updateOne(
                     { userId: user.userId },
                     {
-                        $push: { diary: { $each: diaryEntries, $slice: -100 } }, // Ограничиваем diary до 100 записей
+                        $push: { diary: { $each: diaryEntries, $slice: -250 } }, // Ограничиваем diary до 250 записей
                         $set: {
                             lastActivity: now,
                             'stats.health': updatedStats.health,

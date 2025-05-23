@@ -113,9 +113,6 @@ function registerUserHandlers({
             console.log('New user created:', user.userId);
         }
 
-        // В функции registerUserHandlers, замените блок кода, связанный с созданием записей в diary, на следующий:
-        // Расчёт времени отсутствия и добавление записей в diary
-        // В функции registerUserHandlers, замените блок кода, связанный с созданием записей в diary, на следующий:
         const now = new Date();
         const lastActivity = user.lastActivity || now;
         const hoursPassed = Math.floor((now - lastActivity) / (1000 * 60 * 60)); // Кол-во полных часов

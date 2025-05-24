@@ -49,13 +49,16 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             }
         });
 
-        // Определяем объекты
+        // Определяем базовый масштаб относительно ширины экрана
+        const scaleFactor = window.innerWidth / 1920; // Базовое разрешение 1920px (Full HD)
+
+        // Определяем объекты с пропорциональными размерами
         const furniture = [
-            { name: 'table', image: tableImage, width: 200, height: 100, weight: 20 },
-            { name: 'chair', image: chairImage, width: 80, height: 80, weight: 5 },
-            { name: 'sofa', image: sofaImage, width: 250, height: 100, weight: 30 },
-            { name: 'wardrobe', image: wardrobeImage, width: 150, height: 200, weight: 40 },
-            { name: 'vase', image: vaseImage, width: 50, height: 50, weight: 2 }
+            { name: 'table', image: tableImage, width: 200 * scaleFactor, height: 100 * scaleFactor, weight: 20 },
+            { name: 'chair', image: chairImage, width: 80 * scaleFactor, height: 80 * scaleFactor, weight: 5 },
+            { name: 'sofa', image: sofaImage, width: 250 * scaleFactor, height: 100 * scaleFactor, weight: 30 },
+            { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor, height: 200 * scaleFactor, weight: 40 },
+            { name: 'vase', image: vaseImage, width: 50 * scaleFactor, height: 50 * scaleFactor, weight: 2 }
         ];
 
         // Добавляем объекты в мир
@@ -66,7 +69,13 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 item.width,
                 item.height,
                 {
-                    render: { sprite: { texture: item.image, xScale: 1, yScale: 1 } },
+                    render: {
+                        sprite: {
+                            texture: item.image,
+                            xScale: scaleFactor, // Масштабируем текстуру пропорционально
+                            yScale: scaleFactor
+                        }
+                    },
                     mass: item.weight,
                     friction: 0.1,
                     frictionAir: 0.01,
@@ -116,7 +125,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             Matter.Engine.clear(engine);
             Matter.World.clear(world);
         };
-    }, [socket, userId]); // Удаляем bodies из зависимостей, так как она теперь создаётся внутри
+    }, [socket, userId]);
 
     return (
         <ShelterContainer theme={theme}>

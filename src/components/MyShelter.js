@@ -1,14 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import Matter from 'matter-js';
 import styled from 'styled-components';
-import tableImage from '../images/furniture/table.png'; // Предполагается, что изображения добавлены
+import tableImage from '../images/furniture/table.png';
 import chairImage from '../images/furniture/chair.png';
 import sofaImage from '../images/furniture/sofa.png';
 import wardrobeImage from '../images/furniture/wardrobe.png';
 import vaseImage from '../images/furniture/vase.png';
 import backgroundImage from '../images/furniture/background_pic.jpg';
-
-
 
 const ShelterContainer = styled.div`
   position: fixed;
@@ -35,9 +33,6 @@ const CloseButton = styled.button`
 const MyShelter = ({ theme, socket, userId, onClose }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
-
-    // src/components/MyShelter.js
-    // Внутри useEffect убираем isStatic из создания объектов и обновляем логику гравитации
 
     useEffect(() => {
         const engine = engineRef.current;
@@ -81,13 +76,19 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         const scaleFactor = window.innerWidth / 1920; // Базовое разрешение 1920px (Full HD)
 
         // Определяем объекты с пропорциональными размерами
-        const furniture = [{ name: 'table', image: tableImage, width: 200 * scaleFactor, height: 100 * scaleFactor, weight: 20 }, { name: 'chair', image: chairImage, width: 80 * scaleFactor, height: 80 * scaleFactor, weight: 5 }, { name: 'sofa', image: sofaImage, width: 250 * scaleFactor, height: 100 * scaleFactor, weight: 30 }, { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor, height: 200 * scaleFactor, weight: 40 }, { name: 'vase', image: vaseImage, width: 50 * scaleFactor, height: 50 * scaleFactor, weight: 2 }];
+        const furniture = [
+            { name: 'table', image: tableImage, width: 200 * scaleFactor, height: 100 * scaleFactor, weight: 20 },
+            { name: 'chair', image: chairImage, width: 80 * scaleFactor, height: 80 * scaleFactor, weight: 5 },
+            { name: 'sofa', image: sofaImage, width: 250 * scaleFactor, height: 100 * scaleFactor, weight: 30 },
+            { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor, height: 200 * scaleFactor, weight: 40 },
+            { name: 'vase', image: vaseImage, width: 50 * scaleFactor, height: 50 * scaleFactor, weight: 2 }
+        ];
 
         // Добавляем объекты в мир
         const bodies = furniture.map(item => {
             const body = Matter.Bodies.rectangle(
                 Math.random() * (window.innerWidth - item.width),
-                Math.random() * (window.innerHeight / 2 - item.height),
+                Math.random() * (window.innerHeight * 0.7 - item.height),
                 item.width,
                 item.height,
                 {
@@ -102,7 +103,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     friction: 0.1,
                     frictionAir: 0.01,
                     restitution: 0.5
-                    // Убрано isStatic, чтобы все объекты были динамическими
                 }
             );
             Matter.World.add(world, body);
@@ -112,10 +112,10 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         // Находим тело вазы
         const vaseBody = bodies.find(body => furniture[bodies.indexOf(body)].name === 'vase');
 
-        // Добавляем статический пол в середине экрана
+        // Добавляем новый статический пол на 30% от нижней границы
         const floor = Matter.Bodies.rectangle(
             window.innerWidth / 2,
-            window.innerHeight / 2,
+            window.innerHeight * 0.7,
             window.innerWidth,
             50,
             {
@@ -126,26 +126,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             }
         );
         Matter.World.add(world, floor);
-
-        // Добавляем дополнительные статические полы с шагом 10 пикселей
-        const additionalFloors = [];
-        const numberOfFloors = 5; // Количество дополнительных полов
-        for (let i = 1; i <= numberOfFloors; i++) {
-            const additionalFloor = Matter.Bodies.rectangle(
-                window.innerWidth / 2,
-                window.innerHeight / 2 + i * 10,
-                window.innerWidth,
-                50,
-                {
-                    isStatic: true,
-                    render: {
-                        fillStyle: 'transparent'
-                    }
-                }
-            );
-            additionalFloors.push(additionalFloor);
-        }
-        Matter.World.add(world, additionalFloors);
 
         // Загружаем начальные позиции мебели с сервера
         socket.emit('getFurniturePositions', { userId }, (response) => {

@@ -8,21 +8,7 @@ import wardrobeImage from '../images/furniture/wardrobe.png';
 import vaseImage from '../images/furniture/vase.png';
 import backgroundImage from '../images/furniture/background_pic.jpg';
 
-const leftWall = Matter.Bodies.rectangle(
-    0,
-    window.innerHeight / 2,
-    50,
-    window.innerHeight,
-    { isStatic: true, render: { fillStyle: 'transparent' } }
-);
-const rightWall = Matter.Bodies.rectangle(
-    window.innerWidth,
-    window.innerHeight / 2,
-    50,
-    window.innerHeight,
-    { isStatic: true, render: { fillStyle: 'transparent' } }
-);
-Matter.World.add(world, [leftWall, rightWall]);
+
 
 const ShelterContainer = styled.div`
   position: fixed;
@@ -53,6 +39,22 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
     useEffect(() => {
         const engine = engineRef.current;
         const world = engine.world;
+
+        const leftWall = Matter.Bodies.rectangle(
+            0,
+            window.innerHeight / 2,
+            50,
+            window.innerHeight,
+            { isStatic: true, render: { fillStyle: 'transparent' } }
+        );
+        const rightWall = Matter.Bodies.rectangle(
+            window.innerWidth,
+            window.innerHeight / 2,
+            50,
+            window.innerHeight,
+            { isStatic: true, render: { fillStyle: 'transparent' } }
+        );
+        Matter.World.add(world, [leftWall, rightWall]);
 
         // Создаём рендер с фоновым изображением
         const render = Matter.Render.create({

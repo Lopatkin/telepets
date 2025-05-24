@@ -119,6 +119,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 position: { x: body.position.x, y: body.position.y }
             });
         });
+        
 
         return () => {
             Matter.Render.stop(render);

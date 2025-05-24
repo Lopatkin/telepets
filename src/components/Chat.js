@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { catSounds, dogSounds } from './constants/animalSounds';
 import PovodokIcon from '../images/povodok.png'; // Импорт иконки
 import { getActiveNPCs } from '../utils/npcData'; // Обновляем импорт
+import MyShelter from './MyShelter';
 
 // import BouncingBall from './BouncingBall';
 

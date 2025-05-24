@@ -34,20 +34,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
     const engineRef = useRef(Matter.Engine.create());
 
     useEffect(() => {
-        socket.emit('getFurniturePositions', { userId }, (response) => {
-            if (response.success) {
-                // Устанавливаем начальные позиции тел
-                response.positions.forEach(({ furnitureId, position }) => {
-                    const body = bodies.find(b => b.id === furnitureId);
-                    if (body) {
-                        Matter.Body.setPosition(body, position);
-                    }
-                });
-            }
-        });
-    }, [socket, userId, bodies]);
-
-    useEffect(() => {
         const engine = engineRef.current;
         const world = engine.world;
 
@@ -91,6 +77,18 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             return body;
         });
 
+        // Загружаем начальные позиции мебели с сервера
+        socket.emit('getFurniturePositions', { userId }, (response) => {
+            if (response.success) {
+                response.positions.forEach(({ furnitureId, position }) => {
+                    const body = bodies.find(b => b.id === furnitureId);
+                    if (body) {
+                        Matter.Body.setPosition(body, position);
+                    }
+                });
+            }
+        });
+
         // Настройка перетаскивания
         const mouse = Matter.Mouse.create(render.canvas);
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
@@ -118,7 +116,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             Matter.Engine.clear(engine);
             Matter.World.clear(world);
         };
-    }, [socket, userId]);
+    }, [socket, userId]); // Удаляем bodies из зависимостей, так как она теперь создаётся внутри
 
     return (
         <ShelterContainer theme={theme}>

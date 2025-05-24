@@ -40,6 +40,9 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         const engine = engineRef.current;
         const world = engine.world;
 
+        // Отключаем глобальную гравитацию
+        world.gravity.y = 0;
+
         const leftWall = Matter.Bodies.rectangle(
             0,
             window.innerHeight / 2,
@@ -64,10 +67,10 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 width: window.innerWidth,
                 height: window.innerHeight,
                 wireframes: false,
-                background: `url(${backgroundImage})`, // Добавляем фоновое изображение
-                backgroundSize: 'cover', // Растягиваем фон на весь канвас
-                backgroundPosition: 'center', // Центрируем фон
-                backgroundRepeat: 'no-repeat' // Отключаем повторение
+                background: `url(${backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
             }
         });
 
@@ -75,19 +78,13 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         const scaleFactor = window.innerWidth / 1920; // Базовое разрешение 1920px (Full HD)
 
         // Определяем объекты с пропорциональными размерами
-        const furniture = [
-            { name: 'table', image: tableImage, width: 200 * scaleFactor, height: 100 * scaleFactor, weight: 20 },
-            { name: 'chair', image: chairImage, width: 80 * scaleFactor, height: 80 * scaleFactor, weight: 5 },
-            { name: 'sofa', image: sofaImage, width: 250 * scaleFactor, height: 100 * scaleFactor, weight: 30 },
-            { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor, height: 200 * scaleFactor, weight: 40 },
-            { name: 'vase', image: vaseImage, width: 50 * scaleFactor, height: 50 * scaleFactor, weight: 2 }
-        ];
+        const furniture = [{ name: 'table', image: tableImage, width: 200 * scaleFactor, height: 100 * scaleFactor, weight: 20 }, { name: 'chair', image: chairImage, width: 80 * scaleFactor, height: 80 * scaleFactor, weight: 5 }, { name: 'sofa', image: sofaImage, width: 250 * scaleFactor, height: 100 * scaleFactor, weight: 30 }, { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor, height: 200 * scaleFactor, weight: 40 }, { name: 'vase', image: vaseImage, width: 50 * scaleFactor, height: 50 * scaleFactor, weight: 2 }];
 
         // Добавляем объекты в мир
         const bodies = furniture.map(item => {
             const body = Matter.Bodies.rectangle(
                 Math.random() * (window.innerWidth - item.width),
-                Math.random() * (window.innerHeight / 2 - item.height), // Ограничиваем начальную позицию выше пола
+                Math.random() * (window.innerHeight / 2 - item.height),
                 item.width,
                 item.height,
                 {
@@ -101,27 +98,51 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     mass: item.weight,
                     friction: 0.1,
                     frictionAir: 0.01,
-                    restitution: 0.5
+                    restitution: 0.5,
+                    isStatic: item.name !== 'vase' // Делаем все объекты, кроме вазы, статическими
                 }
             );
             Matter.World.add(world, body);
             return body;
         });
 
+        // Находим тело вазы
+        const vaseBody = bodies.find(body => furniture[bodies.indexOf(body)].name === 'vase');
+
         // Добавляем статический пол в середине экрана
         const floor = Matter.Bodies.rectangle(
-            window.innerWidth / 2, // Центр по горизонтали
-            window.innerHeight / 2, // Пол в середине экрана по вертикали
-            window.innerWidth, // Ширина равна ширине экрана
-            50, // Высота пола
+            window.innerWidth / 2,
+            window.innerHeight / 2,
+            window.innerWidth,
+            50,
             {
-                isStatic: true, // Пол неподвижен
+                isStatic: true,
                 render: {
-                    fillStyle: 'transparent' // Пол невидимый
+                    fillStyle: 'transparent'
                 }
             }
         );
         Matter.World.add(world, floor);
+
+        // Добавляем дополнительные статические полы с шагом 10 пикселей
+        const additionalFloors = [];
+        const numberOfFloors = 5; // Количество дополнительных полов
+        for (let i = 1; i <= numberOfFloors; i++) {
+            const additionalFloor = Matter.Bodies.rectangle(
+                window.innerWidth / 2,
+                window.innerHeight / 2 + i * 10,
+                window.innerWidth,
+                50,
+                {
+                    isStatic: true,
+                    render: {
+                        fillStyle: 'transparent'
+                    }
+                }
+            );
+            additionalFloors.push(additionalFloor);
+        }
+        Matter.World.add(world, additionalFloors);
 
         // Загружаем начальные позиции мебели с сервера
         socket.emit('getFurniturePositions', { userId }, (response) => {
@@ -130,8 +151,23 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     const body = bodies.find(b => b.id === furnitureId);
                     if (body) {
                         Matter.Body.setPosition(body, position);
+                        // Если это ваза, отключаем статичность после установки позиции
+                        if (furniture[bodies.indexOf(body)].name === 'vase') {
+                            Matter.Body.setStatic(body, false);
+                        }
                     }
                 });
+            }
+        });
+
+        // Применяем гравитацию только к вазе
+        Matter.Events.on(engine, 'beforeUpdate', () => {
+            if (vaseBody && !vaseBody.isStatic) {
+                Matter.Body.applyForce(
+                    vaseBody,
+                    vaseBody.position,
+                    { x: 0, y: 0.001 * vaseBody.mass } // Имитируем гравитацию (сила пропорциональна массе)
+                );
             }
         });
 
@@ -161,6 +197,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             Matter.Render.stop(render);
             Matter.Engine.clear(engine);
             Matter.World.clear(world);
+            Matter.Events.off(engine, 'beforeUpdate');
         };
     }, [socket, userId]);
 

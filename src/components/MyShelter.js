@@ -40,22 +40,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         const engine = engineRef.current;
         const world = engine.world;
 
-        const leftWall = Matter.Bodies.rectangle(
-            0,
-            window.innerHeight / 2,
-            50,
-            window.innerHeight,
-            { isStatic: true, render: { fillStyle: 'transparent' } }
-        );
-        const rightWall = Matter.Bodies.rectangle(
-            window.innerWidth,
-            window.innerHeight / 2,
-            50,
-            window.innerHeight,
-            { isStatic: true, render: { fillStyle: 'transparent' } }
-        );
-        Matter.World.add(world, [leftWall, rightWall]);
-
         // Создаём рендер с фоновым изображением
         const render = Matter.Render.create({
             canvas: canvasRef.current,
@@ -64,10 +48,10 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 width: window.innerWidth,
                 height: window.innerHeight,
                 wireframes: false,
-                background: `url(${backgroundImage})`, // Добавляем фоновое изображение
-                backgroundSize: 'cover', // Растягиваем фон на весь канвас
-                backgroundPosition: 'center', // Центрируем фон
-                backgroundRepeat: 'no-repeat' // Отключаем повторение
+                background: `url(${backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
             }
         });
 
@@ -87,7 +71,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         const bodies = furniture.map(item => {
             const body = Matter.Bodies.rectangle(
                 Math.random() * (window.innerWidth - item.width),
-                Math.random() * (window.innerHeight / 2 - item.height), // Ограничиваем начальную позицию выше пола
+                Math.random() * (window.innerHeight / 2 - item.height),
                 item.width,
                 item.height,
                 {
@@ -108,20 +92,40 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             return body;
         });
 
-        // Добавляем статический пол в середине экрана
+        // Добавляем основной статический пол в середине экрана
         const floor = Matter.Bodies.rectangle(
-            window.innerWidth / 2, // Центр по горизонтали
-            window.innerHeight / 2, // Пол в середине экрана по вертикали
-            window.innerWidth, // Ширина равна ширине экрана
-            50, // Высота пола
+            window.innerWidth / 2,
+            window.innerHeight / 2,
+            window.innerWidth,
+            50,
             {
-                isStatic: true, // Пол неподвижен
+                isStatic: true,
                 render: {
-                    fillStyle: 'transparent' // Пол невидимый
+                    fillStyle: 'transparent'
                 }
             }
         );
         Matter.World.add(world, floor);
+
+        // Добавляем дополнительные статические полы с шагом 10 пикселей
+        const additionalFloors = [];
+        const numberOfFloors = 5; // Количество дополнительных полов
+        for (let i = 1; i <= numberOfFloors; i++) {
+            const additionalFloor = Matter.Bodies.rectangle(
+                window.innerWidth / 2, // Центр по горизонтали
+                window.innerHeight / 2 + i * 10, // Смещение на 10 пикселей вниз
+                window.innerWidth, // Ширина равна ширине экрана
+                50, // Высота пола
+                {
+                    isStatic: true,
+                    render: {
+                        fillStyle: 'transparent' // Невидимый пол
+                    }
+                }
+            );
+            additionalFloors.push(additionalFloor);
+        }
+        Matter.World.add(world, additionalFloors);
 
         // Загружаем начальные позиции мебели с сервера
         socket.emit('getFurniturePositions', { userId }, (response) => {

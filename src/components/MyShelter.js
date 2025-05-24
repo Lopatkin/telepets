@@ -36,6 +36,12 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
 
+    jsx
+
+    Копировать
+    // src/components/MyShelter.js
+    // Внутри useEffect убираем isStatic из создания объектов и обновляем логику гравитации
+
     useEffect(() => {
         const engine = engineRef.current;
         const world = engine.world;
@@ -98,8 +104,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     mass: item.weight,
                     friction: 0.1,
                     frictionAir: 0.01,
-                    restitution: 0.5,
-                    isStatic: item.name !== 'vase' // Делаем все объекты, кроме вазы, статическими
+                    restitution: 0.5
+                    // Убрано isStatic, чтобы все объекты были динамическими
                 }
             );
             Matter.World.add(world, body);
@@ -151,9 +157,10 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     const body = bodies.find(b => b.id === furnitureId);
                     if (body) {
                         Matter.Body.setPosition(body, position);
-                        // Если это ваза, отключаем статичность после установки позиции
-                        if (furniture[bodies.indexOf(body)].name === 'vase') {
-                            Matter.Body.setStatic(body, false);
+                        // Устанавливаем нулевую скорость для всех объектов, кроме вазы
+                        if (furniture[bodies.indexOf(body)].name !== 'vase') {
+                            Matter.Body.setVelocity(body, { x: 0, y: 0 });
+                            Matter.Body.setAngularVelocity(body, 0);
                         }
                     }
                 });
@@ -162,11 +169,11 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
 
         // Применяем гравитацию только к вазе
         Matter.Events.on(engine, 'beforeUpdate', () => {
-            if (vaseBody && !vaseBody.isStatic) {
+            if (vaseBody) {
                 Matter.Body.applyForce(
                     vaseBody,
                     vaseBody.position,
-                    { x: 0, y: 0.001 * vaseBody.mass } // Имитируем гравитацию (сила пропорциональна массе)
+                    { x: 0, y: 0.001 * vaseBody.mass }
                 );
             }
         });
@@ -191,6 +198,11 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 furnitureId: body.id,
                 position: { x: body.position.x, y: body.position.y }
             });
+            // Сбрасываем скорость для всех объектов, кроме вазы, после перетаскивания
+            if (furniture[bodies.indexOf(body)].name !== 'vase') {
+                Matter.Body.setVelocity(body, { x: 0, y: 0 });
+                Matter.Body.setAngularVelocity(body, 0);
+            }
         });
 
         return () => {

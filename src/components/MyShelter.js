@@ -6,6 +6,7 @@ import chairImage from '../images/furniture/chair.png';
 import sofaImage from '../images/furniture/sofa.png';
 import wardrobeImage from '../images/furniture/wardrobe.png';
 import vaseImage from '../images/furniture/vase.png';
+import backgroundImage from '../images/furniture/background_pic.jpg';
 
 const ShelterContainer = styled.div`
   position: fixed;
@@ -37,7 +38,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         const engine = engineRef.current;
         const world = engine.world;
 
-        // Создаём рендер
+        // Создаём рендер с фоновым изображением
         const render = Matter.Render.create({
             canvas: canvasRef.current,
             engine: engine,
@@ -45,7 +46,10 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 width: window.innerWidth,
                 height: window.innerHeight,
                 wireframes: false,
-                background: 'transparent'
+                background: `url(${backgroundImage})`, // Добавляем фоновое изображение
+                backgroundSize: 'cover', // Растягиваем фон на весь канвас
+                backgroundPosition: 'center', // Центрируем фон
+                backgroundRepeat: 'no-repeat' // Отключаем повторение
             }
         });
 
@@ -65,7 +69,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         const bodies = furniture.map(item => {
             const body = Matter.Bodies.rectangle(
                 Math.random() * (window.innerWidth - item.width),
-                Math.random() * (window.innerHeight - item.height),
+                Math.random() * (window.innerHeight / 2 - item.height), // Ограничиваем начальную позицию выше пола
                 item.width,
                 item.height,
                 {
@@ -86,16 +90,16 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             return body;
         });
 
-        // Добавляем статический пол
+        // Добавляем статический пол в середине экрана
         const floor = Matter.Bodies.rectangle(
             window.innerWidth / 2, // Центр по горизонтали
-            window.innerHeight, // Располагаем внизу экрана
+            window.innerHeight / 2, // Пол в середине экрана по вертикали
             window.innerWidth, // Ширина равна ширине экрана
             50, // Высота пола
             {
                 isStatic: true, // Пол неподвижен
                 render: {
-                    fillStyle: 'transparent' // Пол невидимый, но можно задать цвет для отладки
+                    fillStyle: 'transparent' // Пол невидимый
                 }
             }
         );

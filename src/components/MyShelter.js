@@ -1,0 +1,131 @@
+import React, { useEffect, useRef } from 'react';
+import Matter from 'matter-js';
+import styled from 'styled-components';
+import tableImage from '../images/furniture/table.png'; // Предполагается, что изображения добавлены
+import chairImage from '../images/furniture/chair.png';
+import sofaImage from '../images/furniture/sofa.png';
+import wardrobeImage from '../images/furniture/wardrobe.png';
+import vaseImage from '../images/furniture/vase.png';
+
+const ShelterContainer = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: ${props => props.theme === 'dark' ? '#2A2A2A' : '#fff'};
+  z-index: 1000;
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+`;
+
+const MyShelter = ({ theme, socket, userId, onClose }) => {
+    const canvasRef = useRef(null);
+    const engineRef = useRef(Matter.Engine.create());
+
+    useEffect(() => {
+        socket.emit('getFurniturePositions', { userId }, (response) => {
+            if (response.success) {
+                // Устанавливаем начальные позиции тел
+                response.positions.forEach(({ furnitureId, position }) => {
+                    const body = bodies.find(b => b.id === furnitureId);
+                    if (body) {
+                        Matter.Body.setPosition(body, position);
+                    }
+                });
+            }
+        });
+    }, [socket, userId, bodies]);
+
+    useEffect(() => {
+        const engine = engineRef.current;
+        const world = engine.world;
+
+        // Создаём рендер
+        const render = Matter.Render.create({
+            canvas: canvasRef.current,
+            engine: engine,
+            options: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                wireframes: false,
+                background: 'transparent'
+            }
+        });
+
+        // Определяем объекты
+        const furniture = [
+            { name: 'table', image: tableImage, width: 200, height: 100, weight: 20 },
+            { name: 'chair', image: chairImage, width: 80, height: 80, weight: 5 },
+            { name: 'sofa', image: sofaImage, width: 250, height: 100, weight: 30 },
+            { name: 'wardrobe', image: wardrobeImage, width: 150, height: 200, weight: 40 },
+            { name: 'vase', image: vaseImage, width: 50, height: 50, weight: 2 }
+        ];
+
+        // Добавляем объекты в мир
+        const bodies = furniture.map(item => {
+            const body = Matter.Bodies.rectangle(
+                Math.random() * (window.innerWidth - item.width),
+                Math.random() * (window.innerHeight - item.height),
+                item.width,
+                item.height,
+                {
+                    render: { sprite: { texture: item.image, xScale: 1, yScale: 1 } },
+                    mass: item.weight,
+                    friction: 0.1,
+                    frictionAir: 0.01,
+                    restitution: 0.5
+                }
+            );
+            Matter.World.add(world, body);
+            return body;
+        });
+
+        // Настройка перетаскивания
+        const mouse = Matter.Mouse.create(render.canvas);
+        const mouseConstraint = Matter.MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: { stiffness: 0.2, render: { visible: false } }
+        });
+        Matter.World.add(world, mouseConstraint);
+
+        // Запуск рендера и физики
+        Matter.Engine.run(engine);
+        Matter.Render.run(render);
+
+        // Сохранение позиций при отпускании
+        Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
+            const body = event.body;
+            socket.emit('updateFurniturePosition', {
+                userId,
+                furnitureId: body.id,
+                position: { x: body.position.x, y: body.position.y }
+            });
+        });
+
+        return () => {
+            Matter.Render.stop(render);
+            Matter.Engine.clear(engine);
+            Matter.World.clear(world);
+        };
+    }, [socket, userId]);
+
+    return (
+        <ShelterContainer theme={theme}>
+            <CloseButton onClick={onClose}>Закрыть</CloseButton>
+            <canvas ref={canvasRef} />
+        </ShelterContainer>
+    );
+};
+
+export default MyShelter;

@@ -41,6 +41,8 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const avatarCacheRef = useRef(new Map()); // Новый кэш для аватарок
   const currentUserPhotoUrl = user?.photoUrl || '';
 
+  const [showShelter, setShowShelter] = useState(false);
+
   useEffect(() => {
     if (!socket || !room) return;
 
@@ -287,6 +289,11 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         {/* <BouncingBall room={room} containerRef={messagesContainerRef} /> */}
       </MessagesContainer>
       <InputContainer theme={theme}>
+
+        <S.ShelterButton onClick={() => setShowShelter(true)} theme={theme}>
+          Моё убежище
+        </S.ShelterButton>
+
         <UsersButton onClick={toggleUserList}>
           <UsersIcon />
           <UserCount>{users.length}</UserCount>
@@ -312,6 +319,14 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
             </UserItem>
           ))}
         </UserListModal>
+      )}
+      {showShelter && (
+        <MyShelter
+          theme={theme}
+          socket={socket}
+          userId={userId}
+          onClose={() => setShowShelter(false)}
+        />
       )}
     </ChatContainer>
   );

@@ -17,6 +17,20 @@ import poligonImage from '../images/poligon.jpg';
 import workshopImage from '../images/workshop.jpg';
 import podmostImage from '../images/podmost.jpg';
 
+export const ShelterButton = styled.button`
+  background: ${props => props.theme === 'dark' ? '#444' : '#f0f0f0'};
+  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 10px;
+  font-size: 14px;
+  &:hover {
+    background: ${props => props.theme === 'dark' ? '#555' : '#e0e0e0'};
+  }
+`;
+
 export const ChatContainer = styled.div`
   height: 100%;
   display: flex;

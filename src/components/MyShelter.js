@@ -36,9 +36,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
 
-    jsx
-
-    Копировать
     // src/components/MyShelter.js
     // Внутри useEffect убираем isStatic из создания объектов и обновляем логику гравитации
 

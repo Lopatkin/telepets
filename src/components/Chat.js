@@ -26,7 +26,8 @@ import {
   ModalTitle,
   UserItem,
   UserName,
-  LeashIcon
+  LeashIcon,
+  ShelterButton
 } from '../styles/ChatStyles';
 
 function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
@@ -290,9 +291,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
       </MessagesContainer>
       <InputContainer theme={theme}>
 
-        <S.ShelterButton onClick={() => setShowShelter(true)} theme={theme}>
+        <ShelterButton onClick={() => setShowShelter(true)} theme={theme}>
           Моё убежище
-        </S.ShelterButton>
+        </ShelterButton>
 
         <UsersButton onClick={toggleUserList}>
           <UsersIcon />

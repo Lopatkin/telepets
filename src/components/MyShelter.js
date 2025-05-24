@@ -72,7 +72,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     render: {
                         sprite: {
                             texture: item.image,
-                            xScale: scaleFactor, // Масштабируем текстуру пропорционально
+                            xScale: scaleFactor,
                             yScale: scaleFactor
                         }
                     },
@@ -85,6 +85,21 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             Matter.World.add(world, body);
             return body;
         });
+
+        // Добавляем статический пол
+        const floor = Matter.Bodies.rectangle(
+            window.innerWidth / 2, // Центр по горизонтали
+            window.innerHeight, // Располагаем внизу экрана
+            window.innerWidth, // Ширина равна ширине экрана
+            50, // Высота пола
+            {
+                isStatic: true, // Пол неподвижен
+                render: {
+                    fillStyle: 'transparent' // Пол невидимый, но можно задать цвет для отладки
+                }
+            }
+        );
+        Matter.World.add(world, floor);
 
         // Загружаем начальные позиции мебели с сервера
         socket.emit('getFurniturePositions', { userId }, (response) => {
@@ -119,7 +134,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 position: { x: body.position.x, y: body.position.y }
             });
         });
-        
 
         return () => {
             Matter.Render.stop(render);

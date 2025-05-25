@@ -53,7 +53,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             {
                 isStatic: true,
                 render: { fillStyle: 'transparent' },
-                collisionFilter: { category: defaultCategory, mask: defaultCategory } // Стены взаимодействуют с defaultCategory
+                collisionFilter: { category: defaultCategory, mask: defaultCategory }
             }
         );
         const rightWall = Matter.Bodies.rectangle(
@@ -88,7 +88,13 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         const scaleFactor = window.innerWidth / 1920; // Базовое разрешение 1920px (Full HD)
 
         // Определяем объекты с пропорциональными размерами (удвоенные)
-        const furniture = [{ name: 'table', image: tableImage, width: 200 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 20 }, { name: 'chair', image: chairImage, width: 80 * scaleFactor * 2, height: 80 * scaleFactor * 2, weight: 5 }, { name: 'sofa', image: sofaImage, width: 250 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 30 }, { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor * 2, height: 200 * scaleFactor * 2, weight: 40 }, { name: 'vase', image: vaseImage, width: 50 * scaleFactor * 2, height: 50 * scaleFactor * 2, weight: 2 }];
+        const furniture = [
+            { name: 'table', image: tableImage, width: 200 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 20 },
+            { name: 'chair', image: chairImage, width: 80 * scaleFactor * 2, height: 80 * scaleFactor * 2, weight: 5 },
+            { name: 'sofa', image: sofaImage, width: 250 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 30 },
+            { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor * 2, height: 200 * scaleFactor * 2, weight: 40 },
+            { name: 'vase', image: vaseImage, width: 50 * scaleFactor * 2, height: 50 * scaleFactor * 2, weight: 2 }
+        ];
 
         // Добавляем объекты в мир
         const bodies = furniture.map(item => {
@@ -113,7 +119,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     inertia: isNonRotatable ? Infinity : undefined,
                     collisionFilter: {
                         category: item.name === 'vase' ? defaultCategory : noCollideCategory,
-                        mask: item.name === 'vase' ? defaultCategory : defaultCategory // Ваза сталкивается с полом/стенами, остальные только с полом/стенами
+                        mask: item.name === 'vase' ? defaultCategory : defaultCategory
                     }
                 }
             );
@@ -129,11 +135,11 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             window.innerWidth / 2,
             window.innerHeight * 0.7,
             window.innerWidth,
-            100, // Увеличиваем толщину пола для надёжного столкновения
+            100,
             {
                 isStatic: true,
                 render: {
-                    fillStyle: 'transparent' // Для отладки можно установить '#cccccc'
+                    fillStyle: 'transparent'
                 },
                 collisionFilter: { category: defaultCategory, mask: defaultCategory }
             }
@@ -163,7 +169,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 Matter.Body.applyForce(
                     vaseBody,
                     vaseBody.position,
-                    { x: 0, y: 0.0005 * vaseBody.mass } // Уменьшаем силу для плавного падения
+                    { x: 0, y: 0.0005 * vaseBody.mass }
                 );
             }
         });

@@ -41,19 +41,31 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         // Отключаем глобальную гравитацию
         world.gravity.y = 0;
 
+        // Определяем группы столкновений
+        const defaultGroup = Matter.Body.nextGroup(true); // Группа для пола, стен и вазы
+        const noCollideGroup = Matter.Body.nextGroup(true); // Группа для объектов без столкновений
+
         const leftWall = Matter.Bodies.rectangle(
             0,
             window.innerHeight / 2,
             50,
             window.innerHeight,
-            { isStatic: true, render: { fillStyle: 'transparent' } }
+            {
+                isStatic: true,
+                render: { fillStyle: 'transparent' },
+                collisionFilter: { group: defaultGroup } // Стены в defaultGroup
+            }
         );
         const rightWall = Matter.Bodies.rectangle(
             window.innerWidth,
             window.innerHeight / 2,
             50,
             window.innerHeight,
-            { isStatic: true, render: { fillStyle: 'transparent' } }
+            {
+                isStatic: true,
+                render: { fillStyle: 'transparent' },
+                collisionFilter: { group: defaultGroup } // Стены в defaultGroup
+            }
         );
         Matter.World.add(world, [leftWall, rightWall]);
 
@@ -80,23 +92,28 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
 
         // Добавляем объекты в мир
         const bodies = furniture.map(item => {
+            const isNonRotatable = ['table', 'chair', 'sofa', 'wardrobe'].includes(item.name);
             const body = Matter.Bodies.rectangle(
                 Math.random() * (window.innerWidth - item.width),
-                Math.random() * (window.innerHeight * 0.7 - item.height), // Ограничиваем начальную позицию выше пола
+                Math.random() * (window.innerHeight * 0.7 - item.height),
                 item.width,
                 item.height,
                 {
                     render: {
                         sprite: {
                             texture: item.image,
-                            xScale: scaleFactor * 2, // Удваиваем масштаб текстуры
-                            yScale: scaleFactor * 2 // Удваиваем масштаб текстуры
+                            xScale: scaleFactor * 2,
+                            yScale: scaleFactor * 2
                         }
                     },
                     mass: item.weight,
                     friction: 0.1,
                     frictionAir: 0.01,
-                    restitution: 0.5
+                    restitution: 0.5,
+                    inertia: isNonRotatable ? Infinity : undefined, // Запрещаем вращение для указанных объектов
+                    collisionFilter: {
+                        group: item.name === 'vase' ? defaultGroup : noCollideGroup // Ваза в defaultGroup, остальные в noCollideGroup
+                    }
                 }
             );
             Matter.World.add(world, body);
@@ -116,7 +133,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 isStatic: true,
                 render: {
                     fillStyle: 'transparent'
-                }
+                },
+                collisionFilter: { group: defaultGroup } // Пол в defaultGroup
             }
         );
         Matter.World.add(world, floor);

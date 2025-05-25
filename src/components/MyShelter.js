@@ -50,8 +50,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             window.innerHeight / 2,
             50,
             window.innerHeight,
-            {
-                isStatic: true,
+            { 
+                isStatic: true, 
                 render: { fillStyle: 'transparent' },
                 collisionFilter: { category: defaultCategory, mask: defaultCategory }
             }
@@ -61,8 +61,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             window.innerHeight / 2,
             50,
             window.innerHeight,
-            {
-                isStatic: true,
+            { 
+                isStatic: true, 
                 render: { fillStyle: 'transparent' },
                 collisionFilter: { category: defaultCategory, mask: defaultCategory }
             }
@@ -117,7 +117,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     frictionAir: 0.01,
                     restitution: 0.5,
                     inertia: isNonRotatable ? Infinity : undefined,
-                    collisionFilter: {
+                    collisionFilter: { 
                         category: item.name === 'vase' ? defaultCategory : noCollideCategory,
                         mask: item.name === 'vase' ? defaultCategory : defaultCategory
                     }
@@ -174,13 +174,27 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             }
         });
 
-        // Настройка перетаскивания
+        // Настройка перетаскивания и кликов
         const mouse = Matter.Mouse.create(render.canvas);
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
             mouse: mouse,
             constraint: { stiffness: 0.2, render: { visible: false } }
         });
         Matter.World.add(world, mouseConstraint);
+
+        // При нажатии на объект перемещаем его в конец world.bodies для рендеринга на переднем плане
+        Matter.Events.on(mouseConstraint, 'mousedown', (event) => {
+            const body = mouseConstraint.body;
+            if (body) {
+                // Удаляем тело из текущей позиции в world.bodies
+                const index = world.bodies.indexOf(body);
+                if (index > -1) {
+                    world.bodies.splice(index, 1);
+                    // Добавляем тело в конец массива
+                    world.bodies.push(body);
+                }
+            }
+        });
 
         // Запуск рендера и физики
         Matter.Engine.run(engine);
@@ -206,6 +220,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             Matter.Engine.clear(engine);
             Matter.World.clear(world);
             Matter.Events.off(engine, 'beforeUpdate');
+            Matter.Events.off(mouseConstraint, 'mousedown');
+            Matter.Events.off(mouseConstraint, 'enddrag');
         };
     }, [socket, userId]);
 

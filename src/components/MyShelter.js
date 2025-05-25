@@ -41,9 +41,9 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         // Отключаем глобальную гравитацию
         world.gravity.y = 0;
 
-        // Определяем группы столкновений
-        const defaultGroup = Matter.Body.nextGroup(true); // Группа для пола, стен и вазы
-        const noCollideGroup = Matter.Body.nextGroup(true); // Группа для объектов без столкновений
+        // Определяем категории столкновений
+        const defaultCategory = 0x0001; // Категория для пола, стен и вазы
+        const noCollideCategory = 0x0002; // Категория для объектов без столкновений
 
         const leftWall = Matter.Bodies.rectangle(
             0,
@@ -53,7 +53,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             {
                 isStatic: true,
                 render: { fillStyle: 'transparent' },
-                collisionFilter: { group: defaultGroup } // Стены в defaultGroup
+                collisionFilter: { category: defaultCategory, mask: defaultCategory } // Стены взаимодействуют с defaultCategory
             }
         );
         const rightWall = Matter.Bodies.rectangle(
@@ -64,7 +64,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             {
                 isStatic: true,
                 render: { fillStyle: 'transparent' },
-                collisionFilter: { group: defaultGroup } // Стены в defaultGroup
+                collisionFilter: { category: defaultCategory, mask: defaultCategory }
             }
         );
         Matter.World.add(world, [leftWall, rightWall]);
@@ -110,9 +110,10 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     friction: 0.1,
                     frictionAir: 0.01,
                     restitution: 0.5,
-                    inertia: isNonRotatable ? Infinity : undefined, // Запрещаем вращение для указанных объектов
+                    inertia: isNonRotatable ? Infinity : undefined,
                     collisionFilter: {
-                        group: item.name === 'vase' ? defaultGroup : noCollideGroup // Ваза в defaultGroup, остальные в noCollideGroup
+                        category: item.name === 'vase' ? defaultCategory : noCollideCategory,
+                        mask: item.name === 'vase' ? defaultCategory : defaultCategory // Ваза сталкивается с полом/стенами, остальные только с полом/стенами
                     }
                 }
             );
@@ -123,18 +124,18 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         // Находим тело вазы
         const vaseBody = bodies.find(body => furniture[bodies.indexOf(body)].name === 'vase');
 
-        // Добавляем статический пол на 30% от нижней границы
+        // Добавляем статический пол на 30% от нижней границы с увеличенной толщиной
         const floor = Matter.Bodies.rectangle(
             window.innerWidth / 2,
             window.innerHeight * 0.7,
             window.innerWidth,
-            50,
+            100, // Увеличиваем толщину пола для надёжного столкновения
             {
                 isStatic: true,
                 render: {
-                    fillStyle: 'transparent'
+                    fillStyle: 'transparent' // Для отладки можно установить '#cccccc'
                 },
-                collisionFilter: { group: defaultGroup } // Пол в defaultGroup
+                collisionFilter: { category: defaultCategory, mask: defaultCategory }
             }
         );
         Matter.World.add(world, floor);
@@ -156,13 +157,13 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             }
         });
 
-        // Применяем гравитацию только к вазе
+        // Применяем гравитацию только к вазе с уменьшенной силой
         Matter.Events.on(engine, 'beforeUpdate', () => {
             if (vaseBody) {
                 Matter.Body.applyForce(
                     vaseBody,
                     vaseBody.position,
-                    { x: 0, y: 0.001 * vaseBody.mass }
+                    { x: 0, y: 0.0005 * vaseBody.mass } // Уменьшаем силу для плавного падения
                 );
             }
         });

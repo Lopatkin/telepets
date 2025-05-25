@@ -75,28 +75,22 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         // Определяем базовый масштаб относительно ширины экрана
         const scaleFactor = window.innerWidth / 1920; // Базовое разрешение 1920px (Full HD)
 
-        // Определяем объекты с пропорциональными размерами
-        const furniture = [
-            { name: 'table', image: tableImage, width: 200 * scaleFactor, height: 100 * scaleFactor, weight: 20 },
-            { name: 'chair', image: chairImage, width: 80 * scaleFactor, height: 80 * scaleFactor, weight: 5 },
-            { name: 'sofa', image: sofaImage, width: 250 * scaleFactor, height: 100 * scaleFactor, weight: 30 },
-            { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor, height: 200 * scaleFactor, weight: 40 },
-            { name: 'vase', image: vaseImage, width: 50 * scaleFactor, height: 50 * scaleFactor, weight: 2 }
-        ];
+        // Определяем объекты с пропорциональными размерами (удвоенные)
+        const furniture = [{ name: 'table', image: tableImage, width: 200 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 20 }, { name: 'chair', image: chairImage, width: 80 * scaleFactor * 2, height: 80 * scaleFactor * 2, weight: 5 }, { name: 'sofa', image: sofaImage, width: 250 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 30 }, { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor * 2, height: 200 * scaleFactor * 2, weight: 40 }, { name: 'vase', image: vaseImage, width: 50 * scaleFactor * 2, height: 50 * scaleFactor * 2, weight: 2 }];
 
         // Добавляем объекты в мир
         const bodies = furniture.map(item => {
             const body = Matter.Bodies.rectangle(
                 Math.random() * (window.innerWidth - item.width),
-                Math.random() * (window.innerHeight * 0.7 - item.height),
+                Math.random() * (window.innerHeight * 0.7 - item.height), // Ограничиваем начальную позицию выше пола
                 item.width,
                 item.height,
                 {
                     render: {
                         sprite: {
                             texture: item.image,
-                            xScale: scaleFactor,
-                            yScale: scaleFactor
+                            xScale: scaleFactor * 2, // Удваиваем масштаб текстуры
+                            yScale: scaleFactor * 2 // Удваиваем масштаб текстуры
                         }
                     },
                     mass: item.weight,
@@ -112,7 +106,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         // Находим тело вазы
         const vaseBody = bodies.find(body => furniture[bodies.indexOf(body)].name === 'vase');
 
-        // Добавляем новый статический пол на 30% от нижней границы
+        // Добавляем статический пол на 30% от нижней границы
         const floor = Matter.Bodies.rectangle(
             window.innerWidth / 2,
             window.innerHeight * 0.7,

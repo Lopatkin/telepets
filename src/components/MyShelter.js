@@ -259,7 +259,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         });
 
         // Запуск рендера и физики
-        Matter.Engine.run(engine);
+        Matter.Runner.run(engine);
         Matter.Render.run(render);
 
         // Сохранение позиций при отпускании

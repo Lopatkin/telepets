@@ -121,7 +121,8 @@ function MyShelter({ theme, setShowMyShelter }) {
       const rect = canvas.getBoundingClientRect();
       const mouseX = touch.clientX - rect.left;
       const mouseY = touch.clientY - rect.top;
-      Matter.Mouse.setPosition(mouse, { x: mouseX, y: mouseY });
+      mouse.position.x = mouseX; // Прямо обновляем позицию мыши
+      mouse.position.y = mouseY;
       mouse.mousedown = true; // Имитируем нажатие мыши
     };
 
@@ -131,7 +132,8 @@ function MyShelter({ theme, setShowMyShelter }) {
       const rect = canvas.getBoundingClientRect();
       const mouseX = touch.clientX - rect.left;
       const mouseY = touch.clientY - rect.top;
-      Matter.Mouse.setPosition(mouse, { x: mouseX, y: mouseY });
+      mouse.position.x = mouseX; // Прямо обновляем позицию мыши
+      mouse.position.y = mouseY;
     };
 
     const handleTouchEnd = (event) => {

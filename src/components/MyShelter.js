@@ -92,7 +92,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             options: {
                 width: window.innerWidth,
                 height: window.innerHeight,
-                wireframes: true,
+                wireframes: false,
                 background: `url(${backgroundImage})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',

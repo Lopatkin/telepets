@@ -30,9 +30,9 @@ const CloseButton = styled.button`
   cursor: pointer;
 `;
 
-const MyShelter = ({ theme, socket, userId, onClose }) => {
+const MyShelter =({ theme, socket, userId, onClose }) => {
     const canvasRef = useRef(null);
-    const engineRef = useRef(Matter.Engine.create());
+    const engineRef = useRef.current(Matter.Engine.create());
 
     useEffect(() => {
         const engine = engineRef.current;
@@ -43,7 +43,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
 
         // Определяем категории столкновений
         const defaultCategory = 0x0001; // Категория для пола, стен и вазы
-        const noCollideCategory = 0x0002; // Категория для объектов без столкновений
+        const noCollideCategory = 0x0002; // Категория для объектов без столкновения
 
         const leftWall = Matter.Bodies.rectangle(
             0,
@@ -110,7 +110,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                             texture: item.image,
                             xScale: scaleFactor * 2,
                             yScale: scaleFactor * 2
-                        }
+                        },
+                        opacity: 1 // Добавляем начальную прозрачность для визуальной обратной связи
                     },
                     mass: item.weight,
                     friction: 0.1,
@@ -186,20 +187,22 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         Matter.Events.on(mouseConstraint, 'mousedown', (event) => {
             const body = mouseConstraint.body;
             if (body) {
+                console.log('Clicked body:', furniture[bodies.indexOf(body)].name, 'ID:', body.id); // Отладка: лог кликнутого объекта
                 // Перемещаем тело в конец world.bodies для рендеринга на переднем плане
                 const index = world.bodies.indexOf(body);
                 if (index > -1) {
                     world.bodies.splice(index, 1);
                     world.bodies.push(body);
+                    console.log('New bodies order:', world.bodies.map(b => furniture[bodies.indexOf(b)]?.name)); // Отладка: порядок тел
                 }
-                // Добавляем временную красную рамку для визуальной обратной связи
-                body.render.strokeStyle = '#ff0000';
-                body.render.lineWidth = 2;
-                // Убираем рамку через 1 секунду
+                // Добавляем временное затемнение для визуальной обратной связи
+                body.render.opacity = 0.6;
+                // Убираем затемнение через 1 секунду
                 setTimeout(() => {
-                    body.render.strokeStyle = undefined;
-                    body.render.lineWidth = 0;
+                    body.render.opacity = 1;
                 }, 1000);
+            } else {
+                console.log('No body clicked'); // Отладка: клик вне объекта
             }
         });
 

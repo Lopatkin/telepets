@@ -38,239 +38,243 @@ const CloseButton = styled.button`
 `;
 
 function MyShelter({ theme, setShowMyShelter }) {
-  const canvasRef = useRef(null);
-  const engineRef = useRef(Matter.Engine.create());
-  const runnerRef = useRef(null);
-  const renderRef = useRef(null);
-  const bodiesRef = useRef([]);
-  const mouseConstraintRef = useRef(null);
+    const canvasRef = useRef(null);
+    const engineRef = useRef(Matter.Engine.create());
+    const runnerRef = useRef(null);
+    const renderRef = useRef(null);
+    const bodiesRef = useRef([]);
+    const mouseConstraintRef = useRef(null);
 
-  useEffect(() => {
-    const engine = engineRef.current;
-    engine.gravity.y = 0; // Отключаем гравитацию
+    useEffect(() => {
+        const engine = engineRef.current;
+        engine.gravity.y = 0; // Отключаем гравитацию
 
-    const canvas = canvasRef.current;
-    const { width, height } = canvas.getBoundingClientRect();
+        const canvas = canvasRef.current;
+        const { width, height } = canvas.getBoundingClientRect();
 
-    // Создаем рендер
-    const render = Matter.Render.create({
-      canvas: canvas, // Используем canvas вместо element
-      engine: engine,
-      options: {
-        width,
-        height,
-        wireframes: false,
-        background: theme === 'dark' ? '#2A2A2A' : '#fff',
-      },
-    });
-    renderRef.current = render;
+        // Создаем рендер
+        const render = Matter.Render.create({
+            canvas: canvas,
+            engine: engine,
+            options: {
+                width,
+                height,
+                wireframes: false,
+                background: theme === 'dark' ? '#2A2A2A' : '#fff',
+            },
+        });
+        renderRef.current = render;
 
-    // Создаем границы
-    const boundaryOptions = {
-      isStatic: true,
-      render: { visible: false },
-    };
-    const boundaries = [
-      Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions), // Верх
-      Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions), // Низ
-      Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions), // Лево
-      Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions), // Право
-    ];
+        // Создаем границы
+        const boundaryOptions = {
+            isStatic: true,
+            render: { visible: false },
+        };
+        const boundaries = [
+            Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions), // Верх
+            Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions), // Низ
+            Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions), // Лево
+            Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions), // Право
+        ];
 
-    // Создаем объекты с проверкой координат
-    const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
-      isStatic: false,
-      restitution: 0,
-      friction: 0,
-      frictionAir: 0,
-      inertia: Infinity, // Отключаем вращение
-      render: { fillStyle: 'red' },
-      collisionFilter: { group: -1 }, // Отключаем коллизии между объектами
-    });
+        // Создаем объекты с проверкой координат
+        const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
+            isStatic: false,
+            restitution: 0,
+            friction: 0,
+            frictionAir: 0,
+            inertia: Infinity, // Отключаем вращение
+            render: { fillStyle: 'red' },
+            collisionFilter: { group: -1 }, // Отключаем коллизии между объектами
+        });
 
-    const square = Matter.Bodies.rectangle(Math.min(width / 2, width - 60), Math.min(height / 2, height - 60), 60, 60, {
-      isStatic: false,
-      restitution: 0,
-      friction: 0,
-      frictionAir: 0,
-      inertia: Infinity,
-      render: { fillStyle: 'blue' },
-      collisionFilter: { group: -1 },
-    });
+        const square = Matter.Bodies.rectangle(Math.min(width / 2, width - 60), Math.min(height / 2, height - 60), 60, 60, {
+            isStatic: false,
+            restitution: 0,
+            friction: 0,
+            frictionAir: 0,
+            inertia: Infinity,
+            render: { fillStyle: 'blue' },
+            collisionFilter: { group: -1 },
+        });
 
-    const triangle = Matter.Bodies.polygon(Math.min(width * 3 / 4, width - 40), Math.min(height * 3 / 4, height - 40), 3, 40, {
-      isStatic: false,
-      restitution: 0,
-      friction: 0,
-      frictionAir: 0,
-      inertia: Infinity,
-      render: { fillStyle: 'yellow' },
-      collisionFilter: { group: -1 },
-    });
+        const triangle = Matter.Bodies.polygon(Math.min(width * 3 / 4, width - 40), Math.min(height * 3 / 4, height - 40), 3, 40, {
+            isStatic: false,
+            restitution: 0,
+            friction: 0,
+            frictionAir: 0,
+            inertia: Infinity,
+            render: { fillStyle: 'yellow' },
+            collisionFilter: { group: -1 },
+        });
 
-    bodiesRef.current = [circle, square, triangle];
-    Matter.World.add(engine.world, [...boundaries, circle, square, triangle]);
+        bodiesRef.current = [circle, square, triangle];
+        Matter.World.add(engine.world, [...boundaries, circle, square, triangle]);
 
-    // Настройка мыши для перетаскивания
-    const mouse = Matter.Mouse.create(canvas);
+        // Настройка мыши для перетаскивания
+        const mouse = Matter.Mouse.create(canvas);
 
-    // Функция для поднятия объекта на передний слой
-    const bringToFront = (body) => {
-      if (bodiesRef.current.includes(body)) {
-        // Перемещаем объект в конец bodiesRef.current
-        const index = bodiesRef.current.indexOf(body);
-        if (index > -1) {
-          bodiesRef.current.splice(index, 1);
-          bodiesRef.current.push(body);
-        }
-        console.log('Bringing to front:', body.render.fillStyle);
-        console.log('Bodies order:', bodiesRef.current.map(b => b.render.fillStyle));
-      }
-    };
+        // Функция для поднятия объекта на передний слой
+        const bringToFront = (body) => {
+            if (bodiesRef.current.includes(body)) {
+                // Перемещаем объект в конец bodiesRef.current
+                const index = bodiesRef.current.indexOf(body);
+                if (index > -1) {
+                    bodiesRef.current.splice(index, 1);
+                    bodiesRef.current.push(body);
+                }
 
-    // Обработка кликов и сенсорных событий
-    const handleMouseDown = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
-      const mouse = Matter.Vector.create(mouseX, mouseY);
-      const clickedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, mouse));
-      if (clickedBody) {
-        bringToFront(clickedBody);
-      }
-    };
+                // Синхронизируем engine.world.bodies
+                const worldBodies = engine.world.bodies;
+                const bodyIndex = worldBodies.indexOf(body);
+                if (bodyIndex > -1) {
+                    worldBodies.splice(bodyIndex, 1);
+                    worldBodies.push(body);
+                }
 
-    const handleTouchStart = (event) => {
-      event.preventDefault();
-      const touch = event.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = touch.clientX - rect.left;
-      const mouseY = touch.clientY - rect.top;
-      mouse.position.x = mouseX;
-      mouse.position.y = mouseY;
-      mouse.mousedown = true; // Имитируем нажатие мыши
+                console.log('Bringing to front:', body.render.fillStyle);
+                console.log('Bodies order:', bodiesRef.current.map(b => b.render.fillStyle));
+                console.log('World bodies order:', worldBodies.map(b => b.render.fillStyle || 'boundary'));
+            }
+        };
 
-      // Проверяем, попал ли клик по объекту
-      const touchPoint = Matter.Vector.create(mouseX, mouseY);
-      const touchedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, touchPoint));
-      if (touchedBody) {
-        bringToFront(touchedBody);
-      }
-    };
+        // Обработка кликов и сенсорных событий
+        const handleMouseDown = (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+            const mouse = Matter.Vector.create(mouseX, mouseY);
+            const clickedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, mouse));
+            if (clickedBody) {
+                bringToFront(clickedBody);
+            }
+        };
 
-    const handleTouchMove = (event) => {
-      event.preventDefault();
-      const touch = event.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = touch.clientX - rect.left;
-      const mouseY = touch.clientY - rect.top;
-      mouse.position.x = mouseX;
-      mouse.position.y = mouseY;
-    };
+        const handleTouchStart = (event) => {
+            event.preventDefault();
+            const touch = event.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = touch.clientX - rect.left;
+            const mouseY = touch.clientY - rect.top;
+            mouse.position.x = mouseX;
+            mouse.position.y = mouseY;
+            mouse.mousedown = true; // Имитируем нажатие мыши
 
-    const handleTouchEnd = (event) => {
-      event.preventDefault();
-      mouse.mousedown = false; // Имитируем отпускание мыши
-    };
+            // Проверяем, попал ли клик по объекту
+            const touchPoint = Matter.Vector.create(mouseX, mouseY);
+            const touchedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, touchPoint));
+            if (touchedBody) {
+                bringToFront(touchedBody);
+            }
+        };
 
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+        const handleTouchMove = (event) => {
+            event.preventDefault();
+            const touch = event.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = touch.clientX - rect.left;
+            const mouseY = touch.clientY - rect.top;
+            mouse.position.x = mouseX;
+            mouse.position.y = mouseY;
+        };
 
-    const mouseConstraint = Matter.MouseConstraint.create(engine, {
-      mouse: mouse,
-      constraint: {
-        stiffness: 0.2,
-        render: { visible: false },
-      },
-    });
-    mouseConstraintRef.current = mouseConstraint;
-    Matter.World.add(engine.world, mouseConstraint);
+        const handleTouchEnd = (event) => {
+            event.preventDefault();
+            mouse.mousedown = false; // Имитируем отпускание мыши
+        };
 
-    // Поднимаем объект на передний слой при начале перетаскивания
-    Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
-      const draggedBody = event.body;
-      bringToFront(draggedBody);
-    });
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-    // Сортировка тел перед рендерингом
-    Matter.Events.on(render, 'beforeRender', () => {
-      render.bodies = [...boundaries, ...bodiesRef.current];
-      console.log('Render bodies:', render.bodies.map(b => b.render.fillStyle || 'boundary'));
-    });
+        const mouseConstraint = Matter.MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: { visible: false },
+            },
+        });
+        mouseConstraintRef.current = mouseConstraint;
+        Matter.World.add(engine.world, mouseConstraint);
 
-    // Запускаем рендеринг
-    runnerRef.current = Matter.Runner.create();
-    Matter.Runner.run(runnerRef.current, engine);
-    Matter.Render.run(render);
+        // Поднимаем объект на передний слой при начале перетаскивания
+        Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
+            const draggedBody = event.body;
+            bringToFront(draggedBody);
+        });
 
-    // Адаптация при изменении размера окна
-    const handleResize = () => {
-      const newWidth = canvas.parentElement.getBoundingClientRect().width;
-      const newHeight = canvas.parentElement.getBoundingClientRect().height;
-      canvas.width = newWidth;
-      canvas.height = newHeight;
-      render.options.width = newWidth;
-      render.options.height = newHeight;
+        // Запускаем рендеринг
+        runnerRef.current = Matter.Runner.create();
+        Matter.Runner.run(runnerRef.current, engine);
+        Matter.Render.run(render);
 
-      // Обновляем позиции границ
-      Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
-      Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
-      Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
-      Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
-      Matter.Body.set(boundaries[0], 'bounds', Matter.Bounds.create([
-        { x: 0, y: -50 },
-        { x: newWidth, y: 0 },
-      ]));
-      Matter.Body.set(boundaries[1], 'bounds', Matter.Bounds.create([
-        { x: 0, y: newHeight },
-        { x: newWidth, y: newHeight + 50 },
-      ]));
-      Matter.Body.set(boundaries[2], 'bounds', Matter.Bounds.create([
-        { x: -50, y: 0 },
-        { x: 0, y: newHeight },
-      ]));
-      Matter.Body.set(boundaries[3], 'bounds', Matter.Bounds.create([
-        { x: newWidth, y: 0 },
-        { x: newWidth + 50, y: newHeight },
-      ]));
+        // Адаптация при изменении размера окна
+        const handleResize = () => {
+            const newWidth = canvas.parentElement.getBoundingClientRect().width;
+            const newHeight = canvas.parentElement.getBoundingClientRect().height;
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            render.options.width = newWidth;
+            render.options.height = newHeight;
 
-      // Проверяем, что объекты остаются в видимой области
-      bodiesRef.current.forEach(body => {
-        const bounds = body.bounds;
-        if (bounds.min.x < 0 || bounds.max.x > newWidth || bounds.min.y < 0 || bounds.max.y > newHeight) {
-          const newX = Math.max(50, Math.min(body.position.x, newWidth - 50));
-          const newY = Math.max(50, Math.min(body.position.y, newHeight - 50));
-          Matter.Body.setPosition(body, { x: newX, y: newY });
-        }
-      });
-    };
+            // Обновляем позиции границ
+            Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
+            Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
+            Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
+            Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
+            Matter.Body.set(boundaries[0], 'bounds', Matter.Bounds.create([
+                { x: 0, y: -50 },
+                { x: newWidth, y: 0 },
+            ]));
+            Matter.Body.set(boundaries[1], 'bounds', Matter.Bounds.create([
+                { x: 0, y: newHeight },
+                { x: newWidth, y: newHeight + 50 },
+            ]));
+            Matter.Body.set(boundaries[2], 'bounds', Matter.Bounds.create([
+                { x: -50, y: 0 },
+                { x: 0, y: newHeight },
+            ]));
+            Matter.Body.set(boundaries[3], 'bounds', Matter.Bounds.create([
+                { x: newWidth, y: 0 },
+                { x: newWidth + 50, y: newHeight },
+            ]));
 
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Вызываем сразу для корректной инициализации
+            // Проверяем, что объекты остаются в видимой области
+            bodiesRef.current.forEach(body => {
+                const bounds = body.bounds;
+                if (bounds.min.x < 0 || bounds.max.x > newWidth || bounds.min.y < 0 || bounds.max.y > newHeight) {
+                    const newX = Math.max(50, Math.min(body.position.x, newWidth - 50));
+                    const newY = Math.max(50, Math.min(body.position.y, newHeight - 50));
+                    Matter.Body.setPosition(body, { x: newX, y: newY });
+                }
+            });
+        };
 
-    return () => {
-      canvas.removeEventListener('mousedown', handleMouseDown);
-      canvas.removeEventListener('touchstart', handleTouchStart);
-      canvas.removeEventListener('touchmove', handleTouchMove);
-      canvas.removeEventListener('touchend', handleTouchEnd);
-      window.removeEventListener('resize', handleResize);
-      Matter.Render.stop(render);
-      Matter.Runner.stop(runnerRef.current);
-      Matter.World.clear(engine.world);
-      Matter.Engine.clear(engine);
-    };
-  }, [theme]);
+        window.addEventListener('resize', handleResize);
+        handleResize(); // Вызываем сразу для корректной инициализации
 
-  return (
-    <ShelterContainer theme={theme}>
-      <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
-      <CanvasContainer>
-        <canvas ref={canvasRef} />
-      </CanvasContainer>
-    </ShelterContainer>
-  );
+        return () => {
+            canvas.removeEventListener('mousedown', handleMouseDown);
+            canvas.removeEventListener('touchstart', handleTouchStart);
+            canvas.removeEventListener('touchmove', handleTouchMove);
+            canvas.removeEventListener('touchend', handleTouchEnd);
+            window.removeEventListener('resize', handleResize);
+            Matter.Render.stop(render);
+            Matter.Runner.stop(runnerRef.current);
+            Matter.World.clear(engine.world);
+            Matter.Engine.clear(engine);
+        };
+    }, [theme]);
+
+    return (
+        <ShelterContainer theme={theme}>
+            <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
+            <CanvasContainer>
+                <canvas ref={canvasRef} />
+            </CanvasContainer>
+        </ShelterContainer>
+    );
 }
 
 export default MyShelter;

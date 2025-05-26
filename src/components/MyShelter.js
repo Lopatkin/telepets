@@ -108,6 +108,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         ];
 
         // Создаём маппинг для связи тела с именем furniture
+        // Создаём маппинг для связи тела с именем furniture
         const bodyToFurnitureMap = new Map();
 
         // Добавляем объекты в мир
@@ -144,48 +145,29 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             return body;
         });
 
-        // Находим тело вазы
-        const vaseBody = bodies.find(body => bodyToFurnitureMap.get(body.id) === 'vase');
-
-        // Загружаем начальные позиции мебели с сервера
-        socket.emit('getFurniturePositions', { userId }, (response) => {
-            if (response.success) {
-                response.positions.forEach(({ furnitureId, position }) => {
-                    const body = bodies.find(b => b.id === furnitureId);
-                    if (body) {
-                        Matter.Body.setPosition(body, position);
-                        if (bodyToFurnitureMap.get(body.id) !== 'vase') {
-                            Matter.Body.setVelocity(body, { x: 0, y: 0 });
-                            Matter.Body.setAngularVelocity(body, 0);
-                        }
-                    }
-                });
+        // Явно исключаем статические тела (стены, пол) из маппинга
+        world.bodies.forEach(body => {
+            if (body.isStatic && !bodyToFurnitureMap.has(body.id)) {
+                bodyToFurnitureMap.set(body.id, 'static');
             }
         });
 
-        // Применяем гравитацию только к вазе
-        Matter.Events.on(engine, 'beforeUpdate', () => {
-            if (vaseBody) {
-                Matter.Body.applyForce(
-                    vaseBody,
-                    vaseBody.position,
-                    { x: 0, y: 0.0005 * vaseBody.mass }
-                );
-            }
-        });
+        // ... (код до обработки событий без изменений)
 
-        // Настройка перетаскивания и кликов
-        const mouse = Matter.Mouse.create(render.canvas);
-        const mouseConstraint = Matter.MouseConstraint.create(engine, {
-            mouse: mouse,
-            constraint: { stiffness: 0.2, render: { visible: false } }
+        // Кастомная сортировка тел для рендеринга
+        Matter.Events.on(render, 'beforeRender', () => {
+            // Сортируем тела по их позиции в world.bodies
+            render.options.sort = (a, b) => {
+                const indexA = world.bodies.indexOf(a);
+                const indexB = world.bodies.indexOf(b);
+                return indexA - indexB;
+            };
         });
-        Matter.World.add(world, mouseConstraint);
 
         // При нажатии на объект перемещаем его на передний план и добавляем подсветку
         Matter.Events.on(mouseConstraint, 'mousedown', (event) => {
             const body = mouseConstraint.body;
-            if (body) {
+            if (body && !body.isStatic) { // Игнорируем статические тела
                 const furnitureName = bodyToFurnitureMap.get(body.id) || 'unknown';
                 console.log('Clicked body:', furnitureName, 'ID:', body.id);
 
@@ -194,24 +176,26 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 if (index > -1) {
                     world.bodies.splice(index, 1);
                     world.bodies.push(body);
-                    // Устанавливаем zIndex для визуального отображения
-                    body.render.zIndex = world.bodies.length;
-                    console.log('New bodies order:', world.bodies.map(b => bodyToFurnitureMap.get(b.id) || 'static'));
+                    console.log('New bodies order:', world.bodies.map(b => bodyToFurnitureMap.get(b.id) || 'unknown'));
                 }
 
-                // Добавляем временную подсветку
-                body.render.opacity = 0.6;
+                // Добавляем визуальную подсветку
+                body.render.opacity = 0.8;
+                body.render.strokeStyle = '#007AFF';
+                body.render.lineWidth = 2;
                 setTimeout(() => {
                     body.render.opacity = 1;
-                }, 1000);
+                    body.render.strokeStyle = null;
+                    body.render.lineWidth = 0;
+                }, 500); // Уменьшаем время подсветки для более быстрого отклика
 
-                // Принудительно обновляем рендер
+                // Принудительно обновление рендера
                 Matter.Render.lookAt(render, {
                     min: { x: 0, y: 0 },
                     max: { x: window.innerWidth, y: window.innerHeight }
                 });
             } else {
-                console.log('No body clicked');
+                console.log('No valid body clicked');
             }
         });
 

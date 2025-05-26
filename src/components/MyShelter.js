@@ -113,6 +113,28 @@ function MyShelter({ theme, setShowMyShelter }) {
 
     // Настройка мыши для перетаскивания
     const mouse = Matter.Mouse.create(canvas);
+    
+    // Включаем поддержку сенсорных событий
+    mouse.element.addEventListener('touchstart', (event) => {
+      event.preventDefault();
+      const touch = event.touches[0];
+      mouse.position.x = touch.clientX - canvas.getBoundingClientRect().left;
+      mouse.position.y = touch.clientY - canvas.getBoundingClientRect().top;
+      Matter.Mouse._setMouseDown(mouse, true);
+    });
+
+    mouse.element.addEventListener('touchmove', (event) => {
+      event.preventDefault();
+      const touch = event.touches[0];
+      mouse.position.x = touch.clientX - canvas.getBoundingClientRect().left;
+      mouse.position.y = touch.clientY - canvas.getBoundingClientRect().top;
+    });
+
+    mouse.element.addEventListener('touchend', (event) => {
+      event.preventDefault();
+      Matter.Mouse._setMouseDown(mouse, false);
+    });
+
     const mouseConstraint = Matter.MouseConstraint.create(engine, {
       mouse: mouse,
       constraint: {
@@ -173,6 +195,10 @@ function MyShelter({ theme, setShowMyShelter }) {
     handleResize(); // Вызываем сразу для корректной инициализации
 
     return () => {
+      // Очищаем обработчики событий
+      mouse.element.removeEventListener('touchstart', () => {});
+      mouse.element.removeEventListener('touchmove', () => {});
+      mouse.element.removeEventListener('touchend', () => {});
       window.removeEventListener('resize', handleResize);
       Matter.Render.stop(render);
       Matter.Runner.stop(runnerRef.current);

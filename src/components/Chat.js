@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { catSounds, dogSounds } from './constants/animalSounds';
 import PovodokIcon from '../images/povodok.png'; // Импорт иконки
 import { getActiveNPCs } from '../utils/npcData'; // Обновляем импорт
-import MyShelter from './MyShelter';
 
 // import BouncingBall from './BouncingBall';
 
@@ -28,10 +27,10 @@ import {
   UserItem,
   UserName,
   LeashIcon,
-  ShelterButton
+  ShelterButton // Новый стиль для кнопки
 } from '../styles/ChatStyles';
 
-function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
+function Chat({ userId, room, theme, socket, joinedRoomsRef, user, setShowMyShelter }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [users, setUsers] = useState([]);
@@ -43,7 +42,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
   const avatarCacheRef = useRef(new Map()); // Новый кэш для аватарок
   const currentUserPhotoUrl = user?.photoUrl || '';
 
-  const [showShelter, setShowShelter] = useState(false);
+  const toggleShelter = () => {
+    setShowMyShelter(true);
+  };
 
   useEffect(() => {
     if (!socket || !room) return;
@@ -288,19 +289,13 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
           </Message>
         ))}
         <div ref={messagesEndRef} />
-        {/* <BouncingBall room={room} containerRef={messagesContainerRef} /> */}
       </MessagesContainer>
       <InputContainer theme={theme}>
-        {/* Показываем кнопку "Моё убежище" только если игрок находится в локации "myhome_" */}
-        {room && room.startsWith('myhome_') && (
-          <ShelterButton onClick={() => setShowShelter(true)} theme={theme}>
-            Моё убежище
-          </ShelterButton>
-        )}
         <UsersButton onClick={toggleUserList}>
           <UsersIcon />
           <UserCount>{users.length}</UserCount>
         </UsersButton>
+        <ShelterButton onClick={toggleShelter} theme={theme}>Моё убежище</ShelterButton> {/* Новая кнопка */}
         <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -322,14 +317,6 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
             </UserItem>
           ))}
         </UserListModal>
-      )}
-      {showShelter && (
-        <MyShelter
-          theme={theme}
-          socket={socket}
-          userId={userId}
-          onClose={() => setShowShelter(false)}
-        />
       )}
     </ChatContainer>
   );

@@ -68,14 +68,6 @@ const userSchema = new mongoose.Schema({
     maxMood: { type: Number, default: 100 },
     maxSatiety: { type: Number, default: 100 },
     freeWill: { type: Number, default: 0, min: 0, max: 100 } // Новое поле freeWill
-  },
-  furniture: {
-    type: Map,
-    of: {
-      x: Number,
-      y: Number
-    },
-    default: {}
   }
 });
 const User = mongoose.model('User', userSchema);
@@ -175,29 +167,6 @@ io.on('connection', (socket) => {
   registerMessageHandlers(dependencies);
   registerInventoryHandlers(dependencies);
   registerAnimalHandlers(dependencies);
-
-  socket.on('getFurniturePositions', async ({ userId }, callback) => {
-    try {
-      const user = await User.findOne({ userId });
-      callback({ success: true, positions: Object.entries(user.furniture || {}).map(([id, pos]) => ({ furnitureId: id, position: pos })) });
-    } catch (err) {
-      console.error('Error fetching furniture positions:', err.message);
-      callback({ success: false, message: 'Ошибка при загрузке позиций мебели' });
-    }
-  });
-
-  socket.on('updateFurniturePosition', async ({ userId, furnitureId, position }) => {
-    try {
-      await User.updateOne(
-        { userId },
-        { $set: { [`furniture.${furnitureId}`]: position } }
-      );
-      console.log(`Updated furniture position for user ${userId}:`, position);
-    } catch (err) {
-      console.error('Error updating furniture position:', err.message);
-      socket.emit('error', { message: 'Ошибка при сохранении позиции мебели' });
-    }
-  });
 
   // Модификация fightRound для использования актуального здоровья
   socket.on('fightRound', async (data, callback) => {

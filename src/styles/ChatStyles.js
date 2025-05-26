@@ -18,16 +18,21 @@ import workshopImage from '../images/workshop.jpg';
 import podmostImage from '../images/podmost.jpg';
 
 export const ShelterButton = styled.button`
-  background: ${props => props.theme === 'dark' ? '#444' : '#f0f0f0'};
-  color: ${props => props.theme === 'dark' ? '#fff' : '#000'};
+  background: ${({ theme }) => (theme === 'dark' ? '#007AFF' : '#007AFF')};
+  color: white;
   border: none;
+  border-radius: 10px;
   padding: 8px 12px;
-  border-radius: 5px;
+  margin-right: 8px;
   cursor: pointer;
-  margin-right: 10px;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+
   &:hover {
-    background: ${props => props.theme === 'dark' ? '#555' : '#e0e0e0'};
+    background: ${({ theme }) => (theme === 'dark' ? '#005BB5' : '#005BB5')};
   }
 `;
 

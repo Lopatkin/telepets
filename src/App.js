@@ -11,6 +11,7 @@ import Inventory from './components/Inventory';
 import { ClipLoader } from 'react-spinners';
 import Registration from './components/Registration';
 import BouncingBall from './components/BouncingBall';
+import MyShelter from './components/MyShelter'; // Новый импорт
 import startLoadingImage from './images/start_loading.jpg';
 
 const BouncingBallOverlay = styled.div`
@@ -63,6 +64,7 @@ function App() {
   const [pets, setPets] = useState([]);
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+  const [showMyShelter, setShowMyShelter] = useState(false); // Новое состояние
 
   const bouncingBallContainerRef = useRef(null);
 
@@ -414,68 +416,75 @@ function App() {
     <AppContainer>
       <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
       <Content>
-        {activeTab === 'chat' && (
-          <Chat
-            userId={user?.userId}
-            room={currentRoom}
-            theme={appliedTheme}
-            socket={socket}
-            joinedRoomsRef={joinedRoomsRef}
-            user={user}
-          />
-        )}
-        {activeTab === 'actions' && socket && (
-          <Actions
-            userId={user?.userId}
-            currentRoom={currentRoom}
-            theme={appliedTheme}
-            socket={socket}
-            personalItems={personalItems}
-            onItemsUpdate={handleItemsUpdate}
-            pets={pets}
-            isModalOpen={isActionModalOpen}
-            setIsModalOpen={setIsActionModalOpen}
-            user={user}
-            updateUser={updateUser} // Передаем updateUser
-          />
-        )}
-        {activeTab === 'housing' && socket && (
-          <Inventory
-            userId={user?.userId}
-            currentRoom={currentRoom}
-            theme={appliedTheme}
-            socket={socket}
-            personalItems={personalItems}
-            onItemsUpdate={handleItemsUpdate}
-            closeActionModal={closeActionModal}
-            setIsModalOpen={setIsActionModalOpen}
-            user={user}
-            updateUser={updateUser} // Передаем updateUser
-          />
-        )}
-        {activeTab === 'map' && canAccessMap && (
-          <Map
-            userId={user?.userId}
-            onRoomSelect={handleRoomSelect}
-            theme={appliedTheme}
-            currentRoom={currentRoom}
-            user={user}
-          />
-        )}
-        {activeTab === 'profile' && (
-          <Profile
-            user={user}
-            theme={appliedTheme}
-            selectedTheme={theme}
-            telegramTheme={telegramTheme}
-            onThemeChange={handleThemeChange}
-            progressValues={{ health: 50, mood: 50, fullness: 50 }}
-            socket={socket} // Передаем socket
-          />
+        {showMyShelter ? (
+          <MyShelter theme={appliedTheme} setShowMyShelter={setShowMyShelter} />
+        ) : (
+          <>
+            {activeTab === 'chat' && (
+              <Chat
+                userId={user?.userId}
+                room={currentRoom}
+                theme={appliedTheme}
+                socket={socket}
+                joinedRoomsRef={joinedRoomsRef}
+                user={user}
+                setShowMyShelter={setShowMyShelter} // Передаем новый проп
+              />
+            )}
+            {activeTab === 'actions' && socket && (
+              <Actions
+                userId={user?.userId}
+                currentRoom={currentRoom}
+                theme={appliedTheme}
+                socket={socket}
+                personalItems={personalItems}
+                onItemsUpdate={handleItemsUpdate}
+                pets={pets}
+                isModalOpen={isActionModalOpen}
+                setIsModalOpen={setIsActionModalOpen}
+                user={user}
+                updateUser={updateUser}
+              />
+            )}
+            {activeTab === 'housing' && socket && (
+              <Inventory
+                userId={user?.userId}
+                currentRoom={currentRoom}
+                theme={appliedTheme}
+                socket={socket}
+                personalItems={personalItems}
+                onItemsUpdate={handleItemsUpdate}
+                closeActionModal={closeActionModal}
+                setIsModalOpen={setIsActionModalOpen}
+                user={user}
+                updateUser={updateUser}
+              />
+            )}
+            {activeTab === 'map' && canAccessMap && (
+              <Map
+                userId={user?.userId}
+                onRoomSelect={handleRoomSelect}
+                theme={appliedTheme}
+                currentRoom={currentRoom}
+                user={user}
+              />
+            )}
+            {activeTab === 'profile' && (
+              <Profile
+                user={user}
+                theme={appliedTheme}
+                selectedTheme={theme}
+                telegramTheme={telegramTheme}
+                onThemeChange={handleThemeChange}
+                progressValues={{ health: 50, mood: 50, fullness: 50 }}
+                socket={socket}
+              />
+            )}
+          </>
         )}
       </Content>
       <BouncingBallOverlay ref={bouncingBallContainerRef}>
-        {activeTab === 'chat' && currentRoom && (
+        {activeTab === 'chat' && currentRoom && !showMyShelter && (
           <BouncingBall room={currentRoom} containerRef={bouncingBallContainerRef} />
         )}
       </BouncingBallOverlay>

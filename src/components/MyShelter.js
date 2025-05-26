@@ -37,14 +37,14 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
     useEffect(() => {
         const engine = engineRef.current;
         const world = engine.world;
-    
+
         // Отключаем глобальную гравитацию
         world.gravity.y = 0;
-    
+
         // Определяем категории столкновений
         const defaultCategory = 0x0001; // Категория для пола, стен и вазы
         const noCollideCategory = 0x0002; // Категория для объектов без столкновений
-    
+
         const leftWall = Matter.Bodies.rectangle(
             0,
             window.innerHeight / 2,
@@ -68,7 +68,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             }
         );
         Matter.World.add(world, [leftWall, rightWall]);
-    
+
         // Создаём рендер с фоновым изображением
         const render = Matter.Render.create({
             canvas: canvasRef.current,
@@ -83,13 +83,19 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 backgroundRepeat: 'no-repeat'
             }
         });
-    
+
         // Определяем базовый масштаб относительно ширины экрана
         const scaleFactor = window.innerWidth / 1920; // Базовое разрешение 1920px (Full HD)
-    
+
         // Определяем объекты с пропорциональными размерами (удвоенные)
-        const furniture = [        { name: 'table', image: tableImage, width: 200 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 20 },        { name: 'chair', image: chairImage, width: 80 * scaleFactor * 2, height: 80 * scaleFactor * 2, weight: 5 },        { name: 'sofa', image: sofaImage, width: 250 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 30 },        { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor * 2, height: 200 * scaleFactor * 2, weight: 40 },        { name: 'vase', image: vaseImage, width: 50 * scaleFactor * 2, height: 50 * scaleFactor * 2, weight: 2 }    ];
-    
+        const furniture = [
+            { name: 'table', image: tableImage, width: 200 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 20 },
+            { name: 'chair', image: chairImage, width: 80 * scaleFactor * 2, height: 80 * scaleFactor * 2, weight: 5 },
+            { name: 'sofa', image: sofaImage, width: 250 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 30 },
+            { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor * 2, height: 200 * scaleFactor * 2, weight: 40 },
+            { name: 'vase', image: vaseImage, width: 50 * scaleFactor * 2, height: 50 * scaleFactor * 2, weight: 2 }
+        ];
+
         // Добавляем объекты в мир
         const bodies = furniture.map(item => {
             const isNonRotatable = ['table', 'chair', 'sofa', 'wardrobe'].includes(item.name);
@@ -120,10 +126,10 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             Matter.World.add(world, body);
             return body;
         });
-    
+
         // Находим тело вазы
         const vaseBody = bodies.find(body => furniture[bodies.indexOf(body)].name === 'vase');
-    
+
         // Добавляем статический пол на 30% от нижней границы с увеличенной толщиной
         const floor = Matter.Bodies.rectangle(
             window.innerWidth / 2,
@@ -139,7 +145,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             }
         );
         Matter.World.add(world, floor);
-    
+
         // Загружаем начальные позиции мебели с сервера
         socket.emit('getFurniturePositions', { userId }, (response) => {
             if (response.success) {
@@ -156,7 +162,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 });
             }
         });
-    
+
         // Применяем гравитацию только к вазе с уменьшенной силой
         Matter.Events.on(engine, 'beforeUpdate', () => {
             if (vaseBody) {
@@ -167,7 +173,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 );
             }
         });
-    
+
         // Настройка перетаскивания и кликов
         const mouse = Matter.Mouse.create(render.canvas);
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
@@ -175,7 +181,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             constraint: { stiffness: 0.2, render: { visible: false } }
         });
         Matter.World.add(world, mouseConstraint);
-    
+
         // При нажатии на объект перемещаем его на передний план и добавляем подсветку
         Matter.Events.on(mouseConstraint, 'mousedown', (event) => {
             const body = mouseConstraint.body;
@@ -196,11 +202,11 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 }, 1000);
             }
         });
-    
+
         // Запуск рендера и физики
         Matter.Engine.run(engine);
         Matter.Render.run(render);
-    
+
         // Сохранение позиций при отпускании
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
             const body = event.body;
@@ -215,7 +221,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 Matter.Body.setAngularVelocity(body, 0);
             }
         });
-    
+
         return () => {
             Matter.Render.stop(render);
             Matter.Engine.clear(engine);

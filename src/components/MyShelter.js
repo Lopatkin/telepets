@@ -197,6 +197,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             mouse: mouse,
             constraint: { stiffness: 0.2, render: { visible: false } }
         });
+
+        
         Matter.World.add(world, mouseConstraint);
 
         // Кастомный рендеринг с сортировкой по zOrder

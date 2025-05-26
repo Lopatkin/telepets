@@ -96,10 +96,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 background: `url(${backgroundImage})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                sort: (a, b) => { // Кастомная сортировка для рендеринга
-                    return (a.zOrder || 0) - (b.zOrder || 0);
-                }
+                backgroundRepeat: 'no-repeat'
             }
         });
 
@@ -200,6 +197,31 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         });
         Matter.World.add(world, mouseConstraint);
 
+        // Кастомный рендеринг с сортировкой по zOrder
+        Matter.Events.on(render, 'beforeRender', () => {
+            const context = render.context;
+            const bodiesToRender = [...world.bodies].sort((a, b) => (a.zOrder || 0) - (b.zOrder || 0));
+
+            // Очищаем канвас
+            context.clearRect(0, 0, render.canvas.width, render.canvas.height);
+
+            // Рисуем фон
+            if (render.options.background) {
+                const backgroundImageObj = new Image();
+                backgroundImageObj.src = render.options.background.replace(/url\(['"]?(.*?)['"]?\)/, '$1');
+                context.drawImage(
+                    backgroundImageObj,
+                    0,
+                    0,
+                    render.canvas.width,
+                    render.canvas.height
+                );
+            }
+
+            // Рендерим тела в отсортированном порядке
+            Matter.Render.bodies(render, bodiesToRender, context);
+        });
+
         // При нажатии на объект увеличиваем его zOrder и добавляем подсветку
         Matter.Events.on(mouseConstraint, 'mousedown', (event) => {
             const body = mouseConstraint.body;
@@ -263,6 +285,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             Matter.Events.off(engine, 'beforeUpdate');
             Matter.Events.off(mouseConstraint, 'mousedown');
             Matter.Events.off(mouseConstraint, 'enddrag');
+            Matter.Events.off(render, 'beforeRender');
         };
     }, [socket, userId, engineRef]);
 

@@ -32,7 +32,7 @@ const CloseButton = styled.button`
 
 const MyShelter = ({ theme, socket, userId, onClose }) => {
     const canvasRef = useRef(null);
-    const engineRef = useRef(Matter.Engine.create()); // Исправляем: вызываем create()
+    const engineRef = useRef(Matter.Engine.create());
 
     useEffect(() => {
         const engine = engineRef.current;
@@ -45,6 +45,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         const defaultCategory = 0x0001; // Категория для пола, стен и вазы
         const noCollideCategory = 0x0002; // Категория для объектов без столкновений
 
+        // Создаём стены и пол
         const leftWall = Matter.Bodies.rectangle(
             0,
             window.innerHeight / 2,
@@ -67,7 +68,21 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 collisionFilter: { category: defaultCategory, mask: defaultCategory }
             }
         );
-        Matter.World.add(world, [leftWall, rightWall]);
+        const floor = Matter.Bodies.rectangle(
+            window.innerWidth / 2,
+            window.innerHeight * 0.7,
+            window.innerWidth,
+            100,
+            {
+                isStatic: true,
+                render: {
+                    fillStyle: 'transparent'
+                },
+                collisionFilter: { category: defaultCategory, mask: defaultCategory }
+            }
+        );
+        // Добавляем стены и пол в начало мира
+        Matter.World.add(world, [leftWall, rightWall, floor]);
 
         // Создаём рендер с фоновым изображением
         const render = Matter.Render.create({
@@ -111,7 +126,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                             xScale: scaleFactor * 2,
                             yScale: scaleFactor * 2
                         },
-                        opacity: 1 // Добавляем начальную прозрачность для визуальной обратной связи
+                        opacity: 1
                     },
                     mass: item.weight,
                     friction: 0.1,
@@ -131,22 +146,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         // Находим тело вазы
         const vaseBody = bodies.find(body => furniture[bodies.indexOf(body)].name === 'vase');
 
-        // Добавляем статический пол на 30% от нижней границы с увеличенной толщиной
-        const floor = Matter.Bodies.rectangle(
-            window.innerWidth / 2,
-            window.innerHeight * 0.7,
-            window.innerWidth,
-            100,
-            {
-                isStatic: true,
-                render: {
-                    fillStyle: 'transparent'
-                },
-                collisionFilter: { category: defaultCategory, mask: defaultCategory }
-            }
-        );
-        Matter.World.add(world, floor);
-
         // Загружаем начальные позиции мебели с сервера
         socket.emit('getFurniturePositions', { userId }, (response) => {
             if (response.success) {
@@ -154,7 +153,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     const body = bodies.find(b => b.id === furnitureId);
                     if (body) {
                         Matter.Body.setPosition(body, position);
-                        // Устанавливаем нулевую скорость для всех объектов, кроме вазы
                         if (furniture[bodies.indexOf(body)].name !== 'vase') {
                             Matter.Body.setVelocity(body, { x: 0, y: 0 });
                             Matter.Body.setAngularVelocity(body, 0);
@@ -164,7 +162,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             }
         });
 
-        // Применяем гравитацию только к вазе с уменьшенной силой
+        // Применяем гравитацию только к вазе
         Matter.Events.on(engine, 'beforeUpdate', () => {
             if (vaseBody) {
                 Matter.Body.applyForce(
@@ -187,22 +185,24 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         Matter.Events.on(mouseConstraint, 'mousedown', (event) => {
             const body = mouseConstraint.body;
             if (body) {
-                console.log('Clicked body:', furniture[bodies.indexOf(body)].name, 'ID:', body.id); // Отладка: лог кликнутого объекта
-                // Перемещаем тело в конец world.bodies для рендеринга на переднем плане
+                console.log('Clicked body:', furniture[bodies.indexOf(body)].name, 'ID:', body.id);
                 const index = world.bodies.indexOf(body);
                 if (index > -1) {
                     world.bodies.splice(index, 1);
                     world.bodies.push(body);
-                    console.log('New bodies order:', world.bodies.map(b => furniture[bodies.indexOf(b)]?.name)); // Отладка: порядок тел
+                    console.log('New bodies order:', world.bodies.map(b => furniture[bodies.indexOf(b)]?.name));
+                    // Принудительно обновляем рендер
+                    Matter.Render.lookAt(render, {
+                        min: { x: 0, y: 0 },
+                        max: { x: window.innerWidth, y: window.innerHeight }
+                    });
                 }
-                // Добавляем временное затемнение для визуальной обратной связи
                 body.render.opacity = 0.6;
-                // Убираем затемнение через 1 секунду
                 setTimeout(() => {
                     body.render.opacity = 1;
                 }, 1000);
             } else {
-                console.log('No body clicked'); // Отладка: клик вне объекта
+                console.log('No body clicked');
             }
         });
 
@@ -218,7 +218,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 furnitureId: body.id,
                 position: { x: body.position.x, y: body.position.y }
             });
-            // Сбрасываем скорость для всех объектов, кроме вазы, после перетаскивания
             if (furniture[bodies.indexOf(body)].name !== 'vase') {
                 Matter.Body.setVelocity(body, { x: 0, y: 0 });
                 Matter.Body.setAngularVelocity(body, 0);
@@ -242,6 +241,5 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         </ShelterContainer>
     );
 };
-
 
 export default MyShelter;

@@ -44,6 +44,7 @@ function MyShelter({ theme, setShowMyShelter }) {
     const renderRef = useRef(null);
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
+    const zIndexRef = useRef(0); // Счетчик для z-индекса
 
     useEffect(() => {
         const engine = engineRef.current;
@@ -52,7 +53,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         const canvas = canvasRef.current;
         const { width, height } = canvas.getBoundingClientRect();
 
-        // Создаем рендер
+        // Создаем рендер с кастомной функцией сортировки
         const render = Matter.Render.create({
             canvas: canvas,
             engine: engine,
@@ -63,6 +64,20 @@ function MyShelter({ theme, setShowMyShelter }) {
                 background: theme === 'dark' ? '#2A2A2A' : '#fff',
             },
         });
+
+        // Переопределяем функцию сортировки тел для рендеринга
+        render.bodies = function (bodies, context) {
+            const sortedBodies = [...bodies].sort((a, b) => {
+                // Сортируем по zIndex (если он есть)
+                const aZ = a.render.zIndex || 0;
+                const bZ = b.render.zIndex || 0;
+                return aZ - bZ;
+            });
+
+            // Вызываем оригинальную функцию рендеринга с отсортированными телами
+            Matter.Render.Bodies(sortedBodies, context);
+        };
+
         renderRef.current = render;
 
         // Создаем границы
@@ -83,9 +98,12 @@ function MyShelter({ theme, setShowMyShelter }) {
             restitution: 0,
             friction: 0,
             frictionAir: 0,
-            inertia: Infinity, // Отключаем вращение
-            render: { fillStyle: 'red' },
-            collisionFilter: { group: -1 }, // Отключаем коллизии между объектами
+            inertia: Infinity,
+            render: {
+                fillStyle: 'red',
+                zIndex: 1 // Начальный z-index
+            },
+            collisionFilter: { group: -1 },
         });
 
         const square = Matter.Bodies.rectangle(Math.min(width / 2, width - 60), Math.min(height / 2, height - 60), 60, 60, {
@@ -94,7 +112,10 @@ function MyShelter({ theme, setShowMyShelter }) {
             friction: 0,
             frictionAir: 0,
             inertia: Infinity,
-            render: { fillStyle: 'blue' },
+            render: {
+                fillStyle: 'blue',
+                zIndex: 2
+            },
             collisionFilter: { group: -1 },
         });
 
@@ -104,37 +125,24 @@ function MyShelter({ theme, setShowMyShelter }) {
             friction: 0,
             frictionAir: 0,
             inertia: Infinity,
-            render: { fillStyle: 'yellow' },
+            render: {
+                fillStyle: 'yellow',
+                zIndex: 3
+            },
             collisionFilter: { group: -1 },
         });
 
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, circle, square, triangle]);
 
-        // Настройка мыши для перетаскивания
-        const mouse = Matter.Mouse.create(canvas);
-
         // Функция для поднятия объекта на передний слой
         const bringToFront = (body) => {
-            if (bodiesRef.current.includes(body)) {
-                // Перемещаем объект в конец bodiesRef.current
-                const index = bodiesRef.current.indexOf(body);
-                if (index > -1) {
-                    bodiesRef.current.splice(index, 1);
-                    bodiesRef.current.push(body);
-                }
+            zIndexRef.current += 1; // Увеличиваем счетчик
+            body.render.zIndex = zIndexRef.current; // Устанавливаем новый z-index
 
-                // Синхронизируем engine.world.bodies
-                const worldBodies = engine.world.bodies;
-                const bodyIndex = worldBodies.indexOf(body);
-                if (bodyIndex > -1) {
-                    worldBodies.splice(bodyIndex, 1);
-                    worldBodies.push(body);
-                }
-
-                console.log('Bringing to front:', body.render.fillStyle);
-                console.log('Bodies order:', bodiesRef.current.map(b => b.render.fillStyle));
-                console.log('World bodies order:', worldBodies.map(b => b.render.fillStyle || 'boundary'));
+            // Обновляем рендер
+            if (renderRef.current) {
+                Matter.Render.setPixelRatio(renderRef.current, window.devicePixelRatio);
             }
         };
 

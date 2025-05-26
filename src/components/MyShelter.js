@@ -30,9 +30,9 @@ const CloseButton = styled.button`
   cursor: pointer;
 `;
 
-const MyShelter =({ theme, socket, userId, onClose }) => {
+const MyShelter = ({ theme, socket, userId, onClose }) => {
     const canvasRef = useRef(null);
-    const engineRef = useRef.current(Matter.Engine.create());
+    const engineRef = useRef(Matter.Engine.create()); // Исправляем: вызываем create()
 
     useEffect(() => {
         const engine = engineRef.current;
@@ -43,7 +43,7 @@ const MyShelter =({ theme, socket, userId, onClose }) => {
 
         // Определяем категории столкновений
         const defaultCategory = 0x0001; // Категория для пола, стен и вазы
-        const noCollideCategory = 0x0002; // Категория для объектов без столкновения
+        const noCollideCategory = 0x0002; // Категория для объектов без столкновений
 
         const leftWall = Matter.Bodies.rectangle(
             0,

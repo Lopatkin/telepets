@@ -201,6 +201,12 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
 
         // Кастомный рендеринг с сортировкой по zOrder
         Matter.Events.on(render, 'beforeRender', () => {
+
+            console.log('Rendering order:', bodiesToRender.map(b => ({
+                name: bodyToFurnitureMap.get(b.id) || 'unknown',
+                zOrder: b.zOrder || 0
+            })));
+            
             const context = render.context;
             const bodiesToRender = [...world.bodies].sort((a, b) => (a.zOrder || 0) - (b.zOrder || 0));
 

@@ -44,7 +44,6 @@ function MyShelter({ theme, setShowMyShelter }) {
     const renderRef = useRef(null);
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
-    const zIndexRef = useRef(0);
 
     useEffect(() => {
         const engine = engineRef.current;

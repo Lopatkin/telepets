@@ -33,10 +33,12 @@ const CloseButton = styled.button`
 const MyShelter = ({ theme, socket, userId, onClose }) => {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
+    const runnerRef = useRef(Matter.Runner.create());
 
     useEffect(() => {
         const engine = engineRef.current;
         const world = engine.world;
+        const runner = runnerRef.current;
 
         // Отключаем глобальную гравитацию
         world.gravity.y = 0;
@@ -258,8 +260,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             }
         });
 
-        // Запуск рендера и физики
-        Matter.Runner.run(engine);
+        // Запуск рендера и физики с Runner
+        Matter.Runner.run(runner, engine);
         Matter.Render.run(render);
 
         // Сохранение позиций при отпускании
@@ -279,6 +281,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         });
 
         return () => {
+            Matter.Runner.stop(runner);
             Matter.Render.stop(render);
             Matter.Engine.clear(engine);
             Matter.World.clear(world);

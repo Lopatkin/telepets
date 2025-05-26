@@ -44,16 +44,16 @@ function MyShelter({ theme, setShowMyShelter }) {
     const renderRef = useRef(null);
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
-    const zIndexRef = useRef(0); // Счетчик для z-индекса
+    const zIndexRef = useRef(0);
 
     useEffect(() => {
         const engine = engineRef.current;
-        engine.gravity.y = 0; // Отключаем гравитацию
+        engine.gravity.y = 0;
 
         const canvas = canvasRef.current;
         const { width, height } = canvas.getBoundingClientRect();
 
-        // Создаем рендер с кастомной функцией сортировки
+        // Создаем рендер
         const render = Matter.Render.create({
             canvas: canvas,
             engine: engine,
@@ -64,20 +64,6 @@ function MyShelter({ theme, setShowMyShelter }) {
                 background: theme === 'dark' ? '#2A2A2A' : '#fff',
             },
         });
-        
-        // Переопределяем функцию сортировки тел для рендеринга
-        render.bodies = function(bodies, context) {
-            const sortedBodies = [...bodies].sort((a, b) => {
-                // Сортируем по zIndex (если он есть)
-                const aZ = a.render.zIndex || 0;
-                const bZ = b.render.zIndex || 0;
-                return aZ - bZ;
-            });
-            
-            // Вызываем оригинальную функцию рендеринга с отсортированными телами
-            Matter.Render.Bodies(sortedBodies, context);
-        };
-        
         renderRef.current = render;
 
         // Создаем границы
@@ -86,22 +72,22 @@ function MyShelter({ theme, setShowMyShelter }) {
             render: { visible: false },
         };
         const boundaries = [
-            Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions), // Верх
-            Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions), // Низ
-            Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions), // Лево
-            Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions), // Право
+            Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions),
+            Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions),
+            Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions),
+            Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions),
         ];
 
-        // Создаем объекты с проверкой координат
+        // Создаем объекты с начальными z-index
         const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
             isStatic: false,
             restitution: 0,
             friction: 0,
             frictionAir: 0,
             inertia: Infinity,
-            render: { 
+            render: {
                 fillStyle: 'red',
-                zIndex: 1 // Начальный z-index
+                zIndex: 1
             },
             collisionFilter: { group: -1 },
         });
@@ -112,7 +98,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             friction: 0,
             frictionAir: 0,
             inertia: Infinity,
-            render: { 
+            render: {
                 fillStyle: 'blue',
                 zIndex: 2
             },
@@ -125,7 +111,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             friction: 0,
             frictionAir: 0,
             inertia: Infinity,
-            render: { 
+            render: {
                 fillStyle: 'yellow',
                 zIndex: 3
             },
@@ -140,13 +126,18 @@ function MyShelter({ theme, setShowMyShelter }) {
 
         // Функция для поднятия объекта на передний слой
         const bringToFront = (body) => {
-            zIndexRef.current += 1; // Увеличиваем счетчик
-            body.render.zIndex = zIndexRef.current; // Устанавливаем новый z-index
-            
-            // Обновляем рендер
-            if (renderRef.current) {
-                Matter.Render.setPixelRatio(renderRef.current, window.devicePixelRatio);
-            }
+            // Увеличиваем z-index для всех тел, кроме выбранного
+            bodiesRef.current.forEach(b => {
+                if (b !== body && b.render.zIndex >= body.render.zIndex) {
+                    b.render.zIndex -= 1;
+                }
+            });
+
+            // Устанавливаем максимальный z-index для выбранного тела
+            body.render.zIndex = bodiesRef.current.length;
+
+            // Принудительно обновляем рендер
+            Matter.Render.setPixelRatio(render, window.devicePixelRatio);
         };
 
         // Обработка кликов и сенсорных событий
@@ -160,6 +151,8 @@ function MyShelter({ theme, setShowMyShelter }) {
                 bringToFront(clickedBody);
             }
         };
+
+
 
         const handleTouchStart = (event) => {
             event.preventDefault();

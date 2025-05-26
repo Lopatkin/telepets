@@ -264,7 +264,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
             key={index}
             isOwn={msg.userId === userId}
             theme={theme}
-            isSystem={msg.isSystem} // Добавляем проп для системных сообщений
+            isSystem={msg.isSystem}
           >
             {msg.isSystem ? (
               <MessageContent>
@@ -291,11 +291,12 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user }) {
         {/* <BouncingBall room={room} containerRef={messagesContainerRef} /> */}
       </MessagesContainer>
       <InputContainer theme={theme}>
-
-        <ShelterButton onClick={() => setShowShelter(true)} theme={theme}>
-          Моё убежище
-        </ShelterButton>
-
+        {/* Показываем кнопку "Моё убежище" только если игрок находится в локации "myhome_" */}
+        {room && room.startsWith('myhome_') && (
+          <ShelterButton onClick={() => setShowShelter(true)} theme={theme}>
+            Моё убежище
+          </ShelterButton>
+        )}
         <UsersButton onClick={toggleUserList}>
           <UsersIcon />
           <UserCount>{users.length}</UserCount>

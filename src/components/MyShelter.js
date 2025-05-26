@@ -114,16 +114,42 @@ function MyShelter({ theme, setShowMyShelter }) {
     // Настройка мыши для перетаскивания
     const mouse = Matter.Mouse.create(canvas);
 
-    // Обработка сенсорных событий
+    // Функция для поднятия объекта на передний слой
+    const bringToFront = (body) => {
+      if (bodiesRef.current.includes(body)) {
+        const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
+        body.render.zIndex = maxZIndex + 1;
+      }
+    };
+
+    // Обработка кликов и сенсорных событий
+    const handleMouseDown = (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+      const mouse = Matter.Vector.create(mouseX, mouseY);
+      const clickedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, mouse));
+      if (clickedBody) {
+        bringToFront(clickedBody);
+      }
+    };
+
     const handleTouchStart = (event) => {
       event.preventDefault();
       const touch = event.touches[0];
       const rect = canvas.getBoundingClientRect();
       const mouseX = touch.clientX - rect.left;
       const mouseY = touch.clientY - rect.top;
-      mouse.position.x = mouseX; // Прямо обновляем позицию мыши
+      mouse.position.x = mouseX;
       mouse.position.y = mouseY;
       mouse.mousedown = true; // Имитируем нажатие мыши
+
+      // Проверяем, попал ли клик по объекту
+      const touchPoint = Matter.Vector.create(mouseX, mouseY);
+      const touchedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, touchPoint));
+      if (touchedBody) {
+        bringToFront(touchedBody);
+      }
     };
 
     const handleTouchMove = (event) => {
@@ -132,7 +158,7 @@ function MyShelter({ theme, setShowMyShelter }) {
       const rect = canvas.getBoundingClientRect();
       const mouseX = touch.clientX - rect.left;
       const mouseY = touch.clientY - rect.top;
-      mouse.position.x = mouseX; // Прямо обновляем позицию мыши
+      mouse.position.x = mouseX;
       mouse.position.y = mouseY;
     };
 
@@ -141,6 +167,7 @@ function MyShelter({ theme, setShowMyShelter }) {
       mouse.mousedown = false; // Имитируем отпускание мыши
     };
 
+    canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
     canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
@@ -158,10 +185,12 @@ function MyShelter({ theme, setShowMyShelter }) {
     // Поднимаем объект на передний слой при начале перетаскивания
     Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
       const draggedBody = event.body;
-      if (bodiesRef.current.includes(draggedBody)) {
-        const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
-        draggedBody.render.zIndex = maxZIndex + 1;
-      }
+      bringToFront(draggedBody);
+    });
+
+    // Сортировка объектов по zIndex перед рендерингом
+    Matter.Events.on(render, 'beforeRender', () => {
+      bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
     });
 
     // Запускаем рендеринг
@@ -205,7 +234,7 @@ function MyShelter({ theme, setShowMyShelter }) {
     handleResize(); // Вызываем сразу для корректной инициализации
 
     return () => {
-      // Очищаем обработчики событий
+      canvas.removeEventListener('mousedown', handleMouseDown);
       canvas.removeEventListener('touchstart', handleTouchStart);
       canvas.removeEventListener('touchmove', handleTouchMove);
       canvas.removeEventListener('touchend', handleTouchEnd);

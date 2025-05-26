@@ -42,8 +42,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         world.gravity.y = 0;
 
         // Определяем категории столкновений
-        const defaultCategory = 0x0001; // Категория для пола, стен и вазы
-        const noCollideCategory = 0x0002; // Категория для объектов без столкновений
+        const defaultCategory = 0x0001;
+        const noCollideCategory = 0x0002;
 
         // Создаём стены и пол
         const leftWall = Matter.Bodies.rectangle(
@@ -51,8 +51,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             window.innerHeight / 2,
             50,
             window.innerHeight,
-            { 
-                isStatic: true, 
+            {
+                isStatic: true,
                 render: { fillStyle: 'transparent' },
                 collisionFilter: { category: defaultCategory, mask: defaultCategory }
             }
@@ -62,8 +62,8 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             window.innerHeight / 2,
             50,
             window.innerHeight,
-            { 
-                isStatic: true, 
+            {
+                isStatic: true,
                 render: { fillStyle: 'transparent' },
                 collisionFilter: { category: defaultCategory, mask: defaultCategory }
             }
@@ -75,13 +75,10 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             100,
             {
                 isStatic: true,
-                render: {
-                    fillStyle: 'transparent'
-                },
+                render: { fillStyle: 'transparent' },
                 collisionFilter: { category: defaultCategory, mask: defaultCategory }
             }
         );
-        // Добавляем стены и пол в начало мира
         Matter.World.add(world, [leftWall, rightWall, floor]);
 
         // Создаём рендер с фоновым изображением
@@ -99,10 +96,9 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             }
         });
 
-        // Определяем базовый масштаб относительно ширины экрана
-        const scaleFactor = window.innerWidth / 1920; // Базовое разрешение 1920px (Full HD)
+        const scaleFactor = window.innerWidth / 1920;
 
-        // Определяем объекты с пропорциональными размерами (удвоенные)
+        // Определяем объекты с пропорциональными размерами
         const furniture = [
             { name: 'table', image: tableImage, width: 200 * scaleFactor * 2, height: 100 * scaleFactor * 2, weight: 20 },
             { name: 'chair', image: chairImage, width: 80 * scaleFactor * 2, height: 80 * scaleFactor * 2, weight: 5 },
@@ -110,6 +106,9 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             { name: 'wardrobe', image: wardrobeImage, width: 150 * scaleFactor * 2, height: 200 * scaleFactor * 2, weight: 40 },
             { name: 'vase', image: vaseImage, width: 50 * scaleFactor * 2, height: 50 * scaleFactor * 2, weight: 2 }
         ];
+
+        // Создаём маппинг для связи тела с именем furniture
+        const bodyToFurnitureMap = new Map();
 
         // Добавляем объекты в мир
         const bodies = furniture.map(item => {
@@ -133,18 +132,20 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     frictionAir: 0.01,
                     restitution: 0.5,
                     inertia: isNonRotatable ? Infinity : undefined,
-                    collisionFilter: { 
+                    collisionFilter: {
                         category: item.name === 'vase' ? defaultCategory : noCollideCategory,
                         mask: item.name === 'vase' ? defaultCategory : defaultCategory
                     }
                 }
             );
+            // Сохраняем связь между телом и именем furniture
+            bodyToFurnitureMap.set(body.id, item.name);
             Matter.World.add(world, body);
             return body;
         });
 
         // Находим тело вазы
-        const vaseBody = bodies.find(body => furniture[bodies.indexOf(body)].name === 'vase');
+        const vaseBody = bodies.find(body => bodyToFurnitureMap.get(body.id) === 'vase');
 
         // Загружаем начальные позиции мебели с сервера
         socket.emit('getFurniturePositions', { userId }, (response) => {
@@ -153,7 +154,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                     const body = bodies.find(b => b.id === furnitureId);
                     if (body) {
                         Matter.Body.setPosition(body, position);
-                        if (furniture[bodies.indexOf(body)].name !== 'vase') {
+                        if (bodyToFurnitureMap.get(body.id) !== 'vase') {
                             Matter.Body.setVelocity(body, { x: 0, y: 0 });
                             Matter.Body.setAngularVelocity(body, 0);
                         }
@@ -185,22 +186,30 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         Matter.Events.on(mouseConstraint, 'mousedown', (event) => {
             const body = mouseConstraint.body;
             if (body) {
-                console.log('Clicked body:', furniture[bodies.indexOf(body)].name, 'ID:', body.id);
+                const furnitureName = bodyToFurnitureMap.get(body.id) || 'unknown';
+                console.log('Clicked body:', furnitureName, 'ID:', body.id);
+
+                // Перемещаем объект в конец массива world.bodies
                 const index = world.bodies.indexOf(body);
                 if (index > -1) {
                     world.bodies.splice(index, 1);
                     world.bodies.push(body);
-                    console.log('New bodies order:', world.bodies.map(b => furniture[bodies.indexOf(b)]?.name));
-                    // Принудительно обновляем рендер
-                    Matter.Render.lookAt(render, {
-                        min: { x: 0, y: 0 },
-                        max: { x: window.innerWidth, y: window.innerHeight }
-                    });
+                    // Устанавливаем zIndex для визуального отображения
+                    body.render.zIndex = world.bodies.length;
+                    console.log('New bodies order:', world.bodies.map(b => bodyToFurnitureMap.get(b.id) || 'static'));
                 }
+
+                // Добавляем временную подсветку
                 body.render.opacity = 0.6;
                 setTimeout(() => {
                     body.render.opacity = 1;
                 }, 1000);
+
+                // Принудительно обновляем рендер
+                Matter.Render.lookAt(render, {
+                    min: { x: 0, y: 0 },
+                    max: { x: window.innerWidth, y: window.innerHeight }
+                });
             } else {
                 console.log('No body clicked');
             }
@@ -218,7 +227,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 furnitureId: body.id,
                 position: { x: body.position.x, y: body.position.y }
             });
-            if (furniture[bodies.indexOf(body)].name !== 'vase') {
+            if (bodyToFurnitureMap.get(body.id) !== 'vase') {
                 Matter.Body.setVelocity(body, { x: 0, y: 0 });
                 Matter.Body.setAngularVelocity(body, 0);
             }

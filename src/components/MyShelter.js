@@ -233,7 +233,7 @@ const MyShelter =({ theme, socket, userId, onClose }) => {
             Matter.Events.off(mouseConstraint, 'mousedown');
             Matter.Events.off(mouseConstraint, 'enddrag');
         };
-    }, [socket, userId]);
+    }, [socket, userId, engineRef]);
 
     return (
         <ShelterContainer theme={theme}>

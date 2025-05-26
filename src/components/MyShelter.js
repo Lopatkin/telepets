@@ -113,27 +113,35 @@ function MyShelter({ theme, setShowMyShelter }) {
 
     // Настройка мыши для перетаскивания
     const mouse = Matter.Mouse.create(canvas);
-    
-    // Включаем поддержку сенсорных событий
-    mouse.element.addEventListener('touchstart', (event) => {
+
+    // Обработка сенсорных событий
+    const handleTouchStart = (event) => {
       event.preventDefault();
       const touch = event.touches[0];
-      mouse.position.x = touch.clientX - canvas.getBoundingClientRect().left;
-      mouse.position.y = touch.clientY - canvas.getBoundingClientRect().top;
-      Matter.Mouse._setMouseDown(mouse, true);
-    });
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = touch.clientX - rect.left;
+      const mouseY = touch.clientY - rect.top;
+      Matter.Mouse.setPosition(mouse, { x: mouseX, y: mouseY });
+      mouse.mousedown = true; // Имитируем нажатие мыши
+    };
 
-    mouse.element.addEventListener('touchmove', (event) => {
+    const handleTouchMove = (event) => {
       event.preventDefault();
       const touch = event.touches[0];
-      mouse.position.x = touch.clientX - canvas.getBoundingClientRect().left;
-      mouse.position.y = touch.clientY - canvas.getBoundingClientRect().top;
-    });
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = touch.clientX - rect.left;
+      const mouseY = touch.clientY - rect.top;
+      Matter.Mouse.setPosition(mouse, { x: mouseX, y: mouseY });
+    };
 
-    mouse.element.addEventListener('touchend', (event) => {
+    const handleTouchEnd = (event) => {
       event.preventDefault();
-      Matter.Mouse._setMouseDown(mouse, false);
-    });
+      mouse.mousedown = false; // Имитируем отпускание мыши
+    };
+
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
     const mouseConstraint = Matter.MouseConstraint.create(engine, {
       mouse: mouse,
@@ -196,9 +204,9 @@ function MyShelter({ theme, setShowMyShelter }) {
 
     return () => {
       // Очищаем обработчики событий
-      mouse.element.removeEventListener('touchstart', () => {});
-      mouse.element.removeEventListener('touchmove', () => {});
-      mouse.element.removeEventListener('touchend', () => {});
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('resize', handleResize);
       Matter.Render.stop(render);
       Matter.Runner.stop(runnerRef.current);

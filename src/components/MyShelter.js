@@ -66,7 +66,7 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             {
                 isStatic: true,
                 render: { fillStyle: 'transparent' },
-                collisionFilter: { category: defaultCategory, mask: defaultCategory, defaultCategory },
+                collisionFilter: { category: defaultCategory, mask: defaultCategory },
                 zOrder: 0
             }
         );
@@ -96,7 +96,10 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
                 background: `url(${backgroundImage})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat'
+                backgroundRepeat: 'no-repeat',
+                sort: (a, b) => { // Кастомная сортировка для рендеринга
+                    return (a.zOrder || 0) - (b.zOrder || 0);
+                }
             }
         });
 
@@ -197,11 +200,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
         });
         Matter.World.add(world, mouseConstraint);
 
-        // Кастомная сортировка тел для рендеринга
-        Matter.Events.on(render, 'beforeRender', () => {
-            world.bodies.sort((a, b) => (a.zOrder || 0) - (b.zOrder || 0));
-        });
-
         // При нажатии на объект увеличиваем его zOrder и добавляем подсветку
         Matter.Events.on(mouseConstraint, 'mousedown', (event) => {
             const body = mouseConstraint.body;
@@ -265,7 +263,6 @@ const MyShelter = ({ theme, socket, userId, onClose }) => {
             Matter.Events.off(engine, 'beforeUpdate');
             Matter.Events.off(mouseConstraint, 'mousedown');
             Matter.Events.off(mouseConstraint, 'enddrag');
-            Matter.Events.off(render, 'beforeRender');
         };
     }, [socket, userId, engineRef]);
 

@@ -41,7 +41,7 @@ function MyShelter({ theme, setShowMyShelter }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
-    const renderRef = useRef(null);
+    const renderRef = useRef(null); // Сохраняем ссылку на рендер
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
 
@@ -54,7 +54,7 @@ function MyShelter({ theme, setShowMyShelter }) {
 
         // Создаем рендер
         const render = Matter.Render.create({
-            canvas: canvas,
+            element: canvas,
             engine: engine,
             options: {
                 width,
@@ -71,10 +71,10 @@ function MyShelter({ theme, setShowMyShelter }) {
             render: { visible: false },
         };
         const boundaries = [
-            Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions), // Верх
-            Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions), // Низ
-            Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions), // Лево
-            Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions), // Право
+            Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions), // Верхняя граница
+            Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions), // Нижняя граница
+            Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions), // Левая граница
+            Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions), // Правая граница
         ];
 
         // Создаем объекты
@@ -84,7 +84,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             friction: 0,
             frictionAir: 0,
             inertia: Infinity, // Отключаем вращение
-            render: { fillStyle: 'red', zIndex: 1 },
+            render: { fillStyle: 'red' },
             collisionFilter: { group: -1 }, // Отключаем коллизии между объектами
         });
 
@@ -94,7 +94,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             friction: 0,
             frictionAir: 0,
             inertia: Infinity,
-            render: { fillStyle: 'blue', zIndex: 2 },
+            render: { fillStyle: 'blue' },
             collisionFilter: { group: -1 },
         });
 
@@ -104,7 +104,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             friction: 0,
             frictionAir: 0,
             inertia: Infinity,
-            render: { fillStyle: 'yellow', zIndex: 3 },
+            render: { fillStyle: 'yellow' },
             collisionFilter: { group: -1 },
         });
 
@@ -117,18 +117,16 @@ function MyShelter({ theme, setShowMyShelter }) {
         // Функция для поднятия объекта на передний слой
         const bringToFront = (body) => {
             if (bodiesRef.current.includes(body)) {
-                const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
-                body.render.zIndex = maxZIndex + 1;
-                const index = engine.world.bodies.indexOf(body);
+                // Перемещаем объект в конец bodiesRef.current
+                const index = bodiesRef.current.indexOf(body);
                 if (index > -1) {
-                    engine.world.bodies.splice(index, 1);
-                    engine.world.bodies.push(body);
+                    bodiesRef.current.splice(index, 1);
+                    bodiesRef.current.push(body);
                 }
-                console.log('Bringing to front:', body.render.fillStyle, 'new zIndex:', body.render.zIndex);
-                console.log('World bodies order:', engine.world.bodies.map(b => b.render.fillStyle));
+                console.log('Bringing to front:', body.render.fillStyle);
+                console.log('Bodies order:', bodiesRef.current.map(b => b.render.fillStyle));
             }
         };
-
 
         // Обработка кликов и сенсорных событий
         const handleMouseDown = (event) => {
@@ -194,6 +192,12 @@ function MyShelter({ theme, setShowMyShelter }) {
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
             const draggedBody = event.body;
             bringToFront(draggedBody);
+        });
+
+        // Сортировка тел перед рендерингом
+        Matter.Events.on(render, 'beforeRender', () => {
+            // Обновляем порядок тел в render.bodies
+            render.bodies = [...boundaries, ...bodiesRef.current];
         });
 
         // Запускаем рендеринг

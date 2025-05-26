@@ -41,7 +41,6 @@ function MyShelter({ theme, setShowMyShelter }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
-    const renderRef = useRef(null);
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
 
@@ -51,19 +50,6 @@ function MyShelter({ theme, setShowMyShelter }) {
 
         const canvas = canvasRef.current;
         const { width, height } = canvas.getBoundingClientRect();
-
-        // Создаем рендер
-        const render = Matter.Render.create({
-            canvas: canvas,
-            engine: engine,
-            options: {
-                width,
-                height,
-                wireframes: false,
-                background: theme === 'dark' ? '#2A2A2A' : '#fff',
-            },
-        });
-        renderRef.current = render;
 
         // Создаем границы
         const boundaryOptions = {
@@ -77,7 +63,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions),
         ];
 
-        // Создаем объекты с начальными z-index
+        // Создаем объекты с начальным zIndex
         const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
             isStatic: false,
             restitution: 0,
@@ -86,7 +72,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             inertia: Infinity,
             render: {
                 fillStyle: 'red',
-                zIndex: 1
+                zIndex: 0
             },
             collisionFilter: { group: -1 },
         });
@@ -99,7 +85,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             inertia: Infinity,
             render: {
                 fillStyle: 'blue',
-                zIndex: 2
+                zIndex: 0
             },
             collisionFilter: { group: -1 },
         });
@@ -112,7 +98,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             inertia: Infinity,
             render: {
                 fillStyle: 'yellow',
-                zIndex: 3
+                zIndex: 0
             },
             collisionFilter: { group: -1 },
         });
@@ -125,21 +111,11 @@ function MyShelter({ theme, setShowMyShelter }) {
 
         // Функция для поднятия объекта на передний слой
         const bringToFront = (body) => {
-            // Увеличиваем z-index для всех тел, кроме выбранного
-            bodiesRef.current.forEach(b => {
-                if (b !== body && b.render.zIndex >= body.render.zIndex) {
-                    b.render.zIndex -= 1;
-                }
-            });
-
-            // Устанавливаем максимальный z-index для выбранного тела
-            body.render.zIndex = bodiesRef.current.length;
-
-            // Принудительно обновляем рендер
-            Matter.Render.setPixelRatio(render, window.devicePixelRatio);
+            const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
+            body.render.zIndex = maxZIndex + 1;
         };
 
-        // Обработка кликов и сенсорных событий
+        // Обработка кликов
         const handleMouseDown = (event) => {
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
@@ -151,8 +127,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             }
         };
 
-
-
+        // Обработка сенсорных событий
         const handleTouchStart = (event) => {
             event.preventDefault();
             const touch = event.touches[0];
@@ -161,9 +136,8 @@ function MyShelter({ theme, setShowMyShelter }) {
             const mouseY = touch.clientY - rect.top;
             mouse.position.x = mouseX;
             mouse.position.y = mouseY;
-            mouse.mousedown = true; // Имитируем нажатие мыши
+            mouse.mousedown = true;
 
-            // Проверяем, попал ли клик по объекту
             const touchPoint = Matter.Vector.create(mouseX, mouseY);
             const touchedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, touchPoint));
             if (touchedBody) {
@@ -183,7 +157,7 @@ function MyShelter({ theme, setShowMyShelter }) {
 
         const handleTouchEnd = (event) => {
             event.preventDefault();
-            mouse.mousedown = false; // Имитируем отпускание мыши
+            mouse.mousedown = false;
         };
 
         canvas.addEventListener('mousedown', handleMouseDown);
@@ -207,10 +181,40 @@ function MyShelter({ theme, setShowMyShelter }) {
             bringToFront(draggedBody);
         });
 
-        // Запускаем рендеринг
+        // Пользовательский цикл рендеринга
+        const context = canvas.getContext('2d');
+        let animationFrameId;
+
+        const renderLoop = () => {
+            context.fillStyle = theme === 'dark' ? '#2A2A2A' : '#fff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
+
+            bodies.forEach(body => {
+                context.beginPath();
+                if (body.circleRadius) {
+                    context.arc(body.position.x, body.position.y, body.circleRadius, 0, 2 * Math.PI);
+                } else {
+                    const vertices = body.vertices;
+                    context.moveTo(vertices[0].x, vertices[0].y);
+                    for (let j = 1; j < vertices.length; j++) {
+                        context.lineTo(vertices[j].x, vertices[j].y);
+                    }
+                    context.closePath();
+                }
+                context.fillStyle = body.render.fillStyle;
+                context.fill();
+            });
+
+            animationFrameId = requestAnimationFrame(renderLoop);
+        };
+
+        renderLoop();
+
+        // Запускаем физический движок
         runnerRef.current = Matter.Runner.create();
         Matter.Runner.run(runnerRef.current, engine);
-        Matter.Render.run(render);
 
         // Адаптация при изменении размера окна
         const handleResize = () => {
@@ -218,8 +222,6 @@ function MyShelter({ theme, setShowMyShelter }) {
             const newHeight = canvas.parentElement.getBoundingClientRect().height;
             canvas.width = newWidth;
             canvas.height = newHeight;
-            render.options.width = newWidth;
-            render.options.height = newHeight;
 
             // Обновляем позиции границ
             Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
@@ -255,15 +257,15 @@ function MyShelter({ theme, setShowMyShelter }) {
         };
 
         window.addEventListener('resize', handleResize);
-        handleResize(); // Вызываем сразу для корректной инициализации
+        handleResize();
 
         return () => {
+            cancelAnimationFrame(animationFrameId);
             canvas.removeEventListener('mousedown', handleMouseDown);
             canvas.removeEventListener('touchstart', handleTouchStart);
             canvas.removeEventListener('touchmove', handleTouchMove);
             canvas.removeEventListener('touchend', handleTouchEnd);
             window.removeEventListener('resize', handleResize);
-            Matter.Render.stop(render);
             Matter.Runner.stop(runnerRef.current);
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);

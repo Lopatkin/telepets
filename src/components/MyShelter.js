@@ -116,12 +116,20 @@ function MyShelter({ theme, setShowMyShelter }) {
 
     // Функция для поднятия объекта на передний слой
     const bringToFront = (body) => {
-        if (bodiesRef.current.includes(body)) {
-          const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
-          body.render.zIndex = maxZIndex + 1;
-          console.log('Bringing to front:', body.render.fillStyle, 'new zIndex:', body.render.zIndex);
+      if (bodiesRef.current.includes(body)) {
+        // Увеличиваем zIndex для отслеживания
+        const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
+        body.render.zIndex = maxZIndex + 1;
+        
+        // Перемещаем объект в конец массива engine.world.bodies
+        const index = engine.world.bodies.indexOf(body);
+        if (index > -1) {
+          engine.world.bodies.splice(index, 1);
+          engine.world.bodies.push(body);
         }
-      };
+        console.log('Bringing to front:', body.render.fillStyle, 'new zIndex:', body.render.zIndex);
+      }
+    };
 
     // Обработка кликов и сенсорных событий
     const handleMouseDown = (event) => {
@@ -187,11 +195,6 @@ function MyShelter({ theme, setShowMyShelter }) {
     Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
       const draggedBody = event.body;
       bringToFront(draggedBody);
-    });
-
-    // Сортировка объектов по zIndex перед рендерингом
-    Matter.Events.on(render, 'beforeRender', () => {
-      bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
     });
 
     // Запускаем рендеринг

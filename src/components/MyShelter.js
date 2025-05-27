@@ -94,7 +94,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: staticCollisionFilter // Не взаимодействует с другими объектами
         });
 
-        const floorTopY = height * 0.4; // Верхняя граница пола
+        const floorTopY = height * 0.4 + 300; // Верхняя граница пола
         const circle = Matter.Bodies.circle(width * 0.25, floorTopY + 30, 30, { // Смещаем центр круга вниз на радиус
             isStatic: false,
             restitution: 0,

@@ -66,6 +66,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         // Создаем стену и пол
         const wallHeight = height * 0.3; // Стена занимает 30% высоты
         const floorHeight = height * 0.7; // Пол занимает 70% высоты
+        const staticCollisionFilter = { category: 0x0002, mask: 0 }; // Уникальная категория, не взаимодействует с другими
         const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
             isStatic: true,
             restitution: 0,
@@ -75,7 +76,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3', // Цвет для стены
                 zIndex: -100 // Самый дальний план
             },
-            collisionFilter: { group: 0 } // Не взаимодействует с другими объектами
+            collisionFilter: staticCollisionFilter // Не взаимодействует с другими объектами
         });
 
         const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
@@ -87,10 +88,10 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9', // Цвет для пола
                 zIndex: -100 // Самый дальний план
             },
-            collisionFilter: { group: 0 } // Не взаимодействует с другими объектами
+            collisionFilter: staticCollisionFilter // Не взаимодействует с другими объектами
         });
 
-        // Создаем объекты с начальным zIndex
+        // Убедимся, что интерактивные объекты имеют другую категорию коллизий
         const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
             isStatic: false,
             restitution: 0,
@@ -101,7 +102,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: 'red',
                 zIndex: 0
             },
-            collisionFilter: { group: -1 },
+            collisionFilter: { category: 0x0001, mask: 0x0001 } // Интерактивные объекты взаимодействуют только между собой
         });
 
         const square = Matter.Bodies.rectangle(Math.min(width / 2, width - 60), Math.min(height / 2, height - 60), 60, 60, {
@@ -114,7 +115,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: 'blue',
                 zIndex: 0
             },
-            collisionFilter: { group: -1 },
+            collisionFilter: { category: 0x0001, mask: 0x0001 }
         });
 
         const triangle = Matter.Bodies.polygon(Math.min(width * 3 / 4, width - 40), Math.min(height * 3 / 4, height - 40), 3, 40, {
@@ -127,7 +128,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: 'yellow',
                 zIndex: 0
             },
-            collisionFilter: { group: -1 },
+            collisionFilter: { category: 0x0001, mask: 0x0001 }
         });
 
         bodiesRef.current = [circle, square, triangle];
@@ -216,8 +217,21 @@ function MyShelter({ theme, setShowMyShelter }) {
             context.fillStyle = theme === 'dark' ? '#2A2A2A' : '#fff';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
-            const bodies = [...bodiesRef.current, wall, floor].sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
+            // Рендерим статичные объекты (стена и пол) первыми
+            [wall, floor].forEach(body => {
+                context.beginPath();
+                const vertices = body.vertices;
+                context.moveTo(vertices[0].x, vertices[0].y);
+                for (let j = 1; j < vertices.length; j++) {
+                    context.lineTo(vertices[j].x, vertices[j].y);
+                }
+                context.closePath();
+                context.fillStyle = body.render.fillStyle;
+                context.fill();
+            });
 
+            // Рендерим интерактивные объекты после, с сортировкой по zIndex
+            const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
             bodies.forEach(body => {
                 context.beginPath();
                 if (body.circleRadius) {

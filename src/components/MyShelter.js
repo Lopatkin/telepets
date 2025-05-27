@@ -352,6 +352,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                 context.fill();
             });
 
+            console.log('isFixed:', isFixed, 'positions:', bodiesRef.current.map(b => b.position));
             animationFrameId = requestAnimationFrame(renderLoop);
         };
 

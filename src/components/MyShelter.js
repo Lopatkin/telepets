@@ -2,11 +2,46 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
-// Новый стиль для кнопки "Сохранить"
+// Определяем styled-компоненты
+const ShelterContainer = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: ${({ theme }) => (theme === 'dark' ? '#2A2A2A' : '#fff')};
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+`;
+
+const CanvasContainer = styled.div`
+  flex: 1;
+  position: relative;
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #007AFF;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 1001;
+
+  &:hover {
+    background: #005BB5;
+  }
+`;
+
 const SaveButton = styled.button`
   position: absolute;
   top: 10px;
-  right: 90px; // Сдвигаем, чтобы не перекрывать кнопку "Закрыть"
+  right: 90px;
   background: #28A745;
   color: white;
   border: none;
@@ -21,7 +56,7 @@ const SaveButton = styled.button`
   }
 `;
 
-function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавляем user и socket в пропсы
+function MyShelter({ theme, setShowMyShelter, user, socket }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
@@ -104,7 +139,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
         circle.scaleFactor = circleData.scaleFactor;
-        circle.id = 'circle'; // Добавляем id для идентификации
+        circle.id = 'circle';
         originalSizesRef.current.circle = { radius: 30 };
 
         const squareData = dwelling.find(item => item.id === 'square') || defaultPositions.square;
@@ -120,11 +155,11 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
         square.scaleFactor = squareData.scaleFactor;
-        square.id = 'square'; // Добавляем id для идентификации
+        square.id = 'square';
         originalSizesRef.current.square = { width: 60, height: 60 };
 
-        const triangleData = dwelling.find(item => item.id === 'triangle') || defaultPositions.triangle;
-        const triangle = Matter.Bodies.polygon(squareData.x, squareData.y, 3, 40, {
+        const triangleData = dwelling.find(item => item.id === 'triangle') || defaultPositions.triangle; // Исправлено: используем triangleData
+        const triangle = Matter.Bodies.polygon(triangleData.x, triangleData.y, 3, 40, { // Исправлено: triangleData вместо squareData
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -136,7 +171,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
         triangle.scaleFactor = triangleData.scaleFactor;
-        triangle.id = 'triangle'; // Добавляем id для идентификации
+        triangle.id = 'triangle';
         originalSizesRef.current.triangle = { radius: 40 };
 
         bodiesRef.current = [circle, square, triangle];
@@ -161,7 +196,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
             });
         };
 
-        // Остальной код без изменений (обработчики мыши, рендеринг, ресайз и т.д.)
+        // Остальной код без изменений
         const bringToFront = (body) => {
             const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
             body.render.zIndex = maxZIndex + 1;
@@ -353,7 +388,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, user, socket]); // Добавляем user и socket в зависимости
+    }, [theme, user, socket]);
 
     return (
         <ShelterContainer theme={theme}>

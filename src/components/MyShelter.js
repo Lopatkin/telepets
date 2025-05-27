@@ -108,7 +108,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
         });
-    
+
         const square = Matter.Bodies.rectangle(Math.min(width / 2, width - 60), Math.min(height / 2, height - 60), 60, 60, {
             isStatic: false,
             restitution: 0,
@@ -121,7 +121,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
         });
-    
+
         const triangle = Matter.Bodies.polygon(Math.min(width * 3 / 4, width - 40), Math.min(height * 3 / 4, height - 40), 3, 40, {
             isStatic: false,
             restitution: 0,
@@ -309,10 +309,10 @@ function MyShelter({ theme, setShowMyShelter }) {
             ]));
 
             // Обновляем позиции и размеры стены и пола
-            Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.3) / 2 });
-            Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.7) / 2 });
-            Matter.Body.scale(wall, newWidth / width, (newHeight * 0.3) / wallHeight);
-            Matter.Body.scale(floor, newWidth / width, (newHeight * 0.7) / floorHeight);
+            Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
+            Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
+            Matter.Body.scale(wall, newWidth / width, (newHeight * 0.4) / wallHeight);
+            Matter.Body.scale(floor, newWidth / width, (newHeight * 0.6) / floorHeight);
 
             // Проверяем, что интерактивные объекты остаются в видимой области
             const margin = 5; // Небольшой отступ от границ

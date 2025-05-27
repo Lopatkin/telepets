@@ -74,8 +74,19 @@ function MyShelter({ theme, setShowMyShelter }) {
     const runnerRef = useRef(null);
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
-    const originalSizesRef = useRef({}); // Храним начальные размеры объектов
-    const [isFixed, setIsFixed] = useState(false); // Состояние для флажка
+    const originalSizesRef = useRef({});
+    const [isFixed, setIsFixed] = useState(false);
+
+    // Сохраняем позиции объектов при клике на крестик
+    const handleClose = () => {
+        const positions = {
+            circle: { x: circle.position.x, y: circle.position.y, scaleFactor: circle.scaleFactor },
+            square: { x: square.position.x, y: square.position.y, scaleFactor: square.scaleFactor },
+            triangle: { x: triangle.position.x, y: triangle.position.y, scaleFactor: triangle.scaleFactor }
+        };
+        localStorage.setItem('shelterObjectPositions', JSON.stringify(positions));
+        setShowMyShelter(false);
+    };
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -131,52 +142,74 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: staticCollisionFilter
         });
 
-        // Размещаем объекты у верхней границы пола
+        // Загружаем сохраненные позиции из localStorage, если они есть
+        const savedPositions = JSON.parse(localStorage.getItem('shelterObjectPositions')) || {};
         const floorTopY = height * 0.4;
-        const circle = Matter.Bodies.circle(width * 0.25, floorTopY, 30, {
-            isStatic: false,
-            restitution: 0,
-            friction: 1,
-            frictionAir: 0.1,
-            render: {
-                fillStyle: 'red',
-                zIndex: 0
-            },
-            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
-        });
-        circle.scaleFactor = 1; // Инициализируем масштаб
+
+        // Создаем объекты с учетом сохраненных позиций
+        const circle = Matter.Bodies.circle(
+            savedPositions.circle?.x || width * 0.25,
+            savedPositions.circle?.y || floorTopY,
+            30,
+            {
+                isStatic: false,
+                restitution: 0,
+                friction: 1,
+                frictionAir: 0.1,
+                render: {
+                    fillStyle: 'red',
+                    zIndex: 0
+                },
+                collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
+            }
+        );
+        circle.scaleFactor = savedPositions.circle?.scaleFactor || 1; // Восстанавливаем масштаб
         originalSizesRef.current.circle = { radius: 30 };
 
-        const square = Matter.Bodies.rectangle(width * 0.5, floorTopY, 60, 60, {
-            isStatic: false,
-            restitution: 0,
-            friction: 1,
-            frictionAir: 0.1,
-            render: {
-                fillStyle: 'blue',
-                zIndex: 0
-            },
-            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
-        });
-        square.scaleFactor = 1; // Инициализируем масштаб
+        const square = Matter.Bodies.rectangle(
+            savedPositions.square?.x || width * 0.5,
+            savedPositions.square?.y || floorTopY,
+            60,
+            60,
+            {
+                isStatic: false,
+                restitution: 0,
+                friction: 1,
+                frictionAir: 0.1,
+                render: {
+                    fillStyle: 'blue',
+                    zIndex: 0
+                },
+                collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
+            }
+        );
+        square.scaleFactor = savedPositions.square?.scaleFactor || 1; // Восстанавливаем масштаб
         originalSizesRef.current.square = { width: 60, height: 60 };
 
-        const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY, 3, 40, {
-            isStatic: false,
-            restitution: 0,
-            friction: 1,
-            frictionAir: 0.1,
-            render: {
-                fillStyle: 'yellow',
-                zIndex: 0
-            },
-            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
-        });
-        triangle.scaleFactor = 1; // Инициализируем масштаб
+        const triangle = Matter.Bodies.polygon(
+            savedPositions.triangle?.x || width * 0.75,
+            savedPositions.triangle?.y || floorTopY,
+            3,
+            40,
+            {
+                isStatic: false,
+                restitution: 0,
+                friction: 1,
+                frictionAir: 0.1,
+                render: {
+                    fillStyle: 'yellow',
+                    zIndex: 0
+                },
+                collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
+            }
+        );
+        triangle.scaleFactor = savedPositions.triangle?.scaleFactor || 1; // Восстанавливаем масштаб
         originalSizesRef.current.triangle = { radius: 40 };
 
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
+
+
 
         // Настройка мыши
         const mouse = Matter.Mouse.create(canvas);
@@ -389,7 +422,7 @@ function MyShelter({ theme, setShowMyShelter }) {
 
     return (
         <ShelterContainer theme={theme}>
-            <CloseIcon theme={theme} onClick={() => setShowMyShelter(false)}>×</CloseIcon>
+            <CloseIcon theme={theme} onClick={handleClose}>×</CloseIcon>
             <ToggleContainer>
                 <input
                     type="checkbox"
@@ -401,7 +434,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                     Зафиксировать
                 </ToggleLabel>
             </ToggleContainer>
-            {isFixed && <Overlay />} {/* Показываем Overlay, если isFixed true */}
+            {isFixed && <Overlay />}
             <CanvasContainer>
                 <canvas ref={canvasRef} />
             </CanvasContainer>

@@ -410,7 +410,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme]);
+    }, [theme, isFixed]);
 
     /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
-// Новый стиль для кнопки "Сохранить"
+// Стили для кнопки "Сохранить"
 const SaveButton = styled.button`
   position: absolute;
   top: 10px;
@@ -57,7 +57,7 @@ const CloseButton = styled.button`
   }
 `;
 
-function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавляем user и socket в пропсы
+function MyShelter({ theme, setShowMyShelter, user, socket }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const bodiesRef = useRef([]);
@@ -136,10 +136,10 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
                 fillStyle: 'red',
                 zIndex: 0
             },
-            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
+            collisionFilter: { group: 0, category: 0x0001, mask: 0x0003 } // Убрали group: -1 для корректного взаимодействия
         });
         circle.scaleFactor = circleData.scaleFactor;
-        circle.id = 'circle'; // Добавляем id для идентификации
+        circle.id = 'circle';
         originalSizesRef.current.circle = { radius: 30 };
 
         const squareData = dwelling.find(item => item.id === 'square') || defaultPositions.square;
@@ -152,14 +152,14 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
                 fillStyle: 'blue',
                 zIndex: 0
             },
-            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
+            collisionFilter: { group: 0, category: 0x0001, mask: 0x0003 } // Убрали group: -1
         });
         square.scaleFactor = squareData.scaleFactor;
-        square.id = 'square'; // Добавляем id для идентификации
+        square.id = 'square';
         originalSizesRef.current.square = { width: 60, height: 60 };
 
         const triangleData = dwelling.find(item => item.id === 'triangle') || defaultPositions.triangle;
-        const triangle = Matter.Bodies.polygon(squareData.x, squareData.y, 3, 40, {
+        const triangle = Matter.Bodies.polygon(triangleData.x, triangleData.y, 3, 40, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -168,16 +168,16 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
                 fillStyle: 'yellow',
                 zIndex: 0
             },
-            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
+            collisionFilter: { group: 0, category: 0x0001, mask: 0x0003 } // Убрали group: -1
         });
         triangle.scaleFactor = triangleData.scaleFactor;
-        triangle.id = 'triangle'; // Добавляем id для идентификации
+        triangle.id = 'triangle';
         originalSizesRef.current.triangle = { radius: 40 };
 
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
 
-        // Остальной код без изменений (обработчики мыши, рендеринг, ресайз и т.д.)
+        // Обработчики для приведения объекта на передний план
         const bringToFront = (body) => {
             const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
             body.render.zIndex = maxZIndex + 1;
@@ -200,6 +200,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
             const rect = canvas.getBoundingClientRect();
             const mouseX = touch.clientX - rect.left;
             const mouseY = touch.clientY - rect.top;
+            const mouse = mouseConstraintRef.current.mouse;
             mouse.position.x = mouseX;
             mouse.position.y = mouseY;
             mouse.mousedown = true;
@@ -217,12 +218,14 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
             const rect = canvas.getBoundingClientRect();
             const mouseX = touch.clientX - rect.left;
             const mouseY = touch.clientY - rect.top;
+            const mouse = mouseConstraintRef.current.mouse;
             mouse.position.x = mouseX;
             mouse.position.y = mouseY;
         };
 
         const handleTouchEnd = (event) => {
             event.preventDefault();
+            const mouse = mouseConstraintRef.current.mouse;
             mouse.mousedown = false;
         };
 
@@ -231,6 +234,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
+        // Настройка mouseConstraint
         const mouse = Matter.Mouse.create(canvas);
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
             mouse: mouse,
@@ -238,6 +242,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
                 stiffness: 0.2,
                 render: { visible: false },
             },
+            collisionFilter: { mask: 0x0001 } // Указываем, что мышь взаимодействует с объектами категории 0x0001
         });
         mouseConstraintRef.current = mouseConstraint;
         Matter.World.add(engine.world, mouseConstraint);
@@ -368,7 +373,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, user, socket]); // Добавляем user и socket в зависимости
+    }, [theme, user, socket]);
 
     return (
         <ShelterContainer theme={theme}>

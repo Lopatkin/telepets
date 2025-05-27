@@ -1,36 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react'; // Добавляем useState
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
-const ButtonContainer = styled.div`
+const ToggleContainer = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 100px; // Располагаем левее кнопки "Закрыть"
   display: flex;
-  gap: 10px; /* Отступ между кнопками */
-  padding: 10px; /* Внутренний отступ для контейнера */
-  justify-content: flex-end; /* Выравнивание кнопок вправо */
+  align-items: center;
   z-index: 1001;
 `;
 
-/* Заменяем FixButton на FixToggle - стили для переключателя */
-const FixToggle = styled.label`
-  display: inline-flex;
-  align-items: center;
-  background: #28A745;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 8px 16px;
-  cursor: pointer;
+const ToggleLabel = styled.label`
+  color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
+  margin-left: 8px;
   font-size: 16px;
-  user-select: none;
-
-  input[type="checkbox"] {
-    margin-right: 8px;
-    accent-color: #218838; /* Цвет чекбокса при активации */
-  }
-
-  &:hover {
-    background: #218838;
-  }
 `;
 
 const ShelterContainer = styled.div`
@@ -51,6 +35,9 @@ const CanvasContainer = styled.div`
 `;
 
 const CloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
   background: #007AFF;
   color: white;
   border: none;
@@ -58,6 +45,7 @@ const CloseButton = styled.button`
   padding: 8px 16px;
   cursor: pointer;
   font-size: 16px;
+  z-index: 1001;
 
   &:hover {
     background: #005BB5;
@@ -71,7 +59,7 @@ function MyShelter({ theme, setShowMyShelter }) {
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
     const originalSizesRef = useRef({}); // Храним начальные размеры объектов
-    const [isFixed, setIsFixed] = useState(false); // Состояние переключателя
+    const [isFixed, setIsFixed] = useState(false); // Состояние для флажка
 
 
     useEffect(() => {
@@ -384,20 +372,20 @@ function MyShelter({ theme, setShowMyShelter }) {
         };
     }, [theme]);
 
-    /* Обновляем разметку в return, заменяем FixButton на FixToggle */
     return (
         <ShelterContainer theme={theme}>
-            <ButtonContainer>
-                <FixToggle>
-                    <input
-                        type="checkbox"
-                        checked={isFixed}
-                        onChange={() => setIsFixed(!isFixed)} // Переключаем состояние
-                    />
+            <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
+            <ToggleContainer>
+                <input
+                    type="checkbox"
+                    checked={isFixed}
+                    onChange={() => setIsFixed(!isFixed)} // Переключаем состояние
+                    id="fixToggle"
+                />
+                <ToggleLabel theme={theme} htmlFor="fixToggle">
                     Зафиксировать
-                </FixToggle>
-                <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
-            </ButtonContainer>
+                </ToggleLabel>
+            </ToggleContainer>
             <CanvasContainer>
                 <canvas ref={canvasRef} />
             </CanvasContainer>

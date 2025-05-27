@@ -9,7 +9,7 @@ const Overlay = styled.div`
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.01); // 99% прозрачность
-  z-index: 1002; // Выше всех элементов (CloseIcon и ToggleContainer имеют z-index 1001)
+  z-index: 1500; // Выше всех элементов (CloseIcon и ToggleContainer имеют z-index 1001)
   pointer-events: auto; // Учитывает клики и нажатия
 `;
 
@@ -29,7 +29,7 @@ const CloseIcon = styled.button`
   justify-content: center;
   cursor: pointer;
   font-size: 24px;
-  z-index: 1001;
+  z-index: 2000;
 
   &:hover {
     background: ${({ theme }) => (theme === 'dark' ? '#5A5A5A' : '#B0B0B0')};
@@ -42,7 +42,7 @@ const ToggleContainer = styled.div`
   right: 100px; // Располагаем левее кнопки "Закрыть"
   display: flex;
   align-items: center;
-  z-index: 1001;
+  z-index: 2000;
 `;
 
 const ToggleLabel = styled.label`

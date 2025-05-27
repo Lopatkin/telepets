@@ -205,20 +205,6 @@ function MyShelter({ theme, setShowMyShelter }) {
         mouseConstraintRef.current = mouseConstraint;
         Matter.World.add(engine.world, mouseConstraint);
 
-        // Управление состоянием фиксации
-        const updateFixation = () => {
-            bodiesRef.current.forEach(body => {
-                Matter.Body.setStatic(body, isFixed);
-            });
-            if (isFixed) {
-                Matter.World.remove(engine.world, mouseConstraint);
-            } else {
-                Matter.World.add(engine.world, mouseConstraint);
-            }
-        };
-
-        updateFixation(); // Инициализация начального состояния
-
         const bringToFront = (body) => {
             if (!isFixed) { // Приводить к переднему плану только если не зафиксировано
                 const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
@@ -311,40 +297,42 @@ function MyShelter({ theme, setShowMyShelter }) {
                 context.fill();
             });
 
-            // Проверяем позиции и масштабируем интерактивные объекты
-            bodiesRef.current.forEach(body => {
-                const bounds = body.bounds;
-                const margin = 5;
-                if (bounds.min.x < margin) {
-                    Matter.Body.setPosition(body, { x: margin + (bounds.max.x - bounds.min.x) / 2, y: body.position.y });
-                }
-                if (bounds.max.x > canvas.width - margin) {
-                    Matter.Body.setPosition(body, { x: canvas.width - margin - (bounds.max.x - bounds.min.x) / 2, y: body.position.y });
-                }
-                if (bounds.min.y < margin) {
-                    Matter.Body.setPosition(body, { x: body.position.x, y: margin + (bounds.max.y - bounds.min.y) / 2 });
-                }
-                if (bounds.max.y > canvas.height - margin) {
-                    Matter.Body.setPosition(body, { x: body.position.x, y: canvas.height - margin - (bounds.max.y - bounds.min.y) / 2 });
-                }
+            if (!isFixed) {
+                // Проверяем позиции и масштабируем интерактивные объекты
+                bodiesRef.current.forEach(body => {
+                    const bounds = body.bounds;
+                    const margin = 5;
+                    if (bounds.min.x < margin) {
+                        Matter.Body.setPosition(body, { x: margin + (bounds.max.x - bounds.min.x) / 2, y: body.position.y });
+                    }
+                    if (bounds.max.x > canvas.width - margin) {
+                        Matter.Body.setPosition(body, { x: canvas.width - margin - (bounds.max.x - bounds.min.x) / 2, y: body.position.y });
+                    }
+                    if (bounds.min.y < margin) {
+                        Matter.Body.setPosition(body, { x: body.position.x, y: margin + (bounds.max.y - bounds.min.y) / 2 });
+                    }
+                    if (bounds.max.y > canvas.height - margin) {
+                        Matter.Body.setPosition(body, { x: body.position.x, y: canvas.height - margin - (bounds.max.y - bounds.min.y) / 2 });
+                    }
 
-                // Масштабирование на основе y-позиции
-                const y = body.position.y;
-                const minY = height * 0.4;
-                const maxY = height;
-                let targetScale = 1;
-                if (y >= minY && y <= maxY) {
-                    targetScale = 1 + (y - minY) / (maxY - minY);
-                } else if (y > maxY) {
-                    targetScale = 2;
-                }
+                    // Масштабирование на основе y-позиции
+                    const y = body.position.y;
+                    const minY = height * 0.4;
+                    const maxY = height;
+                    let targetScale = 1;
+                    if (y >= minY && y <= maxY) {
+                        targetScale = 1 + (y - minY) / (maxY - minY);
+                    } else if (y > maxY) {
+                        targetScale = 2;
+                    }
 
-                if (Math.abs(body.scaleFactor - targetScale) > 0.001) {
-                    const scaleFactor = targetScale / body.scaleFactor;
-                    Matter.Body.scale(body, scaleFactor, scaleFactor);
-                    body.scaleFactor = targetScale;
-                }
-            });
+                    if (Math.abs(body.scaleFactor - targetScale) > 0.001) {
+                        const scaleFactor = targetScale / body.scaleFactor;
+                        Matter.Body.scale(body, scaleFactor, scaleFactor);
+                        body.scaleFactor = targetScale;
+                    }
+                });
+            }
 
             // Рендерим интерактивные объекты
             const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
@@ -394,16 +382,18 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.Body.scale(wall, scaleX, scaleY);
             Matter.Body.scale(floor, scaleX, scaleY);
 
-            // Проверяем, что интерактивные объекты остаются в видимой области
-            const margin = 5;
-            bodiesRef.current.forEach(body => {
-                const bounds = body.bounds;
-                if (bounds.min.x < margin || bounds.max.x > newWidth - margin || bounds.min.y < margin || bounds.max.y > newHeight - margin) {
-                    const newX = Math.max(margin + (bounds.max.x - bounds.min.x) / 2, Math.min(body.position.x, newWidth - margin - (bounds.max.x - bounds.min.x) / 2));
-                    const newY = Math.max(margin + (bounds.max.y - bounds.min.y) / 2, Math.min(body.position.y, newHeight - margin - (bounds.max.y - bounds.min.y) / 2));
-                    Matter.Body.setPosition(body, { x: newX, y: newY });
-                }
-            });
+            if (!isFixed) {
+                // Проверяем, что интерактивные объекты остаются в видимой области
+                const margin = 5;
+                bodiesRef.current.forEach(body => {
+                    const bounds = body.bounds;
+                    if (bounds.min.x < margin || bounds.max.x > newWidth - margin || bounds.min.y < margin || bounds.max.y > newHeight - margin) {
+                        const newX = Math.max(margin + (bounds.max.x - bounds.min.x) / 2, Math.min(body.position.x, newWidth - margin - (bounds.max.x - bounds.min.x) / 2));
+                        const newY = Math.max(margin + (bounds.max.y - bounds.min.y) / 2, Math.min(body.position.y, newHeight - margin - (bounds.max.y - bounds.min.y) / 2));
+                        Matter.Body.setPosition(body, { x: newX, y: newY });
+                    }
+                });
+            }
         };
 
         window.addEventListener('resize', handleResize);
@@ -420,7 +410,24 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, isFixed]); // Добавляем isFixed в зависимости useEffect
+    }, [theme]);
+
+    useEffect(() => {
+        if (bodiesRef.current.length > 0) {
+            bodiesRef.current.forEach(body => {
+                Matter.Body.setStatic(body, isFixed);
+            });
+            if (isFixed) {
+                if (mouseConstraintRef.current) {
+                    Matter.World.remove(engineRef.current.world, mouseConstraintRef.current);
+                }
+            } else {
+                if (mouseConstraintRef.current && !engineRef.current.world.constraints.includes(mouseConstraintRef.current)) {
+                    Matter.World.add(engineRef.current.world, mouseConstraintRef.current);
+                }
+            }
+        }
+    }, [isFixed]);
 
     return (
         <ShelterContainer theme={theme}>

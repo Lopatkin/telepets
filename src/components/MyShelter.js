@@ -80,7 +80,6 @@ function MyShelter({ theme, setShowMyShelter }) {
     const squareRef = useRef(null);
     const triangleRef = useRef(null);
 
-    // Функция handleClose вынесена в тело компонента
     const handleClose = () => {
         const positions = {
             circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor },
@@ -145,7 +144,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: staticCollisionFilter
         });
 
-        // Загружаем сохраненные позиции из localStorage
+        // Загружаем сохраненные позиции и масштабы из localStorage
         const savedPositions = JSON.parse(localStorage.getItem('shelterObjectPositions')) || {};
         const floorTopY = height * 0.4;
 
@@ -166,9 +165,11 @@ function MyShelter({ theme, setShowMyShelter }) {
                 collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
             }
         );
-        circle.scaleFactor = savedPositions.circle?.scaleFactor || 1;
+        const circleScale = savedPositions.circle?.scaleFactor || 1;
+        circle.scaleFactor = circleScale;
+        Matter.Body.scale(circle, circleScale, circleScale); // Применяем масштаб
         originalSizesRef.current.circle = { radius: 30 };
-        circleRef.current = circle; // Сохраняем в ref
+        circleRef.current = circle;
 
         const square = Matter.Bodies.rectangle(
             savedPositions.square?.x || width * 0.5,
@@ -187,9 +188,11 @@ function MyShelter({ theme, setShowMyShelter }) {
                 collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
             }
         );
-        square.scaleFactor = savedPositions.square?.scaleFactor || 1;
+        const squareScale = savedPositions.square?.scaleFactor || 1;
+        square.scaleFactor = squareScale;
+        Matter.Body.scale(square, squareScale, squareScale); // Применяем масштаб
         originalSizesRef.current.square = { width: 60, height: 60 };
-        squareRef.current = square; // Сохраняем в ref
+        squareRef.current = square;
 
         const triangle = Matter.Bodies.polygon(
             savedPositions.triangle?.x || width * 0.75,
@@ -208,9 +211,11 @@ function MyShelter({ theme, setShowMyShelter }) {
                 collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
             }
         );
-        triangle.scaleFactor = savedPositions.triangle?.scaleFactor || 1;
+        const triangleScale = savedPositions.triangle?.scaleFactor || 1;
+        triangle.scaleFactor = triangleScale;
+        Matter.Body.scale(triangle, triangleScale, triangleScale); // Применяем масштаб
         originalSizesRef.current.triangle = { radius: 40 };
-        triangleRef.current = triangle; // Сохраняем в ref
+        triangleRef.current = triangle;
 
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);

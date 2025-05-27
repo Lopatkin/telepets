@@ -95,13 +95,12 @@ function MyShelter({ theme, setShowMyShelter }) {
         });
 
         // Создаем объекты с начальным zIndex
-        // const interactiveCollisionFilter = { category: 0x0001, mask: 0x0001 | 0x0003 }; // Взаимодействуют с другими объектами и границами
+        /// Внутри useEffect, обновляем создание интерактивных объектов, убирая инерцию
         const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
             isStatic: false,
             restitution: 0,
             friction: 1,
-            frictionAir: 0,
-            inertia: Infinity,
+            frictionAir: 0.1, // Добавляем небольшое сопротивление воздуха для быстрой остановки
             render: {
                 fillStyle: 'red',
                 zIndex: 0
@@ -113,8 +112,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             isStatic: false,
             restitution: 0,
             friction: 1,
-            frictionAir: 0,
-            inertia: Infinity,
+            frictionAir: 0.1, // Добавляем небольшое сопротивление воздуха для быстрой остановки
             render: {
                 fillStyle: 'blue',
                 zIndex: 0
@@ -126,13 +124,18 @@ function MyShelter({ theme, setShowMyShelter }) {
             isStatic: false,
             restitution: 0,
             friction: 1,
-            frictionAir: 0,
-            inertia: Infinity,
+            frictionAir: 0.1, // Добавляем небольшое сопротивление воздуха для быстрой остановки
             render: {
                 fillStyle: 'yellow',
                 zIndex: 0
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
+        });
+
+        // Добавляем обработку остановки объектов после перетаскивания
+        Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
+            const draggedBody = event.body;
+            Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 }); // Останавливаем объект после перетаскивания
         });
 
         bodiesRef.current = [circle, square, triangle];
@@ -326,7 +329,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             });
         };
 
-        
+
         window.addEventListener('resize', handleResize);
         handleResize();
 

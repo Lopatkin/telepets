@@ -63,6 +63,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions),
         ];
 
+        // Создаем стену и пол
         const wallHeight = height * 0.3; // Стена занимает 30% высоты
         const floorHeight = height * 0.7; // Пол занимает 70% высоты
         const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
@@ -88,9 +89,6 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: 0 } // Не взаимодействует с другими объектами
         });
-
-        // Добавляем стену и пол в мир, но не в bodiesRef, чтобы исключить их из интерактивной логики
-        Matter.World.add(engine.world, [wall, floor]);
 
         // Создаем объекты с начальным zIndex
         const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
@@ -133,7 +131,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         });
 
         bodiesRef.current = [circle, square, triangle];
-        Matter.World.add(engine.world, [...boundaries, circle, square, triangle]);
+        Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
 
         // Настройка мыши для перетаскивания
         const mouse = Matter.Mouse.create(canvas);
@@ -218,7 +216,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             context.fillStyle = theme === 'dark' ? '#2A2A2A' : '#fff';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
-            const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
+            const bodies = [...bodiesRef.current, wall, floor].sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
 
             bodies.forEach(body => {
                 context.beginPath();

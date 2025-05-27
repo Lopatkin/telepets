@@ -1,6 +1,28 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react'; // Добавляем useState
 import styled from 'styled-components';
 import Matter from 'matter-js';
+
+// Добавляем стили для переключателя
+const ToggleContainer = styled.div`
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  z-index: 1001;
+`;
+
+const ToggleLabel = styled.label`
+  color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
+  margin-left: 8px;
+  font-size: 16px;
+`;
+
+const ToggleInput = styled.input`
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+`;
 
 const ShelterContainer = styled.div`
   position: fixed;
@@ -44,6 +66,7 @@ function MyShelter({ theme, setShowMyShelter }) {
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
     const originalSizesRef = useRef({}); // Храним начальные размеры объектов
+    const [isLocked, setIsLocked] = useState(false); // Состояние для переключателя
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -102,7 +125,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         // Размещаем объекты у верхней границы пола
         const floorTopY = height * 0.4;
         const circle = Matter.Bodies.circle(width * 0.25, floorTopY, 30, {
-            isStatic: false,
+            isStatic: isLocked,
             restitution: 0,
             friction: 1,
             frictionAir: 0.1,
@@ -116,7 +139,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         originalSizesRef.current.circle = { radius: 30 };
 
         const square = Matter.Bodies.rectangle(width * 0.5, floorTopY, 60, 60, {
-            isStatic: false,
+            isStatic: isLocked,
             restitution: 0,
             friction: 1,
             frictionAir: 0.1,
@@ -130,7 +153,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         originalSizesRef.current.square = { width: 60, height: 60 };
 
         const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY, 3, 40, {
-            isStatic: false,
+            isStatic: isLocked,
             restitution: 0,
             friction: 1,
             frictionAir: 0.1,
@@ -208,7 +231,17 @@ function MyShelter({ theme, setShowMyShelter }) {
                 stiffness: 0.2,
                 render: { visible: false },
             },
+            collisionFilter: {
+                mask: isLocked ? 0x0000 : 0x0001 // Отключаем взаимодействие, если isLocked
+            }
         });
+
+        useEffect(() => {
+            bodiesRef.current.forEach(body => {
+                Matter.Body.setStatic(body, isLocked);
+            });
+        }, [isLocked]);
+
         mouseConstraintRef.current = mouseConstraint;
         Matter.World.add(engine.world, mouseConstraint);
 
@@ -353,10 +386,18 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme]);
+    }, [theme, isLocked]);
 
     return (
         <ShelterContainer theme={theme}>
+            <ToggleContainer>
+                <ToggleInput
+                    type="checkbox"
+                    checked={isLocked}
+                    onChange={() => setIsLocked(!isLocked)}
+                />
+                <ToggleLabel theme={theme}>Зафиксировать</ToggleLabel>
+            </ToggleContainer>
             <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
             <CanvasContainer>
                 <canvas ref={canvasRef} />

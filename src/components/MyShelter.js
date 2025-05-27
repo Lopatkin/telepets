@@ -412,7 +412,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         };
     }, [theme]);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable react-hooks/exhaustive-deps */
     useEffect(() => {
         if (bodiesRef.current.length > 0) {
             bodiesRef.current.forEach(body => {
@@ -429,6 +429,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             }
         }
     }, [isFixed]);
+    /* eslint-enable react-hooks/exhaustive-deps */
 
     return (
         <ShelterContainer theme={theme}>

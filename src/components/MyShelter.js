@@ -43,18 +43,18 @@ function MyShelter({ theme, setShowMyShelter }) {
     const runnerRef = useRef(null);
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
+    const originalSizesRef = useRef({}); // Храним начальные размеры объектов
 
     useEffect(() => {
-        const engine = engineRef.current;
-        engine.gravity.y = 0;
-
         const canvas = canvasRef.current;
-        // Устанавливаем размеры canvas на основе родительского контейнера
         const parent = canvas.parentElement;
         const width = parent.getBoundingClientRect().width;
         const height = parent.getBoundingClientRect().height;
         canvas.width = width;
         canvas.height = height;
+
+        const engine = engineRef.current;
+        engine.gravity.y = 0;
 
         // Создаем границы
         const boundaryOptions = {
@@ -112,6 +112,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
+        originalSizesRef.current.circle = { radius: 30 };
 
         const square = Matter.Bodies.rectangle(width * 0.5, floorTopY, 60, 60, {
             isStatic: false,
@@ -124,6 +125,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
+        originalSizesRef.current.square = { width: 60, height: 60 };
 
         const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY, 3, 40, {
             isStatic: false,
@@ -136,20 +138,19 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
+        originalSizesRef.current.triangle = { radius: 40 };
 
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
 
-        // Настройка мыши для перетаскивания
+        // Настройка мыши
         const mouse = Matter.Mouse.create(canvas);
 
-        // Функция для поднятия объекта на передний слой
         const bringToFront = (body) => {
             const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
             body.render.zIndex = maxZIndex + 1;
         };
 
-        // Обработка кликов
         const handleMouseDown = (event) => {
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
@@ -161,7 +162,6 @@ function MyShelter({ theme, setShowMyShelter }) {
             }
         };
 
-        // Обработка сенсорных событий
         const handleTouchStart = (event) => {
             event.preventDefault();
             const touch = event.touches[0];
@@ -209,13 +209,11 @@ function MyShelter({ theme, setShowMyShelter }) {
         mouseConstraintRef.current = mouseConstraint;
         Matter.World.add(engine.world, mouseConstraint);
 
-        // Добавляем обработку остановки объектов после перетаскивания
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
             const draggedBody = event.body;
             Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
         });
 
-        // Поднимаем объект на передний слой при начале перетаскивания
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
             const draggedBody = event.body;
             bringToFront(draggedBody);
@@ -229,7 +227,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             context.fillStyle = theme === 'dark' ? '#2A2A2A' : '#fff';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Рендерим статичные объекты (стена и пол) первыми
+            // Рендерим статичные объекты (стена и пол)
             [wall, floor].forEach(body => {
                 context.beginPath();
                 const vertices = body.vertices;
@@ -242,7 +240,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                 context.fill();
             });
 
-            // Проверяем и корректируем позиции интерактивных объектов
+            // Проверяем позиции и масштабируем интерактивные объекты
             bodiesRef.current.forEach(body => {
                 const bounds = body.bounds;
                 const margin = 5;
@@ -258,9 +256,38 @@ function MyShelter({ theme, setShowMyShelter }) {
                 if (bounds.max.y > canvas.height - margin) {
                     Matter.Body.setPosition(body, { x: body.position.x, y: canvas.height - margin - (bounds.max.y - bounds.min.y) / 2 });
                 }
+
+                // Масштабирование на основе y-позиции
+                const y = body.position.y;
+                const minY = height * 0.4; // Верхняя граница пола
+                const maxY = height; // Нижняя граница пола
+                let scale = 1;
+                if (y >= minY && y <= maxY) {
+                    scale = 1 + (y - minY) / (maxY - minY); // Линейная интерполяция от 1 до 2
+                } else if (y > maxY) {
+                    scale = 2; // Максимальный масштаб
+                }
+
+                // Применяем масштаб
+                if (body === circle) {
+                    const currentRadius = body.circleRadius;
+                    const targetRadius = originalSizesRef.current.circle.radius * scale;
+                    const scaleFactor = targetRadius / currentRadius;
+                    Matter.Body.scale(body, scaleFactor, scaleFactor);
+                } else if (body === square) {
+                    const currentWidth = body.bounds.max.x - body.bounds.min.x;
+                    const targetWidth = originalSizesRef.current.square.width * scale;
+                    const scaleFactor = targetWidth / currentWidth;
+                    Matter.Body.scale(body, scaleFactor, scaleFactor);
+                } else if (body === triangle) {
+                    const currentRadius = body.circleRadius || 40; // Для полигона используем радиус
+                    const targetRadius = originalSizesRef.current.triangle.radius * scale;
+                    const scaleFactor = targetRadius / currentRadius;
+                    Matter.Body.scale(body, scaleFactor, scaleFactor);
+                }
             });
 
-            // Рендерим интерактивные объекты после, с сортировкой по zIndex
+            // Рендерим интерактивные объекты
             const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
             bodies.forEach(body => {
                 context.beginPath();

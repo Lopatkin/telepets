@@ -77,17 +77,6 @@ function MyShelter({ theme, setShowMyShelter }) {
     const originalSizesRef = useRef({});
     const [isFixed, setIsFixed] = useState(false);
 
-    // Сохраняем позиции объектов при клике на крестик
-    const handleClose = () => {
-        const positions = {
-            circle: { x: circle.position.x, y: circle.position.y, scaleFactor: circle.scaleFactor },
-            square: { x: square.position.x, y: square.position.y, scaleFactor: square.scaleFactor },
-            triangle: { x: triangle.position.x, y: triangle.position.y, scaleFactor: triangle.scaleFactor }
-        };
-        localStorage.setItem('shelterObjectPositions', JSON.stringify(positions));
-        setShowMyShelter(false);
-    };
-
     useEffect(() => {
         const canvas = canvasRef.current;
         const parent = canvas.parentElement;
@@ -287,6 +276,8 @@ function MyShelter({ theme, setShowMyShelter }) {
             bringToFront(draggedBody);
         });
 
+
+
         // Пользовательский цикл рендеринга
         const context = canvas.getContext('2d');
         let animationFrameId;
@@ -419,6 +410,17 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.Engine.clear(engine);
         };
     }, [theme]);
+
+    // Сохраняем позиции объектов при клике на крестик
+    const handleClose = () => {
+        const positions = {
+            circle: { x: circle.position.x, y: circle.position.y, scaleFactor: circle.scaleFactor },
+            square: { x: square.position.x, y: square.position.y, scaleFactor: square.scaleFactor },
+            triangle: { x: triangle.position.x, y: triangle.position.y, scaleFactor: triangle.scaleFactor }
+        };
+        localStorage.setItem('shelterObjectPositions', JSON.stringify(positions));
+        setShowMyShelter(false);
+    };
 
     return (
         <ShelterContainer theme={theme}>

@@ -177,25 +177,6 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
 
-        // Функция для сохранения координат предметов
-        const saveDwelling = () => {
-            const dwellingData = bodiesRef.current.map(body => ({
-                id: body.id,
-                x: body.position.x,
-                y: body.position.y,
-                scaleFactor: body.scaleFactor
-            }));
-
-            socket.emit('saveDwelling', {
-                userId: user.userId,
-                dwelling: dwellingData
-            }, (response) => {
-                if (!response.success) {
-                    console.error('Ошибка при сохранении dwelling:', response.message);
-                }
-            });
-        };
-
         // Остальной код без изменений
         const bringToFront = (body) => {
             const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
@@ -384,7 +365,10 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
             canvas.removeEventListener('touchmove', handleTouchMove);
             canvas.removeEventListener('touchend', handleTouchEnd);
             window.removeEventListener('resize', handleResize);
-            Matter.Runner.stop(runnerRef.current);
+            const currentRunner = runnerRef.current; // Сохраняем текущее значение runnerRef.current
+            if (currentRunner) {
+                Matter.Runner.stop(currentRunner);
+            }
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
@@ -406,6 +390,8 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
                 }, (response) => {
                     if (!response.success) {
                         console.error('Ошибка при сохранении dwelling:', response.message);
+                    } else {
+                        console.log('Dwelling успешно сохранено');
                     }
                 });
             }}>Сохранить</SaveButton>

@@ -2,6 +2,17 @@ import React, { useEffect, useRef, useState } from 'react'; // Добавляе�
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.01); // 99% прозрачность
+  z-index: 1002; // Выше всех элементов (CloseIcon и ToggleContainer имеют z-index 1001)
+  pointer-events: auto; // Учитывает клики и нажатия
+`;
+
 // Заменяем CloseButton на CloseIcon
 const CloseIcon = styled.button`
   position: absolute;
@@ -65,7 +76,6 @@ function MyShelter({ theme, setShowMyShelter }) {
     const mouseConstraintRef = useRef(null);
     const originalSizesRef = useRef({}); // Храним начальные размеры объектов
     const [isFixed, setIsFixed] = useState(false); // Состояние для флажка
-
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -391,6 +401,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                     Зафиксировать
                 </ToggleLabel>
             </ToggleContainer>
+            {isFixed && <Overlay />} {/* Показываем Overlay, если isFixed true */}
             <CanvasContainer>
                 <canvas ref={canvasRef} />
             </CanvasContainer>

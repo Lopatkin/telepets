@@ -59,7 +59,7 @@ const SaveButton = styled.button`
 function MyShelter({ theme, setShowMyShelter, user, socket }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
-    const runnerRef = useRef(null);
+    // const runnerRef = useRef(null);
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
     const originalSizesRef = useRef({});

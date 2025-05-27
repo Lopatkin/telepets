@@ -132,12 +132,6 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
         });
 
-        // Добавляем обработку остановки объектов после перетаскивания
-        Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
-            const draggedBody = event.body;
-            Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 }); // Останавливаем объект после перетаскивания
-        });
-
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
 
@@ -209,6 +203,12 @@ function MyShelter({ theme, setShowMyShelter }) {
         });
         mouseConstraintRef.current = mouseConstraint;
         Matter.World.add(engine.world, mouseConstraint);
+
+        // Добавляем обработку остановки объектов после перетаскивания
+        Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
+            const draggedBody = event.body;
+            Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 }); // Останавливаем объект после перетаскивания
+        });
 
         // Поднимаем объект на передний слой при начале перетаскивания
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {

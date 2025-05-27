@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
-// Определяем styled-компоненты
 const ShelterContainer = styled.div`
   position: fixed;
   top: 0;
@@ -38,31 +37,13 @@ const CloseButton = styled.button`
   }
 `;
 
-const SaveButton = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 90px;
-  background: #28A745;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-size: 16px;
-  z-index: 1001;
-
-  &:hover {
-    background: #218838;
-  }
-`;
-
-function MyShelter({ theme, setShowMyShelter, user, socket }) {
+function MyShelter({ theme, setShowMyShelter }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
-    // const runnerRef = useRef(null);
+    const runnerRef = useRef(null);
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
-    const originalSizesRef = useRef({});
+    const originalSizesRef = useRef({}); // Храним начальные размеры объектов
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -118,16 +99,9 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
             collisionFilter: staticCollisionFilter
         });
 
-        // Загружаем координаты предметов из user.dwelling или используем значения по умолчанию
-        const dwelling = user?.dwelling || [];
-        const defaultPositions = {
-            circle: { x: width * 0.25, y: height * 0.4, scaleFactor: 1 },
-            square: { x: width * 0.5, y: height * 0.4, scaleFactor: 1 },
-            triangle: { x: width * 0.75, y: height * 0.4, scaleFactor: 1 }
-        };
-
-        const circleData = dwelling.find(item => item.id === 'circle') || defaultPositions.circle;
-        const circle = Matter.Bodies.circle(circleData.x, circleData.y, 30, {
+        // Размещаем объекты у верхней границы пола
+        const floorTopY = height * 0.4;
+        const circle = Matter.Bodies.circle(width * 0.25, floorTopY, 30, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -138,12 +112,10 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-        circle.scaleFactor = circleData.scaleFactor;
-        circle.id = 'circle';
+        circle.scaleFactor = 1; // Инициализируем масштаб
         originalSizesRef.current.circle = { radius: 30 };
 
-        const squareData = dwelling.find(item => item.id === 'square') || defaultPositions.square;
-        const square = Matter.Bodies.rectangle(squareData.x, squareData.y, 60, 60, {
+        const square = Matter.Bodies.rectangle(width * 0.5, floorTopY, 60, 60, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -154,12 +126,10 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-        square.scaleFactor = squareData.scaleFactor;
-        square.id = 'square';
+        square.scaleFactor = 1; // Инициализируем масштаб
         originalSizesRef.current.square = { width: 60, height: 60 };
 
-        const triangleData = dwelling.find(item => item.id === 'triangle') || defaultPositions.triangle; // Исправлено: используем triangleData
-        const triangle = Matter.Bodies.polygon(triangleData.x, triangleData.y, 3, 40, { // Исправлено: triangleData вместо squareData
+        const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY, 3, 40, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -170,14 +140,15 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-        triangle.scaleFactor = triangleData.scaleFactor;
-        triangle.id = 'triangle';
+        triangle.scaleFactor = 1; // Инициализируем масштаб
         originalSizesRef.current.triangle = { radius: 40 };
 
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
 
-        // Остальной код без изменений
+        // Настройка мыши
+        const mouse = Matter.Mouse.create(canvas);
+
         const bringToFront = (body) => {
             const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
             body.render.zIndex = maxZIndex + 1;
@@ -231,7 +202,6 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-        const mouse = Matter.Mouse.create(canvas);
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
             mouse: mouse,
             constraint: {
@@ -252,6 +222,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
             bringToFront(draggedBody);
         });
 
+        // Пользовательский цикл рендеринга
         const context = canvas.getContext('2d');
         let animationFrameId;
 
@@ -259,6 +230,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
             context.fillStyle = theme === 'dark' ? '#2A2A2A' : '#fff';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
+            // Рендерим статичные объекты (стена и пол)
             [wall, floor].forEach(body => {
                 context.beginPath();
                 const vertices = body.vertices;
@@ -271,6 +243,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
                 context.fill();
             });
 
+            // Проверяем позиции и масштабируем интерактивные объекты
             bodiesRef.current.forEach(body => {
                 const bounds = body.bounds;
                 const margin = 5;
@@ -287,23 +260,26 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
                     Matter.Body.setPosition(body, { x: body.position.x, y: canvas.height - margin - (bounds.max.y - bounds.min.y) / 2 });
                 }
 
+                // Масштабирование на основе y-позиции
                 const y = body.position.y;
-                const minY = height * 0.4;
-                const maxY = height;
+                const minY = height * 0.4; // Верхняя граница пола
+                const maxY = height; // Нижняя граница пола
                 let targetScale = 1;
                 if (y >= minY && y <= maxY) {
-                    targetScale = 1 + (y - minY) / (maxY - minY);
+                    targetScale = 1 + (y - minY) / (maxY - minY); // Линейная интерполяция от 1 до 2
                 } else if (y > maxY) {
-                    targetScale = 2;
+                    targetScale = 2; // Максимальный масштаб
                 }
 
-                if (Math.abs(body.scaleFactor - targetScale) > 0.001) {
+                // Применяем масштаб, если он изменился
+                if (Math.abs(body.scaleFactor - targetScale) > 0.001) { // Порог для избежания микроколебаний
                     const scaleFactor = targetScale / body.scaleFactor;
                     Matter.Body.scale(body, scaleFactor, scaleFactor);
-                    body.scaleFactor = targetScale;
+                    body.scaleFactor = targetScale; // Обновляем текущий масштаб
                 }
             });
 
+            // Рендерим интерактивные объекты
             const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
             bodies.forEach(body => {
                 context.beginPath();
@@ -326,17 +302,24 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
 
         renderLoop();
 
+        // Запускаем физический движок
+        runnerRef.current = Matter.Runner.create();
+        Matter.Runner.run(runnerRef.current, engine);
+
+        // Адаптация при изменении размера окна
         const handleResize = () => {
             const newWidth = canvas.parentElement.getBoundingClientRect().width;
             const newHeight = canvas.parentElement.getBoundingClientRect().height;
             canvas.width = newWidth;
             canvas.height = newHeight;
 
+            // Обновляем позиции и размеры границы
             Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
             Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
             Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
             Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
 
+            // Обновляем позиции и размеры стены и пола
             Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
             Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
             const scaleX = newWidth / width;
@@ -344,6 +327,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
             Matter.Body.scale(wall, scaleX, scaleY);
             Matter.Body.scale(floor, scaleX, scaleY);
 
+            // Проверяем, что интерактивные объекты остаются в видимой области
             const margin = 5;
             bodiesRef.current.forEach(body => {
                 const bounds = body.bounds;
@@ -365,32 +349,15 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
             canvas.removeEventListener('touchmove', handleTouchMove);
             canvas.removeEventListener('touchend', handleTouchEnd);
             window.removeEventListener('resize', handleResize);
+            Matter.Runner.stop(runnerRef.current);
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, user, socket]);
+    }, [theme]);
 
     return (
         <ShelterContainer theme={theme}>
             <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
-            <SaveButton onClick={() => {
-                const dwellingData = bodiesRef.current.map(body => ({
-                    id: body.id,
-                    x: body.position.x,
-                    y: body.position.y,
-                    scaleFactor: body.scaleFactor
-                }));
-                socket.emit('saveDwelling', {
-                    userId: user.userId,
-                    dwelling: dwellingData
-                }, (response) => {
-                    if (!response.success) {
-                        console.error('Ошибка при сохранении dwelling:', response.message);
-                    } else {
-                        console.log('Dwelling успешно сохранено');
-                    }
-                });
-            }}>Сохранить</SaveButton>
             <CanvasContainer>
                 <canvas ref={canvasRef} />
             </CanvasContainer>

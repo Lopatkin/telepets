@@ -94,9 +94,11 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: staticCollisionFilter // Не взаимодействует с другими объектами
         });
 
+        const floorTopY = height * 0.4; // Верхняя граница пола (40% высоты от верха canvas)
+
         // Создаем объекты с начальным zIndex
         /// Внутри useEffect, обновляем создание интерактивных объектов, убирая инерцию
-        const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
+        const circle = Matter.Bodies.circle(width * 0.25, floorTopY, 30, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -107,8 +109,8 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
         });
-
-        const square = Matter.Bodies.rectangle(Math.min(width / 2, width - 60), Math.min(height / 2, height - 60), 60, 60, {
+    
+        const square = Matter.Bodies.rectangle(width * 0.5, floorTopY, 60, 60, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -119,8 +121,8 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
         });
-
-        const triangle = Matter.Bodies.polygon(Math.min(width * 3 / 4, width - 40), Math.min(height * 3 / 4, height - 40), 3, 40, {
+    
+        const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY, 3, 40, {
             isStatic: false,
             restitution: 0,
             friction: 1,

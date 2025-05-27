@@ -2,6 +2,25 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
+/* Добавляем стиль для кнопки FixButton */
+const FixButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 80px; /* Смещаем влево от кнопки "Закрыть" */
+  background: #28A745; /* Зеленый цвет для контраста */
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 1001;
+
+  &:hover {
+    background: #218838; /* Темнее при наведении */
+  }
+`;
+
 const ShelterContainer = styled.div`
   position: fixed;
   top: 0;
@@ -357,6 +376,7 @@ function MyShelter({ theme, setShowMyShelter }) {
 
     return (
         <ShelterContainer theme={theme}>
+            <FixButton onClick={() => { /* Функционал будет добавлен позже */ }}>Зафиксировать</FixButton>
             <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
             <CanvasContainer>
                 <canvas ref={canvasRef} />

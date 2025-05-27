@@ -417,6 +417,11 @@ function MyShelter({ theme, setShowMyShelter }) {
         if (bodiesRef.current.length > 0) {
             bodiesRef.current.forEach(body => {
                 Matter.Body.setStatic(body, isFixed);
+                if (isFixed) {
+                    // Сбрасываем скорость и ускорение, чтобы предотвратить смещение
+                    Matter.Body.setVelocity(body, { x: 0, y: 0 });
+                    Matter.Body.setAngularVelocity(body, 0);
+                }
             });
             if (isFixed) {
                 if (mouseConstraintRef.current) {

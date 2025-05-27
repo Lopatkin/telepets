@@ -280,7 +280,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                     const scaleFactor = targetWidth / currentWidth;
                     Matter.Body.scale(body, scaleFactor, scaleFactor);
                 } else if (body === triangle) {
-                    const currentRadius = body.circleRadius || 40; // Для полигона используем радиус
+                    const currentRadius = body.circleRadius; // Для полигона используем радиус
                     const targetRadius = originalSizesRef.current.triangle.radius * scale;
                     const scaleFactor = targetRadius / currentRadius;
                     Matter.Body.scale(body, scaleFactor, scaleFactor);

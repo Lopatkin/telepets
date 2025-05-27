@@ -95,7 +95,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         });
 
         // Создаем объекты с начальным zIndex
-        const interactiveCollisionFilter = { category: 0x0001, mask: 0x0001 | 0x0003 }; // Взаимодействуют с другими объектами и границами
+        // const interactiveCollisionFilter = { category: 0x0001, mask: 0x0001 | 0x0003 }; // Взаимодействуют с другими объектами и границами
         const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
             isStatic: false,
             restitution: 0,
@@ -106,7 +106,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: 'red',
                 zIndex: 0
             },
-            collisionFilter: interactiveCollisionFilter
+            collisionFilter: { category: 0x0004, mask: 0x0003 } // Уникальная категория, взаимодействует только с границами
         });
 
         const square = Matter.Bodies.rectangle(Math.min(width / 2, width - 60), Math.min(height / 2, height - 60), 60, 60, {
@@ -119,7 +119,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: 'blue',
                 zIndex: 0
             },
-            collisionFilter: interactiveCollisionFilter
+            collisionFilter: { category: 0x0005, mask: 0x0003 } // Уникальная категория, взаимодействует только с границами
         });
 
         const triangle = Matter.Bodies.polygon(Math.min(width * 3 / 4, width - 40), Math.min(height * 3 / 4, height - 40), 3, 40, {
@@ -132,7 +132,7 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: 'yellow',
                 zIndex: 0
             },
-            collisionFilter: interactiveCollisionFilter
+            collisionFilter: { category: 0x0006, mask: 0x0003 } // Уникальная категория, взаимодействует только с границами
         });
 
         bodiesRef.current = [circle, square, triangle];

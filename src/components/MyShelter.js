@@ -60,7 +60,6 @@ const CloseButton = styled.button`
 function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавляем user и socket в пропсы
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
-    const runnerRef = useRef(null);
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
     const originalSizesRef = useRef({});
@@ -120,7 +119,7 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
         });
 
         // Загружаем координаты предметов из user.dwelling или используем значения по умолчанию
-        const dwelling = user?.dwelling || [];
+        const dwelling = user && user.dwelling ? user.dwelling : [];
         const defaultPositions = {
             circle: { x: width * 0.25, y: height * 0.4, scaleFactor: 1 },
             square: { x: width * 0.5, y: height * 0.4, scaleFactor: 1 },
@@ -177,25 +176,6 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
 
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
-
-        // Функция для сохранения координат предметов
-        const saveDwelling = () => {
-            const dwellingData = bodiesRef.current.map(body => ({
-                id: body.id,
-                x: body.position.x,
-                y: body.position.y,
-                scaleFactor: body.scaleFactor
-            }));
-
-            socket.emit('saveDwelling', {
-                userId: user.userId,
-                dwelling: dwellingData
-            }, (response) => {
-                if (!response.success) {
-                    console.error('Ошибка при сохранении dwelling:', response.message);
-                }
-            });
-        };
 
         // Остальной код без изменений (обработчики мыши, рендеринг, ресайз и т.д.)
         const bringToFront = (body) => {
@@ -385,7 +365,6 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) { // Добавл�
             canvas.removeEventListener('touchmove', handleTouchMove);
             canvas.removeEventListener('touchend', handleTouchEnd);
             window.removeEventListener('resize', handleResize);
-            Matter.Runner.stop(runnerRef.current);
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };

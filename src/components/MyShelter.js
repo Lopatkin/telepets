@@ -94,8 +94,8 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: staticCollisionFilter // Не взаимодействует с другими объектами
         });
 
-        const floorTopY = height * 0.4 + 3000; // Верхняя граница пола
-        const circle = Matter.Bodies.circle(width * 0.25, floorTopY + 30, 30, { // Смещаем центр круга вниз на радиус
+        const floorMiddleY = height * 0.7; // Середина пола по вертикали (середина между 40% и 100% высоты)
+        const circle = Matter.Bodies.circle(width * 0.25, floorMiddleY, 30, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -107,7 +107,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
 
-        const square = Matter.Bodies.rectangle(width * 0.5, floorTopY + 30, 60, 60, { // Смещаем центр квадрата вниз на половину высоты
+        const square = Matter.Bodies.rectangle(width * 0.5, floorMiddleY, 60, 60, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -119,7 +119,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
 
-        const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY + 40, 3, 40, { // Смещаем центр треугольника вниз на радиус описанной окружности
+        const triangle = Matter.Bodies.polygon(width * 0.75, floorMiddleY, 3, 40, {
             isStatic: false,
             restitution: 0,
             friction: 1,

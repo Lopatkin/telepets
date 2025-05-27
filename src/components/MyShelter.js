@@ -106,9 +106,9 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: 'red',
                 zIndex: 0
             },
-            collisionFilter: { category: 0x0004, mask: 0x0003 } // Уникальная категория, взаимодействует только с границами
+            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
         });
-
+    
         const square = Matter.Bodies.rectangle(Math.min(width / 2, width - 60), Math.min(height / 2, height - 60), 60, 60, {
             isStatic: false,
             restitution: 0,
@@ -119,9 +119,9 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: 'blue',
                 zIndex: 0
             },
-            collisionFilter: { category: 0x0005, mask: 0x0003 } // Уникальная категория, взаимодействует только с границами
+            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
         });
-
+    
         const triangle = Matter.Bodies.polygon(Math.min(width * 3 / 4, width - 40), Math.min(height * 3 / 4, height - 40), 3, 40, {
             isStatic: false,
             restitution: 0,
@@ -132,9 +132,9 @@ function MyShelter({ theme, setShowMyShelter }) {
                 fillStyle: 'yellow',
                 zIndex: 0
             },
-            collisionFilter: { category: 0x0006, mask: 0x0003 } // Уникальная категория, взаимодействует только с границами
+            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
         });
-
+        
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
 

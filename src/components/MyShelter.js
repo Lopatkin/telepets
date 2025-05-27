@@ -2,25 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
-const ToggleSwitch = styled.label`
-        position: absolute;
-        top: 10px;
-        right: 90px; // Размещаем слева от кнопки Закрыть
-        display: flex;
-        align-items: center;
-        cursor: pointer;
-        font-size: 16px;
-        color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
-        z-index: 1001;
-
-        input {
-            margin-right: 8px;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-    `;
-
 const ShelterContainer = styled.div`
   position: fixed;
   top: 0;
@@ -63,7 +44,6 @@ function MyShelter({ theme, setShowMyShelter }) {
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
     const originalSizesRef = useRef({}); // Храним начальные размеры объектов
-    const [isLocked, setIsLocked] = React.useState(false); // Состояние переключателя
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -121,9 +101,8 @@ function MyShelter({ theme, setShowMyShelter }) {
 
         // Размещаем объекты у верхней границы пола
         const floorTopY = height * 0.4;
-        // При создании объектов сохранить их начальное значение isStatic
         const circle = Matter.Bodies.circle(width * 0.25, floorTopY, 30, {
-            isStatic: isLocked, // Устанавливаем в зависимости от isLocked
+            isStatic: false,
             restitution: 0,
             friction: 1,
             frictionAir: 0.1,
@@ -133,12 +112,11 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-        circle.scaleFactor = 1;
-        circle.originalIsStatic = false; // Сохраняем начальное значение
+        circle.scaleFactor = 1; // Инициализируем масштаб
         originalSizesRef.current.circle = { radius: 30 };
 
         const square = Matter.Bodies.rectangle(width * 0.5, floorTopY, 60, 60, {
-            isStatic: isLocked,
+            isStatic: false,
             restitution: 0,
             friction: 1,
             frictionAir: 0.1,
@@ -148,12 +126,11 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-        square.scaleFactor = 1;
-        square.originalIsStatic = false;
+        square.scaleFactor = 1; // Инициализируем масштаб
         originalSizesRef.current.square = { width: 60, height: 60 };
 
         const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY, 3, 40, {
-            isStatic: isLocked,
+            isStatic: false,
             restitution: 0,
             friction: 1,
             frictionAir: 0.1,
@@ -163,8 +140,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-        triangle.scaleFactor = 1;
-        triangle.originalIsStatic = false;
+        triangle.scaleFactor = 1; // Инициализируем масштаб
         originalSizesRef.current.triangle = { radius: 40 };
 
         bodiesRef.current = [circle, square, triangle];
@@ -226,27 +202,15 @@ function MyShelter({ theme, setShowMyShelter }) {
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-        // Отключаем перетаскивание, если объекты зафиксированы
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
             mouse: mouse,
             constraint: {
                 stiffness: 0.2,
                 render: { visible: false },
             },
-            collisionFilter: isLocked ? { mask: 0 } : { mask: 0x0001 } // Отключаем взаимодействие при isLocked
         });
         mouseConstraintRef.current = mouseConstraint;
         Matter.World.add(engine.world, mouseConstraint);
-
-        // Обновляем isStatic при изменении isLocked
-        const updateLockState = () => {
-            bodiesRef.current.forEach(body => {
-                Matter.Body.setStatic(body, isLocked);
-            });
-        };
-
-        // Вызываем при монтировании и изменении isLocked
-        updateLockState();
 
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
             const draggedBody = event.body;
@@ -389,19 +353,11 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, isLocked]);
+    }, [theme]);
 
     return (
         <ShelterContainer theme={theme}>
             <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
-            <ToggleSwitch theme={theme}>
-                <input
-                    type="checkbox"
-                    checked={isLocked}
-                    onChange={() => setIsLocked(!isLocked)}
-                />
-                Зафиксировать
-            </ToggleSwitch>
             <CanvasContainer>
                 <canvas ref={canvasRef} />
             </CanvasContainer>

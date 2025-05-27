@@ -152,8 +152,7 @@ function registerUserHandlers({
                     onLeash: user.onLeash,
                     freeRoam: user.freeRoam || false,
                     stats: user.stats,
-                    diary: user.diary,
-                    dwelling: user.dwelling || [] // Добавляем dwelling в userUpdate
+                    diary: user.diary
                 });
             } else {
                 // Обновляем lastActivity, если записей нет
@@ -216,8 +215,7 @@ function registerUserHandlers({
             credits: user.credits || 0,
             freeRoam: user.freeRoam || false,
             stats: user.stats,
-            diary: user.diary, // Отправляем diary клиенту
-            dwelling: user.dwelling || [] // Добавляем dwelling в userUpdate
+            diary: user.diary // Отправляем diary клиенту
         });
         console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 
@@ -446,8 +444,7 @@ function registerUserHandlers({
                 credits: user.credits || 0,
                 onLeash: user.onLeash,
                 freeRoam: user.freeRoam || false,
-                stats: user.stats,
-                dwelling: user.dwelling || [] // Добавляем dwelling в userUpdate
+                stats: user.stats
             });
 
             console.log('Отправлен userUpdate с параметрами:', { stats: user.stats });
@@ -562,53 +559,6 @@ function registerUserHandlers({
             callback({ success: true });
         } catch (err) {
             console.error('Ошибка при обновлении freeWill:', err.message);
-            callback({ success: false, message: 'Ошибка сервера' });
-        }
-    });
-
-    // Новый обработчик для сохранения координат предметов в dwelling
-    socket.on('saveDwelling', async (data, callback) => {
-        try {
-            const { userId, dwelling } = data;
-            if (!userId || !Array.isArray(dwelling)) {
-                callback({ success: false, message: 'Некорректные данные' });
-                return;
-            }
-
-            const user = await User.findOneAndUpdate(
-                { userId },
-                { $set: { dwelling } },
-                { new: true }
-            );
-
-            if (!user) {
-                callback({ success: false, message: 'Пользователь не найден' });
-                return;
-            }
-
-            socket.emit('userUpdate', {
-                userId: user.userId,
-                firstName: user.firstName,
-                username: user.username,
-                lastName: user.lastName,
-                photoUrl: user.photoUrl,
-                isRegistered: user.isRegistered,
-                isHuman: user.isHuman,
-                animalType: user.animalType,
-                name: user.name,
-                owner: user.owner,
-                homeless: user.homeless,
-                credits: user.credits || 0,
-                onLeash: user.onLeash,
-                freeRoam: user.freeRoam || false,
-                stats: user.stats,
-                diary: user.diary,
-                dwelling: user.dwelling
-            });
-
-            callback({ success: true });
-        } catch (err) {
-            console.error('Ошибка при сохранении dwelling:', err.message);
             callback({ success: false, message: 'Ошибка сервера' });
         }
     });

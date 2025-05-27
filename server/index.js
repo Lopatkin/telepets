@@ -68,13 +68,7 @@ const userSchema = new mongoose.Schema({
     maxMood: { type: Number, default: 100 },
     maxSatiety: { type: Number, default: 100 },
     freeWill: { type: Number, default: 0, min: 0, max: 100 } // Новое поле freeWill
-  },
-  dwelling: [{ // Новое поле для хранения предметов в убежище
-    id: { type: String, required: true }, // Идентификатор предмета (circle, square, triangle)
-    x: { type: Number, required: true }, // Координата X
-    y: { type: Number, required: true }, // Координата Y
-    scaleFactor: { type: Number, required: true } // Масштаб объекта
-  }]
+  }
 });
 const User = mongoose.model('User', userSchema);
 

@@ -198,7 +198,16 @@ function MyShelter({ theme, setShowMyShelter }) {
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
 
-
+        // Сохраняем позиции объектов при клике на крестик
+        const handleClose = () => {
+            const positions = {
+                circle: { x: circle.position.x, y: circle.position.y, scaleFactor: circle.scaleFactor },
+                square: { x: square.position.x, y: square.position.y, scaleFactor: square.scaleFactor },
+                triangle: { x: triangle.position.x, y: triangle.position.y, scaleFactor: triangle.scaleFactor }
+            };
+            localStorage.setItem('shelterObjectPositions', JSON.stringify(positions));
+            setShowMyShelter(false);
+        };
 
         // Настройка мыши
         const mouse = Matter.Mouse.create(canvas);
@@ -410,17 +419,6 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.Engine.clear(engine);
         };
     }, [theme]);
-
-    // Сохраняем позиции объектов при клике на крестик
-    const handleClose = () => {
-        const positions = {
-            circle: { x: circle.position.x, y: circle.position.y, scaleFactor: circle.scaleFactor },
-            square: { x: square.position.x, y: square.position.y, scaleFactor: square.scaleFactor },
-            triangle: { x: triangle.position.x, y: triangle.position.y, scaleFactor: triangle.scaleFactor }
-        };
-        localStorage.setItem('shelterObjectPositions', JSON.stringify(positions));
-        setShowMyShelter(false);
-    };
 
     return (
         <ShelterContainer theme={theme}>

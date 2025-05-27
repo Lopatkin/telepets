@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
@@ -10,8 +10,10 @@ const ButtonContainer = styled.div`
   z-index: 1001;
 `;
 
-/* Добавляем стиль для кнопки FixButton */
-const FixButton = styled.button`
+/* Заменяем FixButton на FixToggle - стили для переключателя */
+const FixToggle = styled.label`
+  display: inline-flex;
+  align-items: center;
   background: #28A745;
   color: white;
   border: none;
@@ -19,6 +21,12 @@ const FixButton = styled.button`
   padding: 8px 16px;
   cursor: pointer;
   font-size: 16px;
+  user-select: none;
+
+  input[type="checkbox"] {
+    margin-right: 8px;
+    accent-color: #218838; /* Цвет чекбокса при активации */
+  }
 
   &:hover {
     background: #218838;
@@ -63,6 +71,8 @@ function MyShelter({ theme, setShowMyShelter }) {
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
     const originalSizesRef = useRef({}); // Храним начальные размеры объектов
+    const [isFixed, setIsFixed] = useState(false); // Состояние переключателя
+
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -373,11 +383,19 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.Engine.clear(engine);
         };
     }, [theme]);
-    
+
+    /* Обновляем разметку в return, заменяем FixButton на FixToggle */
     return (
         <ShelterContainer theme={theme}>
             <ButtonContainer>
-                <FixButton onClick={() => { /* Функционал будет добавлен позже */ }}>Зафиксировать</FixButton>
+                <FixToggle>
+                    <input
+                        type="checkbox"
+                        checked={isFixed}
+                        onChange={() => setIsFixed(!isFixed)} // Переключаем состояние
+                    />
+                    Зафиксировать
+                </FixToggle>
                 <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
             </ButtonContainer>
             <CanvasContainer>
@@ -387,4 +405,4 @@ function MyShelter({ theme, setShowMyShelter }) {
     );
 }
 
-export default MySh
+export default MyShelter;

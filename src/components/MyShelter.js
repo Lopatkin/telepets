@@ -49,37 +49,42 @@ function MyShelter({ theme, setShowMyShelter }) {
         engine.gravity.y = 0;
 
         const canvas = canvasRef.current;
-        const { width, height } = canvas.getBoundingClientRect();
+        // Устанавливаем размеры canvas на основе родительского контейнера
+        const parent = canvas.parentElement;
+        const width = parent.getBoundingClientRect().width;
+        const height = parent.getBoundingClientRect().height;
+        canvas.width = width;
+        canvas.height = height;
 
         // Создаем границы
         const boundaryOptions = {
             isStatic: true,
-            restitution: 0, // Убираем отскок
-            friction: 1, // Увеличиваем трение для остановки объектов
+            restitution: 0,
+            friction: 1,
             render: { visible: false },
-            collisionFilter: { category: 0x0003, mask: 0x0001 } // Границы взаимодействуют только с интерактивными объектами
+            collisionFilter: { category: 0x0003, mask: 0x0001 }
         };
         const boundaries = [
-            Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions), // Верхняя граница
-            Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions), // Нижняя граница
-            Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions), // Левая граница
-            Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions), // Правая граница
+            Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions),
+            Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions),
+            Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions),
+            Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions),
         ];
 
         // Создаем стену и пол
-        const wallHeight = height * 0.4; // Стена занимает 40% высоты
-        const floorHeight = height * 0.6; // Пол занимает 60% высоты
-        const staticCollisionFilter = { category: 0x0002, mask: 0 }; // Уникальная категория, не взаимодействует с другими
+        const wallHeight = height * 0.4;
+        const floorHeight = height * 0.6;
+        const staticCollisionFilter = { category: 0x0002, mask: 0 };
         const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
             isStatic: true,
             restitution: 0,
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3', // Цвет для стены
-                zIndex: -100 // Самый дальний план
+                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
+                zIndex: -100
             },
-            collisionFilter: staticCollisionFilter // Не взаимодействует с другими объектами
+            collisionFilter: staticCollisionFilter
         });
 
         const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
@@ -88,14 +93,15 @@ function MyShelter({ theme, setShowMyShelter }) {
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9', // Цвет для пола
-                zIndex: -100 // Самый дальний план
+                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
+                zIndex: -100
             },
-            collisionFilter: staticCollisionFilter // Не взаимодействует с другими объектами
+            collisionFilter: staticCollisionFilter
         });
 
-        const floorMiddleY = height * 0.7; // Середина пола по вертикали (середина между 40% и 100% высоты)
-        const circle = Matter.Bodies.circle(width * 0.25, floorMiddleY, 30, {
+        // Размещаем объекты у верхней границы пола
+        const floorTopY = height * 0.4;
+        const circle = Matter.Bodies.circle(width * 0.25, floorTopY, 30, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -107,7 +113,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
 
-        const square = Matter.Bodies.rectangle(width * 0.5, floorMiddleY, 60, 60, {
+        const square = Matter.Bodies.rectangle(width * 0.5, floorTopY, 60, 60, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -119,7 +125,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
 
-        const triangle = Matter.Bodies.polygon(width * 0.75, floorMiddleY, 3, 40, {
+        const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY, 3, 40, {
             isStatic: false,
             restitution: 0,
             friction: 1,
@@ -206,7 +212,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         // Добавляем обработку остановки объектов после перетаскивания
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
             const draggedBody = event.body;
-            Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 }); // Останавливаем объект после перетаскивания
+            Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
         });
 
         // Поднимаем объект на передний слой при начале перетаскивания
@@ -239,7 +245,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             // Проверяем и корректируем позиции интерактивных объектов
             bodiesRef.current.forEach(body => {
                 const bounds = body.bounds;
-                const margin = 5; // Небольшой отступ от границ
+                const margin = 5;
                 if (bounds.min.x < margin) {
                     Matter.Body.setPosition(body, { x: margin + (bounds.max.x - bounds.min.x) / 2, y: body.position.y });
                 }
@@ -293,31 +299,17 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
             Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
             Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
-            Matter.Body.set(boundaries[0], 'bounds', Matter.Bounds.create([
-                { x: 0, y: -50 },
-                { x: newWidth, y: 0 },
-            ]));
-            Matter.Body.set(boundaries[1], 'bounds', Matter.Bounds.create([
-                { x: 0, y: newHeight },
-                { x: newWidth, y: newHeight + 50 },
-            ]));
-            Matter.Body.set(boundaries[2], 'bounds', Matter.Bounds.create([
-                { x: -50, y: 0 },
-                { x: 0, y: newHeight },
-            ]));
-            Matter.Body.set(boundaries[3], 'bounds', Matter.Bounds.create([
-                { x: newWidth, y: 0 },
-                { x: newWidth + 50, y: newHeight },
-            ]));
 
             // Обновляем позиции и размеры стены и пола
             Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
             Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
-            Matter.Body.scale(wall, newWidth / width, (newHeight * 0.4) / wallHeight);
-            Matter.Body.scale(floor, newWidth / width, (newHeight * 0.6) / floorHeight);
+            const scaleX = newWidth / width;
+            const scaleY = newHeight / height;
+            Matter.Body.scale(wall, scaleX, scaleY);
+            Matter.Body.scale(floor, scaleX, scaleY);
 
             // Проверяем, что интерактивные объекты остаются в видимой области
-            const margin = 5; // Небольшой отступ от границ
+            const margin = 5;
             bodiesRef.current.forEach(body => {
                 const bounds = body.bounds;
                 if (bounds.min.x < margin || bounds.max.x > newWidth - margin || bounds.min.y < margin || bounds.max.y > newHeight - margin) {
@@ -327,7 +319,6 @@ function MyShelter({ theme, setShowMyShelter }) {
                 }
             });
         };
-
 
         window.addEventListener('resize', handleResize);
         handleResize();

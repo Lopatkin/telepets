@@ -365,9 +365,10 @@ function MyShelter({ theme, setShowMyShelter, user, socket }) {
             canvas.removeEventListener('touchmove', handleTouchMove);
             canvas.removeEventListener('touchend', handleTouchEnd);
             window.removeEventListener('resize', handleResize);
-            const currentRunner = runnerRef.current; // Сохраняем текущее значение runnerRef.current
-            if (currentRunner) {
-                Matter.Runner.stop(currentRunner);
+            // Создаём локальную копию runnerRef.current для cleanup
+            const runner = runnerRef.current;
+            if (runner) {
+                Matter.Runner.stop(runner);
             }
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);

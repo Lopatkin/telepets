@@ -54,13 +54,16 @@ function MyShelter({ theme, setShowMyShelter }) {
         // Создаем границы
         const boundaryOptions = {
             isStatic: true,
+            restitution: 0, // Убираем отскок
+            friction: 1, // Увеличиваем трение для остановки объектов
             render: { visible: false },
+            collisionFilter: { category: 0x0003, mask: 0x0001 } // Границы взаимодействуют только с интерактивными объектами
         };
         const boundaries = [
-            Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions),
-            Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions),
-            Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions),
-            Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions),
+            Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions), // Верхняя граница
+            Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions), // Нижняя граница
+            Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions), // Левая граница
+            Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions), // Правая граница
         ];
 
         // Создаем стену и пол
@@ -91,44 +94,45 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: staticCollisionFilter // Не взаимодействует с другими объектами
         });
 
-        // Убедимся, что интерактивные объекты имеют другую категорию коллизий
+        // Создаем объекты с начальным zIndex
+        const interactiveCollisionFilter = { category: 0x0001, mask: 0x0001 | 0x0003 }; // Взаимодействуют с другими объектами и границами
         const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
             isStatic: false,
             restitution: 0,
-            friction: 0,
+            friction: 1,
             frictionAir: 0,
             inertia: Infinity,
             render: {
                 fillStyle: 'red',
                 zIndex: 0
             },
-            collisionFilter: { category: 0x0001, mask: 0x0001 } // Интерактивные объекты взаимодействуют только между собой
+            collisionFilter: interactiveCollisionFilter
         });
 
         const square = Matter.Bodies.rectangle(Math.min(width / 2, width - 60), Math.min(height / 2, height - 60), 60, 60, {
             isStatic: false,
             restitution: 0,
-            friction: 0,
+            friction: 1,
             frictionAir: 0,
             inertia: Infinity,
             render: {
                 fillStyle: 'blue',
                 zIndex: 0
             },
-            collisionFilter: { category: 0x0001, mask: 0x0001 }
+            collisionFilter: interactiveCollisionFilter
         });
 
         const triangle = Matter.Bodies.polygon(Math.min(width * 3 / 4, width - 40), Math.min(height * 3 / 4, height - 40), 3, 40, {
             isStatic: false,
             restitution: 0,
-            friction: 0,
+            friction: 1,
             frictionAir: 0,
             inertia: Infinity,
             render: {
                 fillStyle: 'yellow',
                 zIndex: 0
             },
-            collisionFilter: { category: 0x0001, mask: 0x0001 }
+            collisionFilter: interactiveCollisionFilter
         });
 
         bodiesRef.current = [circle, square, triangle];
@@ -230,6 +234,24 @@ function MyShelter({ theme, setShowMyShelter }) {
                 context.fill();
             });
 
+            // Проверяем и корректируем позиции интерактивных объектов
+            bodiesRef.current.forEach(body => {
+                const bounds = body.bounds;
+                const margin = 5; // Небольшой отступ от границ
+                if (bounds.min.x < margin) {
+                    Matter.Body.setPosition(body, { x: margin + (bounds.max.x - bounds.min.x) / 2, y: body.position.y });
+                }
+                if (bounds.max.x > canvas.width - margin) {
+                    Matter.Body.setPosition(body, { x: canvas.width - margin - (bounds.max.x - bounds.min.x) / 2, y: body.position.y });
+                }
+                if (bounds.min.y < margin) {
+                    Matter.Body.setPosition(body, { x: body.position.x, y: margin + (bounds.max.y - bounds.min.y) / 2 });
+                }
+                if (bounds.max.y > canvas.height - margin) {
+                    Matter.Body.setPosition(body, { x: body.position.x, y: canvas.height - margin - (bounds.max.y - bounds.min.y) / 2 });
+                }
+            });
+
             // Рендерим интерактивные объекты после, с сортировкой по zIndex
             const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
             bodies.forEach(body => {
@@ -293,11 +315,12 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.Body.scale(floor, newWidth / width, (newHeight * 0.7) / floorHeight);
 
             // Проверяем, что интерактивные объекты остаются в видимой области
+            const margin = 5; // Небольшой отступ от границ
             bodiesRef.current.forEach(body => {
                 const bounds = body.bounds;
-                if (bounds.min.x < 0 || bounds.max.x > newWidth || bounds.min.y < 0 || bounds.max.y > newHeight) {
-                    const newX = Math.max(50, Math.min(body.position.x, newWidth - 50));
-                    const newY = Math.max(50, Math.min(body.position.y, newHeight - 50));
+                if (bounds.min.x < margin || bounds.max.x > newWidth - margin || bounds.min.y < margin || bounds.max.y > newHeight - margin) {
+                    const newX = Math.max(margin + (bounds.max.x - bounds.min.x) / 2, Math.min(body.position.x, newWidth - margin - (bounds.max.x - bounds.min.x) / 2));
+                    const newY = Math.max(margin + (bounds.max.y - bounds.min.y) / 2, Math.min(body.position.y, newHeight - margin - (bounds.max.y - bounds.min.y) / 2));
                     Matter.Body.setPosition(body, { x: newX, y: newY });
                 }
             });

@@ -326,6 +326,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             });
         };
 
+        
         window.addEventListener('resize', handleResize);
         handleResize();
 

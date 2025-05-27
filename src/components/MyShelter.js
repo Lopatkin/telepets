@@ -63,6 +63,35 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions),
         ];
 
+        const wallHeight = height * 0.3; // Стена занимает 30% высоты
+        const floorHeight = height * 0.7; // Пол занимает 70% высоты
+        const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
+            isStatic: true,
+            restitution: 0,
+            friction: 0,
+            frictionAir: 0,
+            render: {
+                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3', // Цвет для стены
+                zIndex: -100 // Самый дальний план
+            },
+            collisionFilter: { group: 0 } // Не взаимодействует с другими объектами
+        });
+
+        const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
+            isStatic: true,
+            restitution: 0,
+            friction: 0,
+            frictionAir: 0,
+            render: {
+                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9', // Цвет для пола
+                zIndex: -100 // Самый дальний план
+            },
+            collisionFilter: { group: 0 } // Не взаимодействует с другими объектами
+        });
+
+        // Добавляем стену и пол в мир, но не в bodiesRef, чтобы исключить их из интерактивной логики
+        Matter.World.add(engine.world, [wall, floor]);
+
         // Создаем объекты с начальным zIndex
         const circle = Matter.Bodies.circle(Math.min(width / 4, width - 30), Math.min(height / 4, height - 30), 30, {
             isStatic: false,
@@ -223,7 +252,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             canvas.width = newWidth;
             canvas.height = newHeight;
 
-            // Обновляем позиции границ
+            // Обновляем позиции и размеры границы
             Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
             Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
             Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
@@ -245,7 +274,13 @@ function MyShelter({ theme, setShowMyShelter }) {
                 { x: newWidth + 50, y: newHeight },
             ]));
 
-            // Проверяем, что объекты остаются в видимой области
+            // Обновляем позиции и размеры стены и пола
+            Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.3) / 2 });
+            Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.7) / 2 });
+            Matter.Body.scale(wall, newWidth / width, (newHeight * 0.3) / wallHeight);
+            Matter.Body.scale(floor, newWidth / width, (newHeight * 0.7) / floorHeight);
+
+            // Проверяем, что интерактивные объекты остаются в видимой области
             bodiesRef.current.forEach(body => {
                 const bounds = body.bounds;
                 if (bounds.min.x < 0 || bounds.max.x > newWidth || bounds.min.y < 0 || bounds.max.y > newHeight) {

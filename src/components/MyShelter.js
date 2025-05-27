@@ -2,22 +2,26 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 10px; /* Отступ между кнопками */
+  padding: 10px; /* Внутренний отступ для контейнера */
+  justify-content: flex-end; /* Выравнивание кнопок вправо */
+  z-index: 1001;
+`;
+
 /* Добавляем стиль для кнопки FixButton */
 const FixButton = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 80px; /* Смещаем влево от кнопки "Закрыть" */
-  background: #28A745; /* Зеленый цвет для контраста */
+  background: #28A745;
   color: white;
   border: none;
   border-radius: 10px;
   padding: 8px 16px;
   cursor: pointer;
   font-size: 16px;
-  z-index: 1001;
 
   &:hover {
-    background: #218838; /* Темнее при наведении */
+    background: #218838;
   }
 `;
 
@@ -39,9 +43,6 @@ const CanvasContainer = styled.div`
 `;
 
 const CloseButton = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 10px;
   background: #007AFF;
   color: white;
   border: none;
@@ -49,7 +50,6 @@ const CloseButton = styled.button`
   padding: 8px 16px;
   cursor: pointer;
   font-size: 16px;
-  z-index: 1001;
 
   &:hover {
     background: #005BB5;
@@ -373,11 +373,13 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.Engine.clear(engine);
         };
     }, [theme]);
-
+    
     return (
         <ShelterContainer theme={theme}>
-            <FixButton onClick={() => { /* Функционал будет добавлен позже */ }}>Зафиксировать</FixButton>
-            <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
+            <ButtonContainer>
+                <FixButton onClick={() => { /* Функционал будет добавлен позже */ }}>Зафиксировать</FixButton>
+                <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
+            </ButtonContainer>
             <CanvasContainer>
                 <canvas ref={canvasRef} />
             </CanvasContainer>
@@ -385,4 +387,4 @@ function MyShelter({ theme, setShowMyShelter }) {
     );
 }
 
-export default MyShelter;
+export default MySh

@@ -1,28 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react'; // Добавляем useState
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
-
-// Добавляем стили для переключателя
-const ToggleContainer = styled.div`
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  display: flex;
-  align-items: center;
-  z-index: 1001;
-`;
-
-const ToggleLabel = styled.label`
-  color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
-  margin-left: 8px;
-  font-size: 16px;
-`;
-
-const ToggleInput = styled.input`
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-`;
 
 const ShelterContainer = styled.div`
   position: fixed;
@@ -59,14 +37,60 @@ const CloseButton = styled.button`
   }
 `;
 
+const ToggleContainer = styled.div`
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  z-index: 1001;
+`;
+
+const ToggleLabel = styled.label`
+  color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
+  font-size: 16px;
+  margin-right: 8px;
+`;
+
+const ToggleSwitch = styled.input`
+  width: 40px;
+  height: 20px;
+  appearance: none;
+  background: ${({ theme }) => (theme === 'dark' ? '#555' : '#ccc')};
+  border-radius: 20px;
+  position: relative;
+  cursor: pointer;
+  outline: none;
+
+  &:checked {
+    background: #007AFF;
+  }
+
+  &:before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    background: white;
+    transition: transform 0.2s;
+  }
+
+  &:checked:before {
+    transform: translateX(20px);
+  }
+`;
+
 function MyShelter({ theme, setShowMyShelter }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
     const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
-    const originalSizesRef = useRef({}); // Храним начальные размеры объектов
-    const [isLocked, setIsLocked] = useState(false); // Состояние для переключателя
+    const originalSizesRef = useRef({});
+    const [isFixed, setIsFixed] = useState(false); // Состояние переключателя
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -125,7 +149,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         // Размещаем объекты у верхней границы пола
         const floorTopY = height * 0.4;
         const circle = Matter.Bodies.circle(width * 0.25, floorTopY, 30, {
-            isStatic: isLocked,
+            isStatic: false,
             restitution: 0,
             friction: 1,
             frictionAir: 0.1,
@@ -135,11 +159,11 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-        circle.scaleFactor = 1; // Инициализируем масштаб
+        circle.scaleFactor = 1;
         originalSizesRef.current.circle = { radius: 30 };
 
         const square = Matter.Bodies.rectangle(width * 0.5, floorTopY, 60, 60, {
-            isStatic: isLocked,
+            isStatic: false,
             restitution: 0,
             friction: 1,
             frictionAir: 0.1,
@@ -149,11 +173,11 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-        square.scaleFactor = 1; // Инициализируем масштаб
+        square.scaleFactor = 1;
         originalSizesRef.current.square = { width: 60, height: 60 };
 
         const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY, 3, 40, {
-            isStatic: isLocked,
+            isStatic: false,
             restitution: 0,
             friction: 1,
             frictionAir: 0.1,
@@ -163,7 +187,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-        triangle.scaleFactor = 1; // Инициализируем масштаб
+        triangle.scaleFactor = 1;
         originalSizesRef.current.triangle = { radius: 40 };
 
         bodiesRef.current = [circle, square, triangle];
@@ -171,13 +195,39 @@ function MyShelter({ theme, setShowMyShelter }) {
 
         // Настройка мыши
         const mouse = Matter.Mouse.create(canvas);
+        const mouseConstraint = Matter.MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: { visible: false },
+            },
+        });
+        mouseConstraintRef.current = mouseConstraint;
+        Matter.World.add(engine.world, mouseConstraint);
+
+        // Управление состоянием фиксации
+        const updateFixation = () => {
+            bodiesRef.current.forEach(body => {
+                Matter.Body.setStatic(body, isFixed);
+            });
+            if (isFixed) {
+                Matter.World.remove(engine.world, mouseConstraint);
+            } else {
+                Matter.World.add(engine.world, mouseConstraint);
+            }
+        };
+
+        updateFixation(); // Инициализация начального состояния
 
         const bringToFront = (body) => {
-            const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
-            body.render.zIndex = maxZIndex + 1;
+            if (!isFixed) { // Приводить к переднему плану только если не зафиксировано
+                const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
+                body.render.zIndex = maxZIndex + 1;
+            }
         };
 
         const handleMouseDown = (event) => {
+            if (isFixed) return; // Игнорируем клики, если объекты зафиксированы
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
@@ -189,6 +239,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         };
 
         const handleTouchStart = (event) => {
+            if (isFixed) return; // Игнорируем касания, если объекты зафиксированы
             event.preventDefault();
             const touch = event.touches[0];
             const rect = canvas.getBoundingClientRect();
@@ -206,6 +257,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         };
 
         const handleTouchMove = (event) => {
+            if (isFixed) return; // Игнорируем движение, если объекты зафиксированы
             event.preventDefault();
             const touch = event.touches[0];
             const rect = canvas.getBoundingClientRect();
@@ -216,6 +268,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         };
 
         const handleTouchEnd = (event) => {
+            if (isFixed) return; // Игнорируем окончание касания, если объекты зафиксированы
             event.preventDefault();
             mouse.mousedown = false;
         };
@@ -225,32 +278,14 @@ function MyShelter({ theme, setShowMyShelter }) {
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-        const mouseConstraint = Matter.MouseConstraint.create(engine, {
-            mouse: mouse,
-            constraint: {
-                stiffness: 0.2,
-                render: { visible: false },
-            },
-            collisionFilter: {
-                mask: isLocked ? 0x0000 : 0x0001 // Отключаем взаимодействие, если isLocked
-            }
-        });
-
-        useEffect(() => {
-            bodiesRef.current.forEach(body => {
-                Matter.Body.setStatic(body, isLocked);
-            });
-        }, [isLocked]);
-
-        mouseConstraintRef.current = mouseConstraint;
-        Matter.World.add(engine.world, mouseConstraint);
-
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
+            if (isFixed) return; // Игнорируем событие, если объекты зафиксированы
             const draggedBody = event.body;
             Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
         });
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
+            if (isFixed) return; // Игнорируем событие, если объекты зафиксированы
             const draggedBody = event.body;
             bringToFront(draggedBody);
         });
@@ -295,20 +330,19 @@ function MyShelter({ theme, setShowMyShelter }) {
 
                 // Масштабирование на основе y-позиции
                 const y = body.position.y;
-                const minY = height * 0.4; // Верхняя граница пола
-                const maxY = height; // Нижняя граница пола
+                const minY = height * 0.4;
+                const maxY = height;
                 let targetScale = 1;
                 if (y >= minY && y <= maxY) {
-                    targetScale = 1 + (y - minY) / (maxY - minY); // Линейная интерполяция от 1 до 2
+                    targetScale = 1 + (y - minY) / (maxY - minY);
                 } else if (y > maxY) {
-                    targetScale = 2; // Максимальный масштаб
+                    targetScale = 2;
                 }
 
-                // Применяем масштаб, если он изменился
-                if (Math.abs(body.scaleFactor - targetScale) > 0.001) { // Порог для избежания микроколебаний
+                if (Math.abs(body.scaleFactor - targetScale) > 0.001) {
                     const scaleFactor = targetScale / body.scaleFactor;
                     Matter.Body.scale(body, scaleFactor, scaleFactor);
-                    body.scaleFactor = targetScale; // Обновляем текущий масштаб
+                    body.scaleFactor = targetScale;
                 }
             });
 
@@ -386,17 +420,18 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, isLocked]);
+    }, [theme, isFixed]); // Добавляем isFixed в зависимости useEffect
 
     return (
         <ShelterContainer theme={theme}>
             <ToggleContainer>
-                <ToggleInput
-                    type="checkbox"
-                    checked={isLocked}
-                    onChange={() => setIsLocked(!isLocked)}
-                />
                 <ToggleLabel theme={theme}>Зафиксировать</ToggleLabel>
+                <ToggleSwitch
+                    type="checkbox"
+                    theme={theme}
+                    checked={isFixed}
+                    onChange={() => setIsFixed(!isFixed)}
+                />
             </ToggleContainer>
             <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
             <CanvasContainer>

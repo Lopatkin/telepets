@@ -94,44 +94,41 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: staticCollisionFilter // Не взаимодействует с другими объектами
         });
 
-        const floorTopY = height * 0.6; // Верхняя граница пола (40% высоты от верха canvas)
-
-        // Создаем объекты с начальным zIndex
-        /// Внутри useEffect, обновляем создание интерактивных объектов, убирая инерцию
-        const circle = Matter.Bodies.circle(width * 0.25, floorTopY, 30, {
+        const floorTopY = height * 0.4; // Верхняя граница пола
+        const circle = Matter.Bodies.circle(width * 0.25, floorTopY + 30, 30, { // Смещаем центр круга вниз на радиус
             isStatic: false,
             restitution: 0,
             friction: 1,
-            frictionAir: 0.1, // Добавляем небольшое сопротивление воздуха для быстрой остановки
+            frictionAir: 0.1,
             render: {
                 fillStyle: 'red',
                 zIndex: 0
             },
-            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
+            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-    
-        const square = Matter.Bodies.rectangle(width * 0.5, floorTopY, 60, 60, {
+
+        const square = Matter.Bodies.rectangle(width * 0.5, floorTopY + 30, 60, 60, { // Смещаем центр квадрата вниз на половину высоты
             isStatic: false,
             restitution: 0,
             friction: 1,
-            frictionAir: 0.1, // Добавляем небольшое сопротивление воздуха для быстрой остановки
+            frictionAir: 0.1,
             render: {
                 fillStyle: 'blue',
                 zIndex: 0
             },
-            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
+            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
-    
-        const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY, 3, 40, {
+
+        const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY + 40, 3, 40, { // Смещаем центр треугольника вниз на радиус описанной окружности
             isStatic: false,
             restitution: 0,
             friction: 1,
-            frictionAir: 0.1, // Добавляем небольшое сопротивление воздуха для быстрой остановки
+            frictionAir: 0.1,
             render: {
                 fillStyle: 'yellow',
                 zIndex: 0
             },
-            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
+            collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
 
         bodiesRef.current = [circle, square, triangle];

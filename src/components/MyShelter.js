@@ -412,6 +412,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         };
     }, [theme]);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (bodiesRef.current.length > 0) {
             bodiesRef.current.forEach(body => {

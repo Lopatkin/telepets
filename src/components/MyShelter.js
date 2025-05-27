@@ -112,6 +112,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
+        circle.scaleFactor = 1; // Инициализируем масштаб
         originalSizesRef.current.circle = { radius: 30 };
 
         const square = Matter.Bodies.rectangle(width * 0.5, floorTopY, 60, 60, {
@@ -125,6 +126,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
+        square.scaleFactor = 1; // Инициализируем масштаб
         originalSizesRef.current.square = { width: 60, height: 60 };
 
         const triangle = Matter.Bodies.polygon(width * 0.75, floorTopY, 3, 40, {
@@ -138,6 +140,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
         });
+        triangle.scaleFactor = 1; // Инициализируем масштаб
         originalSizesRef.current.triangle = { radius: 40 };
 
         bodiesRef.current = [circle, square, triangle];
@@ -261,29 +264,18 @@ function MyShelter({ theme, setShowMyShelter }) {
                 const y = body.position.y;
                 const minY = height * 0.4; // Верхняя граница пола
                 const maxY = height; // Нижняя граница пола
-                let scale = 1;
+                let targetScale = 1;
                 if (y >= minY && y <= maxY) {
-                    scale = 1 + (y - minY) / (maxY - minY); // Линейная интерполяция от 1 до 2
+                    targetScale = 1 + (y - minY) / (maxY - minY); // Линейная интерполяция от 1 до 2
                 } else if (y > maxY) {
-                    scale = 2; // Максимальный масштаб
+                    targetScale = 2; // Максимальный масштаб
                 }
 
-                // Применяем масштаб
-                if (body === circle) {
-                    const currentRadius = body.circleRadius;
-                    const targetRadius = originalSizesRef.current.circle.radius * scale;
-                    const scaleFactor = targetRadius / currentRadius;
+                // Применяем масштаб, если он изменился
+                if (Math.abs(body.scaleFactor - targetScale) > 0.001) { // Порог для избежания микроколебаний
+                    const scaleFactor = targetScale / body.scaleFactor;
                     Matter.Body.scale(body, scaleFactor, scaleFactor);
-                } else if (body === square) {
-                    const currentWidth = body.bounds.max.x - body.bounds.min.x;
-                    const targetWidth = originalSizesRef.current.square.width * scale;
-                    const scaleFactor = targetWidth / currentWidth;
-                    Matter.Body.scale(body, scaleFactor, scaleFactor);
-                } else if (body === triangle) {
-                    const currentRadius = body.circleRadius; // Для полигона используем радиус
-                    const targetRadius = originalSizesRef.current.triangle.radius * scale;
-                    const scaleFactor = targetRadius / currentRadius;
-                    Matter.Body.scale(body, scaleFactor, scaleFactor);
+                    body.scaleFactor = targetScale; // Обновляем текущий масштаб
                 }
             });
 

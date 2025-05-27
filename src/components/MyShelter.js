@@ -2,6 +2,29 @@ import React, { useEffect, useRef, useState } from 'react'; // Добавляе�
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
+// Заменяем CloseButton на CloseIcon
+const CloseIcon = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: ${({ theme }) => (theme === 'dark' ? '#4A4A4A' : '#D3D3D3')};
+  color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 24px;
+  z-index: 1001;
+
+  &:hover {
+    background: ${({ theme }) => (theme === 'dark' ? '#5A5A5A' : '#B0B0B0')};
+  }
+`;
+
 const ToggleContainer = styled.div`
   position: absolute;
   top: 10px;
@@ -32,24 +55,6 @@ const ShelterContainer = styled.div`
 const CanvasContainer = styled.div`
   flex: 1;
   position: relative;
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #007AFF;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-size: 16px;
-  z-index: 1001;
-
-  &:hover {
-    background: #005BB5;
-  }
 `;
 
 function MyShelter({ theme, setShowMyShelter }) {
@@ -374,12 +379,12 @@ function MyShelter({ theme, setShowMyShelter }) {
 
     return (
         <ShelterContainer theme={theme}>
-            <CloseButton onClick={() => setShowMyShelter(false)}>Закрыть</CloseButton>
+            <CloseIcon theme={theme} onClick={() => setShowMyShelter(false)}>×</CloseIcon>
             <ToggleContainer>
                 <input
                     type="checkbox"
                     checked={isFixed}
-                    onChange={() => setIsFixed(!isFixed)} // Переключаем состояние
+                    onChange={() => setIsFixed(!isFixed)}
                     id="fixToggle"
                 />
                 <ToggleLabel theme={theme} htmlFor="fixToggle">

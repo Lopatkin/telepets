@@ -76,6 +76,20 @@ function MyShelter({ theme, setShowMyShelter }) {
     const mouseConstraintRef = useRef(null);
     const originalSizesRef = useRef({});
     const [isFixed, setIsFixed] = useState(false);
+    const circleRef = useRef(null);
+    const squareRef = useRef(null);
+    const triangleRef = useRef(null);
+
+    // Функция handleClose вынесена в тело компонента
+    const handleClose = () => {
+        const positions = {
+            circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor },
+            square: { x: squareRef.current.position.x, y: squareRef.current.position.y, scaleFactor: squareRef.current.scaleFactor },
+            triangle: { x: triangleRef.current.position.x, y: triangleRef.current.position.y, scaleFactor: triangleRef.current.scaleFactor }
+        };
+        localStorage.setItem('shelterObjectPositions', JSON.stringify(positions));
+        setShowMyShelter(false);
+    };
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -131,7 +145,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: staticCollisionFilter
         });
 
-        // Загружаем сохраненные позиции из localStorage, если они есть
+        // Загружаем сохраненные позиции из localStorage
         const savedPositions = JSON.parse(localStorage.getItem('shelterObjectPositions')) || {};
         const floorTopY = height * 0.4;
 
@@ -152,8 +166,9 @@ function MyShelter({ theme, setShowMyShelter }) {
                 collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
             }
         );
-        circle.scaleFactor = savedPositions.circle?.scaleFactor || 1; // Восстанавливаем масштаб
+        circle.scaleFactor = savedPositions.circle?.scaleFactor || 1;
         originalSizesRef.current.circle = { radius: 30 };
+        circleRef.current = circle; // Сохраняем в ref
 
         const square = Matter.Bodies.rectangle(
             savedPositions.square?.x || width * 0.5,
@@ -172,8 +187,9 @@ function MyShelter({ theme, setShowMyShelter }) {
                 collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
             }
         );
-        square.scaleFactor = savedPositions.square?.scaleFactor || 1; // Восстанавливаем масштаб
+        square.scaleFactor = savedPositions.square?.scaleFactor || 1;
         originalSizesRef.current.square = { width: 60, height: 60 };
+        squareRef.current = square; // Сохраняем в ref
 
         const triangle = Matter.Bodies.polygon(
             savedPositions.triangle?.x || width * 0.75,
@@ -192,22 +208,12 @@ function MyShelter({ theme, setShowMyShelter }) {
                 collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
             }
         );
-        triangle.scaleFactor = savedPositions.triangle?.scaleFactor || 1; // Восстанавливаем масштаб
+        triangle.scaleFactor = savedPositions.triangle?.scaleFactor || 1;
         originalSizesRef.current.triangle = { radius: 40 };
+        triangleRef.current = triangle; // Сохраняем в ref
 
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
-
-        // Сохраняем позиции объектов при клике на крестик
-        const handleClose = () => {
-            const positions = {
-                circle: { x: circle.position.x, y: circle.position.y, scaleFactor: circle.scaleFactor },
-                square: { x: square.position.x, y: square.position.y, scaleFactor: square.scaleFactor },
-                triangle: { x: triangle.position.x, y: triangle.position.y, scaleFactor: triangle.scaleFactor }
-            };
-            localStorage.setItem('shelterObjectPositions', JSON.stringify(positions));
-            setShowMyShelter(false);
-        };
 
         // Настройка мыши
         const mouse = Matter.Mouse.create(canvas);

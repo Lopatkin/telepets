@@ -67,8 +67,8 @@ function MyShelter({ theme, setShowMyShelter }) {
         ];
 
         // Создаем стену и пол
-        const wallHeight = height * 0.3; // Стена занимает 30% высоты
-        const floorHeight = height * 0.7; // Пол занимает 70% высоты
+        const wallHeight = height * 0.4; // Стена занимает 40% высоты
+        const floorHeight = height * 0.6; // Пол занимает 60% высоты
         const staticCollisionFilter = { category: 0x0002, mask: 0 }; // Уникальная категория, не взаимодействует с другими
         const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
             isStatic: true,
@@ -134,7 +134,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             },
             collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 } // Отрицательная группа, взаимодействует только с границами
         });
-        
+
         bodiesRef.current = [circle, square, triangle];
         Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
 

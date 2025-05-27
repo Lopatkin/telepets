@@ -94,7 +94,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: staticCollisionFilter // Не взаимодействует с другими объектами
         });
 
-        const floorTopY = height * 0.4; // Верхняя граница пола (40% высоты от верха canvas)
+        const floorTopY = height * 0.6; // Верхняя граница пола (40% высоты от верха canvas)
 
         // Создаем объекты с начальным zIndex
         /// Внутри useEffect, обновляем создание интерактивных объектов, убирая инерцию

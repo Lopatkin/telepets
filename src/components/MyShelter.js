@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 import wallpaperImage from '../images/dwelling/wallpaper.jpg';
@@ -103,13 +103,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket }) {
     const [items, setItems] = useState([]);
 
     // Размеры предметов
-    const itemSizes = {
+    const itemSizes = useMemo(() => ({
         Стул: { width: 60, height: 60 },
         Диван: { width: 100, height: 60 },
         Стол: { width: 80, height: 60 },
         Шкаф: { width: 80, height: 100 },
         Палка: { width: 40, height: 20 },
-    };
+    }), []);
 
     // Загрузка изображений
     useEffect(() => {

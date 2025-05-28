@@ -295,7 +295,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user, setShowMyShel
           <UsersIcon />
           <UserCount>{users.length}</UserCount>
         </UsersButton>
-        <ShelterButton onClick={toggleShelter} theme={theme}>Моё убежище</ShelterButton> {/* Новая кнопка */}
+        {room && room.startsWith('myhome_') && !user.homeless && (
+          <ShelterButton onClick={toggleShelter} theme={theme}>Моё убежище</ShelterButton>
+        )}
         <Input
           value={message}
           onChange={(e) => setMessage(e.target.value)}

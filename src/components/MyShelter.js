@@ -292,7 +292,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 y: floorTopY,
                 scaleFactor: 1
             };
-        
+
             const isStick = item.name === 'Палка'; // Проверяем, является ли предмет "Палка"
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
@@ -501,7 +501,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     }
                     context.closePath();
                 }
-            
+
                 // Проверяем, есть ли у объекта текстура (для палки)
                 if (body.render.sprite && body.render.sprite.texture === stickImage && imagesLoadedRef.current.stick) {
                     const vertices = body.vertices;
@@ -510,7 +510,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     const minY = Math.min(...vertices.map(v => v.y));
                     const maxY = Math.max(...vertices.map(v => v.y));
                     const objHeight = maxY - minY;
-            
+
                     context.save();
                     context.beginPath();
                     context.moveTo(vertices[0].x, vertices[0].y);
@@ -519,15 +519,28 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     }
                     context.closePath();
                     context.clip();
-            
+
+                    // Добавляем тень для палки
+                    context.shadowColor = 'rgba(0, 0, 0, 0.3)'; // Полупрозрачная черная тень
+                    context.shadowBlur = 5; // Размытие тени
+                    context.shadowOffsetX = 3; // Смещение тени по X
+                    context.shadowOffsetY = 3; // Смещение тени по Y
+
                     const image = stickImgRef.current;
                     if (image.width && image.height) {
                         const aspectRatio = image.width / image.height;
                         const textureHeight = objHeight;
                         const textureWidth = textureHeight * aspectRatio;
-            
+
                         context.drawImage(image, minX, minY, textureWidth, textureHeight);
                     }
+
+                    // Сбрасываем настройки тени после рендеринга палки
+                    context.shadowColor = 'rgba(0, 0, 0, 0)';
+                    context.shadowBlur = 0;
+                    context.shadowOffsetX = 0;
+                    context.shadowOffsetY = 0;
+
                     context.restore();
                 } else {
                     context.fillStyle = body.render.fillStyle;

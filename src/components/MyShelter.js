@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
-import wallpaperImage from '../images/dwelling/wallpaper.jpg';
-import floorImage from '../images/dwelling/floor.jpg';
-import stickImage from '../images/dwelling/furniture/stick.png'; // Импортируем текстуру для палки
+import wallpaperImage from '../images/dwelling/wallpaper.jpg'; // Импорт текстуры для стены
+import floorImage from '../images/dwelling/floor.jpg'; // Импорт текстуры для пола
 
 const Overlay = styled.div`
   position: absolute;
@@ -11,9 +10,9 @@ const Overlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0);
-  z-index: 1500;
-  pointer-events: auto;
+  background: rgba(0, 0, 0, 0); // 100% прозрачность
+  z-index: 1500; // Выше всех элементов (CloseIcon и ToggleContainer имеют z-index 1001)
+  pointer-events: auto; // Учитывает клики и нажатия
 `;
 
 const CloseIcon = styled.button`
@@ -41,7 +40,7 @@ const CloseIcon = styled.button`
 const ToggleContainer = styled.div`
   position: absolute;
   top: 10px;
-  right: 100px;
+  right: 100px; // Располагаем левее кнопки "Закрыть"
   display: flex;
   align-items: center;
   z-index: 2000;
@@ -70,7 +69,7 @@ const CanvasContainer = styled.div`
   position: relative;
 `;
 
-function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
+function MyShelter({ theme, setShowMyShelter, userId }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
@@ -81,17 +80,14 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const circleRef = useRef(null);
     const squareRef = useRef(null);
     const triangleRef = useRef(null);
-    const wallpaperImgRef = useRef(new Image());
-    const floorImgRef = useRef(new Image());
-    const stickImgRef = useRef(new Image()); // Ссылка для изображения палки
-    const imagesLoadedRef = useRef({ wallpaper: false, floor: false, stick: false }); // Добавляем статус загрузки палки
-    const [locationItems, setLocationItems] = useState([]);
+    const wallpaperImgRef = useRef(new Image()); // Референс для текстуры стены
+    const floorImgRef = useRef(new Image()); // Референс для текстуры пола
+    const imagesLoadedRef = useRef({ wallpaper: false, floor: false }); // Отслеживание загрузки изображений
 
     // Загрузка изображений
     useEffect(() => {
         wallpaperImgRef.current.src = wallpaperImage;
         floorImgRef.current.src = floorImage;
-        stickImgRef.current.src = stickImage; // Загружаем текстуру палки
 
         wallpaperImgRef.current.onload = () => {
             imagesLoadedRef.current.wallpaper = true;
@@ -99,59 +95,22 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         floorImgRef.current.onload = () => {
             imagesLoadedRef.current.floor = true;
         };
-        stickImgRef.current.onload = () => {
-            imagesLoadedRef.current.stick = true; // Отмечаем, что текстура палки загружена
-        };
 
         wallpaperImgRef.current.onerror = () => {
             console.error('Failed to load wallpaper image');
-            imagesLoadedRef.current.wallpaper = true;
+            imagesLoadedRef.current.wallpaper = true; // Помечаем как загруженное
         };
         floorImgRef.current.onerror = () => {
             console.error('Failed to load floor image');
             imagesLoadedRef.current.floor = true;
         };
-        stickImgRef.current.onerror = () => {
-            console.error('Failed to load stick image');
-            imagesLoadedRef.current.stick = true; // Обрабатываем ошибку загрузки
-        };
     }, []);
 
-    // Получение предметов текущей локации
-    useEffect(() => {
-        if (!socket || !currentRoom) return;
-
-        const owner = currentRoom;
-        socket.emit('getItems', { owner });
-
-        socket.on('items', (data) => {
-            if (data.owner === owner) {
-                setLocationItems(data.items.map(item => ({
-                    ...item,
-                    _id: item._id.toString(),
-                })));
-            }
-        });
-
-        return () => {
-            socket.off('items');
-        };
-    }, [socket, currentRoom]);
-
     const handleClose = () => {
-        // Сохранение позиций и масштабов всех объектов
         const positions = {
             circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor },
             square: { x: squareRef.current.position.x, y: squareRef.current.position.y, scaleFactor: squareRef.current.scaleFactor },
-            triangle: { x: triangleRef.current.position.x, y: triangleRef.current.position.y, scaleFactor: triangleRef.current.scaleFactor },
-            ...locationItems.reduce((acc, item, index) => ({
-                ...acc,
-                [`item_${item._id}`]: {
-                    x: bodiesRef.current.find(b => b.itemId === item._id)?.position.x || (canvasRef.current?.width * (0.2 + (index % 5) * 0.15)),
-                    y: bodiesRef.current.find(b => b.itemId === item._id)?.position.y || (canvasRef.current?.height * 0.4),
-                    scaleFactor: bodiesRef.current.find(b => b.itemId === item._id)?.scaleFactor || 1
-                }
-            }), {})
+            triangle: { x: triangleRef.current.position.x, y: triangleRef.current.position.y, scaleFactor: triangleRef.current.scaleFactor }
         };
         localStorage.setItem(`shelterObjectPositions_${userId}`, JSON.stringify(positions));
         setShowMyShelter(false);
@@ -193,7 +152,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
+                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3', // Запасной цвет
                 zIndex: -100
             },
             collisionFilter: staticCollisionFilter
@@ -205,17 +164,17 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
+                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9', // Запасной цвет
                 zIndex: -100
             },
             collisionFilter: staticCollisionFilter
         });
 
-        // Загружаем сохраненные позиции и масштабы
+        // Загружаем сохраненные позиции и масштабы из localStorage для текущего userId
         const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};
         const floorTopY = height * 0.4;
 
-        // Создаем статичные объекты (круг, квадрат, треугольник)
+        // Создаем объекты с учетом сохраненных позиций
         const circle = Matter.Bodies.circle(
             savedPositions.circle?.x || width * 0.25,
             savedPositions.circle?.y || floorTopY,
@@ -282,44 +241,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         triangle.scaleFactor = triangleScale;
         Matter.Body.scale(triangle, triangleScale, triangleScale);
         originalSizesRef.current.triangle = { radius: 40 };
-        // Создаем серые квадраты для каждого предмета в инвентаре локации
-        const itemBodies = locationItems.map((item, index) => {
-            const itemKey = `item_${item._id}`;
-            const savedItem = savedPositions[itemKey] || {
-                x: width * (0.2 + (index % 6) * 0.15),
-                y: floorTopY,
-                scaleFactor: 1
-            };
+        triangleRef.current = triangle;
 
-            const itemSquare = Matter.Bodies.rectangle(
-                savedItem.x,
-                savedItem.y,
-                50,
-                50,
-                {
-                    isStatic: false,
-                    restitution: 0,
-                    friction: 1,
-                    frictionAir: 0.1,
-                    render: {
-                        fillStyle: item.name === 'Stick' ? 'texture' : 'grey', // Для палки используем текстуру
-                        zIndex: 0
-                    },
-                    collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
-                    itemId: item._id,
-                    itemName: item.name // Сохраняем имя предмета
-                }
-            );
-            const itemScale = savedItem.scaleFactor || 1;
-            itemSquare.scaleFactor = itemScale;
-            Matter.Body.scale(itemSquare, itemScale, itemScale);
-            originalSizesRef.current[itemKey] = { width: 50, height: 50 };
-            return itemSquare;
-        });
-
-        // Объединяем все объекты
-        bodiesRef.current = [circle, square, triangle, ...itemBodies];
-        Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle, ...itemBodies]);
+        bodiesRef.current = [circle, square, triangle];
+        Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle]);
 
         // Настройка мыши
         const mouse = Matter.Mouse.create(canvas);
@@ -422,17 +347,20 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     context.lineTo(vertices[j].x, vertices[j].y);
                 }
                 context.closePath();
-                context.clip();
+                context.clip(); // Ограничиваем область отрисовки текстуры
 
+                // Выбираем текстуру в зависимости от объекта
                 const isWall = body === wall;
                 const image = isWall ? wallpaperImgRef.current : floorImgRef.current;
                 const isImageLoaded = isWall ? imagesLoadedRef.current.wallpaper : imagesLoadedRef.current.floor;
 
                 if (isImageLoaded && image.width && image.height) {
+                    // Рассчитываем пропорциональную ширину текстуры
                     const aspectRatio = image.width / image.height;
                     const textureHeight = objHeight;
                     const textureWidth = textureHeight * aspectRatio;
 
+                    // Если текстура меньше ширины объекта, используем повторение
                     if (textureWidth < objWidth) {
                         const pattern = context.createPattern(image, 'repeat-x');
                         context.fillStyle = pattern;
@@ -440,9 +368,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         context.scale(textureWidth / image.width, textureHeight / image.height);
                         context.fill();
                     } else {
+                        // Если текстура шире или равна объекту, рисуем без повторения
                         context.drawImage(image, minX, minY, textureWidth, textureHeight);
                     }
                 } else {
+                    // Запасной цвет, если текстура не загрузилась
                     context.fillStyle = body.render.fillStyle;
                     context.fill();
                 }
@@ -487,38 +417,19 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             // Рендерим интерактивные объекты
             const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
             bodies.forEach(body => {
-                const vertices = body.vertices;
-                const minX = Math.min(...vertices.map(v => v.x));
-                const maxX = Math.max(...vertices.map(v => v.x));
-                const minY = Math.min(...vertices.map(v => v.y));
-                const maxY = Math.max(...vertices.map(v => v.y));
-                const objWidth = maxX - minX;
-                const objHeight = maxY - minY;
-
-                context.save();
                 context.beginPath();
                 if (body.circleRadius) {
                     context.arc(body.position.x, body.position.y, body.circleRadius, 0, 2 * Math.PI);
                 } else {
+                    const vertices = body.vertices;
                     context.moveTo(vertices[0].x, vertices[0].y);
                     for (let j = 1; j < vertices.length; j++) {
                         context.lineTo(vertices[j].x, vertices[j].y);
                     }
                     context.closePath();
                 }
-                context.clip();
-
-                if (body.render.fillStyle === 'texture' && body.itemName === 'Stick' && imagesLoadedRef.current.stick && stickImgRef.current.width && stickImgRef.current.height) {
-                    // Рендерим текстуру для палки
-                    const textureWidth = objWidth;
-                    const textureHeight = objHeight;
-                    context.drawImage(stickImgRef.current, minX, minY, textureWidth, textureHeight);
-                } else {
-                    // Рендерим цвет для остальных объектов
-                    context.fillStyle = body.render.fillStyle;
-                    context.fill();
-                }
-                context.restore();
+                context.fillStyle = body.render.fillStyle;
+                context.fill();
             });
 
             animationFrameId = requestAnimationFrame(renderLoop);
@@ -537,11 +448,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             canvas.width = newWidth;
             canvas.height = newHeight;
 
+            // Обновляем позиции и размеры границы
             Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
             Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
             Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
             Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
 
+            // Обновляем позиции и размеры стены и пола
             Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
             Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
             const scaleX = newWidth / width;
@@ -549,6 +462,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.Body.scale(wall, scaleX, scaleY);
             Matter.Body.scale(floor, scaleX, scaleY);
 
+            // Проверяем, что интерактивные объекты остаются в видимой области
             const margin = 5;
             bodiesRef.current.forEach(body => {
                 const bounds = body.bounds;
@@ -574,7 +488,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, userId, socket, currentRoom, locationItems]);
+    }, [theme, userId]);
 
     return (
         <ShelterContainer theme={theme}>

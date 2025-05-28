@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'; // Добавляем useState
+import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 
@@ -13,7 +13,6 @@ const Overlay = styled.div`
   pointer-events: auto; // Учитывает клики и нажатия
 `;
 
-// Заменяем CloseButton на CloseIcon
 const CloseIcon = styled.button`
   position: absolute;
   top: 10px;
@@ -68,7 +67,7 @@ const CanvasContainer = styled.div`
   position: relative;
 `;
 
-function MyShelter({ theme, setShowMyShelter }) {
+function MyShelter({ theme, setShowMyShelter, userId }) { // Добавляем userId в пропсы
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
@@ -81,12 +80,13 @@ function MyShelter({ theme, setShowMyShelter }) {
     const triangleRef = useRef(null);
 
     const handleClose = () => {
+        // Сохраняем позиции и масштаб объектов в localStorage с ключом, уникальным для userId
         const positions = {
             circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor },
             square: { x: squareRef.current.position.x, y: squareRef.current.position.y, scaleFactor: squareRef.current.scaleFactor },
             triangle: { x: triangleRef.current.position.x, y: triangleRef.current.position.y, scaleFactor: triangleRef.current.scaleFactor }
         };
-        localStorage.setItem('shelterObjectPositions', JSON.stringify(positions));
+        localStorage.setItem(`shelterObjectPositions_${userId}`, JSON.stringify(positions));
         setShowMyShelter(false);
     };
 
@@ -144,8 +144,8 @@ function MyShelter({ theme, setShowMyShelter }) {
             collisionFilter: staticCollisionFilter
         });
 
-        // Загружаем сохраненные позиции и масштабы из localStorage
-        const savedPositions = JSON.parse(localStorage.getItem('shelterObjectPositions')) || {};
+        // Загружаем сохраненные позиции и масштабы из localStorage для текущего userId
+        const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};
         const floorTopY = height * 0.4;
 
         // Создаем объекты с учетом сохраненных позиций
@@ -167,7 +167,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         );
         const circleScale = savedPositions.circle?.scaleFactor || 1;
         circle.scaleFactor = circleScale;
-        Matter.Body.scale(circle, circleScale, circleScale); // Применяем масштаб
+        Matter.Body.scale(circle, circleScale, circleScale);
         originalSizesRef.current.circle = { radius: 30 };
         circleRef.current = circle;
 
@@ -190,7 +190,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         );
         const squareScale = savedPositions.square?.scaleFactor || 1;
         square.scaleFactor = squareScale;
-        Matter.Body.scale(square, squareScale, squareScale); // Применяем масштаб
+        Matter.Body.scale(square, squareScale, squareScale);
         originalSizesRef.current.square = { width: 60, height: 60 };
         squareRef.current = square;
 
@@ -213,7 +213,7 @@ function MyShelter({ theme, setShowMyShelter }) {
         );
         const triangleScale = savedPositions.triangle?.scaleFactor || 1;
         triangle.scaleFactor = triangleScale;
-        Matter.Body.scale(triangle, triangleScale, triangleScale); // Применяем масштаб
+        Matter.Body.scale(triangle, triangleScale, triangleScale);
         originalSizesRef.current.triangle = { radius: 40 };
         triangleRef.current = triangle;
 
@@ -296,8 +296,6 @@ function MyShelter({ theme, setShowMyShelter }) {
             bringToFront(draggedBody);
         });
 
-
-
         // Пользовательский цикл рендеринга
         const context = canvas.getContext('2d');
         let animationFrameId;
@@ -338,20 +336,19 @@ function MyShelter({ theme, setShowMyShelter }) {
 
                 // Масштабирование на основе y-позиции
                 const y = body.position.y;
-                const minY = height * 0.4; // Верхняя граница пола
-                const maxY = height; // Нижняя граница пола
+                const minY = height * 0.4;
+                const maxY = height;
                 let targetScale = 1;
                 if (y >= minY && y <= maxY) {
-                    targetScale = 1 + (y - minY) / (maxY - minY); // Линейная интерполяция от 1 до 2
+                    targetScale = 1 + (y - minY) / (maxY - minY);
                 } else if (y > maxY) {
-                    targetScale = 2; // Максимальный масштаб
+                    targetScale = 2;
                 }
 
-                // Применяем масштаб, если он изменился
-                if (Math.abs(body.scaleFactor - targetScale) > 0.001) { // Порог для избежания микроколебаний
+                if (Math.abs(body.scaleFactor - targetScale) > 0.001) {
                     const scaleFactor = targetScale / body.scaleFactor;
                     Matter.Body.scale(body, scaleFactor, scaleFactor);
-                    body.scaleFactor = targetScale; // Обновляем текущий масштаб
+                    body.scaleFactor = targetScale;
                 }
             });
 
@@ -429,7 +426,7 @@ function MyShelter({ theme, setShowMyShelter }) {
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme]);
+    }, [theme, userId]); // Добавляем userId в зависимости useEffect
 
     return (
         <ShelterContainer theme={theme}>

@@ -417,7 +417,7 @@ function App() {
       <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
       <Content>
         {showMyShelter ? (
-          <MyShelter theme={appliedTheme} setShowMyShelter={setShowMyShelter} />
+          <MyShelter theme={appliedTheme} setShowMyShelter={setShowMyShelter} userId={user?.userId} />
         ) : (
           <>
             {activeTab === 'chat' && (

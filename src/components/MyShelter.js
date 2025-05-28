@@ -96,10 +96,9 @@ function MyShelter({ theme, setShowMyShelter, userId }) {
             imagesLoadedRef.current.floor = true;
         };
 
-        // Обработка ошибок загрузки изображений
         wallpaperImgRef.current.onerror = () => {
             console.error('Failed to load wallpaper image');
-            imagesLoadedRef.current.wallpaper = true; // Помечаем как загруженное, чтобы избежать бесконечного ожидания
+            imagesLoadedRef.current.wallpaper = true; // Помечаем как загруженное
         };
         floorImgRef.current.onerror = () => {
             console.error('Failed to load floor image');
@@ -153,7 +152,7 @@ function MyShelter({ theme, setShowMyShelter, userId }) {
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3', // Запасной цвет, если текстура не загрузилась
+                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3', // Запасной цвет
                 zIndex: -100
             },
             collisionFilter: staticCollisionFilter
@@ -165,7 +164,7 @@ function MyShelter({ theme, setShowMyShelter, userId }) {
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9', // Запасной цвет, если текстура не загрузилась
+                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9', // Запасной цвет
                 zIndex: -100
             },
             collisionFilter: staticCollisionFilter
@@ -338,8 +337,8 @@ function MyShelter({ theme, setShowMyShelter, userId }) {
                 const maxX = Math.max(...vertices.map(v => v.x));
                 const minY = Math.min(...vertices.map(v => v.y));
                 const maxY = Math.max(...vertices.map(v => v.y));
-                const width = maxX - minX;
-                const height = maxY - minY;
+                const objWidth = maxX - minX;
+                const objHeight = maxY - minY;
 
                 context.save();
                 context.beginPath();
@@ -355,11 +354,25 @@ function MyShelter({ theme, setShowMyShelter, userId }) {
                 const image = isWall ? wallpaperImgRef.current : floorImgRef.current;
                 const isImageLoaded = isWall ? imagesLoadedRef.current.wallpaper : imagesLoadedRef.current.floor;
 
-                if (isImageLoaded) {
-                    // Отрисовываем текстуру, масштабируя её под размер объекта
-                    context.drawImage(image, minX, minY, width, height);
+                if (isImageLoaded && image.width && image.height) {
+                    // Рассчитываем пропорциональную ширину текстуры
+                    const aspectRatio = image.width / image.height;
+                    const textureHeight = objHeight;
+                    const textureWidth = textureHeight * aspectRatio;
+
+                    // Если текстура меньше ширины объекта, используем повторение
+                    if (textureWidth < objWidth) {
+                        const pattern = context.createPattern(image, 'repeat-x');
+                        context.fillStyle = pattern;
+                        context.translate(minX, minY);
+                        context.scale(textureWidth / image.width, textureHeight / image.height);
+                        context.fill();
+                    } else {
+                        // Если текстура шире или равна объекту, рисуем без повторения
+                        context.drawImage(image, minX, minY, textureWidth, textureHeight);
+                    }
                 } else {
-                    // Используем запасной цвет, если текстура не загрузилась
+                    // Запасной цвет, если текстура не загрузилась
                     context.fillStyle = body.render.fillStyle;
                     context.fill();
                 }

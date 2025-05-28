@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import Matter from 'matter-js';
 import wallpaperImage from '../images/dwelling/wallpaper.jpg';
 import floorImage from '../images/dwelling/floor.jpg';
+import stickImage from '../images/dwelling/furniture/stick.png'; // Добавляем импорт текстуры для палки
 
 const Overlay = styled.div`
   position: absolute;
@@ -85,16 +86,21 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const imagesLoadedRef = useRef({ wallpaper: false, floor: false });
     const [locationItems, setLocationItems] = useState([]); // Состояние для предметов локации
 
-    // Загрузка изображений
     useEffect(() => {
+        // Загрузка изображений
         wallpaperImgRef.current.src = wallpaperImage;
         floorImgRef.current.src = floorImage;
+        const stickImgRef = useRef(new Image()); // Создаем реф для текстуры палки
+        stickImgRef.current.src = stickImage;
 
         wallpaperImgRef.current.onload = () => {
             imagesLoadedRef.current.wallpaper = true;
         };
         floorImgRef.current.onload = () => {
             imagesLoadedRef.current.floor = true;
+        };
+        stickImgRef.current.onload = () => {
+            imagesLoadedRef.current.stick = true; // Добавляем флаг загрузки для палки
         };
 
         wallpaperImgRef.current.onerror = () => {
@@ -104,6 +110,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         floorImgRef.current.onerror = () => {
             console.error('Failed to load floor image');
             imagesLoadedRef.current.floor = true;
+        };
+        stickImgRef.current.onerror = () => {
+            console.error('Failed to load stick image');
+            imagesLoadedRef.current.stick = true;
         };
     }, []);
 
@@ -283,6 +293,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 scaleFactor: 1
             };
 
+            const isStick = item.name === 'Палка'; // Проверяем, является ли предмет "Палка"
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,
@@ -294,7 +305,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     friction: 1,
                     frictionAir: 0.1,
                     render: {
-                        fillStyle: 'grey',
+                        fillStyle: isStick ? 'transparent' : 'grey', // Для палки используем прозрачный фон
+                        sprite: isStick ? { texture: stickImage } : undefined, // Устанавливаем текстуру для палки
                         zIndex: 0
                     },
                     collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
@@ -489,8 +501,39 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     }
                     context.closePath();
                 }
-                context.fillStyle = body.render.fillStyle;
-                context.fill();
+
+                // Проверяем, есть ли у объекта текстура (для палки)
+                if (body.render.sprite && body.render.sprite.texture === stickImage && imagesLoadedRef.current.stick) {
+                    const vertices = body.vertices;
+                    const minX = Math.min(...vertices.map(v => v.x));
+                    const maxX = Math.max(...vertices.map(v => v.x));
+                    const minY = Math.min(...vertices.map(v => v.y));
+                    const maxY = Math.max(...vertices.map(v => v.y));
+                    const objWidth = maxX - minX;
+                    const objHeight = maxY - minY;
+
+                    context.save();
+                    context.beginPath();
+                    context.moveTo(vertices[0].x, vertices[0].y);
+                    for (let j = 1; j < vertices.length; j++) {
+                        context.lineTo(vertices[j].x, vertices[j].y);
+                    }
+                    context.closePath();
+                    context.clip();
+
+                    const image = stickImgRef.current;
+                    if (image.width && image.height) {
+                        const aspectRatio = image.width / image.height;
+                        const textureHeight = objHeight;
+                        const textureWidth = textureHeight * aspectRatio;
+
+                        context.drawImage(image, minX, minY, textureWidth, textureHeight);
+                    }
+                    context.restore();
+                } else {
+                    context.fillStyle = body.render.fillStyle;
+                    context.fill();
+                }
             });
 
             animationFrameId = requestAnimationFrame(renderLoop);

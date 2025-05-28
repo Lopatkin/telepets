@@ -517,7 +517,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 if (body.render.sprite && (body.render.sprite.texture === stickImage || body.render.sprite.texture === garbageImage) && imagesLoadedRef.current[body.render.sprite.texture === stickImage ? 'stick' : 'garbage']) {
                     const vertices = body.vertices;
                     const minX = Math.min(...vertices.map(v => v.x));
-                    const maxX = Math.max(...vertices.map(v => v.x));
+                    // const maxX = Math.max(...vertices.map(v => v.x));
                     const minY = Math.min(...vertices.map(v => v.y));
                     const maxY = Math.max(...vertices.map(v => v.y));
                     const objHeight = maxY - minY;

@@ -83,15 +83,15 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const triangleRef = useRef(null);
     const wallpaperImgRef = useRef(new Image());
     const floorImgRef = useRef(new Image());
-    const imagesLoadedRef = useRef({ wallpaper: false, floor: false });
+    const stickImgRef = useRef(new Image()); // Создаем реф для текстуры палки на уровне компонента
+    const imagesLoadedRef = useRef({ wallpaper: false, floor: false, stick: false }); // Добавляем флаг для палки
     const [locationItems, setLocationItems] = useState([]); // Состояние для предметов локации
 
+    // Загрузка изображений
     useEffect(() => {
-        // Загрузка изображений
         wallpaperImgRef.current.src = wallpaperImage;
         floorImgRef.current.src = floorImage;
-        const stickImgRef = useRef(new Image()); // Создаем реф для текстуры палки
-        stickImgRef.current.src = stickImage;
+        stickImgRef.current.src = stickImage; // Устанавливаем источник для текстуры палки
 
         wallpaperImgRef.current.onload = () => {
             imagesLoadedRef.current.wallpaper = true;
@@ -100,7 +100,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             imagesLoadedRef.current.floor = true;
         };
         stickImgRef.current.onload = () => {
-            imagesLoadedRef.current.stick = true; // Добавляем флаг загрузки для палки
+            imagesLoadedRef.current.stick = true; // Устанавливаем флаг загрузки для палки
         };
 
         wallpaperImgRef.current.onerror = () => {
@@ -292,7 +292,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 y: floorTopY,
                 scaleFactor: 1
             };
-
+        
             const isStick = item.name === 'Палка'; // Проверяем, является ли предмет "Палка"
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
@@ -501,7 +501,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     }
                     context.closePath();
                 }
-
+            
                 // Проверяем, есть ли у объекта текстура (для палки)
                 if (body.render.sprite && body.render.sprite.texture === stickImage && imagesLoadedRef.current.stick) {
                     const vertices = body.vertices;
@@ -511,7 +511,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     const maxY = Math.max(...vertices.map(v => v.y));
                     const objWidth = maxX - minX;
                     const objHeight = maxY - minY;
-
+            
                     context.save();
                     context.beginPath();
                     context.moveTo(vertices[0].x, vertices[0].y);
@@ -520,13 +520,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     }
                     context.closePath();
                     context.clip();
-
+            
                     const image = stickImgRef.current;
                     if (image.width && image.height) {
                         const aspectRatio = image.width / image.height;
                         const textureHeight = objHeight;
                         const textureWidth = textureHeight * aspectRatio;
-
+            
                         context.drawImage(image, minX, minY, textureWidth, textureHeight);
                     }
                     context.restore();

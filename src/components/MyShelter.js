@@ -75,516 +75,507 @@ const CanvasContainer = styled.div`
 `;
 
 function MyShelter({ theme, setShowMyShelter, userId, socket }) {
-  const canvasRef = useRef(null);
-  const engineRef = useRef(Matter.Engine.create());
-  const runnerRef = useRef(null);
-  const bodiesRef = useRef([]);
-  const mouseConstraintRef = useRef(null);
-  const originalSizesRef = useRef({});
-  const [isFixed, setIsFixed] = useState(false);
-  const itemRefs = useRef({});
-  const wallpaperImgRef = useRef(new Image());
-  const floorImgRef = useRef(new Image());
-  const imagesLoadedRef = useRef({ wallpaper: false, floor: false });
-  const itemImagesRef = useRef({
-    Стул: new Image(),
-    Диван: new Image(),
-    Стол: new Image(),
-    Шкаф: new Image(),
-    Палка: new Image(),
-  });
-  const itemImagesLoadedRef = useRef({
-    Стул: false,
-    Диван: false,
-    Стол: false,
-    Шкаф: false,
-    Палка: false,
-  });
-  const [items, setItems] = useState([]);
-
-  // Маппинг названий предметов на изображения
-  const itemImageMap = {
-    Стул: chairImage,
-    Диван: sofaImage,
-    Стол: tableImage,
-    Шкаф: wardrobeImage,
-    Палка: stickImage,
-  };
-
-  // Размеры предметов
-  const itemSizes = {
-    Стул: { width: 60, height: 60 },
-    Диван: { width: 100, height: 60 },
-    Стол: { width: 80, height: 60 },
-    Шкаф: { width: 80, height: 100 },
-    Палка: { width: 40, height: 20 },
-  };
-
-  // Загрузка изображений
-  useEffect(() => {
-    wallpaperImgRef.current.src = wallpaperImage;
-    floorImgRef.current.src = floorImage;
-    itemImagesRef.current.Стул.src = chairImage;
-    itemImagesRef.current.Диван.src = sofaImage;
-    itemImagesRef.current.Стол.src = tableImage;
-    itemImagesRef.current.Шкаф.src = wardrobeImage;
-    itemImagesRef.current.Палка.src = stickImage;
-
-    wallpaperImgRef.current.onload = () => {
-      imagesLoadedRef.current.wallpaper = true;
-    };
-    floorImgRef.current.onload = () => {
-      imagesLoadedRef.current.floor = true;
-    };
-    Object.keys(itemImagesRef.current).forEach((key) => {
-      itemImagesRef.current[key].onload = () => {
-        itemImagesLoadedRef.current[key] = true;
-      };
-      itemImagesRef.current[key].onerror = () => {
-        console.error(`Failed to load image for ${key}`);
-        itemImagesLoadedRef.current[key] = true;
-      };
+    const canvasRef = useRef(null);
+    const engineRef = useRef(Matter.Engine.create());
+    const runnerRef = useRef(null);
+    const bodiesRef = useRef([]);
+    const mouseConstraintRef = useRef(null);
+    const originalSizesRef = useRef({});
+    const [isFixed, setIsFixed] = useState(false);
+    const itemRefs = useRef({});
+    const wallpaperImgRef = useRef(new Image());
+    const floorImgRef = useRef(new Image());
+    const imagesLoadedRef = useRef({ wallpaper: false, floor: false });
+    const itemImagesRef = useRef({
+        Стул: new Image(),
+        Диван: new Image(),
+        Стол: new Image(),
+        Шкаф: new Image(),
+        Палка: new Image(),
     });
-  }, []);
-
-  // Запрос предметов из инвентаря комнаты
-  useEffect(() => {
-    if (!socket || !userId) return;
-
-    const owner = `myhome_${userId}`;
-    socket.emit('getItems', { owner });
-
-    const handleItems = (data) => {
-      if (data.owner === owner) {
-        const validItems = data.items.filter((item) =>
-          ['Стул', 'Диван', 'Стол', 'Шкаф', 'Палка'].includes(item.name)
-        );
-        setItems(validItems);
-      }
-    };
-
-    socket.on('items', handleItems);
-
-    return () => {
-      socket.off('items', handleItems);
-    };
-  }, [socket, userId]);
-
-  const handleClose = () => {
-    const positions = {};
-    Object.keys(itemRefs.current).forEach((itemId) => {
-      const body = itemRefs.current[itemId];
-      positions[itemId] = {
-        x: body.position.x,
-        y: body.position.y,
-        scaleFactor: body.scaleFactor,
-      };
+    const itemImagesLoadedRef = useRef({
+        Стул: false,
+        Диван: false,
+        Стол: false,
+        Шкаф: false,
+        Палка: false,
     });
-    localStorage.setItem(`shelterObjectPositions_${userId}`, JSON.stringify(positions));
-    setShowMyShelter(false);
-  };
+    const [items, setItems] = useState([]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const parent = canvas.parentElement;
-    const width = parent.getBoundingClientRect().width;
-    const height = parent.getBoundingClientRect().height;
-    canvas.width = width;
-    canvas.height = height;
-
-    const engine = engineRef.current;
-    engine.gravity.y = 0;
-
-    // Создаем границы
-    const boundaryOptions = {
-      isStatic: true,
-      restitution: 0,
-      friction: 1,
-      render: { visible: false },
-      collisionFilter: { category: 0x0003, mask: 0x0001 },
-    };
-    const boundaries = [
-      Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions),
-      Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions),
-      Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions),
-      Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions),
-    ];
-
-    // Создаем стену и пол
-    const wallHeight = height * 0.4;
-    const floorHeight = height * 0.6;
-    const staticCollisionFilter = { category: 0x0002, mask: 0 };
-    const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
-      isStatic: true,
-      restitution: 0,
-      friction: 0,
-      frictionAir: 0,
-      render: {
-        fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
-        zIndex: -100,
-      },
-      collisionFilter: staticCollisionFilter,
-    });
-
-    const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
-      isStatic: true,
-      restitution: 0,
-      friction: 0,
-      frictionAir: 0,
-      render: {
-        fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
-        zIndex: -100,
-      },
-      collisionFilter: staticCollisionFilter,
-    });
-
-    // Загружаем сохраненные позиции
-    const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};
-    const floorTopY = height * 0.4;
-
-    // Создаем объекты для каждого предмета
-    const bodies = items.map((item, index) => {
-      const { width: baseWidth, height: baseHeight } = itemSizes[item.name] || { width: 60, height: 60 };
-      const itemId = item._id.toString();
-      const saved = savedPositions[itemId] || {};
-      const body = Matter.Bodies.rectangle(
-        saved.x || width * (0.2 + (index % 5) * 0.15),
-        saved.y || floorTopY,
-        baseWidth,
-        baseHeight,
-        {
-          isStatic: false,
-          restitution: 0,
-          friction: 1,
-          frictionAir: 0.1,
-          render: {
-            fillStyle: 'transparent',
-            zIndex: 0,
-          },
-          collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
-        }
-      );
-      const scaleFactor = saved.scaleFactor || 1;
-      body.scaleFactor = scaleFactor;
-      body.itemId = itemId;
-      body.itemName = item.name;
-      Matter.Body.scale(body, scaleFactor, scaleFactor);
-      originalSizesRef.current[itemId] = { width: baseWidth, height: baseHeight };
-      itemRefs.current[itemId] = body;
-      return body;
-    });
-
-    bodiesRef.current = bodies;
-    Matter.World.add(engine.world, [...boundaries, wall, floor, ...bodies]);
-
-    // Настройка мыши
-    const mouse = Matter.Mouse.create(canvas);
-
-    const bringToFront = (body) => {
-      const maxZIndex = Math.max(...bodiesRef.current.map((b) => b.render.zIndex || 0));
-      body.render.zIndex = maxZIndex + 1;
+    // Размеры предметов
+    const itemSizes = {
+        Стул: { width: 60, height: 60 },
+        Диван: { width: 100, height: 60 },
+        Стол: { width: 80, height: 60 },
+        Шкаф: { width: 80, height: 100 },
+        Палка: { width: 40, height: 20 },
     };
 
-    const handleMouseDown = (event) => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
-      const mouse = Matter.Vector.create(mouseX, mouseY);
-      const clickedBody = bodiesRef.current.find((body) => Matter.Bounds.contains(body.bounds, mouse));
-      if (clickedBody) {
-        bringToFront(clickedBody);
-      }
+    // Загрузка изображений
+    useEffect(() => {
+        wallpaperImgRef.current.src = wallpaperImage;
+        floorImgRef.current.src = floorImage;
+        itemImagesRef.current.Стул.src = chairImage;
+        itemImagesRef.current.Диван.src = sofaImage;
+        itemImagesRef.current.Стол.src = tableImage;
+        itemImagesRef.current.Шкаф.src = wardrobeImage;
+        itemImagesRef.current.Палка.src = stickImage;
+
+        wallpaperImgRef.current.onload = () => {
+            imagesLoadedRef.current.wallpaper = true;
+        };
+        floorImgRef.current.onload = () => {
+            imagesLoadedRef.current.floor = true;
+        };
+        Object.keys(itemImagesRef.current).forEach((key) => {
+            itemImagesRef.current[key].onload = () => {
+                itemImagesLoadedRef.current[key] = true;
+            };
+            itemImagesRef.current[key].onerror = () => {
+                console.error(`Failed to load image for ${key}`);
+                itemImagesLoadedRef.current[key] = true;
+            };
+        });
+    }, []);
+
+    // Запрос предметов из инвентаря комнаты
+    useEffect(() => {
+        if (!socket || !userId) return;
+
+        const owner = `myhome_${userId}`;
+        socket.emit('getItems', { owner });
+
+        const handleItems = (data) => {
+            if (data.owner === owner) {
+                const validItems = data.items.filter((item) =>
+                    ['Стул', 'Диван', 'Стол', 'Шкаф', 'Палка'].includes(item.name)
+                );
+                setItems(validItems);
+            }
+        };
+
+        socket.on('items', handleItems);
+
+        return () => {
+            socket.off('items', handleItems);
+        };
+    }, [socket, userId]);
+
+    const handleClose = () => {
+        const positions = {};
+        Object.keys(itemRefs.current).forEach((itemId) => {
+            const body = itemRefs.current[itemId];
+            positions[itemId] = {
+                x: body.position.x,
+                y: body.position.y,
+                scaleFactor: body.scaleFactor,
+            };
+        });
+        localStorage.setItem(`shelterObjectPositions_${userId}`, JSON.stringify(positions));
+        setShowMyShelter(false);
     };
 
-    const handleTouchStart = (event) => {
-      event.preventDefault();
-      const touch = event.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = touch.clientX - rect.left;
-      const mouseY = touch.clientY - rect.top;
-      mouse.position.x = mouseX;
-      mouse.position.y = mouseY;
-      mouse.mousedown = true;
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const parent = canvas.parentElement;
+        const width = parent.getBoundingClientRect().width;
+        const height = parent.getBoundingClientRect().height;
+        canvas.width = width;
+        canvas.height = height;
 
-      const touchPoint = Matter.Vector.create(mouseX, mouseY);
-      const touchedBody = bodiesRef.current.find((body) => Matter.Bounds.contains(body.bounds, touchPoint));
-      if (touchedBody) {
-        bringToFront(touchedBody);
-      }
-    };
+        const engine = engineRef.current;
+        engine.gravity.y = 0;
 
-    const handleTouchMove = (event) => {
-      event.preventDefault();
-      const touch = event.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = touch.clientX - rect.left;
-      const mouseY = touch.clientY - rect.top;
-      mouse.position.x = mouseX;
-      mouse.position.y = mouseY;
-    };
+        // Создаем границы
+        const boundaryOptions = {
+            isStatic: true,
+            restitution: 0,
+            friction: 1,
+            render: { visible: false },
+            collisionFilter: { category: 0x0003, mask: 0x0001 },
+        };
+        const boundaries = [
+            Matter.Bodies.rectangle(width / 2, -25, width, 50, boundaryOptions),
+            Matter.Bodies.rectangle(width / 2, height + 25, width, 50, boundaryOptions),
+            Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions),
+            Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions),
+        ];
 
-    const handleTouchEnd = (event) => {
-      event.preventDefault();
-      mouse.mousedown = false;
-    };
+        // Создаем стену и пол
+        const wallHeight = height * 0.4;
+        const floorHeight = height * 0.6;
+        const staticCollisionFilter = { category: 0x0002, mask: 0 };
+        const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
+            isStatic: true,
+            restitution: 0,
+            friction: 0,
+            frictionAir: 0,
+            render: {
+                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
+                zIndex: -100,
+            },
+            collisionFilter: staticCollisionFilter,
+        });
 
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+        const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
+            isStatic: true,
+            restitution: 0,
+            friction: 0,
+            frictionAir: 0,
+            render: {
+                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
+                zIndex: -100,
+            },
+            collisionFilter: staticCollisionFilter,
+        });
 
-    const mouseConstraint = Matter.MouseConstraint.create(engine, {
-      mouse: mouse,
-      constraint: {
-        stiffness: 0.2,
-        render: { visible: false },
-      },
-    });
-    mouseConstraintRef.current = mouseConstraint;
-    Matter.World.add(engine.world, mouseConstraint);
+        // Загружаем сохраненные позиции
+        const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};
+        const floorTopY = height * 0.4;
 
-    Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
-      const draggedBody = event.body;
-      Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
-    });
+        // Создаем объекты для каждого предмета
+        const bodies = items.map((item, index) => {
+            const { width: baseWidth, height: baseHeight } = itemSizes[item.name] || { width: 60, height: 60 };
+            const itemId = item._id.toString();
+            const saved = savedPositions[itemId] || {};
+            const body = Matter.Bodies.rectangle(
+                saved.x || width * (0.2 + (index % 5) * 0.15),
+                saved.y || floorTopY,
+                baseWidth,
+                baseHeight,
+                {
+                    isStatic: false,
+                    restitution: 0,
+                    friction: 1,
+                    frictionAir: 0.1,
+                    render: {
+                        fillStyle: 'transparent',
+                        zIndex: 0,
+                    },
+                    collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
+                }
+            );
+            const scaleFactor = saved.scaleFactor || 1;
+            body.scaleFactor = scaleFactor;
+            body.itemId = itemId;
+            body.itemName = item.name;
+            Matter.Body.scale(body, scaleFactor, scaleFactor);
+            originalSizesRef.current[itemId] = { width: baseWidth, height: baseHeight };
+            itemRefs.current[itemId] = body;
+            return body;
+        });
 
-    Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
-      const draggedBody = event.body;
-      bringToFront(draggedBody);
-    });
+        bodiesRef.current = bodies;
+        Matter.World.add(engine.world, [...boundaries, wall, floor, ...bodies]);
 
-    // Пользовательский цикл рендеринга
-    const context = canvas.getContext('2d');
-    let animationFrameId;
+        // Настройка мыши
+        const mouse = Matter.Mouse.create(canvas);
 
-    const renderLoop = () => {
-      context.fillStyle = theme === 'dark' ? '#2A2A2A' : '#fff';
-      context.fillRect(0, 0, canvas.width, canvas.height);
+        const bringToFront = (body) => {
+            const maxZIndex = Math.max(...bodiesRef.current.map((b) => b.render.zIndex || 0));
+            body.render.zIndex = maxZIndex + 1;
+        };
 
-      // Рендерим статичные объекты (стена и пол)
-      [wall, floor].forEach((body) => {
-        const vertices = body.vertices;
-        const minX = Math.min(...vertices.map((v) => v.x));
-        const maxX = Math.max(...vertices.map((v) => v.x));
-        const minY = Math.min(...vertices.map((v) => v.y));
-        const maxY = Math.max(...vertices.map((v) => v.y));
-        const objWidth = maxX - minX;
-        const objHeight = maxY - minY;
+        const handleMouseDown = (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = event.clientX - rect.left;
+            const mouseY = event.clientY - rect.top;
+            const mouse = Matter.Vector.create(mouseX, mouseY);
+            const clickedBody = bodiesRef.current.find((body) => Matter.Bounds.contains(body.bounds, mouse));
+            if (clickedBody) {
+                bringToFront(clickedBody);
+            }
+        };
 
-        context.save();
-        context.beginPath();
-        context.moveTo(vertices[0].x, vertices[0].y);
-        for (let j = 1; j < vertices.length; j++) {
-          context.lineTo(vertices[j].x, vertices[j].y);
-        }
-        context.closePath();
-        context.clip();
+        const handleTouchStart = (event) => {
+            event.preventDefault();
+            const touch = event.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = touch.clientX - rect.left;
+            const mouseY = touch.clientY - rect.top;
+            mouse.position.x = mouseX;
+            mouse.position.y = mouseY;
+            mouse.mousedown = true;
 
-        const isWall = body === wall;
-        const image = isWall ? wallpaperImgRef.current : floorImgRef.current;
-        const isImageLoaded = isWall ? imagesLoadedRef.current.wallpaper : imagesLoadedRef.current.floor;
+            const touchPoint = Matter.Vector.create(mouseX, mouseY);
+            const touchedBody = bodiesRef.current.find((body) => Matter.Bounds.contains(body.bounds, touchPoint));
+            if (touchedBody) {
+                bringToFront(touchedBody);
+            }
+        };
 
-        if (isImageLoaded && image.width && image.height) {
-          const aspectRatio = image.width / image.height;
-          const textureHeight = objHeight;
-          const textureWidth = textureHeight * aspectRatio;
+        const handleTouchMove = (event) => {
+            event.preventDefault();
+            const touch = event.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = touch.clientX - rect.left;
+            const mouseY = touch.clientY - rect.top;
+            mouse.position.x = mouseX;
+            mouse.position.y = mouseY;
+        };
 
-          if (textureWidth < objWidth) {
-            const pattern = context.createPattern(image, 'repeat-x');
-            context.fillStyle = pattern;
-            context.translate(minX, minY);
-            context.scale(textureWidth / image.width, textureHeight / image.height);
-            context.fill();
-          } else {
-            context.drawImage(image, minX, minY, textureWidth, textureHeight);
-          }
-        } else {
-          context.fillStyle = body.render.fillStyle;
-          context.fill();
-        }
-        context.restore();
-      });
+        const handleTouchEnd = (event) => {
+            event.preventDefault();
+            mouse.mousedown = false;
+        };
 
-      // Проверяем позиции и масштабируем интерактивные объекты
-      bodiesRef.current.forEach((body) => {
-        const bounds = body.bounds;
-        const margin = 5;
-        if (bounds.min.x < margin) {
-          Matter.Body.setPosition(body, {
-            x: margin + (bounds.max.x - bounds.min.x) / 2,
-            y: body.position.y,
-          });
-        }
-        if (bounds.max.x > canvas.width - margin) {
-          Matter.Body.setPosition(body, {
-            x: canvas.width - margin - (bounds.max.x - bounds.min.x) / 2,
-            y: body.position.y,
-          });
-        }
-        if (bounds.min.y < margin) {
-          Matter.Body.setPosition(body, {
-            x: body.position.x,
-            y: margin + (bounds.max.y - bounds.min.y) / 2,
-          });
-        }
-        if (bounds.max.y > canvas.height - margin) {
-          Matter.Body.setPosition(body, {
-            x: body.position.x,
-            y: canvas.height - margin - (bounds.max.y - bounds.min.y) / 2,
-          });
-        }
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-        // Масштабирование на основе y-позиции
-        const y = body.position.y;
-        const minY = height * 0.4;
-        const maxY = height;
-        let targetScale = 1;
-        if (y >= minY && y <= maxY) {
-          targetScale = 1 + (y - minY) / (maxY - minY);
-        } else if (y > maxY) {
-          targetScale = 2;
-        }
+        const mouseConstraint = Matter.MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: { visible: false },
+            },
+        });
+        mouseConstraintRef.current = mouseConstraint;
+        Matter.World.add(engine.world, mouseConstraint);
 
-        if (Math.abs(body.scaleFactor - targetScale) > 0.001) {
-          const scaleFactor = targetScale / body.scaleFactor;
-          Matter.Body.scale(body, scaleFactor, scaleFactor);
-          body.scaleFactor = targetScale;
-        }
-      });
+        Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
+            const draggedBody = event.body;
+            Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
+        });
 
-      // Рендерим интерактивные объекты
-      const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
-      bodies.forEach((body) => {
-        const vertices = body.vertices;
-        const minX = Math.min(...vertices.map((v) => v.x));
-        const maxX = Math.max(...vertices.map((v) => v.x));
-        const minY = Math.min(...vertices.map((v) => v.y));
-        const maxY = Math.max(...vertices.map((v) => v.y));
-        const objWidth = maxX - minX;
-        const objHeight = maxY - minY;
+        Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
+            const draggedBody = event.body;
+            bringToFront(draggedBody);
+        });
 
-        context.save();
-        context.beginPath();
-        context.moveTo(vertices[0].x, vertices[0].y);
-        for (let j = 1; j < vertices.length; j++) {
-          context.lineTo(vertices[j].x, vertices[j].y);
-        }
-        context.closePath();
-        context.clip();
+        // Пользовательский цикл рендеринга
+        const context = canvas.getContext('2d');
+        let animationFrameId;
 
-        const image = itemImagesRef.current[body.itemName];
-        const isImageLoaded = itemImagesLoadedRef.current[body.itemName];
+        const renderLoop = () => {
+            context.fillStyle = theme === 'dark' ? '#2A2A2A' : '#fff';
+            context.fillRect(0, 0, canvas.width, canvas.height);
 
-        if (isImageLoaded && image.width && image.height) {
-          const aspectRatio = image.width / image.height;
-          const textureHeight = objHeight;
-          const textureWidth = textureHeight * aspectRatio;
+            // Рендерим статичные объекты (стена и пол)
+            [wall, floor].forEach((body) => {
+                const vertices = body.vertices;
+                const minX = Math.min(...vertices.map((v) => v.x));
+                const maxX = Math.max(...vertices.map((v) => v.x));
+                const minY = Math.min(...vertices.map((v) => v.y));
+                const maxY = Math.max(...vertices.map((v) => v.y));
+                const objWidth = maxX - minX;
+                const objHeight = maxY - minY;
 
-          if (textureWidth < objWidth) {
-            const pattern = context.createPattern(image, 'repeat-x');
-            context.fillStyle = pattern;
-            context.translate(minX, minY);
-            context.scale(textureWidth / image.width, textureHeight / image.height);
-            context.fill();
-          } else {
-            context.drawImage(image, minX, minY, textureWidth, textureHeight);
-          }
-        } else {
-          context.fillStyle = 'gray';
-          context.fill();
-        }
-        context.restore();
-      });
+                context.save();
+                context.beginPath();
+                context.moveTo(vertices[0].x, vertices[0].y);
+                for (let j = 1; j < vertices.length; j++) {
+                    context.lineTo(vertices[j].x, vertices[j].y);
+                }
+                context.closePath();
+                context.clip();
 
-      animationFrameId = requestAnimationFrame(renderLoop);
-    };
+                const isWall = body === wall;
+                const image = isWall ? wallpaperImgRef.current : floorImgRef.current;
+                const isImageLoaded = isWall ? imagesLoadedRef.current.wallpaper : imagesLoadedRef.current.floor;
 
-    renderLoop();
+                if (isImageLoaded && image.width && image.height) {
+                    const aspectRatio = image.width / image.height;
+                    const textureHeight = objHeight;
+                    const textureWidth = textureHeight * aspectRatio;
 
-    // Запускаем физический движок
-    runnerRef.current = Matter.Runner.create();
-    Matter.Runner.run(runnerRef.current, engine);
+                    if (textureWidth < objWidth) {
+                        const pattern = context.createPattern(image, 'repeat-x');
+                        context.fillStyle = pattern;
+                        context.translate(minX, minY);
+                        context.scale(textureWidth / image.width, textureHeight / image.height);
+                        context.fill();
+                    } else {
+                        context.drawImage(image, minX, minY, textureWidth, textureHeight);
+                    }
+                } else {
+                    context.fillStyle = body.render.fillStyle;
+                    context.fill();
+                }
+                context.restore();
+            });
 
-    // Адаптация при изменении размера окна
-    const handleResize = () => {
-      const newWidth = canvas.parentElement.getBoundingClientRect().width;
-      const newHeight = canvas.parentElement.getBoundingClientRect().height;
-      canvas.width = newWidth;
-      canvas.height = newHeight;
+            // Проверяем позиции и масштабируем интерактивные объекты
+            bodiesRef.current.forEach((body) => {
+                const bounds = body.bounds;
+                const margin = 5;
+                if (bounds.min.x < margin) {
+                    Matter.Body.setPosition(body, {
+                        x: margin + (bounds.max.x - bounds.min.x) / 2,
+                        y: body.position.y,
+                    });
+                }
+                if (bounds.max.x > canvas.width - margin) {
+                    Matter.Body.setPosition(body, {
+                        x: canvas.width - margin - (bounds.max.x - bounds.min.x) / 2,
+                        y: body.position.y,
+                    });
+                }
+                if (bounds.min.y < margin) {
+                    Matter.Body.setPosition(body, {
+                        x: body.position.x,
+                        y: margin + (bounds.max.y - bounds.min.y) / 2,
+                    });
+                }
+                if (bounds.max.y > canvas.height - margin) {
+                    Matter.Body.setPosition(body, {
+                        x: body.position.x,
+                        y: canvas.height - margin - (bounds.max.y - bounds.min.y) / 2,
+                    });
+                }
 
-      // Обновляем позиции и размеры границы
-      Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
-      Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
-      Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
-      Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
+                // Масштабирование на основе y-позиции
+                const y = body.position.y;
+                const minY = height * 0.4;
+                const maxY = height;
+                let targetScale = 1;
+                if (y >= minY && y <= maxY) {
+                    targetScale = 1 + (y - minY) / (maxY - minY);
+                } else if (y > maxY) {
+                    targetScale = 2;
+                }
 
-      // Обновляем позиции и размеры стены и пола
-      Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
-      Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
-      const scaleX = newWidth / width;
-      const scaleY = newHeight / height;
-      Matter.Body.scale(wall, scaleX, scaleY);
-      Matter.Body.scale(floor, scaleX, scaleY);
+                if (Math.abs(body.scaleFactor - targetScale) > 0.001) {
+                    const scaleFactor = targetScale / body.scaleFactor;
+                    Matter.Body.scale(body, scaleFactor, scaleFactor);
+                    body.scaleFactor = targetScale;
+                }
+            });
 
-      // Проверяем, что интерактивные объекты остаются в видимой области
-      const margin = 5;
-      bodiesRef.current.forEach((body) => {
-        const bounds = body.bounds;
-        if (
-          bounds.min.x < margin ||
-          bounds.max.x > newWidth - margin ||
-          bounds.min.y < margin ||
-          bounds.max.y > newHeight - margin
-        ) {
-          const newX = Math.max(
-            margin + (bounds.max.x - bounds.min.x) / 2,
-            Math.min(body.position.x, newWidth - margin - (bounds.max.x - bounds.min.x) / 2)
-          );
-          const newY = Math.max(
-            margin + (bounds.max.y - bounds.min.y) / 2,
-            Math.min(body.position.y, newHeight - margin - (bounds.max.y - bounds.min.y) / 2)
-          );
-          Matter.Body.setPosition(body, { x: newX, y: newY });
-        }
-      });
-    };
+            // Рендерим интерактивные объекты
+            const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
+            bodies.forEach((body) => {
+                const vertices = body.vertices;
+                const minX = Math.min(...vertices.map((v) => v.x));
+                const maxX = Math.max(...vertices.map((v) => v.x));
+                const minY = Math.min(...vertices.map((v) => v.y));
+                const maxY = Math.max(...vertices.map((v) => v.y));
+                const objWidth = maxX - minX;
+                const objHeight = maxY - minY;
 
-    window.addEventListener('resize', handleResize);
-    handleResize();
+                context.save();
+                context.beginPath();
+                context.moveTo(vertices[0].x, vertices[0].y);
+                for (let j = 1; j < vertices.length; j++) {
+                    context.lineTo(vertices[j].x, vertices[j].y);
+                }
+                context.closePath();
+                context.clip();
 
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      canvas.removeEventListener('mousedown', handleMouseDown);
-      canvas.removeEventListener('touchstart', handleTouchStart);
-      canvas.removeEventListener('touchmove', handleTouchMove);
-      canvas.removeEventListener('touchend', handleTouchEnd);
-      window.removeEventListener('resize', handleResize);
-      Matter.Runner.stop(runnerRef.current);
-      Matter.World.clear(engine.world);
-      Matter.Engine.clear(engine);
-    };
-  }, [theme, userId, socket, items]);
+                const image = itemImagesRef.current[body.itemName];
+                const isImageLoaded = itemImagesLoadedRef.current[body.itemName];
 
-  return (
-    <ShelterContainer theme={theme}>
-      <CloseIcon theme={theme} onClick={handleClose}>×</CloseIcon>
-      <ToggleContainer>
-        <input
-          type="checkbox"
-          checked={isFixed}
-          onChange={() => setIsFixed(!isFixed)}
-          id="fixToggle"
-        />
-        <ToggleLabel theme={theme} htmlFor="fixToggle">
-          Зафиксировать
-        </ToggleLabel>
-      </ToggleContainer>
-      {isFixed && <Overlay />}
-      <CanvasContainer>
-        <canvas ref={canvasRef} />
-      </CanvasContainer>
-    </ShelterContainer>
-  );
+                if (isImageLoaded && image.width && image.height) {
+                    const aspectRatio = image.width / image.height;
+                    const textureHeight = objHeight;
+                    const textureWidth = textureHeight * aspectRatio;
+
+                    if (textureWidth < objWidth) {
+                        const pattern = context.createPattern(image, 'repeat-x');
+                        context.fillStyle = pattern;
+                        context.translate(minX, minY);
+                        context.scale(textureWidth / image.width, textureHeight / image.height);
+                        context.fill();
+                    } else {
+                        context.drawImage(image, minX, minY, textureWidth, textureHeight);
+                    }
+                } else {
+                    context.fillStyle = 'gray';
+                    context.fill();
+                }
+                context.restore();
+            });
+
+            animationFrameId = requestAnimationFrame(renderLoop);
+        };
+
+        renderLoop();
+
+        // Запускаем физический движок
+        runnerRef.current = Matter.Runner.create();
+        Matter.Runner.run(runnerRef.current, engine);
+
+        // Адаптация при изменении размера окна
+        const handleResize = () => {
+            const newWidth = canvas.parentElement.getBoundingClientRect().width;
+            const newHeight = canvas.parentElement.getBoundingClientRect().height;
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+
+            // Обновляем позиции и размеры границы
+            Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
+            Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
+            Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
+            Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
+
+            // Обновляем позиции и размеры стены и пола
+            Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
+            Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
+            const scaleX = newWidth / width;
+            const scaleY = newHeight / height;
+            Matter.Body.scale(wall, scaleX, scaleY);
+            Matter.Body.scale(floor, scaleX, scaleY);
+
+            // Проверяем, что интерактивные объекты остаются в видимой области
+            const margin = 5;
+            bodiesRef.current.forEach((body) => {
+                const bounds = body.bounds;
+                if (
+                    bounds.min.x < margin ||
+                    bounds.max.x > newWidth - margin ||
+                    bounds.min.y < margin ||
+                    bounds.max.y > newHeight - margin
+                ) {
+                    const newX = Math.max(
+                        margin + (bounds.max.x - bounds.min.x) / 2,
+                        Math.min(body.position.x, newWidth - margin - (bounds.max.x - bounds.min.x) / 2)
+                    );
+                    const newY = Math.max(
+                        margin + (bounds.max.y - bounds.min.y) / 2,
+                        Math.min(body.position.y, newHeight - margin - (bounds.max.y - bounds.min.y) / 2)
+                    );
+                    Matter.Body.setPosition(body, { x: newX, y: newY });
+                }
+            });
+        };
+
+        window.addEventListener('resize', handleResize);
+        handleResize();
+
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+            canvas.removeEventListener('mousedown', handleMouseDown);
+            canvas.removeEventListener('touchstart', handleTouchStart);
+            canvas.removeEventListener('touchmove', handleTouchMove);
+            canvas.removeEventListener('touchend', handleTouchEnd);
+            window.removeEventListener('resize', handleResize);
+            Matter.Runner.stop(runnerRef.current);
+            Matter.World.clear(engine.world);
+            Matter.Engine.clear(engine);
+        };
+    }, [theme, userId, socket, items, itemSizes]); // Добавлен itemSizes`
+
+    return (
+        <ShelterContainer theme={theme}>
+            <CloseIcon theme={theme} onClick={handleClose}>×</CloseIcon>
+            <ToggleContainer>
+                <input
+                    type="checkbox"
+                    checked={isFixed}
+                    onChange={() => setIsFixed(!isFixed)}
+                    id="fixToggle"
+                />
+                <ToggleLabel theme={theme} htmlFor="fixToggle">
+                    Зафиксировать
+                </ToggleLabel>
+            </ToggleContainer>
+            {isFixed && <Overlay />}
+            <CanvasContainer>
+                <canvas ref={canvasRef} />
+            </CanvasContainer>
+        </ShelterContainer>
+    );
 }
 
 export default MyShelter;

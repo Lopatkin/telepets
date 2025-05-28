@@ -509,7 +509,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     const maxX = Math.max(...vertices.map(v => v.x));
                     const minY = Math.min(...vertices.map(v => v.y));
                     const maxY = Math.max(...vertices.map(v => v.y));
-                    const objWidth = maxX - minX;
                     const objHeight = maxY - minY;
             
                     context.save();

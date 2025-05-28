@@ -4,6 +4,7 @@ import Matter from 'matter-js';
 import wallpaperImage from '../images/dwelling/wallpaper.jpg';
 import floorImage from '../images/dwelling/floor.jpg';
 import stickImage from '../images/dwelling/furniture/stick.png'; // Добавляем импорт текстуры для палки
+import garbageImage from '../images/dwelling/furniture/garbage.png'; // Добавляем импорт текстуры для мусора
 
 const Overlay = styled.div`
   position: absolute;
@@ -83,15 +84,17 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const triangleRef = useRef(null);
     const wallpaperImgRef = useRef(new Image());
     const floorImgRef = useRef(new Image());
-    const stickImgRef = useRef(new Image()); // Создаем реф для текстуры палки на уровне компонента
-    const imagesLoadedRef = useRef({ wallpaper: false, floor: false, stick: false }); // Добавляем флаг для палки
-    const [locationItems, setLocationItems] = useState([]); // Состояние для предметов локации
+    const stickImgRef = useRef(new Image());
+    const garbageImgRef = useRef(new Image()); // Создаем реф для текстуры мусора
+    const imagesLoadedRef = useRef({ wallpaper: false, floor: false, stick: false, garbage: false }); // Добавляем флаг для мусора
+    const [locationItems, setLocationItems] = useState([]);
 
     // Загрузка изображений
     useEffect(() => {
         wallpaperImgRef.current.src = wallpaperImage;
         floorImgRef.current.src = floorImage;
-        stickImgRef.current.src = stickImage; // Устанавливаем источник для текстуры палки
+        stickImgRef.current.src = stickImage;
+        garbageImgRef.current.src = garbageImage; // Устанавливаем источник для текстуры мусора
 
         wallpaperImgRef.current.onload = () => {
             imagesLoadedRef.current.wallpaper = true;
@@ -100,7 +103,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             imagesLoadedRef.current.floor = true;
         };
         stickImgRef.current.onload = () => {
-            imagesLoadedRef.current.stick = true; // Устанавливаем флаг загрузки для палки
+            imagesLoadedRef.current.stick = true;
+        };
+        garbageImgRef.current.onload = () => {
+            imagesLoadedRef.current.garbage = true; // Устанавливаем флаг загрузки для мусора
         };
 
         wallpaperImgRef.current.onerror = () => {
@@ -114,6 +120,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         stickImgRef.current.onerror = () => {
             console.error('Failed to load stick image');
             imagesLoadedRef.current.stick = true;
+        };
+        garbageImgRef.current.onerror = () => {
+            console.error('Failed to load garbage image');
+            imagesLoadedRef.current.garbage = true; // Обработка ошибки загрузки мусора
         };
     }, []);
 
@@ -293,7 +303,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 scaleFactor: 1
             };
 
-            const isStick = item.name === 'Палка'; // Проверяем, является ли предмет "Палка"
+            const isStick = item.name === 'Палка';
+            const isGarbage = item.name === 'Мусор'; // Проверяем, является ли предмет "Мусор"
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,
@@ -305,12 +316,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     friction: 1,
                     frictionAir: 0.1,
                     render: {
-                        fillStyle: isStick ? 'transparent' : 'grey', // Для палки используем прозрачный фон
-                        sprite: isStick ? { texture: stickImage } : undefined, // Устанавливаем текстуру для палки
+                        fillStyle: isStick || isGarbage ? 'transparent' : 'grey', // Прозрачный фон для палки и мусора
+                        sprite: isStick ? { texture: stickImage } : isGarbage ? { texture: garbageImage } : undefined, // Текстура для палки или мусора
                         zIndex: 0
                     },
                     collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
-                    itemId: item._id // Привязываем ID предмета
+                    itemId: item._id
                 }
             );
             const itemScale = savedItem.scaleFactor || 1;
@@ -502,11 +513,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     context.closePath();
                 }
 
-                // Проверяем, есть ли у объекта текстура (для палки)
-                if (body.render.sprite && body.render.sprite.texture === stickImage && imagesLoadedRef.current.stick) {
+                // Проверяем, есть ли у объекта текстура (для палки или мусора)
+                if (body.render.sprite && (body.render.sprite.texture === stickImage || body.render.sprite.texture === garbageImage) && imagesLoadedRef.current[body.render.sprite.texture === stickImage ? 'stick' : 'garbage']) {
                     const vertices = body.vertices;
                     const minX = Math.min(...vertices.map(v => v.x));
-                    // const maxX = Math.max(...vertices.map(v => v.x));
+                    const maxX = Math.max(...vertices.map(v => v.x));
                     const minY = Math.min(...vertices.map(v => v.y));
                     const maxY = Math.max(...vertices.map(v => v.y));
                     const objHeight = maxY - minY;
@@ -520,13 +531,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     context.closePath();
                     context.clip();
 
-                    // Добавляем тень для палки
+                    // Добавляем тень для палки или мусора
                     context.shadowColor = 'rgba(0, 0, 0, 0.3)'; // Полупрозрачная черная тень
                     context.shadowBlur = 5; // Размытие тени
                     context.shadowOffsetX = 3; // Смещение тени по X
                     context.shadowOffsetY = 3; // Смещение тени по Y
 
-                    const image = stickImgRef.current;
+                    const image = body.render.sprite.texture === stickImage ? stickImgRef.current : garbageImgRef.current;
                     if (image.width && image.height) {
                         const aspectRatio = image.width / image.height;
                         const textureHeight = objHeight;
@@ -535,7 +546,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         context.drawImage(image, minX, minY, textureWidth, textureHeight);
                     }
 
-                    // Сбрасываем настройки тени после рендеринга палки
+                    // Сбрасываем настройки тени после рендеринга
                     context.shadowColor = 'rgba(0, 0, 0, 0)';
                     context.shadowBlur = 0;
                     context.shadowOffsetX = 0;

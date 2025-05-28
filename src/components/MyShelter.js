@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
+import wallpaperImage from '../images/dwelling/wallpaper.jpg'; // Импорт текстуры для стены
+import floorImage from '../images/dwelling/floor.jpg'; // Импорт текстуры для пола
 
 const Overlay = styled.div`
   position: absolute;
@@ -67,7 +69,7 @@ const CanvasContainer = styled.div`
   position: relative;
 `;
 
-function MyShelter({ theme, setShowMyShelter, userId }) { // Добавляем userId в пропсы
+function MyShelter({ theme, setShowMyShelter, userId }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
@@ -78,9 +80,34 @@ function MyShelter({ theme, setShowMyShelter, userId }) { // Добавляем 
     const circleRef = useRef(null);
     const squareRef = useRef(null);
     const triangleRef = useRef(null);
+    const wallpaperImgRef = useRef(new Image()); // Референс для текстуры стены
+    const floorImgRef = useRef(new Image()); // Референс для текстуры пола
+    const imagesLoadedRef = useRef({ wallpaper: false, floor: false }); // Отслеживание загрузки изображений
+
+    // Загрузка изображений
+    useEffect(() => {
+        wallpaperImgRef.current.src = wallpaperImage;
+        floorImgRef.current.src = floorImage;
+
+        wallpaperImgRef.current.onload = () => {
+            imagesLoadedRef.current.wallpaper = true;
+        };
+        floorImgRef.current.onload = () => {
+            imagesLoadedRef.current.floor = true;
+        };
+
+        // Обработка ошибок загрузки изображений
+        wallpaperImgRef.current.onerror = () => {
+            console.error('Failed to load wallpaper image');
+            imagesLoadedRef.current.wallpaper = true; // Помечаем как загруженное, чтобы избежать бесконечного ожидания
+        };
+        floorImgRef.current.onerror = () => {
+            console.error('Failed to load floor image');
+            imagesLoadedRef.current.floor = true;
+        };
+    }, []);
 
     const handleClose = () => {
-        // Сохраняем позиции и масштаб объектов в localStorage с ключом, уникальным для userId
         const positions = {
             circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor },
             square: { x: squareRef.current.position.x, y: squareRef.current.position.y, scaleFactor: squareRef.current.scaleFactor },
@@ -126,7 +153,7 @@ function MyShelter({ theme, setShowMyShelter, userId }) { // Добавляем 
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
+                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3', // Запасной цвет, если текстура не загрузилась
                 zIndex: -100
             },
             collisionFilter: staticCollisionFilter
@@ -138,7 +165,7 @@ function MyShelter({ theme, setShowMyShelter, userId }) { // Добавляем 
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
+                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9', // Запасной цвет, если текстура не загрузилась
                 zIndex: -100
             },
             collisionFilter: staticCollisionFilter
@@ -304,17 +331,39 @@ function MyShelter({ theme, setShowMyShelter, userId }) { // Добавляем 
             context.fillStyle = theme === 'dark' ? '#2A2A2A' : '#fff';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Рендерим статичные объекты (стена и пол)
+            // Рендерим статичные объекты (стена и пол) с текстурами
             [wall, floor].forEach(body => {
-                context.beginPath();
                 const vertices = body.vertices;
+                const minX = Math.min(...vertices.map(v => v.x));
+                const maxX = Math.max(...vertices.map(v => v.x));
+                const minY = Math.min(...vertices.map(v => v.y));
+                const maxY = Math.max(...vertices.map(v => v.y));
+                const width = maxX - minX;
+                const height = maxY - minY;
+
+                context.save();
+                context.beginPath();
                 context.moveTo(vertices[0].x, vertices[0].y);
                 for (let j = 1; j < vertices.length; j++) {
                     context.lineTo(vertices[j].x, vertices[j].y);
                 }
                 context.closePath();
-                context.fillStyle = body.render.fillStyle;
-                context.fill();
+                context.clip(); // Ограничиваем область отрисовки текстуры
+
+                // Выбираем текстуру в зависимости от объекта
+                const isWall = body === wall;
+                const image = isWall ? wallpaperImgRef.current : floorImgRef.current;
+                const isImageLoaded = isWall ? imagesLoadedRef.current.wallpaper : imagesLoadedRef.current.floor;
+
+                if (isImageLoaded) {
+                    // Отрисовываем текстуру, масштабируя её под размер объекта
+                    context.drawImage(image, minX, minY, width, height);
+                } else {
+                    // Используем запасной цвет, если текстура не загрузилась
+                    context.fillStyle = body.render.fillStyle;
+                    context.fill();
+                }
+                context.restore();
             });
 
             // Проверяем позиции и масштабируем интерактивные объекты
@@ -426,7 +475,7 @@ function MyShelter({ theme, setShowMyShelter, userId }) { // Добавляем 
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, userId]); // Добавляем userId в зависимости useEffect
+    }, [theme, userId]);
 
     return (
         <ShelterContainer theme={theme}>

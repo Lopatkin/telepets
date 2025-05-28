@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import Matter from 'matter-js';
 import wallpaperImage from '../images/dwelling/wallpaper.jpg';
 import floorImage from '../images/dwelling/floor.jpg';
+import stickImage from '../images/dwelling/furniture/stick.png'; // Импортируем текстуру для палки
 
 const Overlay = styled.div`
   position: absolute;
@@ -82,19 +83,24 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const triangleRef = useRef(null);
     const wallpaperImgRef = useRef(new Image());
     const floorImgRef = useRef(new Image());
-    const imagesLoadedRef = useRef({ wallpaper: false, floor: false });
-    const [locationItems, setLocationItems] = useState([]); // Состояние для предметов локации
+    const stickImgRef = useRef(new Image()); // Ссылка для изображения палки
+    const imagesLoadedRef = useRef({ wallpaper: false, floor: false, stick: false }); // Добавляем статус загрузки палки
+    const [locationItems, setLocationItems] = useState([]);
 
     // Загрузка изображений
     useEffect(() => {
         wallpaperImgRef.current.src = wallpaperImage;
         floorImgRef.current.src = floorImage;
+        stickImgRef.current.src = stickImage; // Загружаем текстуру палки
 
         wallpaperImgRef.current.onload = () => {
             imagesLoadedRef.current.wallpaper = true;
         };
         floorImgRef.current.onload = () => {
             imagesLoadedRef.current.floor = true;
+        };
+        stickImgRef.current.onload = () => {
+            imagesLoadedRef.current.stick = true; // Отмечаем, что текстура палки загружена
         };
 
         wallpaperImgRef.current.onerror = () => {
@@ -104,6 +110,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         floorImgRef.current.onerror = () => {
             console.error('Failed to load floor image');
             imagesLoadedRef.current.floor = true;
+        };
+        stickImgRef.current.onerror = () => {
+            console.error('Failed to load stick image');
+            imagesLoadedRef.current.stick = true; // Обрабатываем ошибку загрузки
         };
     }, []);
 
@@ -272,13 +282,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         triangle.scaleFactor = triangleScale;
         Matter.Body.scale(triangle, triangleScale, triangleScale);
         originalSizesRef.current.triangle = { radius: 40 };
-        triangleRef.current = triangle;
-
         // Создаем серые квадраты для каждого предмета в инвентаре локации
         const itemBodies = locationItems.map((item, index) => {
             const itemKey = `item_${item._id}`;
             const savedItem = savedPositions[itemKey] || {
-                x: width * (0.2 + (index % 5) * 0.15),
+                x: width * (0.2 + (index % 6) * 0.15),
                 y: floorTopY,
                 scaleFactor: 1
             };
@@ -294,11 +302,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     friction: 1,
                     frictionAir: 0.1,
                     render: {
-                        fillStyle: 'grey',
+                        fillStyle: item.name === 'Stick' ? 'texture' : 'grey', // Для палки используем текстуру
                         zIndex: 0
                     },
                     collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
-                    itemId: item._id // Привязываем ID предмета
+                    itemId: item._id,
+                    itemName: item.name // Сохраняем имя предмета
                 }
             );
             const itemScale = savedItem.scaleFactor || 1;
@@ -478,19 +487,38 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             // Рендерим интерактивные объекты
             const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
             bodies.forEach(body => {
+                const vertices = body.vertices;
+                const minX = Math.min(...vertices.map(v => v.x));
+                const maxX = Math.max(...vertices.map(v => v.x));
+                const minY = Math.min(...vertices.map(v => v.y));
+                const maxY = Math.max(...vertices.map(v => v.y));
+                const objWidth = maxX - minX;
+                const objHeight = maxY - minY;
+
+                context.save();
                 context.beginPath();
                 if (body.circleRadius) {
                     context.arc(body.position.x, body.position.y, body.circleRadius, 0, 2 * Math.PI);
                 } else {
-                    const vertices = body.vertices;
                     context.moveTo(vertices[0].x, vertices[0].y);
                     for (let j = 1; j < vertices.length; j++) {
                         context.lineTo(vertices[j].x, vertices[j].y);
                     }
                     context.closePath();
                 }
-                context.fillStyle = body.render.fillStyle;
-                context.fill();
+                context.clip();
+
+                if (body.render.fillStyle === 'texture' && body.itemName === 'Stick' && imagesLoadedRef.current.stick && stickImgRef.current.width && stickImgRef.current.height) {
+                    // Рендерим текстуру для палки
+                    const textureWidth = objWidth;
+                    const textureHeight = objHeight;
+                    context.drawImage(stickImgRef.current, minX, minY, textureWidth, textureHeight);
+                } else {
+                    // Рендерим цвет для остальных объектов
+                    context.fillStyle = body.render.fillStyle;
+                    context.fill();
+                }
+                context.restore();
             });
 
             animationFrameId = requestAnimationFrame(renderLoop);

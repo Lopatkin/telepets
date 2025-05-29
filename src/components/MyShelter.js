@@ -437,7 +437,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const itemScale = savedItem.scaleFactor || 1;
             itemSquare.scaleFactor = itemScale;
             Matter.Body.scale(itemSquare, itemScale, itemScale);
-            originalSizesRef.current[itemKey] = { width: 500, height: 500 };
+            originalSizesRef.current[itemKey] = { width: 50, height: 50 };
             return itemSquare;
         });
 

@@ -5,6 +5,8 @@ import wallpaperImage from '../images/dwelling/wallpaper.jpg';
 import floorImage from '../images/dwelling/floor.jpg';
 import stickImage from '../images/dwelling/furniture/stick.png'; // Добавляем импорт текстуры для палки
 import garbageImage from '../images/dwelling/furniture/garbage.png'; // Добавляем импорт текстуры для мусора
+import berryImage from '../images/dwelling/furniture/berry.png'; // Добавляем импорт текстуры для ягод
+import mushroomsImage from '../images/dwelling/furniture/mushrooms.png'; // Добавляем импорт текстуры для грибов
 
 const Overlay = styled.div`
   position: absolute;
@@ -85,8 +87,17 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const wallpaperImgRef = useRef(new Image());
     const floorImgRef = useRef(new Image());
     const stickImgRef = useRef(new Image());
-    const garbageImgRef = useRef(new Image()); // Создаем реф для текстуры мусора
-    const imagesLoadedRef = useRef({ wallpaper: false, floor: false, stick: false, garbage: false }); // Добавляем флаг для мусора
+    const garbageImgRef = useRef(new Image());
+    const berryImgRef = useRef(new Image()); // Создаем реф для текстуры ягод
+    const mushroomsImgRef = useRef(new Image()); // Создаем реф для текстуры грибов
+    const imagesLoadedRef = useRef({
+        wallpaper: false,
+        floor: false,
+        stick: false,
+        garbage: false,
+        berry: false, // Добавляем флаг для ягод
+        mushrooms: false // Добавляем флаг для грибов
+    });
     const [locationItems, setLocationItems] = useState([]);
 
     // Загрузка изображений
@@ -94,7 +105,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         wallpaperImgRef.current.src = wallpaperImage;
         floorImgRef.current.src = floorImage;
         stickImgRef.current.src = stickImage;
-        garbageImgRef.current.src = garbageImage; // Устанавливаем источник для текстуры мусора
+        garbageImgRef.current.src = garbageImage;
+        berryImgRef.current.src = berryImage; // Устанавливаем источник для текстуры ягод
+        mushroomsImgRef.current.src = mushroomsImage; // Устанавливаем источник для текстуры грибов
 
         wallpaperImgRef.current.onload = () => {
             imagesLoadedRef.current.wallpaper = true;
@@ -106,7 +119,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             imagesLoadedRef.current.stick = true;
         };
         garbageImgRef.current.onload = () => {
-            imagesLoadedRef.current.garbage = true; // Устанавливаем флаг загрузки для мусора
+            imagesLoadedRef.current.garbage = true;
+        };
+        berryImgRef.current.onload = () => {
+            imagesLoadedRef.current.berry = true; // Устанавливаем флаг загрузки для ягод
+        };
+        mushroomsImgRef.current.onload = () => {
+            imagesLoadedRef.current.mushrooms = true; // Устанавливаем флаг загрузки для грибов
         };
 
         wallpaperImgRef.current.onerror = () => {
@@ -123,7 +142,15 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         };
         garbageImgRef.current.onerror = () => {
             console.error('Failed to load garbage image');
-            imagesLoadedRef.current.garbage = true; // Обработка ошибки загрузки мусора
+            imagesLoadedRef.current.garbage = true;
+        };
+        berryImgRef.current.onerror = () => {
+            console.error('Failed to load berry image');
+            imagesLoadedRef.current.berry = true; // Обработка ошибки загрузки ягод
+        };
+        mushroomsImgRef.current.onerror = () => {
+            console.error('Failed to load mushrooms image');
+            imagesLoadedRef.current.mushrooms = true; // Обработка ошибки загрузки грибов
         };
     }, []);
 
@@ -304,7 +331,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             };
 
             const isStick = item.name === 'Палка';
-            const isGarbage = item.name === 'Мусор'; // Проверяем, является ли предмет "Мусор"
+            const isGarbage = item.name === 'Мусор';
+            const isBerry = item.name === 'Ягоды'; // Проверяем, является ли предмет "Ягоды"
+            const isMushrooms = item.name === 'Грибы'; // Проверяем, является ли предмет "Грибы"
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,
@@ -316,8 +345,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     friction: 1,
                     frictionAir: 0.1,
                     render: {
-                        fillStyle: isStick || isGarbage ? 'transparent' : 'grey', // Прозрачный фон для палки и мусора
-                        sprite: isStick ? { texture: stickImage } : isGarbage ? { texture: garbageImage } : undefined, // Текстура для палки или мусора
+                        fillStyle: isStick || isGarbage || isBerry || isMushrooms ? 'transparent' : 'grey', // Прозрачный фон для текстурированных предметов
+                        sprite: isStick ? { texture: stickImage } :
+                            isGarbage ? { texture: garbageImage } :
+                                isBerry ? { texture: berryImage } :
+                                    isMushrooms ? { texture: mushroomsImage } : undefined, // Текстура для соответствующих предметов
                         zIndex: 0
                     },
                     collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
@@ -512,16 +544,20 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     }
                     context.closePath();
                 }
-
-                // Проверяем, есть ли у объекта текстура (для палки или мусора)
-                if (body.render.sprite && (body.render.sprite.texture === stickImage || body.render.sprite.texture === garbageImage) && imagesLoadedRef.current[body.render.sprite.texture === stickImage ? 'stick' : 'garbage']) {
+        
+                // Проверяем, есть ли у объекта текстура (для палки, мусора, ягод или грибов)
+                if (body.render.sprite && 
+                    [stickImage, garbageImage, berryImage, mushroomsImage].includes(body.render.sprite.texture) && 
+                    imagesLoadedRef.current[body.render.sprite.texture === stickImage ? 'stick' : 
+                                           body.render.sprite.texture === garbageImage ? 'garbage' : 
+                                           body.render.sprite.texture === berryImage ? 'berry' : 'mushrooms']) {
                     const vertices = body.vertices;
                     const minX = Math.min(...vertices.map(v => v.x));
                     // const maxX = Math.max(...vertices.map(v => v.x));
                     const minY = Math.min(...vertices.map(v => v.y));
                     const maxY = Math.max(...vertices.map(v => v.y));
                     const objHeight = maxY - minY;
-
+        
                     context.save();
                     context.beginPath();
                     context.moveTo(vertices[0].x, vertices[0].y);
@@ -530,28 +566,31 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     }
                     context.closePath();
                     context.clip();
-
-                    // Добавляем тень для палки или мусора
+        
+                    // Добавляем тень для текстурированных предметов
                     context.shadowColor = 'rgba(0, 0, 0, 0.3)'; // Полупрозрачная черная тень
                     context.shadowBlur = 5; // Размытие тени
                     context.shadowOffsetX = 3; // Смещение тени по X
                     context.shadowOffsetY = 3; // Смещение тени по Y
-
-                    const image = body.render.sprite.texture === stickImage ? stickImgRef.current : garbageImgRef.current;
+        
+                    const image = body.render.sprite.texture === stickImage ? stickImgRef.current : 
+                                 body.render.sprite.texture === garbageImage ? garbageImgRef.current : 
+                                 body.render.sprite.texture === berryImage ? berryImgRef.current : 
+                                 mushroomsImgRef.current;
                     if (image.width && image.height) {
                         const aspectRatio = image.width / image.height;
                         const textureHeight = objHeight;
                         const textureWidth = textureHeight * aspectRatio;
-
+        
                         context.drawImage(image, minX, minY, textureWidth, textureHeight);
                     }
-
+        
                     // Сбрасываем настройки тени после рендеринга
                     context.shadowColor = 'rgba(0, 0, 0, 0)';
                     context.shadowBlur = 0;
                     context.shadowOffsetX = 0;
                     context.shadowOffsetY = 0;
-
+        
                     context.restore();
                 } else {
                     context.fillStyle = body.render.fillStyle;

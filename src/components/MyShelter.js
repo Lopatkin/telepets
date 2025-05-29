@@ -395,7 +395,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 y: floorTopY,
                 scaleFactor: 1
             };
-
+        
             const isStick = item.name === 'Палка';
             const isGarbage = item.name === 'Мусор';
             const isBerry = item.name === 'Лесные ягоды';
@@ -409,8 +409,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,
-                200, // Увеличиваем ширину с 50 до 100 пикселей
-                200, // Увеличиваем высоту с 50 до 100 пикселей
+                isChair ? 100 : 200, // Для "Стула" размер 100x100, для остальных 200x200
+                isChair ? 100 : 200, // Для "Стула" размер 100x100, для остальных 200x200
                 {
                     isStatic: false,
                     restitution: 0,
@@ -419,15 +419,15 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     render: {
                         fillStyle: isStick || isGarbage || isBerry || isMushrooms || isBoard || isChair || isTable || isWardrobe || isSofa || isChest ? 'transparent' : 'grey',
                         sprite: isStick ? { texture: stickImage } :
-                            isGarbage ? { texture: garbageImage } :
+                                isGarbage ? { texture: garbageImage } :
                                 isBerry ? { texture: berryImage } :
-                                    isMushrooms ? { texture: mushroomsImage } :
-                                        isBoard ? { texture: boardImage } :
-                                            isChair ? { texture: chairImage } :
-                                                isTable ? { texture: tableImage } :
-                                                    isWardrobe ? { texture: wardrobeImage } :
-                                                        isSofa ? { texture: sofaImage } :
-                                                            isChest ? { texture: chestImage } : undefined,
+                                isMushrooms ? { texture: mushroomsImage } :
+                                isBoard ? { texture: boardImage } :
+                                isChair ? { texture: chairImage } :
+                                isTable ? { texture: tableImage } :
+                                isWardrobe ? { texture: wardrobeImage } :
+                                isSofa ? { texture: sofaImage } :
+                                isChest ? { texture: chestImage } : undefined,
                         zIndex: 0
                     },
                     collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
@@ -437,7 +437,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const itemScale = savedItem.scaleFactor || 1;
             itemSquare.scaleFactor = itemScale;
             Matter.Body.scale(itemSquare, itemScale, itemScale);
-            originalSizesRef.current[itemKey] = { width: 200, height: 200 }; // Обновляем исходные размеры до 100x100
+            originalSizesRef.current[itemKey] = { width: isChair ? 100 : 200, height: isChair ? 100 : 200 }; // Устанавливаем размер 100x100 для "Стула", 200x200 для остальных
             return itemSquare;
         });
 

@@ -409,8 +409,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,
-                100, // Увеличиваем ширину с 50 до 100 пикселей
-                100, // Увеличиваем высоту с 50 до 100 пикселей
+                200, // Увеличиваем ширину с 50 до 100 пикселей
+                200, // Увеличиваем высоту с 50 до 100 пикселей
                 {
                     isStatic: false,
                     restitution: 0,
@@ -437,7 +437,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const itemScale = savedItem.scaleFactor || 1;
             itemSquare.scaleFactor = itemScale;
             Matter.Body.scale(itemSquare, itemScale, itemScale);
-            originalSizesRef.current[itemKey] = { width: 100, height: 100 }; // Обновляем исходные размеры до 100x100
+            originalSizesRef.current[itemKey] = { width: 200, height: 200 }; // Обновляем исходные размеры до 100x100
             return itemSquare;
         });
 

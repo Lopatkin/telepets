@@ -349,7 +349,8 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         const itemsToMove = tempPersonalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
         setTempPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
-        setLocationItems(prev => [...prev, ...itemsToMove]);
+        // Удаляем локальное добавление в locationItems
+        // setLocationItems(prev => [...prev, ...itemsToMove]);
         socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);

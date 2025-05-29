@@ -398,7 +398,8 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setTimeout(() => {
         const itemsToDelete = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
-        socket.emit('removeItems', { owner: userOwnerKey, name: itemName, count }, () => {
+        // Используем itemIds вместо name и count
+        socket.emit('removeItems', { owner: userOwnerKey, itemIds }, () => {
           socket.emit('getItems', { owner: userOwnerKey });
         });
         setAnimatingItem(null);

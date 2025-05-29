@@ -393,7 +393,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const savedItem = savedPositions[itemKey] || {
                 x: width * (0.2 + (index % 5) * 0.15),
                 y: floorTopY,
-                scaleFactor: 1
+                scaleFactor: 10
             };
 
             const isStick = item.name === 'Палка';

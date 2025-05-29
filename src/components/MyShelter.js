@@ -395,7 +395,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 y: floorTopY,
                 scaleFactor: 1
             };
-        
+
             const isStick = item.name === 'Палка';
             const isGarbage = item.name === 'Мусор';
             const isBerry = item.name === 'Лесные ягоды';
@@ -406,11 +406,19 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const isWardrobe = item.name === 'Шкаф';
             const isSofa = item.name === 'Кровать';
             const isChest = item.name === 'Тумба';
+
+            // Определяем размеры в зависимости от предмета
+            const size = isChair ? 100 : // "Стул" уже 100x100
+                isBoard ? 100 : // "Доска" в 2 раза меньше (200 ÷ 2)
+                    isBerry || isMushrooms ? 50 : // "Лесные ягоды" и "Лесные грибы" в 4 раза меньше (200 ÷ 4)
+                        isStick || isGarbage ? 67 : // "Палка" и "Мусор" в 3 раза меньше (200 ÷ 3 ≈ 66.67, округлено до 67)
+                            200; // Остальные предметы (Стол, Шкаф, Кровать, Тумба) остаются 200x200
+
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,
-                isChair ? 100 : 200, // Для "Стула" размер 100x100, для остальных 200x200
-                isChair ? 100 : 200, // Для "Стула" размер 100x100, для остальных 200x200
+                size, // Устанавливаем ширину
+                size, // Устанавливаем высоту
                 {
                     isStatic: false,
                     restitution: 0,
@@ -419,15 +427,15 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     render: {
                         fillStyle: isStick || isGarbage || isBerry || isMushrooms || isBoard || isChair || isTable || isWardrobe || isSofa || isChest ? 'transparent' : 'grey',
                         sprite: isStick ? { texture: stickImage } :
-                                isGarbage ? { texture: garbageImage } :
+                            isGarbage ? { texture: garbageImage } :
                                 isBerry ? { texture: berryImage } :
-                                isMushrooms ? { texture: mushroomsImage } :
-                                isBoard ? { texture: boardImage } :
-                                isChair ? { texture: chairImage } :
-                                isTable ? { texture: tableImage } :
-                                isWardrobe ? { texture: wardrobeImage } :
-                                isSofa ? { texture: sofaImage } :
-                                isChest ? { texture: chestImage } : undefined,
+                                    isMushrooms ? { texture: mushroomsImage } :
+                                        isBoard ? { texture: boardImage } :
+                                            isChair ? { texture: chairImage } :
+                                                isTable ? { texture: tableImage } :
+                                                    isWardrobe ? { texture: wardrobeImage } :
+                                                        isSofa ? { texture: sofaImage } :
+                                                            isChest ? { texture: chestImage } : undefined,
                         zIndex: 0
                     },
                     collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
@@ -437,7 +445,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const itemScale = savedItem.scaleFactor || 1;
             itemSquare.scaleFactor = itemScale;
             Matter.Body.scale(itemSquare, itemScale, itemScale);
-            originalSizesRef.current[itemKey] = { width: isChair ? 100 : 200, height: isChair ? 100 : 200 }; // Устанавливаем размер 100x100 для "Стула", 200x200 для остальных
+            originalSizesRef.current[itemKey] = { width: size, height: size }; // Сохраняем соответствующие размеры для каждого предмета
             return itemSquare;
         });
 

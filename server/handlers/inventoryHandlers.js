@@ -229,7 +229,10 @@ function registerInventoryHandlers({
             const currentRoom = userCurrentRoom.get(socket.userData.userId);
             if (currentRoom) {
                 io.to(currentRoom).emit('itemAction', { action: 'remove', owner: oldOwner, itemId: ids });
-                io.to(currentRoom).emit('itemAction', { action: 'add', owner: newOwner, item: updatedItems[0] });
+                // Отправляем все перемещённые предметы
+                updatedItems.forEach(item => {
+                    io.to(currentRoom).emit('itemAction', { action: 'add', owner: newOwner, item });
+                });
                 io.to(currentRoom).emit('inventoryLimit', oldOwnerLimit);
                 io.to(currentRoom).emit('inventoryLimit', newOwnerLimitUpdated);
             }

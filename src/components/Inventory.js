@@ -101,22 +101,54 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   }, [userOwnerKey, locationOwnerKey]);
 
   const handleItemAction = useCallback((data) => {
-    const { action, owner, itemId, item } = data;
+    const { action, owner, itemId, item, itemIds } = data;
 
-    if (action === 'remove' && owner === locationOwnerKey) {
-      setAnimatingItem({ itemId, action: 'shrink' });
-      setTimeout(() => {
-        setLocationItems(prevItems => prevItems.filter(i => i._id.toString() !== itemId));
-        setAnimatingItem(null);
-      }, 500);
-    } else if (action === 'add' && owner === locationOwnerKey) {
-      setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
-      setTimeout(() => {
-        setLocationItems(prevItems => [...prevItems, item]);
-        setAnimatingItem(null);
-      }, 500);
+    if (owner === locationOwnerKey) {
+      if (action === 'remove') {
+        setAnimatingItem({ itemId, action: 'shrink' });
+        setTimeout(() => {
+          setLocationItems(prevItems => prevItems.filter(i => !itemIds?.includes(i._id.toString()) && i._id.toString() !== itemId));
+          setAnimatingItem(null);
+        }, 500);
+      } else if (action === 'add') {
+        setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
+        setTimeout(() => {
+          setLocationItems(prevItems => {
+            // Проверяем, нет ли уже этого предмета
+            const exists = prevItems.some(i => i._id.toString() === item._id.toString());
+            if (!exists) {
+              return [...prevItems, { ...item, _id: item._id.toString() }];
+            }
+            return prevItems;
+          });
+          setAnimatingItem(null);
+        }, 500);
+      }
+      // Запрашиваем актуальные данные с сервера
+      socket.emit('getItems', { owner: locationOwnerKey });
+    } else if (owner === userOwnerKey) {
+      if (action === 'remove') {
+        setAnimatingItem({ itemId, action: 'shrink' });
+        setTimeout(() => {
+          setTempPersonalItems(prevItems => prevItems.filter(i => !itemIds?.includes(i._id.toString()) && i._id.toString() !== itemId));
+          setAnimatingItem(null);
+        }, 500);
+      } else if (action === 'add') {
+        setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
+        setTimeout(() => {
+          setTempPersonalItems(prevItems => {
+            const exists = prevItems.some(i => i._id.toString() === item._id.toString());
+            if (!exists) {
+              return [...prevItems, { ...item, _id: item._id.toString() }];
+            }
+            return prevItems;
+          });
+          setAnimatingItem(null);
+        }, 500);
+      }
+      socket.emit('getItems', { owner: userOwnerKey });
     }
-  }, [locationOwnerKey]);
+  }, [locationOwnerKey, userOwnerKey, socket]);
 
   const handleShelterAnimals = useCallback((animals) => {
     setShelterAnimals(animals);
@@ -150,9 +182,9 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   useEffect(() => {
     if (!socket || !userId) return;
 
-    // console.log('Emitting getItems for location:', locationOwnerKey);
+    console.log('Emitting getItems for location:', locationOwnerKey);
     socket.emit('getItems', { owner: locationOwnerKey });
-    // console.log('Emitting getItems for user:', userOwnerKey);
+    console.log('Emitting getItems for user:', userOwnerKey);
     socket.emit('getItems', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
@@ -167,18 +199,24 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setShopItems([]);
     }
 
-    socket.on('items', (data) => {
+    const handleItems = (data) => {
       const { owner, items } = data;
-      // console.log('Received items event:', data);
+      console.log('Received items event:', data);
       if (owner === locationOwnerKey) {
         setLocationItems(items.map(item => ({
           ...item,
           _id: item._id.toString(),
         })));
       } else if (owner === userOwnerKey) {
+        setTempPersonalItems(items.map(item => ({
+          ...item,
+          _id: item._id.toString(),
+        })));
         onItemsUpdate(data);
       }
-    });
+    };
+
+    socket.on('items', handleItems);
     socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
     socket.on('shelterAnimals', handleShelterAnimals);
@@ -188,7 +226,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     });
 
     return () => {
-      socket.off('items');
+      socket.off('items', handleItems);
       socket.off('inventoryLimit', handleLimitUpdate);
       socket.off('itemAction', handleItemAction);
       socket.off('shelterAnimals', handleShelterAnimals);
@@ -283,11 +321,13 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     console.log(`Sent takeAnimalHome request for animal ID: ${animalId}, Name: ${animalName}`);
   };
 
+  // Обновляем handleMoveItem для корректного перемещения
   const handleMoveItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
     setActionQuantity({ itemName, weight, count: 1, action: 'move', maxCount });
   };
 
+  // Обновляем handlePickupItem
   const handlePickupItem = (itemId) => {
     if (isActionCooldown) return;
 
@@ -295,15 +335,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setAnimatingItem({ itemId, action: 'pickup' });
 
     setTimeout(() => {
-      const itemToAdd = locationItems.find(item => item._id.toString() === itemId);
-      if (itemToAdd) {
-        setTempPersonalItems(prev => [...prev, { ...itemToAdd }]);
-      }
-      const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
-      setLocationItems(updatedLocationItems);
+      socket.emit('pickupItem', { itemId }, () => {
+        socket.emit('getItems', { owner: userOwnerKey });
+        socket.emit('getItems', { owner: locationOwnerKey });
+      });
       setAnimatingItem(null);
-      socket.emit('pickupItem', { itemId });
-
       setTimeout(() => {
         setIsActionCooldown(false);
       }, 1000);
@@ -337,6 +373,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setConfirmDelete(null);
   };
 
+  // Обновляем confirmActionQuantity для синхронизации с сервером
   const confirmActionQuantity = () => {
     if (!actionQuantity.itemName || isActionCooldown) return;
 
@@ -346,21 +383,24 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     if (action === 'move') {
       setAnimatingItem({ itemId: `${itemName}_${weight}_move`, action: 'move' });
       setTimeout(() => {
-        const itemsToMove = tempPersonalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
+        const itemsToMove = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
-        setTempPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
-        setLocationItems(prev => [...prev, ...itemsToMove]);
-        socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey });
+        socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey }, () => {
+          // После успешного перемещения запрашиваем актуальные данные
+          socket.emit('getItems', { owner: userOwnerKey });
+          socket.emit('getItems', { owner: locationOwnerKey });
+        });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
       }, 500);
     } else if (action === 'delete') {
       setAnimatingItem({ itemId: `${itemName}_${weight}_delete`, action: 'split' });
       setTimeout(() => {
-        const itemsToDelete = tempPersonalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
+        const itemsToDelete = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
-        setTempPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
-        itemIds.forEach(itemId => socket.emit('deleteItem', { itemId }));
+        socket.emit('removeItems', { owner: userOwnerKey, name: itemName, count }, () => {
+          socket.emit('getItems', { owner: userOwnerKey });
+        });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
       }, 1000);

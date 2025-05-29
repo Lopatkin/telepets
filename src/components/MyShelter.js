@@ -568,7 +568,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                 body.render.sprite.texture === mushroomsImage ? 'mushrooms' : 'board']) {
                     const vertices = body.vertices;
                     const minX = Math.min(...vertices.map(v => v.x));
-                    const maxX = Math.max(...vertices.map(v => v.x));
+                    // const maxX = Math.max(...vertices.map(v => v.x));
                     const minY = Math.min(...vertices.map(v => v.y));
                     const maxY = Math.max(...vertices.map(v => v.y));
                     const objHeight = maxY - minY;

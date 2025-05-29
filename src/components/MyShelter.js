@@ -332,8 +332,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
             const isStick = item.name === 'Палка';
             const isGarbage = item.name === 'Мусор';
-            const isBerry = item.name === 'Ягоды'; // Проверяем, является ли предмет "Ягоды"
-            const isMushrooms = item.name === 'Грибы'; // Проверяем, является ли предмет "Грибы"
+            const isBerry = item.name === 'Лесные ягоды'; // Проверяем, является ли предмет "Ягоды"
+            const isMushrooms = item.name === 'Лесные грибы'; // Проверяем, является ли предмет "Грибы"
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,

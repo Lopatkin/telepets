@@ -409,8 +409,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,
-                50, // Увеличиваем ширину с 50 до 100 пикселей
-                50, // Увеличиваем высоту с 50 до 100 пикселей
+                200, // Увеличиваем ширину с 50 до 100 пикселей
+                200, // Увеличиваем высоту с 50 до 100 пикселей
                 {
                     isStatic: false,
                     restitution: 0,

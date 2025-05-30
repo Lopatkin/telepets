@@ -749,8 +749,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
             Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
             Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
-            const scaleX = newWidth / width;
-            const scaleY = newHeight / height;
+            // const scaleX = newWidth / width;
+            // const scaleY = newHeight / height;
             // Matter.Body.scale(wall, scaleX, scaleY);
             // Matter.Body.scale(floor, scaleX, scaleY);
 

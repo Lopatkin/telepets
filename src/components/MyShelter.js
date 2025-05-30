@@ -116,10 +116,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         sofa: false, // Добавляем флаг для кровати
         chest: false // Добавляем флаг для тумбы
     });
-
-    const wallRef = useRef(null);
-    const floorRef = useRef(null);
-
     const [locationItems, setLocationItems] = useState([]);
 
     // Загрузка изображений
@@ -231,55 +227,36 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const owner = currentRoom;
         socket.emit('getItems', { owner });
 
-        // Запрашиваем позиции предметов
-        socket.emit('getItemPositions', { room: currentRoom }, (response) => {
-            if (response.success) {
-                setLocationItems(prevItems =>
-                    prevItems.map(item => ({
-                        ...item,
-                        position: response.positions[item._id] || { x: canvasRef.current?.width * (0.2 + (prevItems.indexOf(item) % 5) * 0.15), y: canvasRef.current?.height * 0.4 },
-                        scaleFactor: response.positions[item._id]?.scaleFactor || 1
-                    }))
-                );
-            }
-        });
-
         socket.on('items', (data) => {
             if (data.owner === owner) {
                 setLocationItems(data.items.map(item => ({
                     ...item,
                     _id: item._id.toString(),
-                    position: item.position || { x: canvasRef.current?.width * (0.2 + (data.items.indexOf(item) % 5) * 0.15), y: canvasRef.current?.height * 0.4 },
-                    scaleFactor: item.scaleFactor || 1
                 })));
-            }
-        });
-
-        // Обработчик обновления позиций от других клиентов
-        socket.on('itemPositionUpdate', ({ itemId, x, y, scaleFactor }) => {
-            setLocationItems(prevItems =>
-                prevItems.map(item =>
-                    item._id === itemId ? { ...item, position: { x, y }, scaleFactor } : item
-                )
-            );
-
-            const body = bodiesRef.current.find(b => b.itemId === itemId);
-            if (body) {
-                Matter.Body.setPosition(body, { x, y });
-                const currentScale = body.scaleFactor || 1;
-                const scaleFactorChange = scaleFactor / currentScale;
-                Matter.Body.scale(body, scaleFactorChange, scaleFactorChange);
-                body.scaleFactor = scaleFactor;
             }
         });
 
         return () => {
             socket.off('items');
-            socket.off('itemPositionUpdate');
         };
     }, [socket, currentRoom]);
 
     const handleClose = () => {
+        // Сохранение позиций и масштабов всех объектов
+        const positions = {
+            circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor },
+            square: { x: squareRef.current.position.x, y: squareRef.current.position.y, scaleFactor: squareRef.current.scaleFactor },
+            triangle: { x: triangleRef.current.position.x, y: triangleRef.current.position.y, scaleFactor: triangleRef.current.scaleFactor },
+            ...locationItems.reduce((acc, item, index) => ({
+                ...acc,
+                [`item_${item._id}`]: {
+                    x: bodiesRef.current.find(b => b.itemId === item._id)?.position.x || (canvasRef.current?.width * (0.2 + (index % 5) * 0.15)),
+                    y: bodiesRef.current.find(b => b.itemId === item._id)?.position.y || (canvasRef.current?.height * 0.4),
+                    scaleFactor: bodiesRef.current.find(b => b.itemId === item._id)?.scaleFactor || 1
+                }
+            }), {})
+        };
+        localStorage.setItem(`shelterObjectPositions_${userId}`, JSON.stringify(positions));
         setShowMyShelter(false);
     };
 
@@ -313,7 +290,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const wallHeight = height * 0.4;
         const floorHeight = height * 0.6;
         const staticCollisionFilter = { category: 0x0002, mask: 0 };
-        wallRef.current = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
+        const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
             isStatic: true,
             restitution: 0,
             friction: 0,
@@ -322,10 +299,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
                 zIndex: -100
             },
-            collisionFilter: staticCollisionFilter,
+            collisionFilter: staticCollisionFilter
         });
 
-        floorRef.current = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
+        const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
             isStatic: true,
             restitution: 0,
             friction: 0,
@@ -413,10 +390,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         // Создаем серые квадраты для каждого предмета в инвентаре локации
         const itemBodies = locationItems.map((item, index) => {
             const itemKey = `item_${item._id}`;
-            const savedItem = item.position || {
+            const savedItem = savedPositions[itemKey] || {
                 x: width * (0.2 + (index % 5) * 0.15),
                 y: floorTopY,
-                scaleFactor: item.scaleFactor || 1
+                scaleFactor: 1
             };
 
             const isStick = item.name === 'Палка';
@@ -430,16 +407,18 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const isSofa = item.name === 'Кровать';
             const isChest = item.name === 'Тумба';
 
-            const size = isChair ? 100 :
-                isBoard ? 100 :
-                    isBerry || isMushrooms ? 50 :
-                        isStick || isGarbage ? 67 : 200;
+            // Определяем размеры в зависимости от предмета
+            const size = isChair ? 100 : // "Стул" уже 100x100
+                isBoard ? 100 : // "Доска" в 2 раза меньше (200 ÷ 2)
+                    isBerry || isMushrooms ? 50 : // "Лесные ягоды" и "Лесные грибы" в 4 раза меньше (200 ÷ 4)
+                        isStick || isGarbage ? 67 : // "Палка" и "Мусор" в 3 раза меньше (200 ÷ 3 ≈ 66.67, округлено до 67)
+                            200; // Остальные предметы (Стол, Шкаф, Кровать, Тумба) остаются 200x200
 
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,
-                size,
-                size,
+                size, // Устанавливаем ширину
+                size, // Устанавливаем высоту
                 {
                     isStatic: false,
                     restitution: 0,
@@ -466,13 +445,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const itemScale = savedItem.scaleFactor || 1;
             itemSquare.scaleFactor = itemScale;
             Matter.Body.scale(itemSquare, itemScale, itemScale);
-            originalSizesRef.current[itemKey] = { width: size, height: size };
+            originalSizesRef.current[itemKey] = { width: size, height: size }; // Сохраняем соответствующие размеры для каждого предмета
             return itemSquare;
         });
 
         // Объединяем все объекты
         bodiesRef.current = [circle, square, triangle, ...itemBodies];
-        Matter.World.add(engine.world, [...boundaries, wallRef.current, floorRef.current, circle, square, triangle, ...itemBodies]);
+        Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle, ...itemBodies]);
 
         // Настройка мыши
         const mouse = Matter.Mouse.create(canvas);
@@ -543,15 +522,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
             const draggedBody = event.body;
             Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
-            if (draggedBody.itemId) {
-                socket.emit('updateItemPosition', {
-                    room: currentRoom,
-                    itemId: draggedBody.itemId,
-                    x: draggedBody.position.x,
-                    y: draggedBody.position.y,
-                    scaleFactor: draggedBody.scaleFactor || 1
-                });
-            }
         });
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
@@ -568,7 +538,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             context.fillRect(0, 0, canvas.width, canvas.height);
 
             // Рендерим статичные объекты (стена и пол) с текстурами
-            [wallRef.current, floorRef.current].forEach(body => {
+            [wall, floor].forEach(body => {
                 const vertices = body.vertices;
                 const minX = Math.min(...vertices.map(v => v.x));
                 const maxX = Math.max(...vertices.map(v => v.x));
@@ -586,7 +556,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 context.closePath();
                 context.clip();
 
-                const isWall = body === wallRef;
+                const isWall = body === wall;
                 const image = isWall ? wallpaperImgRef.current : floorImgRef.current;
                 const isImageLoaded = isWall ? imagesLoadedRef.current.wallpaper : imagesLoadedRef.current.floor;
 
@@ -613,7 +583,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
             // Проверяем позиции и масштабируем интерактивные объекты
             bodiesRef.current.forEach(body => {
-                if (body.isStatic) return; // Пропускаем статичные объекты (стена и пол)
                 const bounds = body.bounds;
                 const margin = 5;
                 if (bounds.min.x < margin) {
@@ -742,56 +711,20 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             canvas.width = newWidth;
             canvas.height = newHeight;
 
-            // Обновляем позиции границ
             Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
             Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
             Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
             Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
 
-            // Пересоздаем стену и пол с новыми размерами, но без масштабирования
-            const wallHeight = newHeight * 0.4;
-            const floorHeight = newHeight * 0.6;
-            const staticCollisionFilter = { category: 0x0002, mask: 0 };
+            Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
+            Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
+            const scaleX = newWidth / width;
+            const scaleY = newHeight / height;
+            Matter.Body.scale(wall, scaleX, scaleY);
+            Matter.Body.scale(floor, scaleX, scaleY);
 
-            // Удаляем старые объекты стены и пола, если они существуют
-            if (wallRef.current) {
-                Matter.World.remove(engine.world, wallRef.current);
-            }
-            if (floorRef.current) {
-                Matter.World.remove(engine.world, floorRef.current);
-            }
-
-            // Создаем новые объекты стены и пола
-            wallRef.current = Matter.Bodies.rectangle(newWidth / 2, wallHeight / 2, newWidth, wallHeight, {
-                isStatic: true,
-                restitution: 0,
-                friction: 0,
-                frictionAir: 0,
-                render: {
-                    fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
-                    zIndex: -100
-                },
-                collisionFilter: staticCollisionFilter,
-            });
-
-            floorRef.current = Matter.Bodies.rectangle(newWidth / 2, newHeight - floorHeight / 2, newWidth, floorHeight, {
-                isStatic: true,
-                restitution: 0,
-                friction: 0,
-                frictionAir: 0,
-                render: {
-                    fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
-                    zIndex: -100
-                },
-                collisionFilter: staticCollisionFilter
-            });
-
-            Matter.World.add(engine.world, [wallRef.current, floorRef.current]);
-
-            // Проверяем границы только для нестатичных объектов
             const margin = 5;
             bodiesRef.current.forEach(body => {
-                if (body.isStatic) return; // Пропускаем статичные объекты
                 const bounds = body.bounds;
                 if (bounds.min.x < margin || bounds.max.x > newWidth - margin || bounds.min.y < margin || bounds.max.y > newHeight - margin) {
                     const newX = Math.max(margin + (bounds.max.x - bounds.min.x) / 2, Math.min(body.position.x, newWidth - margin - (bounds.max.x - bounds.min.x) / 2));

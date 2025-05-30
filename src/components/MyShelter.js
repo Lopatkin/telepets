@@ -14,6 +14,34 @@ import wardrobeImage from '../images/dwelling/furniture/wardrobe.png'; // Доб
 import sofaImage from '../images/dwelling/furniture/sofa.png'; // Добавляем импорт текстуры для кровати
 import chestImage from '../images/dwelling/furniture/chest.png'; // Добавляем импорт текстуры для тумбы
 
+// Добавляем стили для контекстного меню
+const ContextMenu = styled.div`
+    position: absolute;
+    top: ${({ y }) => y}px;
+    left: ${({ x }) => x}px;
+    background: ${({ theme }) => (theme === 'dark' ? '#4A4A4A' : '#D3D3D3')};
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 2500;
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+`;
+
+const ContextMenuItem = styled.button`
+    background: none;
+    border: none;
+    color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+
+    &:hover {
+    background: ${({ theme }) => (theme === 'dark' ? '#5A5A5A' : '#B0B0B0')};
+    }
+`;
+
 const SaveButton = styled.button`
     position: absolute;
     top: 10px;
@@ -136,6 +164,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         chest: false // Добавляем флаг для тумбы
     });
     const [locationItems, setLocationItems] = useState([]);
+
+    const [contextMenu, setContextMenu] = useState(null);
+    const holdTimerRef = useRef(null);
+    const clickPositionRef = useRef(null);
+    const isDraggingRef = useRef(false);
 
     // Загрузка изображений
     useEffect(() => {
@@ -281,6 +314,23 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     // Модифицируем функцию handleClose, убирая сохранение
     const handleClose = () => {
         setShowMyShelter(false);
+    };
+
+    // Функция для перемещения предмета на передний план
+    const moveToFront = (body) => {
+        const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
+        body.render.zIndex = maxZIndex + 1;
+        body.render.opacity = 1; // Восстанавливаем полную непрозрачность
+        setContextMenu(null); // Закрываем меню
+    };
+
+    const moveToBack = (body) => {
+        const minZIndex = Math.min(...bodiesRef.current
+            .filter(b => b !== wall && b !== floor)
+            .map(b => b.render.zIndex || 0));
+        body.render.zIndex = minZIndex - 1 > -100 ? minZIndex - 1 : -99; // Не опускаем ниже -99
+        body.render.opacity = 1; // Восстанавливаем полную непрозрачность
+        setContextMenu(null); // Закрываем меню
     };
 
     useEffect(() => {
@@ -491,8 +541,21 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const mouseY = event.clientY - rect.top;
             const mouse = Matter.Vector.create(mouseX, mouseY);
             const clickedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, mouse));
-            if (clickedBody) {
-                bringToFront(clickedBody);
+
+            if (clickedBody && clickedBody !== wall && clickedBody !== floor) {
+                clickPositionRef.current = { x: mouseX, y: mouseY };
+                isDraggingRef.current = false;
+
+                // Запускаем таймер для длительного нажатия
+                holdTimerRef.current = setTimeout(() => {
+                    if (!isDraggingRef.current) {
+                        setContextMenu({
+                            x: mouseX,
+                            y: mouseY,
+                            body: clickedBody
+                        });
+                    }
+                }, 2000); // 2 секунды
             }
         };
 
@@ -508,8 +571,37 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
             const touchPoint = Matter.Vector.create(mouseX, mouseY);
             const touchedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, touchPoint));
-            if (touchedBody) {
-                bringToFront(touchedBody);
+
+            if (touchedBody && touchedBody !== wall && touchedBody !== floor) {
+                clickPositionRef.current = { x: mouseX, y: mouseY };
+                isDraggingRef.current = false;
+
+                // Запускаем таймер для длительного касания
+                holdTimerRef.current = setTimeout(() => {
+                    if (!isDraggingRef.current) {
+                        setContextMenu({
+                            x: mouseX,
+                            y: mouseY,
+                            body: touchedBody
+                        });
+                    }
+                }, 2000); // 2 секунды
+            }
+        };
+
+        const handleMouseMove = (event) => {
+            if (clickPositionRef.current) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                const distance = Math.sqrt(
+                    Math.pow(mouseX - clickPositionRef.current.x, 2) +
+                    Math.pow(mouseY - clickPositionRef.current.y, 2)
+                );
+                if (distance > 5) { // Пороговое значение для определения перетаскивания
+                    isDraggingRef.current = true;
+                    clearTimeout(holdTimerRef.current);
+                }
             }
         };
 
@@ -521,18 +613,48 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const mouseY = touch.clientY - rect.top;
             mouse.position.x = mouseX;
             mouse.position.y = mouseY;
+
+            if (clickPositionRef.current) {
+                const distance = Math.sqrt(
+                    Math.pow(mouseX - clickPositionRef.current.x, 2) +
+                    Math.pow(mouseY - clickPositionRef.current.y, 2)
+                );
+                if (distance > 5) { // Пороговое значение для определения перетаскивания
+                    isDraggingRef.current = true;
+                    clearTimeout(holdTimerRef.current);
+                }
+            }
+        };
+
+        // Очищаем таймер при отпускании
+        const handleMouseUp = () => {
+            clearTimeout(holdTimerRef.current);
+            clickPositionRef.current = null;
+            isDraggingRef.current = false;
         };
 
         const handleTouchEnd = (event) => {
             event.preventDefault();
             mouse.mousedown = false;
+            clearTimeout(holdTimerRef.current);
+            clickPositionRef.current = null;
+            isDraggingRef.current = false;
+        };
+
+        // Закрытие контекстного меню при клике вне его
+        const handleCanvasClick = (event) => {
+            if (contextMenu) {
+                setContextMenu(null);
+            }
         };
 
         canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
         canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-
+        canvas.addEventListener('click', handleCanvasClick);
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
             mouse: mouse,
             constraint: {
@@ -771,9 +893,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         return () => {
             cancelAnimationFrame(animationFrameId);
             canvas.removeEventListener('mousedown', handleMouseDown);
+            canvas.removeEventListener('mousemove', handleMouseMove);
+            canvas.removeEventListener('mouseup', handleMouseUp);
             canvas.removeEventListener('touchstart', handleTouchStart);
             canvas.removeEventListener('touchmove', handleTouchMove);
             canvas.removeEventListener('touchend', handleTouchEnd);
+            canvas.removeEventListener('click', handleCanvasClick);
             window.removeEventListener('resize', handleResize);
             Matter.Runner.stop(runnerRef.current);
             Matter.World.clear(engine.world);
@@ -799,6 +924,16 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             {isFixed && <Overlay />}
             <CanvasContainer>
                 <canvas ref={canvasRef} />
+                {contextMenu && (
+                    <ContextMenu x={contextMenu.x} y={contextMenu.y} theme={theme}>
+                        <ContextMenuItem theme={theme} onClick={() => moveToFront(contextMenu.body)}>
+                            Переместить вперёд
+                        </ContextMenuItem>
+                        <ContextMenuItem theme={theme} onClick={() => moveToBack(contextMenu.body)}>
+                            Переместить назад
+                        </ContextMenuItem>
+                    </ContextMenu>
+                )}
             </CanvasContainer>
         </ShelterContainer>
     );

@@ -319,8 +319,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 zIndex: -100
             },
             collisionFilter: staticCollisionFilter,
-            // Добавляем флаг, чтобы предотвратить масштабирование
-            isScalable: false
         });
 
         const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
@@ -332,9 +330,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
                 zIndex: -100
             },
-            collisionFilter: staticCollisionFilter,
-            // Добавляем флаг, чтобы предотвратить масштабирование
-            isScalable: false
+            collisionFilter: staticCollisionFilter
         });
 
         // Загружаем сохраненные позиции и масштабы
@@ -540,20 +536,18 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         mouseConstraintRef.current = mouseConstraint;
         Matter.World.add(engine.world, mouseConstraint);
 
-        // В обработчике enddrag добавить проверку
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
-            // const draggedBody = event.body;
-            // Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
-            // // Проверяем, что объект не является стеной или полом
-            // if (draggedBody.itemId && !draggedBody.isScalable) {
-            //     socket.emit('updateItemPosition', {
-            //         room: currentRoom,
-            //         itemId: draggedBody.itemId,
-            //         x: draggedBody.position.x,
-            //         y: draggedBody.position.y,
-            //         scaleFactor: draggedBody.scaleFactor || 1
-            //     });
-            // }
+            const draggedBody = event.body;
+            Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
+            if (draggedBody.itemId) {
+                socket.emit('updateItemPosition', {
+                    room: currentRoom,
+                    itemId: draggedBody.itemId,
+                    x: draggedBody.position.x,
+                    y: draggedBody.position.y,
+                    scaleFactor: draggedBody.scaleFactor || 1
+                });
+            }
         });
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
@@ -743,19 +737,17 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             canvas.width = newWidth;
             canvas.height = newHeight;
 
-            // Обновляем позиции границ
             Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
             Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
             Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
             Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
 
-            // Обновляем позиции стены и пола без масштабирования
             Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
             Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
-
-            // Удаляем масштабирование стены и пола
-            // Matter.Body.scale(wall, scaleX, scaleY);
-            // Matter.Body.scale(floor, scaleX, scaleY);
+            const scaleX = newWidth / width;
+            const scaleY = newHeight / height;
+            Matter.Body.scale(wall, scaleX, scaleY);
+            Matter.Body.scale(floor, scaleX, scaleY);
 
             const margin = 5;
             bodiesRef.current.forEach(body => {
@@ -768,16 +760,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             });
         };
 
-        let resizeTimeout;
-        const debouncedHandleResize = () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                handleResize();
-            }, 100); // Задержка 100 мс
-        };
-
         window.addEventListener('resize', handleResize);
-        window.addEventListener('resize', debouncedHandleResize);
         handleResize();
 
         return () => {
@@ -787,7 +770,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             canvas.removeEventListener('touchmove', handleTouchMove);
             canvas.removeEventListener('touchend', handleTouchEnd);
             window.removeEventListener('resize', handleResize);
-            window.removeEventListener('resize', debouncedHandleResize);
             Matter.Runner.stop(runnerRef.current);
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);

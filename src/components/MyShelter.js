@@ -751,8 +751,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
             const scaleX = newWidth / width;
             const scaleY = newHeight / height;
-            Matter.Body.scale(wall, scaleX, scaleY);
-            Matter.Body.scale(floor, scaleX, scaleY);
+            // Matter.Body.scale(wall, scaleX, scaleY);
+            // Matter.Body.scale(floor, scaleX, scaleY);
 
             const margin = 5;
             bodiesRef.current.forEach(body => {

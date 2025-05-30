@@ -3,16 +3,16 @@ import styled from 'styled-components';
 import Matter from 'matter-js';
 import wallpaperImage from '../images/dwelling/wallpaper.jpg';
 import floorImage from '../images/dwelling/floor.jpg';
-import stickImage from '../images/dwelling/furniture/stick.png'; // Добавляем импорт текстуры для палки
-import garbageImage from '../images/dwelling/furniture/garbage.png'; // Добавляем импорт текстуры для мусора
-import berryImage from '../images/dwelling/furniture/berry.png'; // Добавляем импорт текстуры для ягод
-import mushroomsImage from '../images/dwelling/furniture/mushrooms.png'; // Добавляем импорт текстуры для грибов
-import boardImage from '../images/dwelling/furniture/board.png'; // Добавляем импорт текстуры для доски
-import chairImage from '../images/dwelling/furniture/chair.png'; // Добавляем импорт текстуры для стула
-import tableImage from '../images/dwelling/furniture/table.png'; // Добавляем импорт текстуры для стола
-import wardrobeImage from '../images/dwelling/furniture/wardrobe.png'; // Добавляем импорт текстуры для шкафа
-import sofaImage from '../images/dwelling/furniture/sofa.png'; // Добавляем импорт текстуры для кровати
-import chestImage from '../images/dwelling/furniture/chest.png'; // Добавляем импорт текстуры для тумбы
+import stickImage from '../images/dwelling/furniture/stick.png';
+import garbageImage from '../images/dwelling/furniture/garbage.png';
+import berryImage from '../images/dwelling/furniture/berry.png';
+import mushroomsImage from '../images/dwelling/furniture/mushrooms.png';
+import boardImage from '../images/dwelling/furniture/board.png';
+import chairImage from '../images/dwelling/furniture/chair.png';
+import tableImage from '../images/dwelling/furniture/table.png';
+import wardrobeImage from '../images/dwelling/furniture/wardrobe.png';
+import sofaImage from '../images/dwelling/furniture/sofa.png';
+import chestImage from '../images/dwelling/furniture/chest.png';
 
 const SaveButton = styled.button`
     position: absolute;
@@ -30,8 +30,7 @@ const SaveButton = styled.button`
     &:hover {
       background: ${({ theme }) => (theme === 'dark' ? '#5A5A5A' : '#B0B0B0')};
     }
-  `;
-
+`;
 
 const Overlay = styled.div`
   position: absolute;
@@ -118,9 +117,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const boardImgRef = useRef(new Image());
     const chairImgRef = useRef(new Image());
     const tableImgRef = useRef(new Image());
-    const wardrobeImgRef = useRef(new Image()); // Создаем реф для текстуры шкафа
-    const sofaImgRef = useRef(new Image()); // Создаем реф для текстуры кровати
-    const chestImgRef = useRef(new Image()); // Создаем реф для текстуры тумбы
+    const wardrobeImgRef = useRef(new Image());
+    const sofaImgRef = useRef(new Image());
+    const chestImgRef = useRef(new Image());
     const imagesLoadedRef = useRef({
         wallpaper: false,
         floor: false,
@@ -131,11 +130,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         board: false,
         chair: false,
         table: false,
-        wardrobe: false, // Добавляем флаг для шкафа
-        sofa: false, // Добавляем флаг для кровати
-        chest: false // Добавляем флаг для тумбы
+        wardrobe: false,
+        sofa: false,
+        chest: false
     });
     const [locationItems, setLocationItems] = useState([]);
+    const wallRef = useRef(null);
+    const floorRef = useRef(null);
 
     // Загрузка изображений
     useEffect(() => {
@@ -148,9 +149,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         boardImgRef.current.src = boardImage;
         chairImgRef.current.src = chairImage;
         tableImgRef.current.src = tableImage;
-        wardrobeImgRef.current.src = wardrobeImage; // Устанавливаем источник для текстуры шкафа
-        sofaImgRef.current.src = sofaImage; // Устанавливаем источник для текстуры кровати
-        chestImgRef.current.src = chestImage; // Устанавливаем источник для текстуры тумбы
+        wardrobeImgRef.current.src = wardrobeImage;
+        sofaImgRef.current.src = sofaImage;
+        chestImgRef.current.src = chestImage;
 
         wallpaperImgRef.current.onload = () => {
             imagesLoadedRef.current.wallpaper = true;
@@ -180,13 +181,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             imagesLoadedRef.current.table = true;
         };
         wardrobeImgRef.current.onload = () => {
-            imagesLoadedRef.current.wardrobe = true; // Устанавливаем флаг загрузки для шкафа
+            imagesLoadedRef.current.wardrobe = true;
         };
         sofaImgRef.current.onload = () => {
-            imagesLoadedRef.current.sofa = true; // Устанавливаем флаг загрузки для кровати
+            imagesLoadedRef.current.sofa = true;
         };
         chestImgRef.current.onload = () => {
-            imagesLoadedRef.current.chest = true; // Устанавливаем флаг загрузки для тумбы
+            imagesLoadedRef.current.chest = true;
         };
 
         wallpaperImgRef.current.onerror = () => {
@@ -227,15 +228,59 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         };
         wardrobeImgRef.current.onerror = () => {
             console.error('Failed to load wardrobe image');
-            imagesLoadedRef.current.wardrobe = true; // Обработка ошибки загрузки шкафа
+            imagesLoadedRef.current.wardrobe = true;
         };
         sofaImgRef.current.onerror = () => {
             console.error('Failed to load sofa image');
-            imagesLoadedRef.current.sofa = true; // Обработка ошибки загрузки кровати
+            imagesLoadedRef.current.sofa = true;
         };
         chestImgRef.current.onerror = () => {
             console.error('Failed to load chest image');
-            imagesLoadedRef.current.chest = true; // Обработка ошибки загрузки тумбы
+            imagesLoadedRef.current.chest = true;
+        };
+    }, []);
+
+    // Создание стены и пола один раз при монтировании
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const parent = canvas.parentElement;
+        const width = parent.getBoundingClientRect().width;
+        const height = parent.getBoundingClientRect().height;
+
+        const wallHeight = height * 0.4;
+        const floorHeight = height * 0.6;
+        const staticCollisionFilter = { category: 0x0002, mask: 0 };
+
+        const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
+            isStatic: true,
+            restitution: 0,
+            friction: 0,
+            frictionAir: 0,
+            render: {
+                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
+                zIndex: -100
+            },
+            collisionFilter: staticCollisionFilter
+        });
+
+        const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
+            isStatic: true,
+            restitution: 0,
+            friction: 0,
+            frictionAir: 0,
+            render: {
+                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
+                zIndex: -100
+            },
+            collisionFilter: staticCollisionFilter
+        });
+
+        wallRef.current = wall;
+        floorRef.current = floor;
+        Matter.World.add(engineRef.current.world, [wall, floor]);
+
+        return () => {
+            Matter.World.remove(engineRef.current.world, [wall, floor]);
         };
     }, []);
 
@@ -278,7 +323,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         localStorage.setItem(`shelterObjectPositions_${userId}`, JSON.stringify(positions));
     };
 
-    // Модифицируем функцию handleClose, убирая сохранение
     const handleClose = () => {
         setShowMyShelter(false);
     };
@@ -308,34 +352,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions),
             Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions),
         ];
-
-        // Создаем стену и пол
-        const wallHeight = height * 0.4;
-        const floorHeight = height * 0.6;
-        const staticCollisionFilter = { category: 0x0002, mask: 0 };
-        const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
-            isStatic: true,
-            restitution: 0,
-            friction: 0,
-            frictionAir: 0,
-            render: {
-                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
-                zIndex: -100
-            },
-            collisionFilter: staticCollisionFilter
-        });
-
-        const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
-            isStatic: true,
-            restitution: 0,
-            friction: 0,
-            frictionAir: 0,
-            render: {
-                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
-                zIndex: -100
-            },
-            collisionFilter: staticCollisionFilter
-        });
 
         // Загружаем сохраненные позиции и масштабы
         const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};
@@ -417,7 +433,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 x: width * (0.2 + (index % 5) * 0.15),
                 y: floorTopY,
                 scaleFactor: 1,
-                zIndex: 0 // Значение по умолчанию для zIndex
+                zIndex: 0
             };
 
             const isStick = item.name === 'Палка';
@@ -459,7 +475,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                                     isWardrobe ? { texture: wardrobeImage } :
                                                         isSofa ? { texture: sofaImage } :
                                                             isChest ? { texture: chestImage } : undefined,
-                        zIndex: savedItem.zIndex || 0 // Загружаем сохраненный zIndex
+                        zIndex: savedItem.zIndex || 0
                     },
                     collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
                     itemId: item._id
@@ -472,9 +488,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             return itemSquare;
         });
 
-        // Объединяем все объекты
+        // Объединяем интерактивные объекты
         bodiesRef.current = [circle, square, triangle, ...itemBodies];
-        Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle, ...itemBodies]);
+        Matter.World.add(engine.world, [...boundaries, ...itemBodies]);
 
         // Настройка мыши
         const mouse = Matter.Mouse.create(canvas);
@@ -482,7 +498,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const bringToFront = (body) => {
             const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
             body.render.zIndex = maxZIndex + 1;
-            body.render.opacity = 0.8; // Устанавливаем прозрачность 80% (0.8)
+            body.render.opacity = 0.8;
         };
 
         const handleMouseDown = (event) => {
@@ -546,7 +562,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
             const draggedBody = event.body;
             Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
-            draggedBody.render.opacity = 1; // Восстанавливаем полную непрозрачность
+            draggedBody.render.opacity = 1;
         });
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
@@ -563,7 +579,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             context.fillRect(0, 0, canvas.width, canvas.height);
 
             // Рендерим статичные объекты (стена и пол) с текстурами
-            [wall, floor].forEach(body => {
+            [wallRef.current, floorRef.current].forEach(body => {
                 const vertices = body.vertices;
                 const minX = Math.min(...vertices.map(v => v.x));
                 const maxX = Math.max(...vertices.map(v => v.x));
@@ -581,7 +597,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 context.closePath();
                 context.clip();
 
-                const isWall = body === wall;
+                const isWall = body === wallRef.current;
                 const image = isWall ? wallpaperImgRef.current : floorImgRef.current;
                 const isImageLoaded = isWall ? imagesLoadedRef.current.wallpaper : imagesLoadedRef.current.floor;
 
@@ -656,10 +672,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     context.closePath();
                 }
 
-                // Устанавливаем прозрачность для рендеринга
                 context.globalAlpha = body.render.opacity !== undefined ? body.render.opacity : 1;
 
-                // Проверяем, есть ли у объекта текстура
                 if (body.render.sprite &&
                     [stickImage, garbageImage, berryImage, mushroomsImage, boardImage, chairImage, tableImage, wardrobeImage, sofaImage, chestImage].includes(body.render.sprite.texture) &&
                     imagesLoadedRef.current[body.render.sprite.texture === stickImage ? 'stick' :
@@ -686,7 +700,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     context.closePath();
                     context.clip();
 
-                    // Добавляем тень для текстурированных предметов
                     context.shadowColor = 'rgba(0, 0, 0, 0.3)';
                     context.shadowBlur = 5;
                     context.shadowOffsetX = 3;
@@ -710,7 +723,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         context.drawImage(image, minX, minY, textureWidth, textureHeight);
                     }
 
-                    // Сбрасываем настройки тени
                     context.shadowColor = 'rgba(0, 0, 0, 0)';
                     context.shadowBlur = 0;
                     context.shadowOffsetX = 0;
@@ -722,7 +734,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     context.fill();
                 }
 
-                // Сбрасываем прозрачность после рендеринга
                 context.globalAlpha = 1;
             });
 
@@ -747,14 +758,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
             Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
 
-            Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
-            Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
-            const scaleX = newWidth / width;
-            const scaleY = newHeight / height;
-            Matter.Body.scale(wall, scaleX, scaleY);
-            Matter.Body.scale(floor, scaleX, scaleY);
-
-            const margin = 0;
+            const margin = 5;
             bodiesRef.current.forEach(body => {
                 const bounds = body.bounds;
                 if (bounds.min.x < margin || bounds.max.x > newWidth - margin || bounds.min.y < margin || bounds.max.y > newHeight - margin) {

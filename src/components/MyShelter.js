@@ -319,7 +319,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 zIndex: -100
             },
             collisionFilter: staticCollisionFilter,
-            isFixed: true // Добавляем флаг для идентификации статичного объекта
         });
 
         const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
@@ -331,8 +330,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
                 zIndex: -100
             },
-            collisionFilter: staticCollisionFilter,
-            isFixed: true // Добавляем флаг для идентификации статичного объекта
+            collisionFilter: staticCollisionFilter
         });
 
         // Загружаем сохраненные позиции и масштабы
@@ -611,7 +609,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
             // Проверяем позиции и масштабируем интерактивные объекты
             bodiesRef.current.forEach(body => {
-                if (body.isFixed) return; // Пропускаем статичные объекты (стену и пол)
                 const bounds = body.bounds;
                 const margin = 5;
                 if (bounds.min.x < margin) {
@@ -745,18 +742,15 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
             Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
 
-            // Пересоздаём размеры стены и пола вместо масштабирования
-            const newWallHeight = newHeight * 0.4;
-            const newFloorHeight = newHeight * 0.6;
-            Matter.Body.setPosition(wall, { x: newWidth / 2, y: newWallHeight / 2 });
-            Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - newFloorHeight / 2 });
-            // Устанавливаем новые размеры без масштабирования
-            Matter.Body.setVertices(wall, Matter.Bodies.rectangle(newWidth / 2, newWallHeight / 2, newWidth, newWallHeight).vertices);
-            Matter.Body.setVertices(floor, Matter.Bodies.rectangle(newWidth / 2, newHeight - newFloorHeight / 2, newWidth, newFloorHeight).vertices);
+            Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
+            Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
+            const scaleX = newWidth / width;
+            const scaleY = newHeight / height;
+            Matter.Body.scale(wall, scaleX, scaleY);
+            Matter.Body.scale(floor, scaleX, scaleY);
 
             const margin = 5;
             bodiesRef.current.forEach(body => {
-                if (body.isFixed) return; // Пропускаем статичные объекты
                 const bounds = body.bounds;
                 if (bounds.min.x < margin || bounds.max.x > newWidth - margin || bounds.min.y < margin || bounds.max.y > newHeight - margin) {
                     const newX = Math.max(margin + (bounds.max.x - bounds.min.x) / 2, Math.min(body.position.x, newWidth - margin - (bounds.max.x - bounds.min.x) / 2));

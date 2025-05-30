@@ -170,6 +170,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const clickPositionRef = useRef(null);
     const isDraggingRef = useRef(false);
 
+    // Добавляем рефы для wall и floor
+  const wallRef = useRef(null);
+  const floorRef = useRef(null);
+
     // Загрузка изображений
     useEffect(() => {
         wallpaperImgRef.current.src = wallpaperImage;
@@ -326,12 +330,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
     const moveToBack = (body) => {
         const minZIndex = Math.min(...bodiesRef.current
-            .filter(b => b !== wall && b !== floor)
-            .map(b => b.render.zIndex || 0));
+          .filter(b => b !== wallRef.current && b !== floorRef.current)
+          .map(b => b.render.zIndex || 0));
         body.render.zIndex = minZIndex - 1 > -100 ? minZIndex - 1 : -99; // Не опускаем ниже -99
         body.render.opacity = 1; // Восстанавливаем полную непрозрачность
         setContextMenu(null); // Закрываем меню
-    };
+      };
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -369,23 +373,25 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
-                zIndex: -100
+              fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
+              zIndex: -100
             },
             collisionFilter: staticCollisionFilter
-        });
+          });
+          wallRef.current = wall;
 
-        const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
+          const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
             isStatic: true,
             restitution: 0,
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
-                zIndex: -100
+              fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
+              zIndex: -100
             },
             collisionFilter: staticCollisionFilter
-        });
+          });
+          floorRef.current = floor;
 
         // Загружаем сохраненные позиции и масштабы
         const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};

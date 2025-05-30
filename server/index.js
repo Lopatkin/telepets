@@ -99,9 +99,16 @@ const itemSchema = new mongoose.Schema({
   cost: { type: Number },
   effect: { type: String },
   playerID: { type: String, required: false },
-  animalId: { type: String, required: false }
+  animalId: { type: String, required: false },
+  position: { // Новое поле для позиции
+    x: { type: Number, default: 0 },
+    y: { type: Number, default: 0 }
+  },
+  scaleFactor: { type: Number, default: 1 } // Новое поле для масштаба
 }, { timestamps: true });
 const Item = mongoose.model('Item', itemSchema);
+
+const itemPositions = new Map(); // Формат: { room: { itemId: { x, y, scaleFactor } } }
 
 const inventoryLimitSchema = new mongoose.Schema({
   owner: String,
@@ -167,6 +174,52 @@ io.on('connection', (socket) => {
   registerMessageHandlers(dependencies);
   registerInventoryHandlers(dependencies);
   registerAnimalHandlers(dependencies);
+
+  socket.on('getItemPositions', async ({ room }, callback) => {
+    // Проверяем, есть ли данные в кэше
+    const cachedPositions = itemPositions.get(room) || {};
+    if (Object.keys(cachedPositions).length > 0) {
+      callback({ success: true, positions: cachedPositions });
+      return;
+    }
+
+    // Если кэша нет, загружаем из базы
+    try {
+      const items = await Item.find({ owner: room }).select('_id position scaleFactor');
+      const positions = items.reduce((acc, item) => ({
+        ...acc,
+        [item._id.toString()]: {
+          x: item.position.x,
+          y: item.position.y,
+          scaleFactor: item.scaleFactor
+        }
+      }), {});
+      itemPositions.set(room, positions);
+      callback({ success: true, positions });
+    } catch (err) {
+      console.error('Ошибка при загрузке позиций предметов:', err.message);
+      callback({ success: false, message: 'Ошибка сервера' });
+    }
+  });
+
+  socket.on('updateItemPosition', async ({ room, itemId, x, y, scaleFactor }) => {
+    // Обновляем кэш
+    let positions = itemPositions.get(room) || {};
+    positions[itemId] = { x, y, scaleFactor };
+    itemPositions.set(room, positions);
+
+    // Обновляем базу данных
+    try {
+      await Item.updateOne(
+        { _id: itemId, owner: room },
+        { $set: { position: { x, y }, scaleFactor } }
+      );
+      // Рассылаем обновление всем в комнате
+      io.to(room).emit('itemPositionUpdate', { itemId, x, y, scaleFactor });
+    } catch (err) {
+      console.error('Ошибка при обновлении позиции предмета:', err.message);
+    }
+  });
 
   // Модификация fightRound для использования актуального здоровья
   socket.on('fightRound', async (data, callback) => {
@@ -430,6 +483,20 @@ io.on('connection', (socket) => {
     if (roomJoinTimes.has(socket)) {
       roomJoinTimes.delete(socket);
     }
+
+    // Сохраняем кэш в базу для всех комнат
+    itemPositions.forEach(async (positions, room) => {
+      for (const [itemId, { x, y, scaleFactor }] of Object.entries(positions)) {
+        try {
+          await Item.updateOne(
+            { _id: itemId, owner: room },
+            { $set: { position: { x, y }, scaleFactor } }
+          );
+        } catch (err) {
+          console.error(`Ошибка при сохранении позиции предмета ${itemId} в комнате ${room}:`, err.message);
+        }
+      }
+    });
   });
 });
 

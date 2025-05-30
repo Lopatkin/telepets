@@ -227,36 +227,55 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const owner = currentRoom;
         socket.emit('getItems', { owner });
 
+        // Запрашиваем позиции предметов
+        socket.emit('getItemPositions', { room: currentRoom }, (response) => {
+            if (response.success) {
+                setLocationItems(prevItems =>
+                    prevItems.map(item => ({
+                        ...item,
+                        position: response.positions[item._id] || { x: canvasRef.current?.width * (0.2 + (prevItems.indexOf(item) % 5) * 0.15), y: canvasRef.current?.height * 0.4 },
+                        scaleFactor: response.positions[item._id]?.scaleFactor || 1
+                    }))
+                );
+            }
+        });
+
         socket.on('items', (data) => {
             if (data.owner === owner) {
                 setLocationItems(data.items.map(item => ({
                     ...item,
                     _id: item._id.toString(),
+                    position: item.position || { x: canvasRef.current?.width * (0.2 + (data.items.indexOf(item) % 5) * 0.15), y: canvasRef.current?.height * 0.4 },
+                    scaleFactor: item.scaleFactor || 1
                 })));
+            }
+        });
+
+        // Обработчик обновления позиций от других клиентов
+        socket.on('itemPositionUpdate', ({ itemId, x, y, scaleFactor }) => {
+            setLocationItems(prevItems =>
+                prevItems.map(item =>
+                    item._id === itemId ? { ...item, position: { x, y }, scaleFactor } : item
+                )
+            );
+
+            const body = bodiesRef.current.find(b => b.itemId === itemId);
+            if (body) {
+                Matter.Body.setPosition(body, { x, y });
+                const currentScale = body.scaleFactor || 1;
+                const scaleFactorChange = scaleFactor / currentScale;
+                Matter.Body.scale(body, scaleFactorChange, scaleFactorChange);
+                body.scaleFactor = scaleFactor;
             }
         });
 
         return () => {
             socket.off('items');
+            socket.off('itemPositionUpdate');
         };
     }, [socket, currentRoom]);
 
     const handleClose = () => {
-        // Сохранение позиций и масштабов всех объектов
-        const positions = {
-            circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor },
-            square: { x: squareRef.current.position.x, y: squareRef.current.position.y, scaleFactor: squareRef.current.scaleFactor },
-            triangle: { x: triangleRef.current.position.x, y: triangleRef.current.position.y, scaleFactor: triangleRef.current.scaleFactor },
-            ...locationItems.reduce((acc, item, index) => ({
-                ...acc,
-                [`item_${item._id}`]: {
-                    x: bodiesRef.current.find(b => b.itemId === item._id)?.position.x || (canvasRef.current?.width * (0.2 + (index % 5) * 0.15)),
-                    y: bodiesRef.current.find(b => b.itemId === item._id)?.position.y || (canvasRef.current?.height * 0.4),
-                    scaleFactor: bodiesRef.current.find(b => b.itemId === item._id)?.scaleFactor || 1
-                }
-            }), {})
-        };
-        localStorage.setItem(`shelterObjectPositions_${userId}`, JSON.stringify(positions));
         setShowMyShelter(false);
     };
 
@@ -390,10 +409,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         // Создаем серые квадраты для каждого предмета в инвентаре локации
         const itemBodies = locationItems.map((item, index) => {
             const itemKey = `item_${item._id}`;
-            const savedItem = savedPositions[itemKey] || {
+            const savedItem = item.position || {
                 x: width * (0.2 + (index % 5) * 0.15),
                 y: floorTopY,
-                scaleFactor: 1
+                scaleFactor: item.scaleFactor || 1
             };
 
             const isStick = item.name === 'Палка';
@@ -407,18 +426,16 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const isSofa = item.name === 'Кровать';
             const isChest = item.name === 'Тумба';
 
-            // Определяем размеры в зависимости от предмета
-            const size = isChair ? 100 : // "Стул" уже 100x100
-                isBoard ? 100 : // "Доска" в 2 раза меньше (200 ÷ 2)
-                    isBerry || isMushrooms ? 50 : // "Лесные ягоды" и "Лесные грибы" в 4 раза меньше (200 ÷ 4)
-                        isStick || isGarbage ? 67 : // "Палка" и "Мусор" в 3 раза меньше (200 ÷ 3 ≈ 66.67, округлено до 67)
-                            200; // Остальные предметы (Стол, Шкаф, Кровать, Тумба) остаются 200x200
+            const size = isChair ? 100 :
+                isBoard ? 100 :
+                    isBerry || isMushrooms ? 50 :
+                        isStick || isGarbage ? 67 : 200;
 
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,
-                size, // Устанавливаем ширину
-                size, // Устанавливаем высоту
+                size,
+                size,
                 {
                     isStatic: false,
                     restitution: 0,
@@ -445,7 +462,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const itemScale = savedItem.scaleFactor || 1;
             itemSquare.scaleFactor = itemScale;
             Matter.Body.scale(itemSquare, itemScale, itemScale);
-            originalSizesRef.current[itemKey] = { width: size, height: size }; // Сохраняем соответствующие размеры для каждого предмета
+            originalSizesRef.current[itemKey] = { width: size, height: size };
             return itemSquare;
         });
 
@@ -522,6 +539,15 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
             const draggedBody = event.body;
             Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
+            if (draggedBody.itemId) {
+                socket.emit('updateItemPosition', {
+                    room: currentRoom,
+                    itemId: draggedBody.itemId,
+                    x: draggedBody.position.x,
+                    y: draggedBody.position.y,
+                    scaleFactor: draggedBody.scaleFactor || 1
+                });
+            }
         });
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {

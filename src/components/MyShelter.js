@@ -472,7 +472,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
         // Объединяем все объекты
         bodiesRef.current = [circle, square, triangle, ...itemBodies];
-        Matter.World.add(engine.world, [...boundaries, wall, floor, circle, square, triangle, ...itemBodies]);
+        Matter.World.add(engine.world, [...boundaries, wallRef.current, floorRef.current, circle, square, triangle, ...itemBodies]);
 
         // Настройка мыши
         const mouse = Matter.Mouse.create(canvas);
@@ -586,7 +586,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 context.closePath();
                 context.clip();
 
-                const isWall = body === wall;
+                const isWall = body === wallRef;
                 const image = isWall ? wallpaperImgRef.current : floorImgRef.current;
                 const isImageLoaded = isWall ? imagesLoadedRef.current.wallpaper : imagesLoadedRef.current.floor;
 

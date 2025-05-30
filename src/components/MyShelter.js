@@ -262,15 +262,16 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
     const handleSave = () => {
         const positions = {
-            circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor },
-            square: { x: squareRef.current.position.x, y: squareRef.current.position.y, scaleFactor: squareRef.current.scaleFactor },
-            triangle: { x: triangleRef.current.position.x, y: triangleRef.current.position.y, scaleFactor: triangleRef.current.scaleFactor },
+            circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor, zIndex: circleRef.current.render.zIndex || 0 },
+            square: { x: squareRef.current.position.x, y: squareRef.current.position.y, scaleFactor: squareRef.current.scaleFactor, zIndex: squareRef.current.render.zIndex || 0 },
+            triangle: { x: triangleRef.current.position.x, y: triangleRef.current.position.y, scaleFactor: triangleRef.current.scaleFactor, zIndex: triangleRef.current.render.zIndex || 0 },
             ...locationItems.reduce((acc, item, index) => ({
                 ...acc,
                 [`item_${item._id}`]: {
                     x: bodiesRef.current.find(b => b.itemId === item._id)?.position.x || (canvasRef.current?.width * (0.2 + (index % 5) * 0.15)),
                     y: bodiesRef.current.find(b => b.itemId === item._id)?.position.y || (canvasRef.current?.height * 0.4),
-                    scaleFactor: bodiesRef.current.find(b => b.itemId === item._id)?.scaleFactor || 1
+                    scaleFactor: bodiesRef.current.find(b => b.itemId === item._id)?.scaleFactor || 1,
+                    zIndex: bodiesRef.current.find(b => b.itemId === item._id)?.render.zIndex || 0
                 }
             }), {})
         };
@@ -415,7 +416,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const savedItem = savedPositions[itemKey] || {
                 x: width * (0.2 + (index % 5) * 0.15),
                 y: floorTopY,
-                scaleFactor: 1
+                scaleFactor: 1,
+                zIndex: 0 // Значение по умолчанию для zIndex
             };
 
             const isStick = item.name === 'Палка';
@@ -429,18 +431,17 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const isSofa = item.name === 'Кровать';
             const isChest = item.name === 'Тумба';
 
-            // Определяем размеры в зависимости от предмета
-            const size = isChair ? 100 : // "Стул" уже 100x100
-                isBoard ? 100 : // "Доска" в 2 раза меньше (200 ÷ 2)
-                    isBerry || isMushrooms ? 50 : // "Лесные ягоды" и "Лесные грибы" в 4 раза меньше (200 ÷ 4)
-                        isStick || isGarbage ? 67 : // "Палка" и "Мусор" в 3 раза меньше (200 ÷ 3 ≈ 66.67, округлено до 67)
-                            200; // Остальные предметы (Стол, Шкаф, Кровать, Тумба) остаются 200x200
+            const size = isChair ? 100 :
+                isBoard ? 100 :
+                    isBerry || isMushrooms ? 50 :
+                        isStick || isGarbage ? 67 :
+                            200;
 
             const itemSquare = Matter.Bodies.rectangle(
                 savedItem.x,
                 savedItem.y,
-                size, // Устанавливаем ширину
-                size, // Устанавливаем высоту
+                size,
+                size,
                 {
                     isStatic: false,
                     restitution: 0,
@@ -458,7 +459,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                                     isWardrobe ? { texture: wardrobeImage } :
                                                         isSofa ? { texture: sofaImage } :
                                                             isChest ? { texture: chestImage } : undefined,
-                        zIndex: 0
+                        zIndex: savedItem.zIndex || 0 // Загружаем сохраненный zIndex
                     },
                     collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
                     itemId: item._id
@@ -467,7 +468,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const itemScale = savedItem.scaleFactor || 1;
             itemSquare.scaleFactor = itemScale;
             Matter.Body.scale(itemSquare, itemScale, itemScale);
-            originalSizesRef.current[itemKey] = { width: size, height: size }; // Сохраняем соответствующие размеры для каждого предмета
+            originalSizesRef.current[itemKey] = { width: size, height: size };
             return itemSquare;
         });
 

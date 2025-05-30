@@ -754,7 +754,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.Body.scale(wall, scaleX, scaleY);
             Matter.Body.scale(floor, scaleX, scaleY);
 
-            const margin = 5;
+            const margin = 0;
             bodiesRef.current.forEach(body => {
                 const bounds = body.bounds;
                 if (bounds.min.x < margin || bounds.max.x > newWidth - margin || bounds.min.y < margin || bounds.max.y > newHeight - margin) {

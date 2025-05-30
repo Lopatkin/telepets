@@ -116,6 +116,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         sofa: false, // Добавляем флаг для кровати
         chest: false // Добавляем флаг для тумбы
     });
+
+    const wallRef = useRef(null);
+    const floorRef = useRef(null);
+
     const [locationItems, setLocationItems] = useState([]);
 
     // Загрузка изображений
@@ -309,7 +313,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const wallHeight = height * 0.4;
         const floorHeight = height * 0.6;
         const staticCollisionFilter = { category: 0x0002, mask: 0 };
-        const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
+        wallRef.current = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
             isStatic: true,
             restitution: 0,
             friction: 0,
@@ -321,7 +325,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             collisionFilter: staticCollisionFilter,
         });
 
-        const floor = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
+        floorRef.current = Matter.Bodies.rectangle(width / 2, height - floorHeight / 2, width, floorHeight, {
             isStatic: true,
             restitution: 0,
             friction: 0,
@@ -564,7 +568,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             context.fillRect(0, 0, canvas.width, canvas.height);
 
             // Рендерим статичные объекты (стена и пол) с текстурами
-            [wall, floor].forEach(body => {
+            [wallRef.current, floorRef.current].forEach(body => {
                 const vertices = body.vertices;
                 const minX = Math.min(...vertices.map(v => v.x));
                 const maxX = Math.max(...vertices.map(v => v.x));
@@ -749,10 +753,16 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const floorHeight = newHeight * 0.6;
             const staticCollisionFilter = { category: 0x0002, mask: 0 };
 
-            Matter.World.remove(engine.world, wall);
-            Matter.World.remove(engine.world, floor);
+            // Удаляем старые объекты стены и пола, если они существуют
+            if (wallRef.current) {
+                Matter.World.remove(engine.world, wallRef.current);
+            }
+            if (floorRef.current) {
+                Matter.World.remove(engine.world, floorRef.current);
+            }
 
-            const newWall = Matter.Bodies.rectangle(newWidth / 2, wallHeight / 2, newWidth, wallHeight, {
+            // Создаем новые объекты стены и пола
+            wallRef.current = Matter.Bodies.rectangle(newWidth / 2, wallHeight / 2, newWidth, wallHeight, {
                 isStatic: true,
                 restitution: 0,
                 friction: 0,
@@ -764,7 +774,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 collisionFilter: staticCollisionFilter,
             });
 
-            const newFloor = Matter.Bodies.rectangle(newWidth / 2, newHeight - floorHeight / 2, newWidth, floorHeight, {
+            floorRef.current = Matter.Bodies.rectangle(newWidth / 2, newHeight - floorHeight / 2, newWidth, floorHeight, {
                 isStatic: true,
                 restitution: 0,
                 friction: 0,
@@ -776,9 +786,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 collisionFilter: staticCollisionFilter
             });
 
-            Matter.World.add(engine.world, [newWall, newFloor]);
-            wall = newWall;
-            floor = newFloor;
+            Matter.World.add(engine.world, [wallRef.current, floorRef.current]);
 
             // Проверяем границы только для нестатичных объектов
             const margin = 5;

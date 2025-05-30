@@ -609,6 +609,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
             // Проверяем позиции и масштабируем интерактивные объекты
             bodiesRef.current.forEach(body => {
+                if (body.isStatic) return; // Пропускаем статичные объекты (стена и пол)
                 const bounds = body.bounds;
                 const margin = 5;
                 if (bounds.min.x < margin) {
@@ -737,20 +738,52 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             canvas.width = newWidth;
             canvas.height = newHeight;
 
+            // Обновляем позиции границ
             Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
             Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
             Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
             Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
 
-            Matter.Body.setPosition(wall, { x: newWidth / 2, y: (newHeight * 0.4) / 2 });
-            Matter.Body.setPosition(floor, { x: newWidth / 2, y: newHeight - (newHeight * 0.6) / 2 });
-            const scaleX = newWidth / width;
-            const scaleY = newHeight / height;
-            Matter.Body.scale(wall, scaleX, scaleY);
-            Matter.Body.scale(floor, scaleX, scaleY);
+            // Пересоздаем стену и пол с новыми размерами, но без масштабирования
+            const wallHeight = newHeight * 0.4;
+            const floorHeight = newHeight * 0.6;
+            const staticCollisionFilter = { category: 0x0002, mask: 0 };
 
+            Matter.World.remove(engine.world, wall);
+            Matter.World.remove(engine.world, floor);
+
+            const newWall = Matter.Bodies.rectangle(newWidth / 2, wallHeight / 2, newWidth, wallHeight, {
+                isStatic: true,
+                restitution: 0,
+                friction: 0,
+                frictionAir: 0,
+                render: {
+                    fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
+                    zIndex: -100
+                },
+                collisionFilter: staticCollisionFilter,
+            });
+
+            const newFloor = Matter.Bodies.rectangle(newWidth / 2, newHeight - floorHeight / 2, newWidth, floorHeight, {
+                isStatic: true,
+                restitution: 0,
+                friction: 0,
+                frictionAir: 0,
+                render: {
+                    fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
+                    zIndex: -100
+                },
+                collisionFilter: staticCollisionFilter
+            });
+
+            Matter.World.add(engine.world, [newWall, newFloor]);
+            wall = newWall;
+            floor = newFloor;
+
+            // Проверяем границы только для нестатичных объектов
             const margin = 5;
             bodiesRef.current.forEach(body => {
+                if (body.isStatic) return; // Пропускаем статичные объекты
                 const bounds = body.bounds;
                 if (bounds.min.x < margin || bounds.max.x > newWidth - margin || bounds.min.y < margin || bounds.max.y > newHeight - margin) {
                     const newX = Math.max(margin + (bounds.max.x - bounds.min.x) / 2, Math.min(body.position.x, newWidth - margin - (bounds.max.x - bounds.min.x) / 2));

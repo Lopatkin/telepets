@@ -14,6 +14,25 @@ import wardrobeImage from '../images/dwelling/furniture/wardrobe.png'; // Доб
 import sofaImage from '../images/dwelling/furniture/sofa.png'; // Добавляем импорт текстуры для кровати
 import chestImage from '../images/dwelling/furniture/chest.png'; // Добавляем импорт текстуры для тумбы
 
+const SaveButton = styled.button`
+    position: absolute;
+    top: 10px;
+    right: 60px;
+    background: ${({ theme }) => (theme === 'dark' ? '#4A4A4A' : '#D3D3D3')};
+    color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 2000;
+
+    &:hover {
+      background: ${({ theme }) => (theme === 'dark' ? '#5A5A5A' : '#B0B0B0')};
+    }
+  `;
+
+
 const Overlay = styled.div`
   position: absolute;
   top: 0;
@@ -241,8 +260,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         };
     }, [socket, currentRoom]);
 
-    const handleClose = () => {
-        // Сохранение позиций и масштабов всех объектов
+    const handleSave = () => {
         const positions = {
             circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor },
             square: { x: squareRef.current.position.x, y: squareRef.current.position.y, scaleFactor: squareRef.current.scaleFactor },
@@ -257,6 +275,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             }), {})
         };
         localStorage.setItem(`shelterObjectPositions_${userId}`, JSON.stringify(positions));
+    };
+
+    // Модифицируем функцию handleClose, убирая сохранение
+    const handleClose = () => {
         setShowMyShelter(false);
     };
 
@@ -753,6 +775,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     return (
         <ShelterContainer theme={theme}>
             <CloseIcon theme={theme} onClick={handleClose}>×</CloseIcon>
+            <SaveButton theme={theme} onClick={handleSave}>Сохранить</SaveButton>
             <ToggleContainer>
                 <input
                     type="checkbox"

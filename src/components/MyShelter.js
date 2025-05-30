@@ -242,6 +242,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
     // Создание стены и пола один раз при монтировании
     useEffect(() => {
+        const engine = engineRef.current; // Copy engineRef.current to a local variable
         const canvas = canvasRef.current;
         const parent = canvas.parentElement;
         const width = parent.getBoundingClientRect().width;
@@ -257,7 +258,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#4A4A4A' : '#D3D3D3',
                 zIndex: -100
             },
             collisionFilter: staticCollisionFilter
@@ -269,7 +269,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             friction: 0,
             frictionAir: 0,
             render: {
-                fillStyle: theme === 'dark' ? '#3A3A3A' : '#A9A9A9',
                 zIndex: -100
             },
             collisionFilter: staticCollisionFilter
@@ -277,10 +276,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
         wallRef.current = wall;
         floorRef.current = floor;
-        Matter.World.add(engineRef.current.world, [wall, floor]);
+        Matter.World.add(engine.world, [wall, floor]);
 
         return () => {
-            Matter.World.remove(engineRef.current.world, [wall, floor]);
+            Matter.World.remove(engine.world, [wall, floor]);
         };
     }, []);
 
@@ -616,7 +615,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         context.drawImage(image, minX, minY, textureWidth, textureHeight);
                     }
                 } else {
-                    context.fillStyle = body.render.fillStyle;
+                    context.fillStyle = isWall ? (theme === 'dark' ? '#4A4A4A' : '#D3D3D3') : (theme === 'dark' ? '#3A3A3A' : '#A9A9A9');
                     context.fill();
                 }
                 context.restore();

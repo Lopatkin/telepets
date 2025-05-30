@@ -542,18 +542,18 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
         // В обработчике enddrag добавить проверку
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
-            const draggedBody = event.body;
-            Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
-            // Проверяем, что объект не является стеной или полом
-            if (draggedBody.itemId && !draggedBody.isScalable) {
-                socket.emit('updateItemPosition', {
-                    room: currentRoom,
-                    itemId: draggedBody.itemId,
-                    x: draggedBody.position.x,
-                    y: draggedBody.position.y,
-                    scaleFactor: draggedBody.scaleFactor || 1
-                });
-            }
+            // const draggedBody = event.body;
+            // Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
+            // // Проверяем, что объект не является стеной или полом
+            // if (draggedBody.itemId && !draggedBody.isScalable) {
+            //     socket.emit('updateItemPosition', {
+            //         room: currentRoom,
+            //         itemId: draggedBody.itemId,
+            //         x: draggedBody.position.x,
+            //         y: draggedBody.position.y,
+            //         scaleFactor: draggedBody.scaleFactor || 1
+            //     });
+            // }
         });
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {

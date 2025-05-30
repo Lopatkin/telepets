@@ -482,6 +482,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const bringToFront = (body) => {
             const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
             body.render.zIndex = maxZIndex + 1;
+            body.render.opacity = 0.8; // Устанавливаем прозрачность 80% (0.8)
         };
 
         const handleMouseDown = (event) => {
@@ -545,6 +546,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
             const draggedBody = event.body;
             Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
+            draggedBody.render.opacity = 1; // Восстанавливаем полную непрозрачность
         });
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
@@ -654,7 +656,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     context.closePath();
                 }
 
-                // Проверяем, есть ли у объекта текстура (для всех текстурированных предметов)
+                // Устанавливаем прозрачность для рендеринга
+                context.globalAlpha = body.render.opacity !== undefined ? body.render.opacity : 1;
+
+                // Проверяем, есть ли у объекта текстура
                 if (body.render.sprite &&
                     [stickImage, garbageImage, berryImage, mushroomsImage, boardImage, chairImage, tableImage, wardrobeImage, sofaImage, chestImage].includes(body.render.sprite.texture) &&
                     imagesLoadedRef.current[body.render.sprite.texture === stickImage ? 'stick' :
@@ -682,10 +687,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     context.clip();
 
                     // Добавляем тень для текстурированных предметов
-                    context.shadowColor = 'rgba(0, 0, 0, 0.3)'; // Полупрозрачная черная тень
-                    context.shadowBlur = 5; // Размытие тени
-                    context.shadowOffsetX = 3; // Смещение тени по X
-                    context.shadowOffsetY = 3; // Смещение тени по Y
+                    context.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                    context.shadowBlur = 5;
+                    context.shadowOffsetX = 3;
+                    context.shadowOffsetY = 3;
 
                     const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
                         body.render.sprite.texture === garbageImage ? garbageImgRef.current :
@@ -705,7 +710,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         context.drawImage(image, minX, minY, textureWidth, textureHeight);
                     }
 
-                    // Сбрасываем настройки тени после рендеринга
+                    // Сбрасываем настройки тени
                     context.shadowColor = 'rgba(0, 0, 0, 0)';
                     context.shadowBlur = 0;
                     context.shadowOffsetX = 0;
@@ -716,6 +721,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     context.fillStyle = body.render.fillStyle;
                     context.fill();
                 }
+
+                // Сбрасываем прозрачность после рендеринга
+                context.globalAlpha = 1;
             });
 
             animationFrameId = requestAnimationFrame(renderLoop);

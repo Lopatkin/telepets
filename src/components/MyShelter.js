@@ -482,7 +482,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const bringToFront = (body) => {
             const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
             body.render.zIndex = maxZIndex + 1;
-            body.render.opacity = 0.8; // Устанавливаем прозрачность 80% (0.8)
+            body.render.opacity = 0.8; // Сохраняем прозрачность 80%
+            body.render.tint = 'rgba(0, 255, 0, 0.3)'; // Добавляем зеленый оттенок
         };
 
         const handleMouseDown = (event) => {
@@ -547,6 +548,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const draggedBody = event.body;
             Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
             draggedBody.render.opacity = 1; // Восстанавливаем полную непрозрачность
+            delete draggedBody.render.tint; // Удаляем зеленый оттенок
         });
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
@@ -708,6 +710,14 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         const textureWidth = textureHeight * aspectRatio;
 
                         context.drawImage(image, minX, minY, textureWidth, textureHeight);
+
+                        // Применяем зеленый оттенок, если он установлен
+                        if (body.render.tint) {
+                            context.globalCompositeOperation = 'source-atop';
+                            context.fillStyle = body.render.tint;
+                            context.fill();
+                            context.globalCompositeOperation = 'source-over';
+                        }
                     }
 
                     // Сбрасываем настройки тени
@@ -720,6 +730,14 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 } else {
                     context.fillStyle = body.render.fillStyle;
                     context.fill();
+
+                    // Применяем зеленый оттенок для нетекстурированных объектов
+                    if (body.render.tint) {
+                        context.globalCompositeOperation = 'source-atop';
+                        context.fillStyle = body.render.tint;
+                        context.fill();
+                        context.globalCompositeOperation = 'source-over';
+                    }
                 }
 
                 // Сбрасываем прозрачность после рендеринга

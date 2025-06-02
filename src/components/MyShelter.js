@@ -139,40 +139,58 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const floorRef = useRef(null);
 
     // Проверка прозрачности пикселя в точке клика
-    const isPixelTransparent = (image, x, y, body, context) => {
+    const isPixelTransparent = (image, x, y, body) => {
         // Получаем размеры объекта
         const vertices = body.vertices;
         const minX = Math.min(...vertices.map(v => v.x));
         const minY = Math.min(...vertices.map(v => v.y));
+        const maxX = Math.max(...vertices.map(v => v.x));
         const maxY = Math.max(...vertices.map(v => v.y));
+        const objWidth = maxX - minX;
         const objHeight = maxY - minY;
 
-        // Вычисляем координаты относительно изображения
-        const aspectRatio = image.width / image.height;
-        const textureHeight = objHeight;
-        const textureWidth = textureHeight * aspectRatio;
-        const relX = (x - minX) / textureWidth;
-        const relY = (y - minY) / textureHeight;
+        // Вычисляем относительные координаты клика относительно текстуры
+        const relX = (x - minX) / objWidth;
+        const relY = (y - minY) / objHeight;
 
-        // Проверяем, находится ли точка в пределах текстуры
+        // Проверяем, находится ли точка в пределах объекта
         if (relX < 0 || relX > 1 || relY < 0 || relY > 1) {
-            return true; // Точка за пределами текстуры
+            console.log('Клик за пределами объекта:', { x, y, minX, maxX, minY, maxY });
+            return true; // Точка вне границ объекта
         }
 
-        // Создаем временный канвас для получения данных пикселя
+        // Проверяем, загружено ли изображение
+        if (!image.complete || image.width === 0 || image.height === 0) {
+            console.log('Изображение не загружено:', image.src);
+            return true; // Изображение не загружено, считаем прозрачным
+        }
+
+        // Создаем временный канвас для анализа пикселя
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = image.width;
         tempCanvas.height = image.height;
         const tempContext = tempCanvas.getContext('2d');
         tempContext.drawImage(image, 0, 0, image.width, image.height);
 
-        // Получаем данные пикселя
+        // Получаем координаты пикселя в изображении
         const pixelX = Math.floor(relX * image.width);
         const pixelY = Math.floor(relY * image.height);
-        const pixelData = tempContext.getImageData(pixelX, pixelY, 1, 1).data;
 
-        // Проверяем альфа-канал (прозрачность)
-        return pixelData[3] === 0; // Возвращает true, если пиксель полностью прозрачный
+        // Проверяем, что координаты валидны
+        if (pixelX < 0 || pixelX >= image.width || pixelY < 0 || pixelY >= image.height) {
+            console.log('Некорректные координаты пикселя:', { pixelX, pixelY, imageWidth: image.width, imageHeight: image.height });
+            return true;
+        }
+
+        // Получаем данные пикселя
+        const pixelData = tempContext.getImageData(pixelX, pixelY, 1, 1).data;
+        const isTransparent = pixelData[3] < 10; // Порог прозрачности (0 - полностью прозрачный)
+
+        console.log('Проверка прозрачности:', {
+            x, y, pixelX, pixelY, alpha: pixelData[3], isTransparent
+        });
+
+        return isTransparent;
     };
 
     // Загрузка изображений
@@ -544,14 +562,27 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const mouseY = event.clientY - rect.top;
             const mouse = Matter.Vector.create(mouseX, mouseY);
 
+            console.log('Клик мышью:', { mouseX, mouseY });
+
             // Ищем объект, на который кликнули
             const clickedBody = bodiesRef.current.find(body => {
                 if (!Matter.Bounds.contains(body.bounds, mouse)) {
+                    console.log('Клик вне границ объекта:', body.itemId || body.id);
                     return false; // Точка не в границах объекта
                 }
 
                 // Если у объекта есть текстура, проверяем прозрачность пикселя
                 if (body.render.sprite && body.render.sprite.texture) {
+                    const imageKey = body.render.sprite.texture === stickImage ? 'stick' :
+                        body.render.sprite.texture === garbageImage ? 'garbage' :
+                            body.render.sprite.texture === berryImage ? 'berry' :
+                                body.render.sprite.texture === mushroomsImage ? 'mushrooms' :
+                                    body.render.sprite.texture === boardImage ? 'board' :
+                                        body.render.sprite.texture === chairImage ? 'chair' :
+                                            body.render.sprite.texture === tableImage ? 'table' :
+                                                body.render.sprite.texture === wardrobeImage ? 'wardrobe' :
+                                                    body.render.sprite.texture === sofaImage ? 'sofa' : 'chest';
+
                     const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
                         body.render.sprite.texture === garbageImage ? garbageImgRef.current :
                             body.render.sprite.texture === berryImage ? berryImgRef.current :
@@ -563,23 +594,24 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                                     body.render.sprite.texture === sofaImage ? sofaImgRef.current :
                                                         chestImgRef.current;
 
-                    if (imagesLoadedRef.current[body.render.sprite.texture === stickImage ? 'stick' :
-                        body.render.sprite.texture === garbageImage ? 'garbage' :
-                            body.render.sprite.texture === berryImage ? 'berry' :
-                                body.render.sprite.texture === mushroomsImage ? 'mushrooms' :
-                                    body.render.sprite.texture === boardImage ? 'board' :
-                                        body.render.sprite.texture === chairImage ? 'chair' :
-                                            body.render.sprite.texture === tableImage ? 'table' :
-                                                body.render.sprite.texture === wardrobeImage ? 'wardrobe' :
-                                                    body.render.sprite.texture === sofaImage ? 'sofa' : 'chest']) {
-                        return !isPixelTransparent(image, mouseX, mouseY, body, context);
+                    if (imagesLoadedRef.current[imageKey]) {
+                        const isTransparent = isPixelTransparent(image, mouseX, mouseY, body);
+                        console.log('Результат проверки прозрачности для объекта', body.itemId || body.id, ':', isTransparent);
+                        return !isTransparent;
+                    } else {
+                        console.log('Изображение не загружено для объекта:', body.itemId || body.id);
+                        return false;
                     }
                 }
+
                 return true; // Если нет текстуры, считаем объект непрозрачным
             });
 
             if (clickedBody) {
+                console.log('Выбран объект:', clickedBody.itemId || clickedBody.id);
                 bringToFront(clickedBody);
+            } else {
+                console.log('Объект не выбран');
             }
         };
 
@@ -593,14 +625,27 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             mouse.position.y = mouseY;
             mouse.mousedown = true;
 
+            console.log('Касание:', { mouseX, mouseY });
+
             const touchPoint = Matter.Vector.create(mouseX, mouseY);
             const touchedBody = bodiesRef.current.find(body => {
                 if (!Matter.Bounds.contains(body.bounds, touchPoint)) {
+                    console.log('Касание вне границ объекта:', body.itemId || body.id);
                     return false; // Точка не в границах объекта
                 }
 
                 // Если у объекта есть текстура, проверяем прозрачность пикселя
                 if (body.render.sprite && body.render.sprite.texture) {
+                    const imageKey = body.render.sprite.texture === stickImage ? 'stick' :
+                        body.render.sprite.texture === garbageImage ? 'garbage' :
+                            body.render.sprite.texture === berryImage ? 'berry' :
+                                body.render.sprite.texture === mushroomsImage ? 'mushrooms' :
+                                    body.render.sprite.texture === boardImage ? 'board' :
+                                        body.render.sprite.texture === chairImage ? 'chair' :
+                                            body.render.sprite.texture === tableImage ? 'table' :
+                                                body.render.sprite.texture === wardrobeImage ? 'wardrobe' :
+                                                    body.render.sprite.texture === sofaImage ? 'sofa' : 'chest';
+
                     const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
                         body.render.sprite.texture === garbageImage ? garbageImgRef.current :
                             body.render.sprite.texture === berryImage ? berryImgRef.current :
@@ -612,23 +657,24 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                                     body.render.sprite.texture === sofaImage ? sofaImgRef.current :
                                                         chestImgRef.current;
 
-                    if (imagesLoadedRef.current[body.render.sprite.texture === stickImage ? 'stick' :
-                        body.render.sprite.texture === garbageImage ? 'garbage' :
-                            body.render.sprite.texture === berryImage ? 'berry' :
-                                body.render.sprite.texture === mushroomsImage ? 'mushrooms' :
-                                    body.render.sprite.texture === boardImage ? 'board' :
-                                        body.render.sprite.texture === chairImage ? 'chair' :
-                                            body.render.sprite.texture === tableImage ? 'table' :
-                                                body.render.sprite.texture === wardrobeImage ? 'wardrobe' :
-                                                    body.render.sprite.texture === sofaImage ? 'sofa' : 'chest']) {
-                        return !isPixelTransparent(image, mouseX, mouseY, body, context);
+                    if (imagesLoadedRef.current[imageKey]) {
+                        const isTransparent = isPixelTransparent(image, mouseX, mouseY, body);
+                        console.log('Результат проверки прозрачности для объекта', body.itemId || body.id, ':', isTransparent);
+                        return !isTransparent;
+                    } else {
+                        console.log('Изображение не загружено для объекта:', body.itemId || body.id);
+                        return false;
                     }
                 }
+
                 return true; // Если нет текстуры, считаем объект непрозрачным
             });
 
             if (touchedBody) {
+                console.log('Выбран объект:', touchedBody.itemId || touchedBody.id);
                 bringToFront(touchedBody);
+            } else {
+                console.log('Объект не выбран');
             }
         };
 

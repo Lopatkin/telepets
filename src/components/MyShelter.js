@@ -528,7 +528,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     const minY = Math.min(...vertices.map(v => v.y));
                     const maxX = Math.max(...vertices.map(v => v.x));
                     const maxY = Math.max(...vertices.map(v => v.y));
-                    const objWidth = maxX - minX;
                     const objHeight = maxY - minY;
 
                     const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
@@ -584,7 +583,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     const minY = Math.min(...vertices.map(v => v.y));
                     const maxX = Math.max(...vertices.map(v => v.x));
                     const maxY = Math.max(...vertices.map(v => v.y));
-                    const objWidth = maxX - minX;
                     const objHeight = maxY - minY;
 
                     const image = body.render.sprite.texture === stickImage ? stickImgRef.current :

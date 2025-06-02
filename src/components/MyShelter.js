@@ -558,23 +558,34 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
-            const mouse = Matter.Vector.create(mouseX, mouseY);
+            const mouse = Matter.Mouse.create(canvas); // Обновляем позицию мыши
+            mouse.position.x = mouseX;
+            mouse.position.y = mouseY;
+            mouse.mousedown = true;
+
             const clickedBody = bodiesRef.current.find(body =>
-                Matter.Bounds.contains(body.bounds, mouse) &&
+                Matter.Bounds.contains(body.bounds, mouse.position) &&
                 (!body.render.sprite || bringToFront(body, mouseX, mouseY))
             );
-            if (clickedBody && !clickedBody.render.sprite) { // Изменено с body на clickedBody
-                bringToFront(clickedBody, mouseX, mouseY);
+
+            if (clickedBody) {
+                mouseConstraintRef.current.body = clickedBody; // Устанавливаем тело для MouseConstraint
+                if (!clickedBody.render.sprite) {
+                    bringToFront(clickedBody, mouseX, mouseY); // Поднимаем объект без текстуры
+                }
+            } else {
+                mouseConstraintRef.current.body = null; // Сбрасываем, если клик на прозрачной области
             }
         };
 
-        // Исправляем handleTouchStart, заменяя body на touchedBody
+        // Модифицируем handleTouchStart для проверки непрозрачности перед выбором объекта
         const handleTouchStart = (event) => {
             event.preventDefault();
             const touch = event.touches[0];
             const rect = canvas.getBoundingClientRect();
             const mouseX = touch.clientX - rect.left;
             const mouseY = touch.clientY - rect.top;
+            const mouse = Matter.Mouse.create(canvas); // Обновляем позицию мыши
             mouse.position.x = mouseX;
             mouse.position.y = mouseY;
             mouse.mousedown = true;
@@ -584,8 +595,14 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 Matter.Bounds.contains(body.bounds, touchPoint) &&
                 (!body.render.sprite || bringToFront(body, mouseX, mouseY))
             );
-            if (touchedBody && !touchedBody.render.sprite) { // Изменено с body на touchedBody
-                bringToFront(touchedBody, mouseX, mouseY);
+
+            if (touchedBody) {
+                mouseConstraintRef.current.body = touchedBody; // Устанавливаем тело для MouseConstraint
+                if (!touchedBody.render.sprite) {
+                    bringToFront(touchedBody, mouseX, mouseY); // Поднимаем объект без текстуры
+                }
+            } else {
+                mouseConstraintRef.current.body = null; // Сбрасываем, если касание на прозрачной области
             }
         };
 

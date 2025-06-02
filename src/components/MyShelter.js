@@ -144,9 +144,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const vertices = body.vertices;
         const minX = Math.min(...vertices.map(v => v.x));
         const minY = Math.min(...vertices.map(v => v.y));
-        const maxX = Math.max(...vertices.map(v => v.x));
         const maxY = Math.max(...vertices.map(v => v.y));
-        const objWidth = maxX - minX;
         const objHeight = maxY - minY;
 
         // Вычисляем координаты относительно изображения
@@ -681,7 +679,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const renderLoop = () => {
             context.fillStyle = theme === 'dark' ? '#2A2A2A' : '#fff';
             context.fillRect(0, 0, canvas.width, canvas.height);
-            
+
             // Рендерим статичные объекты (стена и пол) с текстурами
             [wallRef.current, floorRef.current].forEach(body => {
                 const vertices = body.vertices;

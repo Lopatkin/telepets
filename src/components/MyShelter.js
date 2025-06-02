@@ -138,6 +138,17 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const wallRef = useRef(null);
     const floorRef = useRef(null);
 
+    // Проверка, является ли пиксель прозрачным
+    const isPixelTransparent = (image, x, y) => {
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = image.width;
+        offscreenCanvas.height = image.height;
+        const ctx = offscreenCanvas.getContext('2d');
+        ctx.drawImage(image, 0, 0, image.width, image.height);
+        const imageData = ctx.getImageData(x, y, 1, 1).data;
+        return imageData[3] === 0; // Альфа-канал = 0 означает прозрачность
+    };
+
     // Загрузка изображений
     useEffect(() => {
         wallpaperImgRef.current.src = wallpaperImage;
@@ -502,7 +513,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
         // Обработчик клика мыши
         const handleMouseDown = (event) => {
-            const rect = canvas.getBoundingClientRect();
+            const rect = canvasRef.current.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
             const mouse = Matter.Vector.create(mouseX, mouseY);
@@ -555,7 +566,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const handleTouchStart = (event) => {
             event.preventDefault();
             const touch = event.touches[0];
-            const rect = canvas.getBoundingClientRect();
+            const rect = canvasRef.current.getBoundingClientRect();
             const mouseX = touch.clientX - rect.left;
             const mouseY = touch.clientY - rect.top;
             mouse.position.x = mouseX;

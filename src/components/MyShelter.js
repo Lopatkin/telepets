@@ -138,17 +138,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const wallRef = useRef(null);
     const floorRef = useRef(null);
 
-    // Проверка, является ли пиксель прозрачным
-    const isPixelTransparent = (image, x, y) => {
-        const offscreenCanvas = document.createElement('canvas');
-        offscreenCanvas.width = image.width;
-        offscreenCanvas.height = image.height;
-        const ctx = offscreenCanvas.getContext('2d');
-        ctx.drawImage(image, 0, 0, image.width, image.height);
-        const imageData = ctx.getImageData(x, y, 1, 1).data;
-        return imageData[3] === 0; // Альфа-канал = 0 означает прозрачность
-    };
-
     // Загрузка изображений
     useEffect(() => {
         wallpaperImgRef.current.src = wallpaperImage;
@@ -511,51 +500,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             body.render.opacity = 0.8;
         };
 
-        // Обработчик клика мыши
         const handleMouseDown = (event) => {
-            const rect = canvasRef.current.getBoundingClientRect();
+            const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
             const mouse = Matter.Vector.create(mouseX, mouseY);
-
-            const clickedBody = bodiesRef.current.find(body => {
-                if (!Matter.Bounds.contains(body.bounds, mouse)) return false;
-
-                // Если объект имеет спрайт, проверяем прозрачность пикселя
-                if (body.render.sprite) {
-                    const vertices = body.vertices;
-                    const minX = Math.min(...vertices.map(v => v.x));
-                    const minY = Math.min(...vertices.map(v => v.y));
-                    const maxY = Math.max(...vertices.map(v => v.y));
-                    const objHeight = maxY - minY;
-
-                    const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
-                        body.render.sprite.texture === garbageImage ? garbageImgRef.current :
-                            body.render.sprite.texture === berryImage ? berryImgRef.current :
-                                body.render.sprite.texture === mushroomsImage ? mushroomsImgRef.current :
-                                    body.render.sprite.texture === boardImage ? boardImgRef.current :
-                                        body.render.sprite.texture === chairImage ? chairImgRef.current :
-                                            body.render.sprite.texture === tableImage ? tableImgRef.current :
-                                                body.render.sprite.texture === wardrobeImage ? wardrobeImgRef.current :
-                                                    body.render.sprite.texture === sofaImage ? sofaImgRef.current :
-                                                        chestImgRef.current;
-
-                    if (image.width && image.height) {
-                        const aspectRatio = image.width / image.height;
-                        const textureHeight = objHeight;
-                        const textureWidth = textureHeight * aspectRatio;
-
-                        // Преобразуем координаты клика в координаты изображения
-                        const imageX = ((mouseX - minX) / textureWidth) * image.width;
-                        const imageY = ((mouseY - minY) / textureHeight) * image.height;
-
-                        // Проверяем, прозрачен ли пиксель
-                        return !isPixelTransparent(image, Math.floor(imageX), Math.floor(imageY));
-                    }
-                }
-                return true; // Для объектов без спрайта (круг, квадрат, треугольник) используем стандартную проверку
-            });
-
+            const clickedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, mouse));
             if (clickedBody) {
                 bringToFront(clickedBody);
             }
@@ -564,7 +514,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const handleTouchStart = (event) => {
             event.preventDefault();
             const touch = event.touches[0];
-            const rect = canvasRef.current.getBoundingClientRect();
+            const rect = canvas.getBoundingClientRect();
             const mouseX = touch.clientX - rect.left;
             const mouseY = touch.clientY - rect.top;
             mouse.position.x = mouseX;
@@ -572,44 +522,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             mouse.mousedown = true;
 
             const touchPoint = Matter.Vector.create(mouseX, mouseY);
-            const touchedBody = bodiesRef.current.find(body => {
-                if (!Matter.Bounds.contains(body.bounds, touchPoint)) return false;
-
-                // Если объект имеет спрайт, проверяем прозрачность пикселя
-                if (body.render.sprite) {
-                    const vertices = body.vertices;
-                    const minX = Math.min(...vertices.map(v => v.x));
-                    const minY = Math.min(...vertices.map(v => v.y));
-                    const maxY = Math.max(...vertices.map(v => v.y));
-                    const objHeight = maxY - minY;
-
-                    const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
-                        body.render.sprite.texture === garbageImage ? garbageImgRef.current :
-                            body.render.sprite.texture === berryImage ? berryImgRef.current :
-                                body.render.sprite.texture === mushroomsImage ? mushroomsImgRef.current :
-                                    body.render.sprite.texture === boardImage ? boardImgRef.current :
-                                        body.render.sprite.texture === chairImage ? chairImgRef.current :
-                                            body.render.sprite.texture === tableImage ? tableImgRef.current :
-                                                body.render.sprite.texture === wardrobeImage ? wardrobeImgRef.current :
-                                                    body.render.sprite.texture === sofaImage ? sofaImgRef.current :
-                                                        chestImgRef.current;
-
-                    if (image.width && image.height) {
-                        const aspectRatio = image.width / image.height;
-                        const textureHeight = objHeight;
-                        const textureWidth = textureHeight * aspectRatio;
-
-                        // Преобразуем координаты касания в координаты изображения
-                        const imageX = ((mouseX - minX) / textureWidth) * image.width;
-                        const imageY = ((mouseY - minY) / textureHeight) * image.height;
-
-                        // Проверяем, прозрачен ли пиксель
-                        return !isPixelTransparent(image, Math.floor(imageX), Math.floor(imageY));
-                    }
-                }
-                return true; // Для объектов без спрайта используем стандартную проверку
-            });
-
+            const touchedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, touchPoint));
             if (touchedBody) {
                 bringToFront(touchedBody);
             }

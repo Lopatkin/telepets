@@ -560,7 +560,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
-            const mouse = Matter.Vector.create(mouseX, mouseY);
+            const mouse = mouseConstraintRef.current.mouse; // Используем mouse из mouseConstraint
+            mouse.position.x = mouseX;
+            mouse.position.y = mouseY;
 
             console.log('Клик мышью:', { mouseX, mouseY });
 
@@ -609,9 +611,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
             if (clickedBody) {
                 console.log('Выбран объект:', clickedBody.itemId || clickedBody.id);
+                mouse.mousedown = true; // Активируем перетаскивание только для непрозрачной области
                 bringToFront(clickedBody);
             } else {
                 console.log('Объект не выбран');
+                mouse.mousedown = false; // Отключаем перетаскивание, если клик по прозрачной области
             }
         };
 
@@ -621,9 +625,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const rect = canvas.getBoundingClientRect();
             const mouseX = touch.clientX - rect.left;
             const mouseY = touch.clientY - rect.top;
+            const mouse = mouseConstraintRef.current.mouse; // Используем mouse из mouseConstraint
             mouse.position.x = mouseX;
             mouse.position.y = mouseY;
-            mouse.mousedown = true;
 
             console.log('Касание:', { mouseX, mouseY });
 
@@ -672,9 +676,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
             if (touchedBody) {
                 console.log('Выбран объект:', touchedBody.itemId || touchedBody.id);
+                mouse.mousedown = true; // Активируем перетаскивание только для непрозрачной области
                 bringToFront(touchedBody);
             } else {
                 console.log('Объект не выбран');
+                mouse.mousedown = false; // Отключаем перетаскивание, если клик по прозрачной области
             }
         };
 
@@ -705,6 +711,43 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 render: { visible: false },
             },
         });
+
+        // Проверяем прозрачность перед началом перетаскивания
+        Matter.Events.on(mouseConstraint, 'mousedown', (event) => {
+            const mouseX = event.mouse.position.x;
+            const mouseY = event.mouse.position.y;
+            const body = bodiesRef.current.find(b => Matter.Bounds.contains(b.bounds, event.mouse.position));
+
+            if (body && body.render.sprite && body.render.sprite.texture) {
+                const imageKey = body.render.sprite.texture === stickImage ? 'stick' :
+                    body.render.sprite.texture === garbageImage ? 'garbage' :
+                        body.render.sprite.texture === berryImage ? 'berry' :
+                            body.render.sprite.texture === mushroomsImage ? 'mushrooms' :
+                                body.render.sprite.texture === boardImage ? 'board' :
+                                    body.render.sprite.texture === chairImage ? 'chair' :
+                                        body.render.sprite.texture === tableImage ? 'table' :
+                                            body.render.sprite.texture === wardrobeImage ? 'wardrobe' :
+                                                body.render.sprite.texture === sofaImage ? 'sofa' : 'chest';
+
+                const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
+                    body.render.sprite.texture === garbageImage ? garbageImgRef.current :
+                        body.render.sprite.texture === berryImage ? berryImgRef.current :
+                            body.render.sprite.texture === mushroomsImage ? mushroomsImgRef.current :
+                                body.render.sprite.texture === boardImage ? boardImgRef.current :
+                                    body.render.sprite.texture === chairImage ? chairImgRef.current :
+                                        body.render.sprite.texture === tableImage ? tableImgRef.current :
+                                            body.render.sprite.texture === wardrobeImage ? wardrobeImgRef.current :
+                                                body.render.sprite.texture === sofaImage ? sofaImgRef.current :
+                                                    chestImgRef.current;
+
+                if (imagesLoadedRef.current[imageKey] && isPixelTransparent(image, mouseX, mouseY, body)) {
+                    console.log('Перетаскивание предотвращено: клик по прозрачной области объекта', body.itemId || body.id);
+                    event.source.mouse.mousedown = false; // Отменяем событие мыши
+                    event.source.body = null; // Сбрасываем захваченный объект
+                }
+            }
+        });
+
         mouseConstraintRef.current = mouseConstraint;
         Matter.World.add(engine.world, mouseConstraint);
 

@@ -563,12 +563,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 Matter.Bounds.contains(body.bounds, mouse) &&
                 (!body.render.sprite || bringToFront(body, mouseX, mouseY))
             );
-            if (clickedBody && !body.render.sprite) {
+            if (clickedBody && !clickedBody.render.sprite) { // Изменено с body на clickedBody
                 bringToFront(clickedBody, mouseX, mouseY);
             }
         };
 
-        // Обновляем handleTouchStart для проверки непрозрачности
+        // Исправляем handleTouchStart, заменяя body на touchedBody
         const handleTouchStart = (event) => {
             event.preventDefault();
             const touch = event.touches[0];
@@ -584,7 +584,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 Matter.Bounds.contains(body.bounds, touchPoint) &&
                 (!body.render.sprite || bringToFront(body, mouseX, mouseY))
             );
-            if (touchedBody && !body.render.sprite) {
+            if (touchedBody && !touchedBody.render.sprite) { // Изменено с body на touchedBody
                 bringToFront(touchedBody, mouseX, mouseY);
             }
         };

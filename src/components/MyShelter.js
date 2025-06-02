@@ -1046,7 +1046,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, userId, socket, currentRoom, locationItems]);
+    }, [theme, userId, socket, currentRoom, locationItems, isPixelTransparent]);
 
     return (
         <ShelterContainer theme={theme}>

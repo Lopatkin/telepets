@@ -139,6 +139,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const floorRef = useRef(null);
 
     // Проверка прозрачности пикселя в точке клика
+    // Проверка прозрачности пикселя в точке клика
     const isPixelTransparent = (image, x, y, body) => {
         // Получаем размеры объекта
         const vertices = body.vertices;
@@ -148,10 +149,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const maxY = Math.max(...vertices.map(v => v.y));
         const objWidth = maxX - minX;
         const objHeight = maxY - minY;
+        const scaleFactor = body.scaleFactor || 1; // Учитываем масштаб объекта
 
-        // Вычисляем относительные координаты клика относительно текстуры
-        const relX = (x - minX) / objWidth;
-        const relY = (y - minY) / objHeight;
+        // Вычисляем относительные координаты клика относительно текстуры с учётом масштаба
+        const relX = (x - minX) / (objWidth / scaleFactor);
+        const relY = (y - minY) / (objHeight / scaleFactor);
 
         // Проверяем, находится ли точка в пределах объекта
         if (relX < 0 || relX > 1 || relY < 0 || relY > 1) {
@@ -187,7 +189,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const isTransparent = pixelData[3] < 10; // Порог прозрачности (0 - полностью прозрачный)
 
         console.log('Проверка прозрачности:', {
-            x, y, pixelX, pixelY, alpha: pixelData[3], isTransparent
+            x, y, pixelX, pixelY, alpha: pixelData[3], isTransparent, scaleFactor
         });
 
         return isTransparent;
@@ -704,6 +706,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
+        // В useEffect, где настраивается mouseConstraint
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
             mouse: mouse,
             constraint: {
@@ -744,8 +747,48 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     console.log('Перетаскивание предотвращено: клик по прозрачной области объекта', body.itemId || body.id);
                     event.source.mouse.mousedown = false; // Отменяем событие мыши
                     event.source.body = null; // Сбрасываем захваченный объект
+                    Matter.MouseConstraint._triggerEvents(event.source, []); // Очищаем события
                 }
             }
+        });
+
+        // Дополнительная проверка при начале перетаскивания
+        Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
+            const mouseX = event.mouse.position.x;
+            const mouseY = event.mouse.position.y;
+            const body = event.body;
+
+            if (body && body.render.sprite && body.render.sprite.texture) {
+                const imageKey = body.render.sprite.texture === stickImage ? 'stick' :
+                    body.render.sprite.texture === garbageImage ? 'garbage' :
+                        body.render.sprite.texture === berryImage ? 'berry' :
+                            body.render.sprite.texture === mushroomsImage ? 'mushrooms' :
+                                body.render.sprite.texture === boardImage ? 'board' :
+                                    body.render.sprite.texture === chairImage ? 'chair' :
+                                        body.render.sprite.texture === tableImage ? 'table' :
+                                            body.render.sprite.texture === wardrobeImage ? 'wardrobe' :
+                                                body.render.sprite.texture === sofaImage ? 'sofa' : 'chest';
+
+                const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
+                    body.render.sprite.texture === garbageImage ? garbageImgRef.current :
+                        body.render.sprite.texture === berryImage ? berryImgRef.current :
+                            body.render.sprite.texture === mushroomsImage ? mushroomsImgRef.current :
+                                body.render.sprite.texture === boardImage ? boardImgRef.current :
+                                    body.render.sprite.texture === chairImage ? chairImgRef.current :
+                                        body.render.sprite.texture === tableImage ? tableImgRef.current :
+                                            body.render.sprite.texture === wardrobeImage ? wardrobeImgRef.current :
+                                                body.render.sprite.texture === sofaImage ? sofaImgRef.current :
+                                                    chestImgRef.current;
+
+                if (imagesLoadedRef.current[imageKey] && isPixelTransparent(image, mouseX, mouseY, body)) {
+                    console.log('Перетаскивание отменено в startdrag: клик по прозрачной области объекта', body.itemId || body.id);
+                    event.source.mouse.mousedown = false; // Отменяем событие мыши
+                    event.source.body = null; // Сбрасываем захваченный объект
+                    Matter.MouseConstraint._triggerEvents(event.source, []); // Очищаем события
+                    return;
+                }
+            }
+            bringToFront(body); // Выполняем bringToFront только для непрозрачных областей
         });
 
         mouseConstraintRef.current = mouseConstraint;

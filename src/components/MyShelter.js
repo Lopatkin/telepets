@@ -141,6 +141,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     // Проверка прозрачности пикселя в точке клика
     // Проверка прозрачности пикселя в точке клика
     const isPixelTransparent = (image, x, y, body) => {
+        // Кэшируем результаты проверки для одного клика
+        const cacheKey = `${x}_${y}_${body.id}`;
+        if (isPixelTransparent.cache && isPixelTransparent.cache[cacheKey]) {
+            console.log('Использован кэш прозрачности:', isPixelTransparent.cache[cacheKey]);
+            return isPixelTransparent.cache[cacheKey];
+        }
+
         // Получаем размеры объекта
         const vertices = body.vertices;
         const minX = Math.min(...vertices.map(v => v.x));
@@ -192,8 +199,19 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             x, y, pixelX, pixelY, alpha: pixelData[3], isTransparent, scaleFactor
         });
 
+        // Сохраняем результат в кэш
+        if (!isPixelTransparent.cache) isPixelTransparent.cache = {};
+        isPixelTransparent.cache[cacheKey] = isTransparent;
+
         return isTransparent;
     };
+
+    // Очищаем кэш при следующем кадре
+    const clearTransparencyCache = () => {
+        isPixelTransparent.cache = {};
+        requestAnimationFrame(clearTransparencyCache);
+    };
+    requestAnimationFrame(clearTransparencyCache);
 
     // Загрузка изображений
     useEffect(() => {
@@ -715,8 +733,18 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             },
         });
 
+        // Храним состояние последнего обработанного события для предотвращения рекурсии
+        let lastMouseDownEvent = null;
+
         // Проверяем прозрачность перед началом перетаскивания
         Matter.Events.on(mouseConstraint, 'mousedown', (event) => {
+            // Проверяем, не обрабатываем ли мы уже это событие
+            if (lastMouseDownEvent === event) {
+                console.log('Повторное событие mousedown пропущено');
+                return;
+            }
+            lastMouseDownEvent = event;
+
             const mouseX = event.mouse.position.x;
             const mouseY = event.mouse.position.y;
             const body = bodiesRef.current.find(b => Matter.Bounds.contains(b.bounds, event.mouse.position));
@@ -747,9 +775,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     console.log('Перетаскивание предотвращено: клик по прозрачной области объекта', body.itemId || body.id);
                     event.source.mouse.mousedown = false; // Отменяем событие мыши
                     event.source.body = null; // Сбрасываем захваченный объект
-                    Matter.MouseConstraint._triggerEvents(event.source, []); // Очищаем события
                 }
             }
+
+            // Сбрасываем lastMouseDownEvent после обработки
+            lastMouseDownEvent = null;
         });
 
         // Дополнительная проверка при начале перетаскивания
@@ -784,7 +814,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     console.log('Перетаскивание отменено в startdrag: клик по прозрачной области объекта', body.itemId || body.id);
                     event.source.mouse.mousedown = false; // Отменяем событие мыши
                     event.source.body = null; // Сбрасываем захваченный объект
-                    Matter.MouseConstraint._triggerEvents(event.source, []); // Очищаем события
                     return;
                 }
             }

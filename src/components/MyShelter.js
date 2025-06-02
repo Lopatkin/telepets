@@ -494,22 +494,81 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         // Настройка мыши
         const mouse = Matter.Mouse.create(canvas);
 
-        const bringToFront = (body) => {
-            const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
-            body.render.zIndex = maxZIndex + 1;
+        // Добавляем функцию для проверки непрозрачности пикселя
+        const isPixelOpaque = (image, x, y, canvasContext) => {
+            // Создаем временный canvas для анализа пикселей изображения
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = image.width;
+            tempCanvas.height = image.height;
+            const tempContext = tempCanvas.getContext('2d');
+            tempContext.drawImage(image, 0, 0);
+
+            // Получаем данные пикселя в точке (x, y)
+            const pixelData = tempContext.getImageData(x, y, 1, 1).data;
+            return pixelData[3] > 0; // Проверяем альфа-канал (непрозрачность)
         };
+
+        // Модифицируем функцию bringToFront для проверки непрозрачности
+        const bringToFront = (body, mouseX, mouseY) => {
+            if (body.render.sprite) {
+                const vertices = body.vertices;
+                const minX = Math.min(...vertices.map(v => v.x));
+                const minY = Math.min(...vertices.map(v => v.y));
+                const maxY = Math.max(...vertices.map(v => v.y));
+                const objHeight = maxY - minY;
+                const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
+                    body.render.sprite.texture === garbageImage ? garbageImgRef.current :
+                        body.render.sprite.texture === berryImage ? berryImgRef.current :
+                            body.render.sprite.texture === mushroomsImage ? mushroomsImgRef.current :
+                                body.render.sprite.texture === boardImage ? boardImgRef.current :
+                                    body.render.sprite.texture === chairImage ? chairImgRef.current :
+                                        body.render.sprite.texture === tableImage ? tableImgRef.current :
+                                            body.render.sprite.texture === wardrobeImage ? wardrobeImgRef.current :
+                                                body.render.sprite.texture === sofaImage ? sofaImgRef.current :
+                                                    chestImgRef.current;
+
+                if (image.width && image.height) {
+                    const aspectRatio = image.width / image.height;
+                    const textureHeight = objHeight;
+                    const textureWidth = textureHeight * aspectRatio;
+
+                    // Преобразуем координаты мыши в координаты текстуры
+                    const textureX = ((mouseX - minX) / textureWidth) * image.width;
+                    const textureY = ((mouseY - minY) / textureHeight) * image.height;
+
+                    if (textureX >= 0 && textureX < image.width && textureY >= 0 && textureY < image.height) {
+                        if (isPixelOpaque(image, textureX, textureY)) {
+                            const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
+                            body.render.zIndex = maxZIndex + 1;
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+            } else {
+                const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
+                body.render.zIndex = maxZIndex + 1;
+                return true;
+            }
+            return false;
+        };
+
 
         const handleMouseDown = (event) => {
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
             const mouse = Matter.Vector.create(mouseX, mouseY);
-            const clickedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, mouse));
-            if (clickedBody) {
-                bringToFront(clickedBody);
+            const clickedBody = bodiesRef.current.find(body =>
+                Matter.Bounds.contains(body.bounds, mouse) &&
+                (!body.render.sprite || bringToFront(body, mouseX, mouseY))
+            );
+            if (clickedBody && !body.render.sprite) {
+                bringToFront(clickedBody, mouseX, mouseY);
             }
         };
 
+        // Обновляем handleTouchStart для проверки непрозрачности
         const handleTouchStart = (event) => {
             event.preventDefault();
             const touch = event.touches[0];
@@ -521,9 +580,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             mouse.mousedown = true;
 
             const touchPoint = Matter.Vector.create(mouseX, mouseY);
-            const touchedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, touchPoint));
-            if (touchedBody) {
-                bringToFront(touchedBody);
+            const touchedBody = bodiesRef.current.find(body =>
+                Matter.Bounds.contains(body.bounds, touchPoint) &&
+                (!body.render.sprite || bringToFront(body, mouseX, mouseY))
+            );
+            if (touchedBody && !body.render.sprite) {
+                bringToFront(touchedBody, mouseX, mouseY);
             }
         };
 

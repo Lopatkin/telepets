@@ -544,13 +544,14 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         }
                         return false;
                     }
+                    return false;
                 }
+                return false;
             } else {
                 const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
                 body.render.zIndex = maxZIndex + 1;
                 return true;
             }
-            return false;
         };
 
         const mouseConstraint = Matter.MouseConstraint.create(engine, {
@@ -559,19 +560,22 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 stiffness: 0.2,
                 render: { visible: false },
             },
-            // Переопределяем метод mouseDown для учета непрозрачности
+            collisionFilter: {
+                category: 0x0001,
+                mask: 0x0003
+            },
+            // Переопределяем метод mouseDown для проверки непрозрачности
             mouseDown: function (event) {
                 const mousePosition = this.mouse.position;
-                const clickedBody = bodiesRef.current.find(body =>
+                // Сортируем тела по zIndex в обратном порядке, чтобы проверять верхние объекты первыми
+                const sortedBodies = bodiesRef.current.slice().sort((a, b) => (b.render.zIndex || 0) - (a.render.zIndex || 0));
+                const clickedBody = sortedBodies.find(body =>
                     Matter.Bounds.contains(body.bounds, mousePosition) &&
                     (!body.render.sprite || bringToFront(body, mousePosition.x, mousePosition.y))
                 );
 
                 if (clickedBody) {
-                    this.body = clickedBody; // Устанавливаем тело только для непрозрачных областей
-                    if (!clickedBody.render.sprite) {
-                        bringToFront(clickedBody, mousePosition.x, mousePosition.y); // Поднимаем объект без текстуры
-                    }
+                    this.body = clickedBody; // Устанавливаем тело только для непрозрачных областей или объектов без текстуры
                     Matter.Events.trigger(this, 'mousedown', { mouse: this.mouse });
                 } else {
                     this.body = null; // Сбрасываем, если клик на прозрачной области
@@ -588,7 +592,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
             const draggedBody = event.body;
-            bringToFront(draggedBody);
+            const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
+            draggedBody.render.zIndex = maxZIndex + 1;
         });
 
         // Пользовательский цикл рендеринга
@@ -797,6 +802,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             cancelAnimationFrame(animationFrameId);
             window.removeEventListener('resize', handleResize);
             Matter.Runner.stop(runnerRef.current);
+            Matter.World.remove(engine.world, mouseConstraint); // Очищаем mouseConstraint
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };

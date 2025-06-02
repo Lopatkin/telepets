@@ -574,7 +574,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const bringToFront = (body) => {
             const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
             body.render.zIndex = maxZIndex + 1;
-            body.render.opacity = 0.8;
+            // body.render.opacity = 0.8;
         };
 
         const handleMouseDown = (event) => {
@@ -841,7 +841,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
             const draggedBody = event.body;
             Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
-            draggedBody.render.opacity = 1;
+            // draggedBody.render.opacity = 1;
         });
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {

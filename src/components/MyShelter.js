@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 import wallpaperImage from '../images/dwelling/wallpaper.jpg';
@@ -140,7 +140,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
     // Проверка прозрачности пикселя в точке клика
     // Проверка прозрачности пикселя в точке клика
-    const isPixelTransparent = (image, x, y, body) => {
+    // Внутри компонента MyShelter, перед useEffect
+    const isPixelTransparent = useCallback((image, x, y, body) => {
         // Кэшируем результаты проверки для одного клика
         const cacheKey = `${x}_${y}_${body.id}`;
         if (isPixelTransparent.cache && isPixelTransparent.cache[cacheKey]) {
@@ -204,7 +205,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         isPixelTransparent.cache[cacheKey] = isTransparent;
 
         return isTransparent;
-    };
+    }, []); // Пустой массив зависимостей, так как функция не зависит от внешних переменных
 
     // Очищаем кэш при следующем кадре
     const clearTransparencyCache = () => {

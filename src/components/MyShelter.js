@@ -105,7 +105,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const wallRef = useRef(null);
     const floorRef = useRef(null);
     const itemDataRef = useRef([]);
-    // Добавляем реф для хранения текущего перетаскиваемого предмета
     const draggedItemRef = useRef(null);
 
     // Загрузка изображений
@@ -210,7 +209,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         };
     }, []);
 
-    // Создание стены и пола один раз при монтировании
+    // Создание стены и пола
     useEffect(() => {
         const engine = engineRef.current;
         const canvas = canvasRef.current;
@@ -218,8 +217,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const width = parent.getBoundingClientRect().width;
         const height = parent.getBoundingClientRect().height;
 
-        const wallHeight = height * 0.4; // Оставляем пропорции для стены
-        const floorHeight = height * 0.6; // Оставляем пропорции для пола
+        const wallHeight = height * 0.4;
+        const floorHeight = height * 0.6;
         const staticCollisionFilter = { category: 0x0002, mask: 0 };
 
         const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
@@ -251,7 +250,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         return () => {
             Matter.World.remove(engine.world, [wall, floor]);
         };
-    }, []); // Зависимости остаются пустыми, так как стена и пол создаются один раз
+    }, []);
 
     // Получение предметов текущей локации
     useEffect(() => {
@@ -269,12 +268,23 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             }
         });
 
+        // Обработчик обновления позиций предметов от сервера
+        socket.on('itemPositionsUpdate', (data) => {
+            if (data.owner === currentRoom) {
+                setLocationItems(data.items.map(item => ({
+                    ...item,
+                    _id: item._id.toString(),
+                })));
+            }
+        });
+
         return () => {
             socket.off('items');
+            socket.off('itemPositionsUpdate');
         };
     }, [socket, currentRoom]);
 
-    // Обновляем handleSave для сохранения позиций только предметов
+    // Сохранение позиций предметов на сервере
     const handleSave = () => {
         const canvas = canvasRef.current;
         const width = canvas.width;
@@ -284,21 +294,28 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             ...locationItems.reduce((acc, item) => ({
                 ...acc,
                 [`item_${item._id}`]: {
-                    x: (itemDataRef.current.find(i => i.id === item._id)?.x || (width * (0.2 + (itemDataRef.current.length % 5) * 0.15))) / width, // Сохраняем x как долю ширины
-                    y: (itemDataRef.current.find(i => i.id === item._id)?.y || (height * 0.4)) / height, // Сохраняем y как долю высоты
+                    x: (itemDataRef.current.find(i => i.id === item._id)?.x || (width * 0.2)) / width,
+                    y: (itemDataRef.current.find(i => i.id === item._id)?.y || (height * 0.4)) / height,
                     scaleFactor: itemDataRef.current.find(i => i.id === item._id)?.scaleFactor || 1,
                     zIndex: itemDataRef.current.find(i => i.id === item._id)?.zIndex || 0
                 }
             }), {})
         };
-        localStorage.setItem(`shelterObjectPositions_${userId}`, JSON.stringify(positions));
+
+        socket.emit('updateItemPositions', { owner: currentRoom, positions }, (response) => {
+            if (response.success) {
+                console.log('Позиции предметов успешно сохранены на сервере');
+            } else {
+                console.error('Ошибка сохранения позиций:', response.message);
+            }
+        });
     };
 
     const handleClose = () => {
-        setShowMyShelter(false);
+        setShowMyShelter(false); // Закрываем без сохранения
     };
 
-    // Обновляем основной useEffect
+    // Основной эффект для рендеринга
     useEffect(() => {
         const canvas = canvasRef.current;
         const parent = canvas.parentElement;
@@ -310,7 +327,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const engine = engineRef.current;
         engine.gravity.y = 0;
 
-        // Создаем границы (без изменений)
         const boundaryOptions = {
             isStatic: true,
             restitution: 0,
@@ -326,19 +342,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         ];
         Matter.World.add(engine.world, boundaries);
 
-        // Загружаем сохраненные позиции и создаем данные для предметов
-        const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};
-
-        // Формируем данные для предметов с относительными координатами
+        // Формируем данные для предметов на основе данных из базы
         itemDataRef.current = locationItems.map((item, index) => {
-            const itemKey = `item_${item._id}`;
-            const savedItem = savedPositions[itemKey] || {
-                x: 0.2 + (index % 5) * 0.15, // Относительная x-позиция по умолчанию
-                y: 0.4, // Относительная y-позиция по умолчанию (верх пола)
-                scaleFactor: 1,
-                zIndex: 0
-            };
-
             const isStick = item.name === 'Палка';
             const isGarbage = item.name === 'Мусор';
             const isBerry = item.name === 'Лесные ягоды';
@@ -358,10 +363,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
             return {
                 id: item._id,
-                x: savedItem.x * width, // Преобразуем относительную x в абсолютную
-                y: savedItem.y * height, // Преобразуем относительную y в абсолютную
-                scaleFactor: savedItem.scaleFactor,
-                zIndex: savedItem.zIndex,
+                x: item.x * width, // Преобразуем относительную x в абсолютную
+                y: item.y * height, // Преобразуем относительную y в абсолютную
+                scaleFactor: item.scaleFactor,
+                zIndex: item.zIndex,
                 width: size,
                 height: size,
                 texture: isStick ? stickImage :
@@ -378,9 +383,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             };
         });
 
-        // Функция для ограничения позиций предметов
         const restrictPosition = (item) => {
-            const margin = 5 / width; // Относительный отступ
+            const margin = 5 / width;
             const halfWidth = (item.width * item.scaleFactor) / (2 * width);
             const halfHeight = (item.height * item.scaleFactor) / (2 * height);
 
@@ -477,7 +481,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 const mouseY = event.clientY - rect.top;
                 draggedItemRef.current.x = mouseX;
                 draggedItemRef.current.y = mouseY;
-                restrictPosition(draggedItemRef.current); // Ограничиваем позицию
+                restrictPosition(draggedItemRef.current);
             }
         };
 
@@ -575,7 +579,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 const mouseY = touch.clientY - rect.top;
                 draggedItemRef.current.x = mouseX;
                 draggedItemRef.current.y = mouseY;
-                restrictPosition(draggedItemRef.current); // Ограничиваем позицию
+                restrictPosition(draggedItemRef.current);
             }
         };
 
@@ -594,7 +598,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
-        // Пользовательский цикл рендеринга (без изменений в этой части, но обновляем ограничения)
         const context = canvas.getContext('2d');
         let animationFrameId;
 
@@ -645,7 +648,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 context.restore();
             });
 
-            // Обновляем ограничения и масштабирование предметов
             itemDataRef.current.forEach(item => {
                 const margin = 5;
                 const halfWidth = (item.width * item.scaleFactor) / 2;
@@ -653,7 +655,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 item.x = Math.max(margin + halfWidth, Math.min(item.x, canvas.width - margin - halfWidth));
                 item.y = Math.max(margin + halfHeight, Math.min(item.y, canvas.height - margin - halfHeight));
 
-                // Масштабирование на основе y-позиции
                 const y = item.y;
                 const minY = height * 0.4;
                 const maxY = height;
@@ -666,7 +667,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 item.scaleFactor = targetScale;
             });
 
-            // Рендерим предметы
             const items = itemDataRef.current.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
             items.forEach(item => {
                 context.globalAlpha = item.opacity;
@@ -719,7 +719,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         runnerRef.current = Matter.Runner.create();
         Matter.Runner.run(runnerRef.current, engine);
 
-        // Обновляем обработчик изменения размера окна
         const handleResize = () => {
             const newWidth = canvas.parentElement.getBoundingClientRect().width;
             const newHeight = canvas.parentElement.getBoundingClientRect().height;
@@ -731,7 +730,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
             Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
 
-            // Пересчитываем позиции предметов
             itemDataRef.current.forEach(item => {
                 item.x = (item.x / width) * newWidth;
                 item.y = (item.y / height) * newHeight;
@@ -742,7 +740,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 item.y = Math.max(margin + halfHeight, Math.min(item.y, newHeight - margin - halfHeight));
             });
 
-            // Пересоздаем стену и пол с новыми размерами
             const wallHeight = newHeight * 0.4;
             const floorHeight = newHeight * 0.6;
             Matter.Body.setPosition(wallRef.current, { x: newWidth / 2, y: wallHeight / 2 });

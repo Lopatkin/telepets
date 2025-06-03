@@ -415,9 +415,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
 
-            // Создаем временный canvas для проверки прозрачности
+            // Создаем временный canvas с оптимизацией для частого чтения
             const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
+            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
 
             const clickedItem = itemDataRef.current.find(item => {
                 const halfWidth = (item.width * item.scaleFactor) / 2;
@@ -430,7 +430,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     mouseY >= item.y - halfHeight &&
                     mouseY <= item.y + halfHeight
                 ) {
-                    // Проверяем прозрачность пикселя
                     const image = item.texture === stickImage ? stickImgRef.current :
                         item.texture === garbageImage ? garbageImgRef.current :
                             item.texture === berryImage ? berryImgRef.current :
@@ -442,7 +441,15 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                                     item.texture === sofaImage ? sofaImgRef.current :
                                                         chestImgRef.current;
 
-                    if (image.width && image.height) {
+                    if (image.width && image.height && imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
+                        item.texture === garbageImage ? 'garbage' :
+                            item.texture === berryImage ? 'berry' :
+                                item.texture === mushroomsImage ? 'mushrooms' :
+                                    item.texture === boardImage ? 'board' :
+                                        item.texture === chairImage ? 'chair' :
+                                            item.texture === tableImage ? 'table' :
+                                                item.texture === wardrobeImage ? 'wardrobe' :
+                                                    item.texture === sofaImage ? 'sofa' : 'chest']) {
                         const aspectRatio = image.width / image.height;
                         const textureHeight = item.height * item.scaleFactor;
                         const textureWidth = textureHeight * aspectRatio;
@@ -456,10 +463,20 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         const localX = (mouseX - (item.x - halfWidth)) * (image.width / textureWidth);
                         const localY = (mouseY - (item.y - halfHeight)) * (image.height / textureHeight);
 
-                        // Получаем данные пикселя
-                        const pixelData = tempCtx.getImageData(localX, localY, 1, 1).data;
-                        // Проверяем альфа-канал (последний компонент RGBA)
-                        return pixelData[3] > 0; // Возвращаем true, если пиксель не прозрачный
+                        // Проверяем, что координаты находятся в пределах изображения
+                        if (localX >= 0 && localX < image.width && localY >= 0 && localY < image.height) {
+                            try {
+                                const pixelData = tempCtx.getImageData(localX, localY, 1, 1).data;
+                                // Проверяем альфа-канал
+                                const isNotTransparent = pixelData[3] > 0;
+                                console.log(`Clicked item: ${item.id}, Pixel alpha: ${pixelData[3]}, Not transparent: ${isNotTransparent}`);
+                                return isNotTransparent;
+                            } catch (error) {
+                                console.error('Error reading pixel data:', error);
+                                return false;
+                            }
+                        }
+                        return false;
                     }
                     return false;
                 }
@@ -467,8 +484,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             });
 
             if (clickedItem) {
+                console.log('Selected item for dragging:', clickedItem.id);
                 bringToFront(clickedItem);
                 draggedItemRef.current = clickedItem;
+            } else {
+                console.log('No item selected at position:', { mouseX, mouseY });
             }
         };
 
@@ -490,6 +510,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         };
 
         // Аналогично обновляем handleTouchStart
+        // Заменяем функцию handleTouchStart
         const handleTouchStart = (event) => {
             if (isFixed) return;
             event.preventDefault();
@@ -499,7 +520,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const mouseY = touch.clientY - rect.top;
 
             const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
+            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
 
             const touchedItem = itemDataRef.current.find(item => {
                 const halfWidth = (item.width * item.scaleFactor) / 2;
@@ -522,7 +543,15 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                                     item.texture === sofaImage ? sofaImgRef.current :
                                                         chestImgRef.current;
 
-                    if (image.width && image.height) {
+                    if (image.width && image.height && imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
+                        item.texture === garbageImage ? 'garbage' :
+                            item.texture === berryImage ? 'berry' :
+                                item.texture === mushroomsImage ? 'mushrooms' :
+                                    item.texture === boardImage ? 'board' :
+                                        item.texture === chairImage ? 'chair' :
+                                            item.texture === tableImage ? 'table' :
+                                                item.texture === wardrobeImage ? 'wardrobe' :
+                                                    item.texture === sofaImage ? 'sofa' : 'chest']) {
                         const aspectRatio = image.width / image.height;
                         const textureHeight = item.height * item.scaleFactor;
                         const textureWidth = textureHeight * aspectRatio;
@@ -534,8 +563,18 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         const localX = (mouseX - (item.x - halfWidth)) * (image.width / textureWidth);
                         const localY = (mouseY - (item.y - halfHeight)) * (image.height / textureHeight);
 
-                        const pixelData = tempCtx.getImageData(localX, localY, 1, 1).data;
-                        return pixelData[3] > 0;
+                        if (localX >= 0 && localX < image.width && localY >= 0 && localY < image.height) {
+                            try {
+                                const pixelData = tempCtx.getImageData(localX, localY, 1, 1).data;
+                                const isNotTransparent = pixelData[3] > 0;
+                                console.log(`Touched item: ${item.id}, Pixel alpha: ${pixelData[3]}, Not transparent: ${isNotTransparent}`);
+                                return isNotTransparent;
+                            } catch (error) {
+                                console.error('Error reading pixel data:', error);
+                                return false;
+                            }
+                        }
+                        return false;
                     }
                     return false;
                 }
@@ -543,8 +582,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             });
 
             if (touchedItem) {
+                console.log('Selected item for touch dragging:', touchedItem.id);
                 bringToFront(touchedItem);
                 draggedItemRef.current = touchedItem;
+            } else {
+                console.log('No item selected for touch at position:', { mouseX, mouseY });
             }
         };
 

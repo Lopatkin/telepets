@@ -577,25 +577,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             }
         };
 
-        // Добавляем функцию для сохранения на сервер
-        const handleSave = () => {
-            if (Object.keys(tempPositions).length === 0) return;
-
-            const items = Object.entries(tempPositions).map(([itemId, { position, zIndex }]) => ({
-                itemId,
-                position,
-                zIndex,
-            }));
-
-            socket.emit('updateItemsPositions', { items }, (response) => {
-                if (response.success) {
-                    setTempPositions({}); // Очищаем после успешного сохранения
-                } else {
-                    console.error('Failed to save items positions:', response.message);
-                }
-            });
-        };
-
         const handleTouchMove = (event) => {
             event.preventDefault();
             if (draggedItemRef.current) {
@@ -790,6 +771,25 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.Engine.clear(engine);
         };
     }, [theme, userId, socket, currentRoom, locationItems]);
+
+    // Добавляем функцию для сохранения на сервер
+    const handleSave = () => {
+        if (Object.keys(tempPositions).length === 0) return;
+
+        const items = Object.entries(tempPositions).map(([itemId, { position, zIndex }]) => ({
+            itemId,
+            position,
+            zIndex,
+        }));
+
+        socket.emit('updateItemsPositions', { items }, (response) => {
+            if (response.success) {
+                setTempPositions({}); // Очищаем после успешного сохранения
+            } else {
+                console.error('Failed to save items positions:', response.message);
+            }
+        });
+    };
 
     return (
         <ShelterContainer theme={theme}>

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import styled from 'styled-components';
 import Matter from 'matter-js';
 import wallpaperImage from '../images/dwelling/wallpaper.jpg';
 import floorImage from '../images/dwelling/floor.jpg';
@@ -32,17 +31,6 @@ const SaveButton = styled.button`
     }
 `;
 
-const Overlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0);
-  z-index: 1500;
-  pointer-events: auto;
-`;
-
 const CloseIcon = styled.button`
   position: absolute;
   top: 10px;
@@ -63,21 +51,6 @@ const CloseIcon = styled.button`
   &:hover {
     background: ${({ theme }) => (theme === 'dark' ? '#5A5A5A' : '#B0B0B0')};
   }
-`;
-
-const ToggleContainer = styled.div`
-  position: absolute;
-  top: 10px;
-  right: 100px;
-  display: flex;
-  align-items: center;
-  z-index: 2000;
-`;
-
-const ToggleLabel = styled.label`
-  color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
-  margin-left: 8px;
-  font-size: 16px;
 `;
 
 const ShelterContainer = styled.div`
@@ -101,7 +74,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
-    const [isFixed, setIsFixed] = useState(false);
     const wallpaperImgRef = useRef(new Image());
     const floorImgRef = useRef(new Image());
     const stickImgRef = useRef(new Image());
@@ -422,7 +394,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         };
 
         const handleMouseDown = (event) => {
-            if (isFixed) return;
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
@@ -499,7 +470,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         };
 
         const handleMouseMove = (event) => {
-            if (draggedItemRef.current && !isFixed) {
+            if (draggedItemRef.current) {
                 const rect = canvas.getBoundingClientRect();
                 const mouseX = event.clientX - rect.left;
                 const mouseY = event.clientY - rect.top;
@@ -597,7 +568,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
         const handleTouchMove = (event) => {
             event.preventDefault();
-            if (draggedItemRef.current && !isFixed) {
+            if (draggedItemRef.current) {
                 const touch = event.touches[0];
                 const rect = canvas.getBoundingClientRect();
                 const mouseX = touch.clientX - rect.left;
@@ -796,24 +767,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, userId, socket, currentRoom, locationItems, isFixed]);
+    }, [theme, userId, socket, currentRoom, locationItems]);
 
     return (
         <ShelterContainer theme={theme}>
             <CloseIcon theme={theme} onClick={handleClose}>×</CloseIcon>
             <SaveButton theme={theme} onClick={handleSave}>Сохранить</SaveButton>
-            <ToggleContainer>
-                <input
-                    type="checkbox"
-                    checked={isFixed}
-                    onChange={() => setIsFixed(!isFixed)}
-                    id="fixToggle"
-                />
-                <ToggleLabel theme={theme} htmlFor="fixToggle">
-                    Зафиксировать
-                </ToggleLabel>
-            </ToggleContainer>
-            {isFixed && <Overlay />}
             <CanvasContainer>
                 <canvas ref={canvasRef} />
             </CanvasContainer>

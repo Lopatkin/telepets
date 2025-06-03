@@ -223,6 +223,24 @@ function App() {
         });
       });
 
+      // Новый обработчик для обновления позиций предметов
+      socketRef.current.on('itemPositionsUpdate', (data) => {
+        const { owner, items } = data;
+        if (owner === `user_${user?.userId}` || owner === currentRoom) {
+          const updatedItems = items.map(item => ({
+            ...item,
+            _id: item._id.toString(),
+          }));
+          setPersonalItems(prev => {
+            const mergedItems = prev.map(p => {
+              const updatedItem = updatedItems.find(u => u._id === p._id);
+              return updatedItem || p;
+            }).filter(p => !updatedItems.some(u => u._id === p._id) || updatedItems.includes(p));
+            return [...mergedItems, ...updatedItems.filter(u => !prev.some(p => p._id === u._id))];
+          });
+        }
+      });
+
       socketRef.current.on('leashStatus', ({ onLeash }) => {
         setUser((prev) => ({ ...prev, onLeash }));
       });

@@ -21,6 +21,54 @@ function registerInventoryHandlers({
         }
     });
 
+    // Добавляем обработчик для обновления позиции предмета
+    socket.on('updateItemPosition', async ({ itemId, position, zIndex }, callback) => {
+        try {
+            // Проверка интервала между действиями
+            const now = Date.now();
+            const lastActionTime = userLastAction.get(socket.userData.userId) || 0;
+            if (now - lastActionTime < MIN_ACTION_INTERVAL) {
+                if (callback) callback({ success: false, message: 'Слишком частые действия, подождите' });
+                return;
+            }
+            userLastAction.set(socket.userData.userId, now);
+
+            const item = await Item.findById(itemId);
+            if (!item) {
+                if (callback) callback({ success: false, message: 'Предмет не найден' });
+                return;
+            }
+
+            // Проверяем, что предмет принадлежит текущей комнате
+            const currentRoom = userCurrentRoom.get(socket.userData.userId);
+            if (item.owner !== currentRoom) {
+                if (callback) callback({ success: false, message: 'Нет прав на перемещение этого предмета' });
+                return;
+            }
+
+            // Обновляем позицию и zIndex
+            item.position = {
+                x: Math.max(0, Math.min(position.x, 1)), // Ограничиваем 0-1
+                y: Math.max(0, Math.min(position.y, 1)),
+                scaleFactor: position.scaleFactor || 1,
+            };
+            item.zIndex = zIndex || 0;
+            await item.save();
+
+            // Уведомляем всех в комнате
+            io.to(currentRoom).emit('itemPositionUpdate', {
+                itemId,
+                position: item.position,
+                zIndex: item.zIndex,
+            });
+
+            if (callback) callback({ success: true });
+        } catch (err) {
+            console.error('Error updating item position:', err.message, err.stack);
+            if (callback) callback({ success: false, message: 'Ошибка при обновлении позиции предмета' });
+        }
+    });
+
     socket.on('craftItem', async ({ owner, craftedItem, materials }, callback) => {
         try {
             console.log('Received craftItem data:', { owner, craftedItem, materials });

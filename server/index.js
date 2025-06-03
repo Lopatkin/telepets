@@ -99,7 +99,13 @@ const itemSchema = new mongoose.Schema({
   cost: { type: Number },
   effect: { type: String },
   playerID: { type: String, required: false },
-  animalId: { type: String, required: false }
+  animalId: { type: String, required: false },
+  position: { // Новое поле для позиций
+    x: { type: Number, default: 0.2 }, // Относительная позиция X (0-1)
+    y: { type: Number, default: 0.4 }, // Относительная позиция Y (0-1)
+    scaleFactor: { type: Number, default: 1 }, // Масштаб
+  },
+  zIndex: { type: Number, default: 0 }, // Порядок наложения
 }, { timestamps: true });
 const Item = mongoose.model('Item', itemSchema);
 

@@ -254,6 +254,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     }, []); // Зависимости остаются пустыми, так как стена и пол создаются один раз
 
     // Получение предметов текущей локации
+    // Удаляем логику с localStorage и добавляем обработчик сокетов
     useEffect(() => {
         if (!socket || !currentRoom) return;
 
@@ -269,30 +270,63 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             }
         });
 
+        // Добавляем обработчик для обновления позиций от других клиентов
+        socket.on('itemPositionUpdate', ({ itemId, position, zIndex }) => {
+            setLocationItems(prev =>
+                prev.map(item =>
+                    item._id === itemId
+                        ? { ...item, position, zIndex }
+                        : item
+                )
+            );
+            itemDataRef.current = itemDataRef.current.map(item =>
+                item.id === itemId
+                    ? { ...item, x: position.x * canvasRef.current.width, y: position.y * canvasRef.current.height, scaleFactor: position.scaleFactor, zIndex }
+                    : item
+            );
+        });
+
         return () => {
             socket.off('items');
+            socket.off('itemPositionUpdate');
         };
     }, [socket, currentRoom]);
 
-    // Обновляем handleSave для сохранения позиций только предметов
-    const handleSave = () => {
+    // Обновляем itemDataRef на основе locationItems
+    useEffect(() => {
         const canvas = canvasRef.current;
         const width = canvas.width;
         const height = canvas.height;
 
-        const positions = {
-            ...locationItems.reduce((acc, item) => ({
-                ...acc,
-                [`item_${item._id}`]: {
-                    x: (itemDataRef.current.find(i => i.id === item._id)?.x || (width * (0.2 + (itemDataRef.current.length % 5) * 0.15))) / width, // Сохраняем x как долю ширины
-                    y: (itemDataRef.current.find(i => i.id === item._id)?.y || (height * 0.4)) / height, // Сохраняем y как долю высоты
-                    scaleFactor: itemDataRef.current.find(i => i.id === item._id)?.scaleFactor || 1,
-                    zIndex: itemDataRef.current.find(i => i.id === item._id)?.zIndex || 0
-                }
-            }), {})
-        };
-        localStorage.setItem(`shelterObjectPositions_${userId}`, JSON.stringify(positions));
-    };
+        itemDataRef.current = locationItems.map((item, index) => {
+            const size = item.name === 'Стул' ? 100 :
+                item.name === 'Доска' ? 100 :
+                    item.name === 'Лесные ягоды' || item.name === 'Лесные грибы' ? 50 :
+                        item.name === 'Палка' || item.name === 'Мусор' ? 67 :
+                            200;
+
+            return {
+                id: item._id,
+                x: (item.position?.x || (0.2 + (index % 5) * 0.15)) * width,
+                y: (item.position?.y || 0.4) * height,
+                scaleFactor: item.position?.scaleFactor || 1,
+                zIndex: item.zIndex || 0,
+                width: size,
+                height: size,
+                texture: item.name === 'Палка' ? stickImage :
+                    item.name === 'Мусор' ? garbageImage :
+                        item.name === 'Лесные ягоды' ? berryImage :
+                            item.name === 'Лесные грибы' ? mushroomsImage :
+                                item.name === 'Доска' ? boardImage :
+                                    item.name === 'Стул' ? chairImage :
+                                        item.name === 'Стол' ? tableImage :
+                                            item.name === 'Шкаф' ? wardrobeImage :
+                                                item.name === 'Кровать' ? sofaImage :
+                                                    item.name === 'Тумба' ? chestImage : undefined,
+                opacity: 1,
+            };
+        });
+    }, [locationItems]);
 
     const handleClose = () => {
         setShowMyShelter(false);
@@ -481,88 +515,55 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             }
         };
 
+        // Обновляем handleMouseUp и handleTouchEnd для отправки позиций на сервер
         const handleMouseUp = () => {
             if (draggedItemRef.current) {
-                draggedItemRef.current.opacity = 1;
+                const canvas = canvasRef.current;
+                const item = draggedItemRef.current;
+                item.opacity = 1;
+
+                // Отправляем обновление позиции на сервер
+                socket.emit('updateItemPosition', {
+                    itemId: item.id,
+                    position: {
+                        x: item.x / canvas.width, // Относительная позиция
+                        y: item.y / canvas.height,
+                        scaleFactor: item.scaleFactor,
+                    },
+                    zIndex: item.zIndex,
+                }, (response) => {
+                    if (!response.success) {
+                        console.error('Failed to update item position:', response.message);
+                    }
+                });
+
                 draggedItemRef.current = null;
             }
         };
 
-        const handleTouchStart = (event) => {
+        const handleTouchEnd = (event) => {
             event.preventDefault();
-            const touch = event.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = touch.clientX - rect.left;
-            const mouseY = touch.clientY - rect.top;
+            if (draggedItemRef.current) {
+                const canvas = canvasRef.current;
+                const item = draggedItemRef.current;
+                item.opacity = 1;
 
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
-
-            const itemsUnderCursor = itemDataRef.current
-                .map(item => {
-                    const halfWidth = (item.width * item.scaleFactor) / 2;
-                    const halfHeight = (item.height * item.scaleFactor) / 2;
-
-                    if (
-                        mouseX >= item.x - halfWidth &&
-                        mouseX <= item.x + halfWidth &&
-                        mouseY >= item.y - halfHeight &&
-                        mouseY <= item.y + halfHeight
-                    ) {
-                        const image = item.texture === stickImage ? stickImgRef.current :
-                            item.texture === garbageImage ? garbageImgRef.current :
-                                item.texture === berryImage ? berryImgRef.current :
-                                    item.texture === mushroomsImage ? mushroomsImgRef.current :
-                                        item.texture === boardImage ? boardImgRef.current :
-                                            item.texture === chairImage ? chairImgRef.current :
-                                                item.texture === tableImage ? tableImgRef.current :
-                                                    item.texture === wardrobeImage ? wardrobeImgRef.current :
-                                                        item.texture === sofaImage ? sofaImgRef.current :
-                                                            chestImgRef.current;
-
-                        if (image.width && image.height && imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
-                            item.texture === garbageImage ? 'garbage' :
-                                item.texture === berryImage ? 'berry' :
-                                    item.texture === mushroomsImage ? 'mushrooms' :
-                                        item.texture === boardImage ? 'board' :
-                                            item.texture === chairImage ? 'chair' :
-                                                item.texture === tableImage ? 'table' :
-                                                    item.texture === wardrobeImage ? 'wardrobe' :
-                                                        item.texture === sofaImage ? 'sofa' : 'chest']) {
-                            const aspectRatio = image.width / image.height;
-                            const textureHeight = item.height * item.scaleFactor;
-                            const textureWidth = textureHeight * aspectRatio;
-
-                            tempCanvas.width = image.width;
-                            tempCanvas.height = image.height;
-                            tempCtx.drawImage(image, 0, 0, image.width, image.height);
-
-                            const localX = (mouseX - (item.x - halfWidth)) / (textureWidth / image.width);
-                            const localY = (mouseY - (item.y - halfHeight)) / (textureHeight / image.height);
-
-                            if (localX >= 0 && localX < image.width && localY >= 0 && localY < image.height) {
-                                try {
-                                    const pixelData = tempCtx.getImageData(Math.floor(localX), Math.floor(localY), 1, 1).data;
-                                    const isNotTransparent = pixelData[3] > 0;
-                                    return { item, isNotTransparent };
-                                } catch (error) {
-                                    console.error('Error reading pixel data for item:', item.id, error);
-                                    return null;
-                                }
-                            }
-                        }
-                        return null;
+                // Отправляем обновление позиции на сервер
+                socket.emit('updateItemPosition', {
+                    itemId: item.id,
+                    position: {
+                        x: item.x / canvas.width,
+                        y: item.y / canvas.height,
+                        scaleFactor: item.scaleFactor,
+                    },
+                    zIndex: item.zIndex,
+                }, (response) => {
+                    if (!response.success) {
+                        console.error('Failed to update item position:', response.message);
                     }
-                    return null;
-                })
-                .filter(item => item && item.isNotTransparent)
-                .sort((a, b) => (b.item.zIndex || 0) - (a.item.zIndex || 0));
+                });
 
-            const touchedItem = itemsUnderCursor.length > 0 ? itemsUnderCursor[0].item : null;
-
-            if (touchedItem) {
-                bringToFront(touchedItem);
-                draggedItemRef.current = touchedItem;
+                draggedItemRef.current = null;
             }
         };
 
@@ -576,14 +577,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 draggedItemRef.current.x = mouseX;
                 draggedItemRef.current.y = mouseY;
                 restrictPosition(draggedItemRef.current); // Ограничиваем позицию
-            }
-        };
-
-        const handleTouchEnd = (event) => {
-            event.preventDefault();
-            if (draggedItemRef.current) {
-                draggedItemRef.current.opacity = 1;
-                draggedItemRef.current = null;
             }
         };
 

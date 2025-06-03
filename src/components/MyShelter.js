@@ -355,7 +355,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
         // Загружаем сохраненные позиции и создаем данные для предметов
         const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};
-        const floorTopY = height * 0.4; // Верхняя граница пола
 
         // Формируем данные для предметов с относительными координатами
         itemDataRef.current = locationItems.map((item, index) => {

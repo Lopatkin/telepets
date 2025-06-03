@@ -317,7 +317,7 @@ function App() {
     };
 
     initializeSocket();
-  }, [handleItemsUpdate, updateUser, user?.userId]); // Добавляем зависимости
+  }, [handleItemsUpdate, updateUser, user?.userId, currentRoom]); // Добавляем зависимости
 
   // Добавляем эффект для повторного запроса getItems после обновления user
   // useEffect(() => {

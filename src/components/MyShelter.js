@@ -101,7 +101,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
-    const bodiesRef = useRef([]);
     const mouseConstraintRef = useRef(null);
     const originalSizesRef = useRef({});
     const [isFixed, setIsFixed] = useState(false);
@@ -134,6 +133,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const [locationItems, setLocationItems] = useState([]);
     const wallRef = useRef(null);
     const floorRef = useRef(null);
+    const itemDataRef = useRef([]);
+    // Добавляем реф для хранения текущего перетаскиваемого предмета
+    const draggedItemRef = useRef(null);
 
     // Загрузка изображений
     useEffect(() => {
@@ -301,15 +303,16 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         };
     }, [socket, currentRoom]);
 
+    // Обновляем handleSave для сохранения позиций только предметов
     const handleSave = () => {
         const positions = {
-            ...locationItems.reduce((acc, item, index) => ({
+            ...locationItems.reduce((acc, item) => ({
                 ...acc,
                 [`item_${item._id}`]: {
-                    x: bodiesRef.current.find(b => b.itemId === item._id)?.position.x || (canvasRef.current?.width * (0.2 + (index % 5) * 0.15)),
-                    y: bodiesRef.current.find(b => b.itemId === item._id)?.position.y || (canvasRef.current?.height * 0.4),
-                    scaleFactor: bodiesRef.current.find(b => b.itemId === item._id)?.scaleFactor || 1,
-                    zIndex: bodiesRef.current.find(b => b.itemId === item._id)?.render.zIndex || 0
+                    x: itemDataRef.current.find(i => i.id === item._id)?.x || (canvasRef.current?.width * (0.2 + (itemDataRef.current.length % 5) * 0.15)),
+                    y: itemDataRef.current.find(i => i.id === item._id)?.y || (canvasRef.current?.height * 0.4),
+                    scaleFactor: itemDataRef.current.find(i => i.id === item._id)?.scaleFactor || 1,
+                    zIndex: itemDataRef.current.find(i => i.id === item._id)?.zIndex || 0
                 }
             }), {})
         };
@@ -320,6 +323,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         setShowMyShelter(false);
     };
 
+    // Обновляем основной useEffect
     useEffect(() => {
         const canvas = canvasRef.current;
         const parent = canvas.parentElement;
@@ -331,7 +335,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const engine = engineRef.current;
         engine.gravity.y = 0;
 
-        // Создаем границы
+        // Создаем границы (оставляем, чтобы ограничить область перемещения)
         const boundaryOptions = {
             isStatic: true,
             restitution: 0,
@@ -345,13 +349,14 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.Bodies.rectangle(-25, height / 2, 50, height, boundaryOptions),
             Matter.Bodies.rectangle(width + 25, height / 2, 50, height, boundaryOptions),
         ];
+        Matter.World.add(engine.world, boundaries);
 
-        // Загружаем сохраненные позиции и масштабы
+        // Загружаем сохраненные позиции и создаем данные для предметов
         const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};
         const floorTopY = height * 0.4;
 
-        // Создаем серые квадраты для каждого предмета в инвентаре локации
-        const itemBodies = locationItems.map((item, index) => {
+        // Формируем данные для предметов (без физических тел)
+        itemDataRef.current = locationItems.map((item, index) => {
             const itemKey = `item_${item._id}`;
             const savedItem = savedPositions[itemKey] || {
                 x: width * (0.2 + (index % 5) * 0.15),
@@ -377,122 +382,120 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         isStick || isGarbage ? 67 :
                             200;
 
-            const itemSquare = Matter.Bodies.rectangle(
-                savedItem.x,
-                savedItem.y,
-                size,
-                size,
-                {
-                    isStatic: false,
-                    restitution: 0,
-                    friction: 1,
-                    frictionAir: 0.1,
-                    render: {
-                        fillStyle: isStick || isGarbage || isBerry || isMushrooms || isBoard || isChair || isTable || isWardrobe || isSofa || isChest ? 'transparent' : 'grey',
-                        sprite: isStick ? { texture: stickImage } :
-                            isGarbage ? { texture: garbageImage } :
-                                isBerry ? { texture: berryImage } :
-                                    isMushrooms ? { texture: mushroomsImage } :
-                                        isBoard ? { texture: boardImage } :
-                                            isChair ? { texture: chairImage } :
-                                                isTable ? { texture: tableImage } :
-                                                    isWardrobe ? { texture: wardrobeImage } :
-                                                        isSofa ? { texture: sofaImage } :
-                                                            isChest ? { texture: chestImage } : undefined,
-                        zIndex: savedItem.zIndex || 0
-                    },
-                    collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 },
-                    itemId: item._id
-                }
-            );
-            const itemScale = savedItem.scaleFactor || 1;
-            itemSquare.scaleFactor = itemScale;
-            Matter.Body.scale(itemSquare, itemScale, itemScale);
-            originalSizesRef.current[itemKey] = { width: size, height: size };
-            return itemSquare;
+            return {
+                id: item._id,
+                x: savedItem.x,
+                y: savedItem.y,
+                scaleFactor: savedItem.scaleFactor,
+                zIndex: savedItem.zIndex,
+                width: size,
+                height: size,
+                texture: isStick ? stickImage :
+                    isGarbage ? garbageImage :
+                        isBerry ? berryImage :
+                            isMushrooms ? mushroomsImage :
+                                isBoard ? boardImage :
+                                    isChair ? chairImage :
+                                        isTable ? tableImage :
+                                            isWardrobe ? wardrobeImage :
+                                                isSofa ? sofaImage :
+                                                    isChest ? chestImage : undefined,
+                opacity: 1
+            };
         });
 
-        // Объединяем только предметы локации
-        bodiesRef.current = [...itemBodies];
-        Matter.World.add(engine.world, [...boundaries, ...itemBodies]);
-
-        // Настройка мыши
+        // Настройка мыши для перетаскивания
         const mouse = Matter.Mouse.create(canvas);
 
-        const bringToFront = (body) => {
-            const maxZIndex = Math.max(...bodiesRef.current.map(b => b.render.zIndex || 0));
-            body.render.zIndex = maxZIndex + 1;
-            body.render.opacity = 0.8;
+        const bringToFront = (item) => {
+            const maxZIndex = Math.max(...itemDataRef.current.map(i => i.zIndex || 0));
+            item.zIndex = maxZIndex + 1;
+            item.opacity = 0.8;
         };
 
         const handleMouseDown = (event) => {
+            if (isFixed) return;
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
-            const mouse = Matter.Vector.create(mouseX, mouseY);
-            const clickedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, mouse));
-            if (clickedBody) {
-                bringToFront(clickedBody);
+            const clickedItem = itemDataRef.current.find(item => {
+                const halfWidth = (item.width * item.scaleFactor) / 2;
+                const halfHeight = (item.height * item.scaleFactor) / 2;
+                return mouseX >= item.x - halfWidth &&
+                    mouseX <= item.x + halfWidth &&
+                    mouseY >= item.y - halfHeight &&
+                    mouseY <= item.y + halfHeight;
+            });
+            if (clickedItem) {
+                bringToFront(clickedItem);
+                draggedItemRef.current = clickedItem;
+            }
+        };
+
+        const handleMouseMove = (event) => {
+            if (draggedItemRef.current && !isFixed) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                draggedItemRef.current.x = mouseX;
+                draggedItemRef.current.y = mouseY;
+            }
+        };
+
+        const handleMouseUp = () => {
+            if (draggedItemRef.current) {
+                draggedItemRef.current.opacity = 1;
+                draggedItemRef.current = null;
             }
         };
 
         const handleTouchStart = (event) => {
+            if (isFixed) return;
             event.preventDefault();
             const touch = event.touches[0];
             const rect = canvas.getBoundingClientRect();
             const mouseX = touch.clientX - rect.left;
             const mouseY = touch.clientY - rect.top;
-            mouse.position.x = mouseX;
-            mouse.position.y = mouseY;
-            mouse.mousedown = true;
-
-            const touchPoint = Matter.Vector.create(mouseX, mouseY);
-            const touchedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, touchPoint));
-            if (touchedBody) {
-                bringToFront(touchedBody);
+            const touchedItem = itemDataRef.current.find(item => {
+                const halfWidth = (item.width * item.scaleFactor) / 2;
+                const halfHeight = (item.height * item.scaleFactor) / 2;
+                return mouseX >= item.x - halfWidth &&
+                    mouseX <= item.x + halfWidth &&
+                    mouseY >= item.y - halfHeight &&
+                    mouseY <= item.y + halfHeight;
+            });
+            if (touchedItem) {
+                bringToFront(touchedItem);
+                draggedItemRef.current = touchedItem;
             }
         };
 
         const handleTouchMove = (event) => {
             event.preventDefault();
-            const touch = event.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = touch.clientX - rect.left;
-            const mouseY = touch.clientY - rect.top;
-            mouse.position.x = mouseX;
-            mouse.position.y = mouseY;
+            if (draggedItemRef.current && !isFixed) {
+                const touch = event.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = touch.clientX - rect.left;
+                const mouseY = touch.clientY - rect.top;
+                draggedItemRef.current.x = mouseX;
+                draggedItemRef.current.y = mouseY;
+            }
         };
 
         const handleTouchEnd = (event) => {
             event.preventDefault();
-            mouse.mousedown = false;
+            if (draggedItemRef.current) {
+                draggedItemRef.current.opacity = 1;
+                draggedItemRef.current = null;
+            }
         };
 
         canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
         canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-
-        const mouseConstraint = Matter.MouseConstraint.create(engine, {
-            mouse: mouse,
-            constraint: {
-                stiffness: 0.2,
-                render: { visible: false },
-            },
-        });
-        mouseConstraintRef.current = mouseConstraint;
-        Matter.World.add(engine.world, mouseConstraint);
-
-        Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
-            const draggedBody = event.body;
-            Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
-            draggedBody.render.opacity = 1;
-        });
-
-        Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
-            const draggedBody = event.body;
-            bringToFront(draggedBody);
-        });
 
         // Пользовательский цикл рендеринга
         const context = canvas.getContext('2d');
@@ -502,7 +505,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             context.fillStyle = theme === 'dark' ? '#2A2A2A' : '#fff';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Рендерим статичные объекты (стена и пол) с текстурами
+            // Рендерим статичные объекты (стена и пол)
             [wallRef.current, floorRef.current].forEach(body => {
                 const vertices = body.vertices;
                 const minX = Math.min(...vertices.map(v => v.x));
@@ -546,25 +549,26 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 context.restore();
             });
 
-            // Проверяем позиции и масштабируем интерактивные объекты
-            bodiesRef.current.forEach(body => {
-                const bounds = body.bounds;
+            // Проверяем позиции и масштабируем предметы
+            itemDataRef.current.forEach(item => {
                 const margin = 5;
-                if (bounds.min.x < margin) {
-                    Matter.Body.setPosition(body, { x: margin + (bounds.max.x - bounds.min.x) / 2, y: body.position.y });
+                const halfWidth = (item.width * item.scaleFactor) / 2;
+                const halfHeight = (item.height * item.scaleFactor) / 2;
+                if (item.x - halfWidth < margin) {
+                    item.x = margin + halfWidth;
                 }
-                if (bounds.max.x > canvas.width - margin) {
-                    Matter.Body.setPosition(body, { x: canvas.width - margin - (bounds.max.x - bounds.min.x) / 2, y: body.position.y });
+                if (item.x + halfWidth > canvas.width - margin) {
+                    item.x = canvas.width - margin - halfWidth;
                 }
-                if (bounds.min.y < margin) {
-                    Matter.Body.setPosition(body, { x: body.position.x, y: margin + (bounds.max.y - bounds.min.y) / 2 });
+                if (item.y - halfHeight < margin) {
+                    item.y = margin + halfHeight;
                 }
-                if (bounds.max.y > canvas.height - margin) {
-                    Matter.Body.setPosition(body, { x: body.position.x, y: canvas.height - margin - (bounds.max.y - bounds.min.y) / 2 });
+                if (item.y + halfHeight > canvas.height - margin) {
+                    item.y = canvas.height - margin - halfHeight;
                 }
 
                 // Масштабирование на основе y-позиции
-                const y = body.position.y;
+                const y = item.y;
                 const minY = height * 0.4;
                 const maxY = height;
                 let targetScale = 1;
@@ -573,91 +577,51 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 } else if (y > maxY) {
                     targetScale = 2;
                 }
-
-                if (Math.abs(body.scaleFactor - targetScale) > 0.001) {
-                    const scaleFactor = targetScale / body.scaleFactor;
-                    Matter.Body.scale(body, scaleFactor, scaleFactor);
-                    body.scaleFactor = targetScale;
-                }
+                item.scaleFactor = targetScale;
             });
 
-            // Рендерим интерактивные объекты
-            const bodies = bodiesRef.current.sort((a, b) => (a.render.zIndex || 0) - (b.render.zIndex || 0));
-            bodies.forEach(body => {
-                context.beginPath();
-                if (body.circleRadius) {
-                    context.arc(body.position.x, body.position.y, body.circleRadius, 0, 2 * Math.PI);
-                } else {
-                    const vertices = body.vertices;
-                    context.moveTo(vertices[0].x, vertices[0].y);
-                    for (let j = 1; j < vertices.length; j++) {
-                        context.lineTo(vertices[j].x, vertices[j].y);
-                    }
-                    context.closePath();
-                }
-
-                context.globalAlpha = body.render.opacity !== undefined ? body.render.opacity : 1;
-
-                if (body.render.sprite &&
-                    [stickImage, garbageImage, berryImage, mushroomsImage, boardImage, chairImage, tableImage, wardrobeImage, sofaImage, chestImage].includes(body.render.sprite.texture) &&
-                    imagesLoadedRef.current[body.render.sprite.texture === stickImage ? 'stick' :
-                        body.render.sprite.texture === garbageImage ? 'garbage' :
-                            body.render.sprite.texture === berryImage ? 'berry' :
-                                body.render.sprite.texture === mushroomsImage ? 'mushrooms' :
-                                    body.render.sprite.texture === boardImage ? 'board' :
-                                        body.render.sprite.texture === chairImage ? 'chair' :
-                                            body.render.sprite.texture === tableImage ? 'table' :
-                                                body.render.sprite.texture === wardrobeImage ? 'wardrobe' :
-                                                    body.render.sprite.texture === sofaImage ? 'sofa' : 'chest']) {
-                    const vertices = body.vertices;
-                    const minX = Math.min(...vertices.map(v => v.x));
-                    const minY = Math.min(...vertices.map(v => v.y));
-                    const maxY = Math.max(...vertices.map(v => v.y));
-                    const objHeight = maxY - minY;
-
-                    context.save();
-                    context.beginPath();
-                    context.moveTo(vertices[0].x, vertices[0].y);
-                    for (let j = 1; j < vertices.length; j++) {
-                        context.lineTo(vertices[j].x, vertices[j].y);
-                    }
-                    context.closePath();
-                    context.clip();
-
-                    context.shadowColor = 'rgba(0, 0, 0, 0.3)';
-                    context.shadowBlur = 5;
-                    context.shadowOffsetX = 3;
-                    context.shadowOffsetY = 3;
-
-                    const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
-                        body.render.sprite.texture === garbageImage ? garbageImgRef.current :
-                            body.render.sprite.texture === berryImage ? berryImgRef.current :
-                                body.render.sprite.texture === mushroomsImage ? mushroomsImgRef.current :
-                                    body.render.sprite.texture === boardImage ? boardImgRef.current :
-                                        body.render.sprite.texture === chairImage ? chairImgRef.current :
-                                            body.render.sprite.texture === tableImage ? tableImgRef.current :
-                                                body.render.sprite.texture === wardrobeImage ? wardrobeImgRef.current :
-                                                    body.render.sprite.texture === sofaImage ? sofaImgRef.current :
+            // Рендерим предметы как изображения
+            const items = itemDataRef.current.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
+            items.forEach(item => {
+                context.globalAlpha = item.opacity;
+                if (item.texture &&
+                    [stickImage, garbageImage, berryImage, mushroomsImage, boardImage, chairImage, tableImage, wardrobeImage, sofaImage, chestImage].includes(item.texture) &&
+                    imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
+                        item.texture === garbageImage ? 'garbage' :
+                            item.texture === berryImage ? 'berry' :
+                                item.texture === mushroomsImage ? 'mushrooms' :
+                                    item.texture === boardImage ? 'board' :
+                                        item.texture === chairImage ? 'chair' :
+                                            item.texture === tableImage ? 'table' :
+                                                item.texture === wardrobeImage ? 'wardrobe' :
+                                                    item.texture === sofaImage ? 'sofa' : 'chest']) {
+                    const image = item.texture === stickImage ? stickImgRef.current :
+                        item.texture === garbageImage ? garbageImgRef.current :
+                            item.texture === berryImage ? berryImgRef.current :
+                                item.texture === mushroomsImage ? mushroomsImgRef.current :
+                                    item.texture === boardImage ? boardImgRef.current :
+                                        item.texture === chairImage ? chairImgRef.current :
+                                            item.texture === tableImage ? tableImgRef.current :
+                                                item.texture === wardrobeImage ? wardrobeImgRef.current :
+                                                    item.texture === sofaImage ? sofaImgRef.current :
                                                         chestImgRef.current;
                     if (image.width && image.height) {
                         const aspectRatio = image.width / image.height;
-                        const textureHeight = objHeight;
+                        const textureHeight = item.height * item.scaleFactor;
                         const textureWidth = textureHeight * aspectRatio;
-
-                        context.drawImage(image, minX, minY, textureWidth, textureHeight);
+                        context.save();
+                        context.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                        context.shadowBlur = 5;
+                        context.shadowOffsetX = 3;
+                        context.shadowOffsetY = 3;
+                        context.drawImage(image, item.x - textureWidth / 2, item.y - textureHeight / 2, textureWidth, textureHeight);
+                        context.shadowColor = 'rgba(0, 0, 0, 0)';
+                        context.shadowBlur = 0;
+                        context.shadowOffsetX = 0;
+                        context.shadowOffsetY = 0;
+                        context.restore();
                     }
-
-                    context.shadowColor = 'rgba(0, 0, 0, 0)';
-                    context.shadowBlur = 0;
-                    context.shadowOffsetX = 0;
-                    context.shadowOffsetY = 0;
-
-                    context.restore();
-                } else {
-                    context.fillStyle = body.render.fillStyle;
-                    context.fill();
                 }
-
                 context.globalAlpha = 1;
             });
 
@@ -666,7 +630,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
         renderLoop();
 
-        // Запускаем физический движок
+        // Запускаем физический движок (только для границ)
         runnerRef.current = Matter.Runner.create();
         Matter.Runner.run(runnerRef.current, engine);
 
@@ -683,13 +647,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
 
             const margin = 5;
-            bodiesRef.current.forEach(body => {
-                const bounds = body.bounds;
-                if (bounds.min.x < margin || bounds.max.x > newWidth - margin || bounds.min.y < margin || bounds.max.y > newHeight - margin) {
-                    const newX = Math.max(margin + (bounds.max.x - bounds.min.x) / 2, Math.min(body.position.x, newWidth - margin - (bounds.max.x - bounds.min.x) / 2));
-                    const newY = Math.max(margin + (bounds.max.y - bounds.min.y) / 2, Math.min(body.position.y, newHeight - margin - (bounds.max.y - bounds.min.y) / 2));
-                    Matter.Body.setPosition(body, { x: newX, y: newY });
-                }
+            itemDataRef.current.forEach(item => {
+                const halfWidth = (item.width * item.scaleFactor) / 2;
+                const halfHeight = (item.height * item.scaleFactor) / 2;
+                const newX = Math.max(margin + halfWidth, Math.min(item.x, newWidth - margin - halfWidth));
+                const newY = Math.max(margin + halfHeight, Math.min(item.y, newHeight - margin - halfHeight));
+                item.x = newX;
+                item.y = newY;
             });
         };
 
@@ -699,6 +663,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         return () => {
             cancelAnimationFrame(animationFrameId);
             canvas.removeEventListener('mousedown', handleMouseDown);
+            canvas.removeEventListener('mousemove', handleMouseMove);
+            canvas.removeEventListener('mouseup', handleMouseUp);
             canvas.removeEventListener('touchstart', handleTouchStart);
             canvas.removeEventListener('touchmove', handleTouchMove);
             canvas.removeEventListener('touchend', handleTouchEnd);

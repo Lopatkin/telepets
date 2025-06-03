@@ -71,7 +71,7 @@ const CanvasContainer = styled.div`
   position: relative;
 `;
 
-const initialDimensionsRef = useRef({ width: 0, height: 0, wallHeight: 0, floorHeight: 0 });
+
 
 function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const canvasRef = useRef(null);
@@ -108,6 +108,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const floorRef = useRef(null);
     const itemDataRef = useRef([]);
     const draggedItemRef = useRef(null);
+    const initialDimensionsRef = useRef({ width: 0, height: 0, wallHeight: 0, floorHeight: 0 });
 
     // Загрузка изображений
     useEffect(() => {
@@ -252,13 +253,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         floorRef.current = floor;
         Matter.World.add(engine.world, [wall, floor]);
 
-        // Добавляем отладочный лог для проверки размеров при создании
+        // Отладочный лог для проверки размеров при создании
         console.log('Создание стены и пола:', { width, height, wallHeight, floorHeight, floorY: height - floorHeight / 2 });
 
         return () => {
             Matter.World.remove(engine.world, [wall, floor]);
         };
-    }, []); // Пустой массив зависимостей, чтобы избежать пересоздания
+    }, []); // Пустой массив зависимостей
 
     // Получение предметов текущей локации
     useEffect(() => {

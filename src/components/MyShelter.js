@@ -101,8 +101,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
-    const mouseConstraintRef = useRef(null);
-    const originalSizesRef = useRef({});
     const [isFixed, setIsFixed] = useState(false);
     const wallpaperImgRef = useRef(new Image());
     const floorImgRef = useRef(new Image());
@@ -335,7 +333,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const engine = engineRef.current;
         engine.gravity.y = 0;
 
-        // Создаем границы (оставляем, чтобы ограничить область перемещения)
+        // Создаем границы
         const boundaryOptions = {
             isStatic: true,
             restitution: 0,
@@ -355,7 +353,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};
         const floorTopY = height * 0.4;
 
-        // Формируем данные для предметов (без физических тел)
+        // Формируем данные для предметов
         itemDataRef.current = locationItems.map((item, index) => {
             const itemKey = `item_${item._id}`;
             const savedItem = savedPositions[itemKey] || {
@@ -403,9 +401,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 opacity: 1
             };
         });
-
-        // Настройка мыши для перетаскивания
-        const mouse = Matter.Mouse.create(canvas);
 
         const bringToFront = (item) => {
             const maxZIndex = Math.max(...itemDataRef.current.map(i => i.zIndex || 0));
@@ -673,7 +668,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             Matter.World.clear(engine.world);
             Matter.Engine.clear(engine);
         };
-    }, [theme, userId, socket, currentRoom, locationItems]);
+    }, [theme, userId, socket, currentRoom, locationItems, isFixed]); // Добавляем isFixed в зависимости
 
     return (
         <ShelterContainer theme={theme}>

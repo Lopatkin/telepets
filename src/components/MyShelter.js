@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import styled from 'styled-components';
 import Matter from 'matter-js';
 import wallpaperImage from '../images/dwelling/wallpaper.jpg';
 import floorImage from '../images/dwelling/floor.jpg';

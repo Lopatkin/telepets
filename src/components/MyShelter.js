@@ -33,14 +33,14 @@ const SaveButton = styled.button`
 `;
 
 const Overlay = styled.div`
-position: absolute;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0, 0, 0, 0);
-z-index: 1500;
-pointer-events: ${props => props.isFixed ? 'auto' : 'none'};
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1500;
+  pointer-events: auto;
 `;
 
 const CloseIcon = styled.button`
@@ -419,123 +419,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
 
-            const clickedItem = itemDataRef.current.find(item => {
-                const halfWidth = (item.width * item.scaleFactor) / 2;
-                const halfHeight = (item.height * item.scaleFactor) / 2;
-
-                // Проверяем, находится ли клик в пределах bounding box предмета
-                if (
-                    mouseX >= item.x - halfWidth &&
-                    mouseX <= item.x + halfWidth &&
-                    mouseY >= item.y - halfHeight &&
-                    mouseY <= item.y + halfHeight
-                ) {
-                    const image = item.texture === stickImage ? stickImgRef.current :
-                        item.texture === garbageImage ? garbageImgRef.current :
-                            item.texture === berryImage ? berryImgRef.current :
-                                item.texture === mushroomsImage ? mushroomsImgRef.current :
-                                    item.texture === boardImage ? boardImgRef.current :
-                                        item.texture === chairImage ? chairImgRef.current :
-                                            item.texture === tableImage ? tableImgRef.current :
-                                                item.texture === wardrobeImage ? wardrobeImgRef.current :
-                                                    item.texture === sofaImage ? sofaImgRef.current :
-                                                        chestImgRef.current;
-
-                    if (image.width && image.height && imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
-                        item.texture === garbageImage ? 'garbage' :
-                            item.texture === berryImage ? 'berry' :
-                                item.texture === mushroomsImage ? 'mushrooms' :
-                                    item.texture === boardImage ? 'board' :
-                                        item.texture === chairImage ? 'chair' :
-                                            item.texture === tableImage ? 'table' :
-                                                item.texture === wardrobeImage ? 'wardrobe' :
-                                                    item.texture === sofaImage ? 'sofa' : 'chest']) {
-                        const aspectRatio = image.width / image.height;
-                        const textureHeight = item.height * item.scaleFactor;
-                        const textureWidth = textureHeight * aspectRatio;
-
-                        // Настраиваем временный canvas
-                        tempCanvas.width = textureWidth;
-                        tempCanvas.height = textureHeight;
-                        tempCtx.drawImage(image, 0, 0, textureWidth, textureHeight);
-
-                        // Вычисляем координаты пикселя относительно изображения
-                        const localX = (mouseX - (item.x - halfWidth)) * (image.width / textureWidth);
-                        const localY = (mouseY - (item.y - halfHeight)) * (image.height / textureHeight);
-
-                        // Проверяем, что координаты находятся в пределах изображения
-                        if (localX >= 0 && localX < image.width && localY >= 0 && localY < image.height) {
-                            try {
-                                const pixelData = tempCtx.getImageData(localX, localY, 1, 1).data;
-                                // Проверяем альфа-канал
-                                const isNotTransparent = pixelData[3] > 0;
-                                console.log(`Clicked item: ${item.id}, Pixel alpha: ${pixelData[3]}, Not transparent: ${isNotTransparent}`);
-                                return isNotTransparent;
-                            } catch (error) {
-                                console.error('Error reading pixel data:', error);
-                                return false;
-                            }
-                        }
-                        return false;
-                    }
-                    return false;
-                }
-                return false;
-            });
-
-            if (clickedItem) {
-                console.log('Selected item for dragging:', clickedItem.id);
-                bringToFront(clickedItem);
-                draggedItemRef.current = clickedItem;
-            } else {
-                console.log('No item selected at position:', { mouseX, mouseY });
-            }
-        };
-
-        const handleMouseMove = (event) => {
-            if (draggedItemRef.current && !isFixed) {
-                const rect = canvas.getBoundingClientRect();
-                const mouseX = event.clientX - rect.left;
-                const mouseY = event.clientY - rect.top;
-                draggedItemRef.current.x = mouseX;
-                draggedItemRef.current.y = mouseY;
-            }
-        };
-
-        const handleMouseUp = () => {
-            if (draggedItemRef.current) {
-                draggedItemRef.current.opacity = 1;
-                draggedItemRef.current = null;
-            }
-        };
-
-        // Аналогично обновляем handleTouchStart
-        // Заменяем функцию handleTouchStart
-        const handleTouchStart = (event) => {
-            if (isFixed) return;
-            event.preventDefault(); // Предотвращаем стандартное поведение браузера
-            const touch = event.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = touch.clientX - rect.left;
-            const mouseY = touch.clientY - rect.top;
-
-            // Проверяем, не обрабатывается ли уже другое касание
-            if (draggedItemRef.current) {
-                console.log('Another touch is already being processed, ignoring');
-                return;
-            }
-
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
-
-            // Ищем предмет в обратном порядке, чтобы выбрать верхний (по zIndex)
-            const touchedItem = [...itemDataRef.current]
-                .sort((a, b) => (b.zIndex || 0) - (a.zIndex || 0))
-                .find(item => {
+            // Находим все предметы под курсором и сортируем по zIndex
+            const itemsUnderCursor = itemDataRef.current
+                .map(item => {
                     const halfWidth = (item.width * item.scaleFactor) / 2;
                     const halfHeight = (item.height * item.scaleFactor) / 2;
 
-                    // Проверяем, находится ли касание в пределах bounding box предмета
                     if (
                         mouseX >= item.x - halfWidth &&
                         mouseX <= item.x + halfWidth &&
@@ -566,45 +455,145 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                             const textureHeight = item.height * item.scaleFactor;
                             const textureWidth = textureHeight * aspectRatio;
 
-                            // Настраиваем временный canvas
                             tempCanvas.width = textureWidth;
                             tempCanvas.height = textureHeight;
                             tempCtx.drawImage(image, 0, 0, textureWidth, textureHeight);
 
-                            // Корректируем вычисление локальных координат
-                            const localX = ((mouseX - (item.x - halfWidth)) / textureWidth) * image.width;
-                            const localY = ((mouseY - (item.y - halfHeight)) / textureHeight) * image.height;
+                            const localX = (mouseX - (item.x - halfWidth)) * (image.width / textureWidth);
+                            const localY = (mouseY - (item.y - halfHeight)) * (image.height / textureHeight);
 
-                            // Проверяем, что координаты находятся в пределах изображения
                             if (localX >= 0 && localX < image.width && localY >= 0 && localY < image.height) {
                                 try {
-                                    const pixelData = tempCtx.getImageData(Math.floor(localX), Math.floor(localY), 1, 1).data;
+                                    const pixelData = tempCtx.getImageData(localX, localY, 1, 1).data;
                                     const isNotTransparent = pixelData[3] > 0;
-                                    console.log(`Touched item: ${item.id}, Position: (${mouseX}, ${mouseY}), Local: (${localX}, ${localY}), Pixel alpha: ${pixelData[3]}, Not transparent: ${isNotTransparent}`);
-                                    return isNotTransparent;
+                                    console.log(`Mouse clicked item: ${item.id}, Pixel alpha: ${pixelData[3]}, zIndex: ${item.zIndex || 0}`);
+                                    return { item, isNotTransparent };
                                 } catch (error) {
-                                    console.error('Error reading pixel data:', error);
-                                    return false;
+                                    console.error('Error reading pixel data for item:', item.id, error);
+                                    return null;
                                 }
-                            } else {
-                                console.log(`Touch outside image bounds: Local (${localX}, ${localY}), Image size (${image.width}, ${image.height})`);
-                                return false;
                             }
                         }
-                        return false;
+                        return null;
                     }
-                    return false;
-                });
+                    return null;
+                })
+                .filter(item => item && item.isNotTransparent)
+                .sort((a, b) => (b.item.zIndex || 0) - (a.item.zIndex || 0)); // Сортировка по убыванию zIndex
+
+            const clickedItem = itemsUnderCursor.length > 0 ? itemsUnderCursor[0].item : null;
+
+            if (clickedItem) {
+                console.log('Selected item for dragging:', clickedItem.id, 'zIndex:', clickedItem.zIndex || 0);
+                bringToFront(clickedItem);
+                draggedItemRef.current = clickedItem;
+            } else {
+                console.log('No item selected at position:', { mouseX, mouseY });
+            }
+        };
+
+        const handleMouseMove = (event) => {
+            if (draggedItemRef.current && !isFixed) {
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                draggedItemRef.current.x = mouseX;
+                draggedItemRef.current.y = mouseY;
+            }
+        };
+
+        const handleMouseUp = () => {
+            if (draggedItemRef.current) {
+                draggedItemRef.current.opacity = 1;
+                draggedItemRef.current = null;
+            }
+        };
+
+        // Аналогично обновляем handleTouchStart
+        // Заменяем функцию handleTouchStart
+        const handleTouchStart = (event) => {
+            if (isFixed) return;
+            event.preventDefault();
+            const touch = event.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = touch.clientX - rect.left;
+            const mouseY = touch.clientY - rect.top;
+
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+
+            // Находим все предметы под курсором и сортируем по zIndex
+            const itemsUnderCursor = itemDataRef.current
+                .map(item => {
+                    const halfWidth = (item.width * item.scaleFactor) / 2;
+                    const halfHeight = (item.height * item.scaleFactor) / 2;
+
+                    if (
+                        mouseX >= item.x - halfWidth &&
+                        mouseX <= item.x + halfWidth &&
+                        mouseY >= item.y - halfHeight &&
+                        mouseY <= item.y + halfHeight
+                    ) {
+                        const image = item.texture === stickImage ? stickImgRef.current :
+                            item.texture === garbageImage ? garbageImgRef.current :
+                                item.texture === berryImage ? berryImgRef.current :
+                                    item.texture === mushroomsImage ? mushroomsImgRef.current :
+                                        item.texture === boardImage ? boardImgRef.current :
+                                            item.texture === chairImage ? chairImgRef.current :
+                                                item.texture === tableImage ? tableImgRef.current :
+                                                    item.texture === wardrobeImage ? wardrobeImgRef.current :
+                                                        item.texture === sofaImage ? sofaImgRef.current :
+                                                            chestImgRef.current;
+
+                        if (image.width && image.height && imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
+                            item.texture === garbageImage ? 'garbage' :
+                                item.texture === berryImage ? 'berry' :
+                                    item.texture === mushroomsImage ? 'mushrooms' :
+                                        item.texture === boardImage ? 'board' :
+                                            item.texture === chairImage ? 'chair' :
+                                                item.texture === tableImage ? 'table' :
+                                                    item.texture === wardrobeImage ? 'wardrobe' :
+                                                        item.texture === sofaImage ? 'sofa' : 'chest']) {
+                            const aspectRatio = image.width / image.height;
+                            const textureHeight = item.height * item.scaleFactor;
+                            const textureWidth = textureHeight * aspectRatio;
+
+                            tempCanvas.width = textureWidth;
+                            tempCanvas.height = textureHeight;
+                            tempCtx.drawImage(image, 0, 0, textureWidth, textureHeight);
+
+                            const localX = (mouseX - (item.x - halfWidth)) * (image.width / textureWidth);
+                            const localY = (mouseY - (item.y - halfHeight)) * (image.height / textureHeight);
+
+                            if (localX >= 0 && localX < image.width && localY >= 0 && localY < image.height) {
+                                try {
+                                    const pixelData = tempCtx.getImageData(localX, localY, 1, 1).data;
+                                    const isNotTransparent = pixelData[3] > 0;
+                                    console.log(`Touched item: ${item.id}, Pixel alpha: ${pixelData[3]}, zIndex: ${item.zIndex || 0}`);
+                                    return { item, isNotTransparent };
+                                } catch (error) {
+                                    console.error('Error reading pixel data for item:', item.id, error);
+                                    return null;
+                                }
+                            }
+                        }
+                        return null;
+                    }
+                    return null;
+                })
+                .filter(item => item && item.isNotTransparent)
+                .sort((a, b) => (b.item.zIndex || 0) - (a.item.zIndex || 0)); // Сортировка по убыванию zIndex
+
+            const touchedItem = itemsUnderCursor.length > 0 ? itemsUnderCursor[0].item : null;
 
             if (touchedItem) {
-                console.log('Selected item for touch dragging:', touchedItem.id);
+                console.log('Selected item for touch dragging:', touchedItem.id, 'zIndex:', touchedItem.zIndex || 0);
                 bringToFront(touchedItem);
                 draggedItemRef.current = touchedItem;
             } else {
                 console.log('No item selected for touch at position:', { mouseX, mouseY });
             }
         };
-
 
         const handleTouchMove = (event) => {
             event.preventDefault();
@@ -621,7 +610,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const handleTouchEnd = (event) => {
             event.preventDefault();
             if (draggedItemRef.current) {
-                console.log('Touch ended for item:', draggedItemRef.current.id);
                 draggedItemRef.current.opacity = 1;
                 draggedItemRef.current = null;
             }

@@ -408,19 +408,64 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             item.opacity = 0.8;
         };
 
+        // Внутри основного useEffect, заменяем функцию handleMouseDown
         const handleMouseDown = (event) => {
             if (isFixed) return;
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
+
+            // Создаем временный canvas для проверки прозрачности
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+
             const clickedItem = itemDataRef.current.find(item => {
                 const halfWidth = (item.width * item.scaleFactor) / 2;
                 const halfHeight = (item.height * item.scaleFactor) / 2;
-                return mouseX >= item.x - halfWidth &&
+
+                // Проверяем, находится ли клик в пределах bounding box предмета
+                if (
+                    mouseX >= item.x - halfWidth &&
                     mouseX <= item.x + halfWidth &&
                     mouseY >= item.y - halfHeight &&
-                    mouseY <= item.y + halfHeight;
+                    mouseY <= item.y + halfHeight
+                ) {
+                    // Проверяем прозрачность пикселя
+                    const image = item.texture === stickImage ? stickImgRef.current :
+                        item.texture === garbageImage ? garbageImgRef.current :
+                            item.texture === berryImage ? berryImgRef.current :
+                                item.texture === mushroomsImage ? mushroomsImgRef.current :
+                                    item.texture === boardImage ? boardImgRef.current :
+                                        item.texture === chairImage ? chairImgRef.current :
+                                            item.texture === tableImage ? tableImgRef.current :
+                                                item.texture === wardrobeImage ? wardrobeImgRef.current :
+                                                    item.texture === sofaImage ? sofaImgRef.current :
+                                                        chestImgRef.current;
+
+                    if (image.width && image.height) {
+                        const aspectRatio = image.width / image.height;
+                        const textureHeight = item.height * item.scaleFactor;
+                        const textureWidth = textureHeight * aspectRatio;
+
+                        // Настраиваем временный canvas
+                        tempCanvas.width = textureWidth;
+                        tempCanvas.height = textureHeight;
+                        tempCtx.drawImage(image, 0, 0, textureWidth, textureHeight);
+
+                        // Вычисляем координаты пикселя относительно изображения
+                        const localX = (mouseX - (item.x - halfWidth)) * (image.width / textureWidth);
+                        const localY = (mouseY - (item.y - halfHeight)) * (image.height / textureHeight);
+
+                        // Получаем данные пикселя
+                        const pixelData = tempCtx.getImageData(localX, localY, 1, 1).data;
+                        // Проверяем альфа-канал (последний компонент RGBA)
+                        return pixelData[3] > 0; // Возвращаем true, если пиксель не прозрачный
+                    }
+                    return false;
+                }
+                return false;
             });
+
             if (clickedItem) {
                 bringToFront(clickedItem);
                 draggedItemRef.current = clickedItem;
@@ -444,6 +489,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             }
         };
 
+        // Аналогично обновляем handleTouchStart
         const handleTouchStart = (event) => {
             if (isFixed) return;
             event.preventDefault();
@@ -451,14 +497,51 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const rect = canvas.getBoundingClientRect();
             const mouseX = touch.clientX - rect.left;
             const mouseY = touch.clientY - rect.top;
+
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+
             const touchedItem = itemDataRef.current.find(item => {
                 const halfWidth = (item.width * item.scaleFactor) / 2;
                 const halfHeight = (item.height * item.scaleFactor) / 2;
-                return mouseX >= item.x - halfWidth &&
+
+                if (
+                    mouseX >= item.x - halfWidth &&
                     mouseX <= item.x + halfWidth &&
                     mouseY >= item.y - halfHeight &&
-                    mouseY <= item.y + halfHeight;
+                    mouseY <= item.y + halfHeight
+                ) {
+                    const image = item.texture === stickImage ? stickImgRef.current :
+                        item.texture === garbageImage ? garbageImgRef.current :
+                            item.texture === berryImage ? berryImgRef.current :
+                                item.texture === mushroomsImage ? mushroomsImgRef.current :
+                                    item.texture === boardImage ? boardImgRef.current :
+                                        item.texture === chairImage ? chairImgRef.current :
+                                            item.texture === tableImage ? tableImgRef.current :
+                                                item.texture === wardrobeImage ? wardrobeImgRef.current :
+                                                    item.texture === sofaImage ? sofaImgRef.current :
+                                                        chestImgRef.current;
+
+                    if (image.width && image.height) {
+                        const aspectRatio = image.width / image.height;
+                        const textureHeight = item.height * item.scaleFactor;
+                        const textureWidth = textureHeight * aspectRatio;
+
+                        tempCanvas.width = textureWidth;
+                        tempCanvas.height = textureHeight;
+                        tempCtx.drawImage(image, 0, 0, textureWidth, textureHeight);
+
+                        const localX = (mouseX - (item.x - halfWidth)) * (image.width / textureWidth);
+                        const localY = (mouseY - (item.y - halfHeight)) * (image.height / textureHeight);
+
+                        const pixelData = tempCtx.getImageData(localX, localY, 1, 1).data;
+                        return pixelData[3] > 0;
+                    }
+                    return false;
+                }
+                return false;
             });
+
             if (touchedItem) {
                 bringToFront(touchedItem);
                 draggedItemRef.current = touchedItem;

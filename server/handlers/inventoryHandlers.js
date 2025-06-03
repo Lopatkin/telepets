@@ -21,8 +21,8 @@ function registerInventoryHandlers({
         }
     });
 
-    // Добавляем обработчик для обновления позиции предмета
-    socket.on('updateItemPosition', async ({ itemId, position, zIndex }, callback) => {
+    // Добавляем обработчик для массового обновления позиций предметов
+    socket.on('updateItemsPositions', async ({ items }, callback) => {
         try {
             // Проверка интервала между действиями
             const now = Date.now();
@@ -33,39 +33,38 @@ function registerInventoryHandlers({
             }
             userLastAction.set(socket.userData.userId, now);
 
-            const item = await Item.findById(itemId);
-            if (!item) {
-                if (callback) callback({ success: false, message: 'Предмет не найден' });
-                return;
-            }
-
-            // Проверяем, что предмет принадлежит текущей комнате
             const currentRoom = userCurrentRoom.get(socket.userData.userId);
-            if (item.owner !== currentRoom) {
-                if (callback) callback({ success: false, message: 'Нет прав на перемещение этого предмета' });
+
+            // Проверяем права владельца комнаты (опционально)
+            const roomOwnerId = currentRoom.startsWith('myhome_') ? currentRoom.replace('myhome_', '') : null;
+            if (roomOwnerId && socket.userData.userId !== roomOwnerId) {
+                if (callback) callback({ success: false, message: 'Только владелец комнаты может сохранять позиции предметов' });
                 return;
             }
 
-            // Обновляем позицию и zIndex
-            item.position = {
-                x: Math.max(0, Math.min(position.x, 1)), // Ограничиваем 0-1
-                y: Math.max(0, Math.min(position.y, 1)),
-                scaleFactor: position.scaleFactor || 1,
-            };
-            item.zIndex = zIndex || 0;
-            await item.save();
+            // Обновляем позиции предметов
+            for (const { itemId, position, zIndex } of items) {
+                const item = await Item.findById(itemId);
+                if (!item || item.owner !== currentRoom) {
+                    continue; // Пропускаем неверные предметы
+                }
+
+                item.position = {
+                    x: Math.max(0, Math.min(position.x, 1)),
+                    y: Math.max(0, Math.min(position.y, 1)),
+                    scaleFactor: position.scaleFactor || 1,
+                };
+                item.zIndex = zIndex || 0;
+                await item.save();
+            }
 
             // Уведомляем всех в комнате
-            io.to(currentRoom).emit('itemPositionUpdate', {
-                itemId,
-                position: item.position,
-                zIndex: item.zIndex,
-            });
+            io.to(currentRoom).emit('itemsPositionsUpdate', { items });
 
             if (callback) callback({ success: true });
         } catch (err) {
-            console.error('Error updating item position:', err.message, err.stack);
-            if (callback) callback({ success: false, message: 'Ошибка при обновлении позиции предмета' });
+            console.error('Error updating items positions:', err.message, err.stack);
+            if (callback) callback({ success: false, message: 'Ошибка при сохранении позиций предметов' });
         }
     });
 

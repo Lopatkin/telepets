@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Button } from '@mui/material';
 import styled from 'styled-components';
 import Matter from 'matter-js';
 import wallpaperImage from '../images/dwelling/wallpaper.jpg';
@@ -70,6 +71,8 @@ const CanvasContainer = styled.div`
   flex: 1;
   position: relative;
 `;
+
+const [tempPositions, setTempPositions] = useState({});
 
 function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const canvasRef = useRef(null);
@@ -267,28 +270,38 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     ...item,
                     _id: item._id.toString(),
                 })));
+                setTempPositions({}); // Очищаем временные позиции при получении новых данных
             }
         });
 
-        // Добавляем обработчик для обновления позиций от других клиентов
-        socket.on('itemPositionUpdate', ({ itemId, position, zIndex }) => {
+        // Добавляем обработчик для обновления позиций от сервера
+        socket.on('itemsPositionsUpdate', ({ items }) => {
             setLocationItems(prev =>
-                prev.map(item =>
-                    item._id === itemId
-                        ? { ...item, position, zIndex }
-                        : item
-                )
+                prev.map(item => {
+                    const updated = items.find(i => i.itemId === item._id);
+                    return updated
+                        ? { ...item, position: updated.position, zIndex: updated.zIndex }
+                        : item;
+                })
             );
-            itemDataRef.current = itemDataRef.current.map(item =>
-                item.id === itemId
-                    ? { ...item, x: position.x * canvasRef.current.width, y: position.y * canvasRef.current.height, scaleFactor: position.scaleFactor, zIndex }
-                    : item
-            );
+            itemDataRef.current = itemDataRef.current.map(item => {
+                const updated = items.find(i => i.itemId === item.id);
+                return updated
+                    ? {
+                        ...item,
+                        x: updated.position.x * canvasRef.current.width,
+                        y: updated.position.y * canvasRef.current.height,
+                        scaleFactor: updated.position.scaleFactor,
+                        zIndex: updated.zIndex,
+                    }
+                    : item;
+            });
+            setTempPositions({}); // Очищаем временные позиции после синхронизации
         });
 
         return () => {
             socket.off('items');
-            socket.off('itemPositionUpdate');
+            socket.off('itemsPositionsUpdate');
         };
     }, [socket, currentRoom]);
 
@@ -299,6 +312,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const height = canvas.height;
 
         itemDataRef.current = locationItems.map((item, index) => {
+            const temp = tempPositions[item._id] || {};
             const size = item.name === 'Стул' ? 100 :
                 item.name === 'Доска' ? 100 :
                     item.name === 'Лесные ягоды' || item.name === 'Лесные грибы' ? 50 :
@@ -307,10 +321,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
             return {
                 id: item._id,
-                x: (item.position?.x || (0.2 + (index % 5) * 0.15)) * width,
-                y: (item.position?.y || 0.4) * height,
-                scaleFactor: item.position?.scaleFactor || 1,
-                zIndex: item.zIndex || 0,
+                x: (temp.position?.x || item.position?.x || (0.2 + (index % 5) * 0.15)) * width,
+                y: (temp.position?.y || item.position?.y || 0.4) * height,
+                scaleFactor: temp.position?.scaleFactor || item.position?.scaleFactor || 1,
+                zIndex: temp.zIndex || item.zIndex || 0,
                 width: size,
                 height: size,
                 texture: item.name === 'Палка' ? stickImage :
@@ -326,7 +340,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 opacity: 1,
             };
         });
-    }, [locationItems]);
+    }, [locationItems, tempPositions]);
 
     const handleClose = () => {
         setShowMyShelter(false);
@@ -522,20 +536,18 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 const item = draggedItemRef.current;
                 item.opacity = 1;
 
-                // Отправляем обновление позиции на сервер
-                socket.emit('updateItemPosition', {
-                    itemId: item.id,
-                    position: {
-                        x: item.x / canvas.width, // Относительная позиция
-                        y: item.y / canvas.height,
-                        scaleFactor: item.scaleFactor,
+                // Сохраняем изменения локально
+                setTempPositions(prev => ({
+                    ...prev,
+                    [item.id]: {
+                        position: {
+                            x: item.x / canvas.width,
+                            y: item.y / canvas.height,
+                            scaleFactor: item.scaleFactor,
+                        },
+                        zIndex: item.zIndex,
                     },
-                    zIndex: item.zIndex,
-                }, (response) => {
-                    if (!response.success) {
-                        console.error('Failed to update item position:', response.message);
-                    }
-                });
+                }));
 
                 draggedItemRef.current = null;
             }
@@ -548,23 +560,40 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 const item = draggedItemRef.current;
                 item.opacity = 1;
 
-                // Отправляем обновление позиции на сервер
-                socket.emit('updateItemPosition', {
-                    itemId: item.id,
-                    position: {
-                        x: item.x / canvas.width,
-                        y: item.y / canvas.height,
-                        scaleFactor: item.scaleFactor,
+                // Сохраняем изменения локально
+                setTempPositions(prev => ({
+                    ...prev,
+                    [item.id]: {
+                        position: {
+                            x: item.x / canvas.width,
+                            y: item.y / canvas.height,
+                            scaleFactor: item.scaleFactor,
+                        },
+                        zIndex: item.zIndex,
                     },
-                    zIndex: item.zIndex,
-                }, (response) => {
-                    if (!response.success) {
-                        console.error('Failed to update item position:', response.message);
-                    }
-                });
+                }));
 
                 draggedItemRef.current = null;
             }
+        };
+
+        // Добавляем функцию для сохранения на сервер
+        const handleSave = () => {
+            if (Object.keys(tempPositions).length === 0) return;
+
+            const items = Object.entries(tempPositions).map(([itemId, { position, zIndex }]) => ({
+                itemId,
+                position,
+                zIndex,
+            }));
+
+            socket.emit('updateItemsPositions', { items }, (response) => {
+                if (response.success) {
+                    setTempPositions({}); // Очищаем после успешного сохранения
+                } else {
+                    console.error('Failed to save items positions:', response.message);
+                }
+            });
         };
 
         const handleTouchMove = (event) => {

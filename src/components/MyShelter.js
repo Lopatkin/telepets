@@ -138,10 +138,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const wallRef = useRef(null);
     const floorRef = useRef(null);
 
-    // Вспомогательный canvas для проверки прозрачности
-    const pixelCheckCanvasRef = useRef(document.createElement('canvas'));
-    const pixelCheckContextRef = useRef(pixelCheckCanvasRef.current.getContext('2d'));
-
     // Загрузка изображений
     useEffect(() => {
         wallpaperImgRef.current.src = wallpaperImage;
@@ -246,7 +242,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
     // Создание стены и пола один раз при монтировании
     useEffect(() => {
-        const engine = engineRef.current;
+        const engine = engineRef.current; // Copy engineRef.current to a local variable
         const canvas = canvasRef.current;
         const parent = canvas.parentElement;
         const width = parent.getBoundingClientRect().width;
@@ -328,55 +324,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
     const handleClose = () => {
         setShowMyShelter(false);
-    };
-
-    // Проверка прозрачности пикселя в изображении
-    const isPixelTransparent = (body, mouseX, mouseY) => {
-        if (!body.render.sprite) return true; // Если нет спрайта, считаем пиксель прозрачным
-
-        const image = body.render.sprite.texture === stickImage ? stickImgRef.current :
-            body.render.sprite.texture === garbageImage ? garbageImgRef.current :
-            body.render.sprite.texture === berryImage ? berryImgRef.current :
-            body.render.sprite.texture === mushroomsImage ? mushroomsImgRef.current :
-            body.render.sprite.texture === boardImage ? boardImgRef.current :
-            body.render.sprite.texture === chairImage ? chairImgRef.current :
-            body.render.sprite.texture === tableImage ? tableImgRef.current :
-            body.render.sprite.texture === wardrobeImage ? wardrobeImgRef.current :
-            body.render.sprite.texture === sofaImage ? sofaImgRef.current :
-            chestImgRef.current;
-
-        if (!image.width || !image.height) return true; // Если изображение не загружено, считаем прозрачным
-
-        const vertices = body.vertices;
-        const minX = Math.min(...vertices.map(v => v.x));
-        const minY = Math.min(...vertices.map(v => v.y));
-        const maxY = Math.max(...vertices.map(v => v.y));
-        const objHeight = maxY - minY;
-        const aspectRatio = image.width / image.height;
-        const textureWidth = objHeight * aspectRatio;
-
-        // Координаты клика относительно изображения
-        const imgX = (mouseX - minX) * (image.width / textureWidth);
-        const imgY = (mouseY - minY) * (image.height / objHeight);
-
-        // Проверка, находится ли точка в пределах изображения
-        if (imgX < 0 || imgX > image.width || imgY < 0 || imgY > image.height) {
-            return true;
-        }
-
-        // Рендерим изображение на временный canvas для проверки альфа-канала
-        const canvas = pixelCheckCanvasRef.current;
-        const ctx = pixelCheckContextRef.current;
-        canvas.width = image.width;
-        canvas.height = image.height;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, 0, 0, image.width, image.height);
-
-        // Получаем данные пикселя
-        const pixelData = ctx.getImageData(Math.floor(imgX), Math.floor(imgY), 1, 1).data;
-        const alpha = pixelData[3]; // Альфа-канал
-
-        return alpha < 128; // Пиксель считается прозрачным, если альфа меньше 128
     };
 
     useEffect(() => {
@@ -557,22 +504,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const rect = canvas.getBoundingClientRect();
             const mouseX = event.clientX - rect.left;
             const mouseY = event.clientY - rect.top;
-            mouse.position.x = mouseX;
-            mouse.position.y = mouseY;
-
-            // Проверяем тела в порядке убывания zIndex
-            const sortedBodies = [...bodiesRef.current].sort((a, b) => (b.render.zIndex || 0) - (a.render.zIndex || 0));
-            const clickedBody = sortedBodies.find(body => {
-                if (Matter.Bounds.contains(body.bounds, { x: mouseX, y: mouseY })) {
-                    // Проверяем прозрачность только для тел с текстурой
-                    if (body.render.sprite) {
-                        return !isPixelTransparent(body, mouseX, mouseY);
-                    }
-                    return true; // Для тел без спрайта (круг, квадрат, треугольник) проверяем только границы
-                }
-                return false;
-            });
-
+            const mouse = Matter.Vector.create(mouseX, mouseY);
+            const clickedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, mouse));
             if (clickedBody) {
                 bringToFront(clickedBody);
             }
@@ -588,18 +521,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             mouse.position.y = mouseY;
             mouse.mousedown = true;
 
-            // Проверяем тела в порядке убывания zIndex
-            const sortedBodies = [...bodiesRef.current].sort((a, b) => (b.render.zIndex || 0) - (a.render.zIndex || 0));
-            const touchedBody = sortedBodies.find(body => {
-                if (Matter.Bounds.contains(body.bounds, { x: mouseX, y: mouseY })) {
-                    if (body.render.sprite) {
-                        return !isPixelTransparent(body, mouseX, mouseY);
-                    }
-                    return true;
-                }
-                return false;
-            });
-
+            const touchPoint = Matter.Vector.create(mouseX, mouseY);
+            const touchedBody = bodiesRef.current.find(body => Matter.Bounds.contains(body.bounds, touchPoint));
             if (touchedBody) {
                 bringToFront(touchedBody);
             }
@@ -631,37 +554,19 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 stiffness: 0.2,
                 render: { visible: false },
             },
-            // Переопределяем логику выбора тела для перетаскивания
-            collisionFilter: {
-                category: 0x0001,
-                mask: 0x0003
-            },
-            bodyFilter: (body, mousePosition) => {
-                if (Matter.Bounds.contains(body.bounds, mousePosition)) {
-                    if (body.render.sprite) {
-                        return !isPixelTransparent(body, mousePosition.x, mousePosition.y);
-                    }
-                    return true;
-                }
-                return false;
-            }
         });
         mouseConstraintRef.current = mouseConstraint;
         Matter.World.add(engine.world, mouseConstraint);
 
         Matter.Events.on(mouseConstraint, 'enddrag', (event) => {
             const draggedBody = event.body;
-            if (draggedBody) {
-                Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
-                draggedBody.render.opacity = 1;
-            }
+            Matter.Body.setVelocity(draggedBody, { x: 0, y: 0 });
+            draggedBody.render.opacity = 1;
         });
 
         Matter.Events.on(mouseConstraint, 'startdrag', (event) => {
             const draggedBody = event.body;
-            if (draggedBody) {
-                bringToFront(draggedBody);
-            }
+            bringToFront(draggedBody);
         });
 
         // Пользовательский цикл рендеринга

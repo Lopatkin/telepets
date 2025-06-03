@@ -105,9 +105,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const mouseConstraintRef = useRef(null);
     const originalSizesRef = useRef({});
     const [isFixed, setIsFixed] = useState(false);
-    const circleRef = useRef(null);
-    const squareRef = useRef(null);
-    const triangleRef = useRef(null);
     const wallpaperImgRef = useRef(new Image());
     const floorImgRef = useRef(new Image());
     const stickImgRef = useRef(new Image());
@@ -306,9 +303,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
     const handleSave = () => {
         const positions = {
-            circle: { x: circleRef.current.position.x, y: circleRef.current.position.y, scaleFactor: circleRef.current.scaleFactor, zIndex: circleRef.current.render.zIndex || 0 },
-            square: { x: squareRef.current.position.x, y: squareRef.current.position.y, scaleFactor: squareRef.current.scaleFactor, zIndex: squareRef.current.render.zIndex || 0 },
-            triangle: { x: triangleRef.current.position.x, y: triangleRef.current.position.y, scaleFactor: triangleRef.current.scaleFactor, zIndex: triangleRef.current.render.zIndex || 0 },
             ...locationItems.reduce((acc, item, index) => ({
                 ...acc,
                 [`item_${item._id}`]: {
@@ -355,75 +349,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         // Загружаем сохраненные позиции и масштабы
         const savedPositions = JSON.parse(localStorage.getItem(`shelterObjectPositions_${userId}`)) || {};
         const floorTopY = height * 0.4;
-
-        // Создаем статичные объекты (круг, квадрат, треугольник)
-        const circle = Matter.Bodies.circle(
-            savedPositions.circle?.x || width * 0.25,
-            savedPositions.circle?.y || floorTopY,
-            30,
-            {
-                isStatic: false,
-                restitution: 0,
-                friction: 1,
-                frictionAir: 0.1,
-                render: {
-                    fillStyle: 'red',
-                    zIndex: 0
-                },
-                collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
-            }
-        );
-        const circleScale = savedPositions.circle?.scaleFactor || 1;
-        circle.scaleFactor = circleScale;
-        Matter.Body.scale(circle, circleScale, circleScale);
-        originalSizesRef.current.circle = { radius: 30 };
-        circleRef.current = circle;
-
-        const square = Matter.Bodies.rectangle(
-            savedPositions.square?.x || width * 0.5,
-            savedPositions.square?.y || floorTopY,
-            60,
-            60,
-            {
-                isStatic: false,
-                restitution: 0,
-                friction: 1,
-                frictionAir: 0.1,
-                render: {
-                    fillStyle: 'blue',
-                    zIndex: 0
-                },
-                collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
-            }
-        );
-        const squareScale = savedPositions.square?.scaleFactor || 1;
-        square.scaleFactor = squareScale;
-        Matter.Body.scale(square, squareScale, squareScale);
-        originalSizesRef.current.square = { width: 60, height: 60 };
-        squareRef.current = square;
-
-        const triangle = Matter.Bodies.polygon(
-            savedPositions.triangle?.x || width * 0.75,
-            savedPositions.triangle?.y || floorTopY,
-            3,
-            40,
-            {
-                isStatic: false,
-                restitution: 0,
-                friction: 1,
-                frictionAir: 0.1,
-                render: {
-                    fillStyle: 'yellow',
-                    zIndex: 0
-                },
-                collisionFilter: { group: -1, category: 0x0001, mask: 0x0003 }
-            }
-        );
-        const triangleScale = savedPositions.triangle?.scaleFactor || 1;
-        triangle.scaleFactor = triangleScale;
-        Matter.Body.scale(triangle, triangleScale, triangleScale);
-        originalSizesRef.current.triangle = { radius: 40 };
-        triangleRef.current = triangle;
 
         // Создаем серые квадраты для каждого предмета в инвентаре локации
         const itemBodies = locationItems.map((item, index) => {
@@ -487,8 +412,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             return itemSquare;
         });
 
-        // Объединяем интерактивные объекты
-        bodiesRef.current = [circle, square, triangle, ...itemBodies];
+        // Объединяем только предметы локации
+        bodiesRef.current = [...itemBodies];
         Matter.World.add(engine.world, [...boundaries, ...itemBodies]);
 
         // Настройка мыши

@@ -71,6 +71,8 @@ const CanvasContainer = styled.div`
   position: relative;
 `;
 
+const initialDimensionsRef = useRef({ width: 0, height: 0, wallHeight: 0, floorHeight: 0 });
+
 function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
@@ -221,6 +223,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const floorHeight = height * 0.6;
         const staticCollisionFilter = { category: 0x0002, mask: 0 };
 
+        // Сохраняем начальные размеры
+        initialDimensionsRef.current = { width, height, wallHeight, floorHeight };
+
         const wall = Matter.Bodies.rectangle(width / 2, wallHeight / 2, width, wallHeight, {
             isStatic: true,
             restitution: 0,
@@ -247,10 +252,13 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         floorRef.current = floor;
         Matter.World.add(engine.world, [wall, floor]);
 
+        // Добавляем отладочный лог для проверки размеров при создании
+        console.log('Создание стены и пола:', { width, height, wallHeight, floorHeight, floorY: height - floorHeight / 2 });
+
         return () => {
             Matter.World.remove(engine.world, [wall, floor]);
         };
-    }, []);
+    }, []); // Пустой массив зависимостей, чтобы избежать пересоздания
 
     // Получение предметов текущей локации
     useEffect(() => {
@@ -289,6 +297,15 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const canvas = canvasRef.current;
         const width = canvas.width;
         const height = canvas.height;
+
+        // Лог для проверки размеров перед сохранением
+        console.log('Сохранение, текущие размеры:', {
+            width,
+            height,
+            wallHeight: initialDimensionsRef.current.wallHeight,
+            floorHeight: initialDimensionsRef.current.floorHeight,
+            floorY: height - initialDimensionsRef.current.floorHeight / 2
+        });
 
         const positions = {
             ...locationItems.reduce((acc, item) => ({
@@ -719,20 +736,28 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         runnerRef.current = Matter.Runner.create();
         Matter.Runner.run(runnerRef.current, engine);
 
+        // В основном useEffect, обновляем handleResize
         const handleResize = () => {
+            const canvas = canvasRef.current;
             const newWidth = canvas.parentElement.getBoundingClientRect().width;
             const newHeight = canvas.parentElement.getBoundingClientRect().height;
             canvas.width = newWidth;
             canvas.height = newHeight;
 
-            Matter.Body.setPosition(boundaries[0], { x: newWidth / 2, y: -25 });
-            Matter.Body.setPosition(boundaries[1], { x: newWidth / 2, y: newHeight + 25 });
-            Matter.Body.setPosition(boundaries[2], { x: -25, y: newHeight / 2 });
-            Matter.Body.setPosition(boundaries[3], { x: newWidth + 25, y: newHeight / 2 });
+            // Используем пропорции из начальных размеров
+            const wallHeight = newHeight * 0.4;
+            const floorHeight = newHeight * 0.6;
 
+            // Обновляем позиции и размеры стены и пола
+            Matter.Body.setPosition(wallRef.current, { x: newWidth / 2, y: wallHeight / 2 });
+            Matter.Body.setPosition(floorRef.current, { x: newWidth / 2, y: newHeight - floorHeight / 2 });
+            Matter.Body.setVertices(wallRef.current, Matter.Bodies.rectangle(newWidth / 2, wallHeight / 2, newWidth, wallHeight).vertices);
+            Matter.Body.setVertices(floorRef.current, Matter.Bodies.rectangle(newWidth / 2, newHeight - floorHeight / 2, newWidth, floorHeight).vertices);
+
+            // Обновляем позиции предметов пропорционально новому размеру
             itemDataRef.current.forEach(item => {
-                item.x = (item.x / width) * newWidth;
-                item.y = (item.y / height) * newHeight;
+                item.x = (item.x / initialDimensionsRef.current.width) * newWidth;
+                item.y = (item.y / initialDimensionsRef.current.height) * newHeight;
                 const margin = 5;
                 const halfWidth = (item.width * item.scaleFactor) / 2;
                 const halfHeight = (item.height * item.scaleFactor) / 2;
@@ -740,12 +765,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 item.y = Math.max(margin + halfHeight, Math.min(item.y, newHeight - margin - halfHeight));
             });
 
-            const wallHeight = newHeight * 0.4;
-            const floorHeight = newHeight * 0.6;
-            Matter.Body.setPosition(wallRef.current, { x: newWidth / 2, y: wallHeight / 2 });
-            Matter.Body.setPosition(floorRef.current, { x: newWidth / 2, y: newHeight - floorHeight / 2 });
-            Matter.Body.setVertices(wallRef.current, Matter.Bodies.rectangle(newWidth / 2, wallHeight / 2, newWidth, wallHeight).vertices);
-            Matter.Body.setVertices(floorRef.current, Matter.Bodies.rectangle(newWidth / 2, newHeight - floorHeight / 2, newWidth, floorHeight).vertices);
+            // Добавляем отладочный лог для проверки размеров при ресайзе
+            console.log('Ресайз:', { newWidth, newHeight, wallHeight, floorHeight, floorY: newHeight - floorHeight / 2 });
+
+            // Сохраняем новые размеры как начальные
+            initialDimensionsRef.current = { width: newWidth, height: newHeight, wallHeight, floorHeight };
         };
 
         window.addEventListener('resize', handleResize);

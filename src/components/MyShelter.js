@@ -489,7 +489,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         };
 
         const handleTouchStart = (event) => {
-            if (isFixed) return;
             event.preventDefault();
             const touch = event.touches[0];
             const rect = canvas.getBoundingClientRect();

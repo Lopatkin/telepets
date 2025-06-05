@@ -28,7 +28,8 @@ import {
   UserItem,
   UserName,
   LeashIcon,
-  ShelterButton // Новый стиль для кнопки
+  ShelterButton,
+  ShelterIcon // Новый стиль для кнопки
 } from '../styles/ChatStyles';
 
 function Chat({ userId, room, theme, socket, joinedRoomsRef, user, setShowMyShelter }) {

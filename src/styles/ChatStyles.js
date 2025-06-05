@@ -35,25 +35,6 @@ export const ShelterIcon = styled.div`
   }
 `;
 
-export const ShelterButton = styled.button`
-  background: ${({ theme }) => (theme === 'dark' ? '#007AFF' : '#007AFF')};
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 8px 12px;
-  margin-right: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.3s;
-
-  &:hover {
-    background: ${({ theme }) => (theme === 'dark' ? '#005BB5' : '#005BB5')};
-  }
-`;
-
 export const ChatContainer = styled.div`
   height: 100%;
   display: flex;

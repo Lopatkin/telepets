@@ -28,7 +28,6 @@ import {
   UserItem,
   UserName,
   LeashIcon,
-  ShelterButton,
   ShelterIcon // Новый стиль для кнопки
 } from '../styles/ChatStyles';
 

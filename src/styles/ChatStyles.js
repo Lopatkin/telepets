@@ -169,7 +169,7 @@ export const InputContainer = styled.div`
   position: sticky;
   bottom: 0;
   background: ${props => props.theme === 'dark' ? '#333' : '#fff'};
-  padding: 10px;
+  padding: 5px;
   border-top: 1px solid ${props => props.theme === 'dark' ? '#555' : '#ddd'};
   display: flex;
   align-items: center;

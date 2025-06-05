@@ -704,7 +704,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           onClick={() => handleBuyItem(item)}
                           disabled={isActionCooldown}
                         >
-                          Купить за {item.cost} кредитов
+                          {item.cost} кредитов
                           {isActionCooldown && <S.ProgressBar />}
                         </S.PickupButton>
                       </S.ActionButtons>

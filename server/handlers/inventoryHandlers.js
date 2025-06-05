@@ -21,6 +21,135 @@ function registerInventoryHandlers({
         }
     });
 
+    // Добавляем обработчик для обновления позиций предметов
+    socket.on('updateItemPositions', async ({ owner, positions }, callback) => {
+        try {
+            // Проверяем интервал между действиями
+            const now = Date.now();
+            const lastActionTime = userLastAction.get(owner) || 0;
+            if (now - lastActionTime < MIN_ACTION_INTERVAL) {
+                if (callback) callback({ success: false, message: 'Слишком частые действия, подождите' });
+                return;
+            }
+            userLastAction.set(owner, now);
+
+            // Обновляем позиции предметов в базе данных
+            for (const [itemId, pos] of Object.entries(positions)) {
+                const itemKey = itemId.replace('item_', '');
+                await Item.updateOne(
+                    { _id: itemKey, owner },
+                    { $set: { x: pos.x, y: pos.y, scaleFactor: pos.scaleFactor, zIndex: pos.zIndex } }
+                );
+            }
+
+            // Получаем обновленные предметы
+            const updatedItems = await Item.find({ owner });
+            itemCache.set(owner, updatedItems);
+
+            // Отправляем обновленные предметы всем в комнате
+            const currentRoom = userCurrentRoom.get(socket.userData.userId);
+            if (currentRoom) {
+                io.to(currentRoom).emit('itemPositionsUpdate', { owner, items: updatedItems });
+                io.to(currentRoom).emit('items', { owner, items: updatedItems });
+            }
+
+            if (callback) callback({ success: true, message: 'Позиции предметов обновлены' });
+        } catch (err) {
+            console.error('Error updating item positions:', err.message, err.stack);
+            if (callback) callback({ success: false, message: 'Ошибка при обновлении позиций предметов' });
+        }
+    });
+
+    socket.on('craftItem', async ({ owner, craftedItem, materials }, callback) => {
+        try {
+            console.log('Received craftItem data:', { owner, craftedItem, materials });
+            if (!craftedItem || typeof craftedItem !== 'object' || !materials || typeof materials !== 'object') {
+                console.error('Invalid craftItem data:', { craftedItem, materials });
+                if (callback) callback({ success: false, message: 'Некорректные данные предмета или материалов' });
+                return;
+            }
+
+            // Проверка интервала между действиями
+            const now = Date.now();
+            const lastActionTime = userLastAction.get(owner) || 0;
+            if (now - lastActionTime < MIN_ACTION_INTERVAL) {
+                if (callback) callback({ success: false, message: 'Слишком частые действия, подождите' });
+                return;
+            }
+            userLastAction.set(owner, now);
+
+            // Проверка наличия материалов
+            const requiredSticks = materials.sticks || 0;
+            const requiredBoards = materials.boards || 0;
+            const stickItems = requiredSticks > 0 ? await Item.find({ owner, name: 'Палка' }).limit(requiredSticks) : [];
+            const boardItems = requiredBoards > 0 ? await Item.find({ owner, name: 'Доска' }).limit(requiredBoards) : [];
+
+            if (stickItems.length < requiredSticks || boardItems.length < requiredBoards) {
+                if (callback) callback({ success: false, message: 'Недостаточно материалов для крафта' });
+                return;
+            }
+
+            // Проверка лимитов инвентаря
+            const ownerLimit = await InventoryLimit.findOne({ owner });
+            if (!ownerLimit) {
+                if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
+                return;
+            }
+
+            const craftedItemWeight = parseFloat(craftedItem.weight) || 0;
+            const materialsWeight = stickItems.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0) +
+                boardItems.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
+            const weightDifference = craftedItemWeight - materialsWeight;
+
+            if (ownerLimit.currentWeight + weightDifference > ownerLimit.maxWeight) {
+                if (callback) callback({ success: false, message: 'Превышен лимит веса инвентаря' });
+                return;
+            }
+
+            // Удаление материалов
+            const stickIds = stickItems.map(item => item._id);
+            const boardIds = boardItems.map(item => item._id);
+            await Item.deleteMany({ _id: { $in: [...stickIds, ...boardIds] } });
+
+            // Создание нового предмета
+            const newItem = await Item.create({ owner, ...craftedItem });
+            console.log('Crafted item:', newItem);
+
+            // Обновление веса инвентаря
+            await InventoryLimit.updateOne(
+                { owner },
+                { $inc: { currentWeight: weightDifference } }
+            );
+
+            // Обновление кэша
+            const ownerItems = itemCache.get(owner) || [];
+            const updatedItems = ownerItems
+                .filter(i => !stickIds.includes(i._id) && !boardIds.includes(i._id))
+                .concat([newItem]);
+            itemCache.set(owner, updatedItems);
+
+            // Получение обновленных лимитов
+            const updatedLimit = await InventoryLimit.findOne({ owner });
+
+            // Уведомление клиентов
+            socket.emit('inventoryLimit', updatedLimit);
+            io.to(owner).emit('items', { owner, items: updatedItems });
+
+            const currentRoom = userCurrentRoom.get(socket.userData.userId);
+            if (currentRoom) {
+                io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemIds: [...stickIds, ...boardIds] });
+                io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: newItem });
+                io.to(currentRoom).emit('items', { owner, items: updatedItems });
+                io.to(currentRoom).emit('inventoryLimit', updatedLimit);
+            }
+
+            if (callback) callback({ success: true, item: newItem });
+        } catch (err) {
+            console.error('Error crafting item:', err.message, err.stack);
+            if (callback) callback({ success: false, message: 'Ошибка при создании предмета' });
+        }
+    });
+
     socket.on('getInventoryLimit', async ({ owner }) => {
         try {
             const limit = await InventoryLimit.findOne({ owner });
@@ -223,10 +352,12 @@ function registerInventoryHandlers({
         }
     });
 
-    socket.on('deleteItem', async ({ itemId }) => {
+    // Обновление обработчика deleteItem
+    socket.on('deleteItem', async ({ itemId }, callback) => {
         try {
             if (itemLocks.has(itemId)) {
                 socket.emit('error', { message: 'Этот предмет уже обрабатывается другим пользователем' });
+                if (callback) callback({ success: false, message: 'Этот предмет уже обрабатывается' });
                 return;
             }
 
@@ -236,16 +367,20 @@ function registerInventoryHandlers({
             if (!item) {
                 itemLocks.delete(itemId);
                 socket.emit('error', { message: 'Предмет не найден' });
+                if (callback) callback({ success: false, message: 'Предмет не найден' });
                 return;
             }
 
             const owner = item.owner;
             const itemWeight = parseFloat(item.weight) || 0;
 
+            // Удаляем предмет
             await Item.deleteOne({ _id: itemId });
+            console.log(`Deleted item ${itemId} (${item.name}) for owner ${owner}`);
 
             let trashItem = null;
             if (item.name !== 'Мусор') {
+                // Создаем предмет "Мусор" с тем же весом
                 trashItem = new Item({
                     name: 'Мусор',
                     description: 'Раньше это было чем-то полезным',
@@ -256,29 +391,46 @@ function registerInventoryHandlers({
                     owner: owner
                 });
                 await trashItem.save();
-                console.log('Created trash item:', trashItem);
+                console.log(`Created trash item for owner ${owner}:`, trashItem);
             }
 
-            await InventoryLimit.updateOne(
-                { owner },
-                { $inc: { currentWeight: trashItem ? 0 : -itemWeight } }
-            );
-
+            // Обновляем кэш
             const ownerItems = itemCache.get(owner) || [];
-            itemCache.set(owner, ownerItems.filter(i => i._id.toString() !== itemId).concat(trashItem ? [trashItem] : []));
+            const updatedCache = ownerItems.filter(i => i._id.toString() !== itemId);
+            if (trashItem) {
+                updatedCache.push(trashItem);
+            }
+            itemCache.set(owner, updatedCache);
 
+            // Обновляем вес инвентаря (вес не меняется, так как "Мусор" имеет тот же вес)
             const updatedLimit = await InventoryLimit.findOne({ owner });
-            socket.emit('inventoryLimit', updatedLimit);
+            console.log(`Updated inventory limit for ${owner}:`, updatedLimit);
 
+            // Получаем актуальные предметы из базы данных
             const updatedItems = await Item.find({ owner });
-            console.log('Sending updated items after delete:', updatedItems);
+            console.log(`Sending updated items for ${owner}:`, updatedItems);
+
+            // Отправляем события клиентам
             io.to(owner).emit('items', { owner, items: updatedItems });
+            const currentRoom = userCurrentRoom.get(socket.userData.userId);
+            if (currentRoom) {
+                io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemId });
+                if (trashItem) {
+                    io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: trashItem });
+                }
+                io.to(currentRoom).emit('items', { owner, items: updatedItems });
+                io.to(currentRoom).emit('inventoryLimit', updatedLimit);
+            }
+
+            socket.emit('inventoryLimit', updatedLimit);
+            if (callback) callback({ success: true, message: 'Предмет удалён, создан мусор' });
 
             itemLocks.delete(itemId);
         } catch (err) {
             console.error('Error deleting item:', err.message, err.stack);
             itemLocks.delete(itemId);
             socket.emit('error', { message: 'Ошибка при удалении предмета' });
+            if (callback) callback({ success: false, message: 'Ошибка при удалении предмета' });
         }
     });
 

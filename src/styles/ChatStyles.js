@@ -21,7 +21,8 @@ export const ShelterIcon = styled.div`
   width: 24px;
   height: 24px;
   cursor: pointer;
-  margin-right: 10px;
+  margin-left: 5px;
+  margin-right: 5px;
   color: ${({ theme }) => (theme === 'dark' ? '#ffffff' : '#000000')}; // Цвет иконки в зависимости от темы
   transition: color 0.3s ease, opacity 0.3s ease;
 

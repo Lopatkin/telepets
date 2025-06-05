@@ -16,6 +16,10 @@ import bedImage from '../images/items/sofa.jpg'; // Новое изображе�
 import wardrobeImage from '../images/items/wardrobe.jpg'; // Новое изображение для Шкафа
 import tableImage from '../images/items/table.jpg'; // Новое изображение для Стола
 import chestImage from '../images/items/chest.jpg'; // Новое изображение для Тумбы
+import firstAidKitImage from '../images/items/first-aid-kit.jpg'; // Изображение для Аптечки
+import bandageImage from '../images/items/bandage.jpg'; // Изображение для Бинта
+import cannedFoodImage from '../images/items/canned-food.jpg'; // Изображение для Консервов
+import chocolateImage from '../images/items/chocolate.jpg'; // Изображение для Шоколадки
 
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
@@ -179,6 +183,41 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       weight: 0.5,
       cost: 200,
       effect: 'Вы чувствуете власть над кем-то. Приятно.',
+    }, {
+      _id: 'shop_first_aid_kit',
+      name: 'Аптечка',
+      description: 'Поможет подлечиться при проблемах со здоровьем',
+      rarity: 'Обычный',
+      weight: 0.2,
+      cost: 300,
+      effect: 'Одноразовая. Вы почувствуете себя гораздо лучше.',
+    },
+    {
+      _id: 'shop_bandage',
+      name: 'Бинт',
+      description: 'Поможет подлечить небольшие раны',
+      rarity: 'Обычный',
+      weight: 0.1,
+      cost: 50,
+      effect: 'Одноразовый. Поможет при небольших повреждениях',
+    },
+    {
+      _id: 'shop_canned_food',
+      name: 'Консервы',
+      description: 'Вкусные, сытные!',
+      rarity: 'Обычный',
+      weight: 0.5,
+      cost: 150,
+      effect: 'Отлично утоляет голод!',
+    },
+    {
+      _id: 'shop_chocolate',
+      name: 'Шоколадка',
+      description: 'Настоящий шоколад! Перекус на бегу.',
+      rarity: 'Обычный',
+      weight: 0.5,
+      cost: 30,
+      effect: 'Слегка утоляет голод.',
     },
   ], []);
 
@@ -642,7 +681,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                                         item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
                                           item.name === 'Стол' ? tableImage : // Добавляем Стол
                                             item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
-                                              defaultItemImage
+                                              item.name === 'Аптечка' ? firstAidKitImage :
+                                                item.name === 'Бинт' ? bandageImage :
+                                                  item.name === 'Консервы' ? cannedFoodImage :
+                                                    item.name === 'Шоколадка' ? chocolateImage :
+                                                      defaultItemImage
                           }
                           alt={item.name}
                         />

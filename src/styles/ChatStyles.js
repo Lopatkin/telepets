@@ -17,6 +17,24 @@ import poligonImage from '../images/poligon.jpg';
 import workshopImage from '../images/workshop.jpg';
 import podmostImage from '../images/podmost.jpg';
 
+export const ShelterIcon = styled.div`
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  margin-right: 10px;
+  color: ${({ theme }) => (theme === 'dark' ? '#ffffff' : '#000000')}; // Цвет иконки в зависимости от темы
+  transition: color 0.3s ease, opacity 0.3s ease;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
 export const ShelterButton = styled.button`
   background: ${({ theme }) => (theme === 'dark' ? '#007AFF' : '#007AFF')};
   color: white;

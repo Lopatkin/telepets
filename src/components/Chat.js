@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { catSounds, dogSounds } from './constants/animalSounds';
 import PovodokIcon from '../images/povodok.png'; // Импорт иконки
 import { getActiveNPCs } from '../utils/npcData'; // Обновляем импорт
+import { MdVisibility } from 'react-icons/md'; // Добавляем импорт иконки глаза из react-icons
 
 // import BouncingBall from './BouncingBall';
 
@@ -296,7 +297,9 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user, setShowMyShel
           <UserCount>{users.length}</UserCount>
         </UsersButton>
         {room && room.startsWith('myhome_') && !user.homeless && (
-          <ShelterButton onClick={toggleShelter} theme={theme}>Моё убежище</ShelterButton>
+          <ShelterIcon onClick={toggleShelter} theme={theme}>
+            <MdVisibility />
+          </ShelterIcon>
         )}
         <Input
           value={message}

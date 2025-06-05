@@ -9,6 +9,13 @@ import collarImage from '../images/items/collar.png';
 import garbageImage from '../images/items/garbage.png';
 import leashImage from '../images/items/leash.png';
 import passportImage from '../images/items/passport.png';
+import berrysImage from '../images/items/berrys.jpg'; // Новое изображение для Лесных ягод
+import mushroomsImage from '../images/items/mushrooms.jpg'; // Новое изображение для Лесных грибов
+import chairImage from '../images/items/chair.jpg'; // Новое изображение для Стула
+import bedImage from '../images/items/sofa.jpg'; // Новое изображение для Кровати
+import wardrobeImage from '../images/items/wardrobe.jpg'; // Новое изображение для Шкафа
+import tableImage from '../images/items/table.jpg'; // Новое изображение для Стола
+import chestImage from '../images/items/chest.jpg'; // Новое изображение для Тумбы
 
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
@@ -535,7 +542,15 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           item.name === 'Ошейник' ? collarImage :
                             item.name === 'Мусор' ? garbageImage :
                               item.name === 'Поводок' ? leashImage :
-                                item.name === 'Паспорт животного' ? passportImage : defaultItemImage
+                                item.name === 'Паспорт животного' ? passportImage :
+                                  item.name === 'Лесные ягоды' ? berrysImage : // Добавляем Лесные ягоды
+                                    item.name === 'Лесные грибы' ? mushroomsImage : // Добавляем Лесные грибы
+                                      item.name === 'Стул' ? chairImage : // Добавляем Стул
+                                        item.name === 'Кровать' ? bedImage : // Добавляем Кровать
+                                          item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
+                                            item.name === 'Стол' ? tableImage : // Добавляем Стол
+                                              item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
+                                                defaultItemImage
                     }
                     alt={item.name}
                   />
@@ -619,7 +634,15 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                         <S.ItemImage
                           src={
                             item.name === 'Ошейник' ? collarImage :
-                              item.name === 'Поводок' ? leashImage : defaultItemImage
+                              item.name === 'Поводок' ? leashImage :
+                                item.name === 'Лесные ягоды' ? berrysImage : // Добавляем Лесные ягоды
+                                  item.name === 'Лесные грибы' ? mushroomsImage : // Добавляем Лесные грибы
+                                    item.name === 'Стул' ? chairImage : // Добавляем Стул
+                                      item.name === 'Кровать' ? bedImage : // Добавляем Кровать
+                                        item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
+                                          item.name === 'Стол' ? tableImage : // Добавляем Стол
+                                            item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
+                                              defaultItemImage
                           }
                           alt={item.name}
                         />
@@ -661,7 +684,15 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                                 item.name === 'Ошейник' ? collarImage :
                                   item.name === 'Мусор' ? garbageImage :
                                     item.name === 'Поводок' ? leashImage :
-                                      item.name === 'Паспорт животного' ? passportImage : defaultItemImage
+                                      item.name === 'Паспорт животного' ? passportImage :
+                                        item.name === 'Лесные ягоды' ? berrysImage : // Добавляем Лесные ягоды
+                                          item.name === 'Лесные грибы' ? mushroomsImage : // Добавляем Лесные грибы
+                                            item.name === 'Стул' ? chairImage : // Добавляем Стул
+                                              item.name === 'Кровать' ? bedImage : // Добавляем Кровать
+                                                item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
+                                                  item.name === 'Стол' ? tableImage : // Добавляем Стол
+                                                    item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
+                                                      defaultItemImage
                           }
                           alt={item.name}
                         />

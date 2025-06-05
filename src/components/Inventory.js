@@ -589,7 +589,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                                           item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
                                             item.name === 'Стол' ? tableImage : // Добавляем Стол
                                               item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
-                                                defaultItemImage
+                                                item.name === 'Аптечка' ? firstAidKitImage :
+                                                  item.name === 'Бинт' ? bandageImage :
+                                                    item.name === 'Консервы' ? cannedFoodImage :
+                                                      item.name === 'Шоколадка' ? chocolateImage :
+                                                        defaultItemImage
                     }
                     alt={item.name}
                   />
@@ -674,18 +678,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           src={
                             item.name === 'Ошейник' ? collarImage :
                               item.name === 'Поводок' ? leashImage :
-                                item.name === 'Лесные ягоды' ? berrysImage : // Добавляем Лесные ягоды
-                                  item.name === 'Лесные грибы' ? mushroomsImage : // Добавляем Лесные грибы
-                                    item.name === 'Стул' ? chairImage : // Добавляем Стул
-                                      item.name === 'Кровать' ? bedImage : // Добавляем Кровать
-                                        item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
-                                          item.name === 'Стол' ? tableImage : // Добавляем Стол
-                                            item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
-                                              item.name === 'Аптечка' ? firstAidKitImage :
-                                                item.name === 'Бинт' ? bandageImage :
-                                                  item.name === 'Консервы' ? cannedFoodImage :
-                                                    item.name === 'Шоколадка' ? chocolateImage :
-                                                      defaultItemImage
+                                item.name === 'Аптечка' ? firstAidKitImage :
+                                  item.name === 'Бинт' ? bandageImage :
+                                    item.name === 'Консервы' ? cannedFoodImage :
+                                      item.name === 'Шоколадка' ? chocolateImage :
+                                        defaultItemImage
                           }
                           alt={item.name}
                         />
@@ -735,7 +732,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                                                 item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
                                                   item.name === 'Стол' ? tableImage : // Добавляем Стол
                                                     item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
-                                                      defaultItemImage
+                                                      item.name === 'Аптечка' ? firstAidKitImage :
+                                                        item.name === 'Бинт' ? bandageImage :
+                                                          item.name === 'Консервы' ? cannedFoodImage :
+                                                            item.name === 'Шоколадка' ? chocolateImage :
+                                                              defaultItemImage
                           }
                           alt={item.name}
                         />

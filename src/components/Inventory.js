@@ -397,28 +397,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setActionQuantity({ itemName, weight, count: 1, action: 'delete', maxCount });
   };
 
-  const confirmDeleteItem = (confirmed) => {
-    if (confirmed && confirmDelete) {
-      const itemId = confirmDelete;
-      const itemToDelete = tempPersonalItems.find(item => item._id.toString() === itemId);
-      if (!itemToDelete) return;
-
-      setIsActionCooldown(true);
-      setAnimatingItem({ itemId, action: 'split' });
-
-      setTimeout(() => {
-        setTempPersonalItems(prev => prev.filter(item => item._id.toString() !== itemId));
-        socket.emit('deleteItem', { itemId });
-        setAnimatingItem(null);
-        setTimeout(() => {
-          setIsActionCooldown(false);
-        }, 1000);
-      }, 1000);
-    }
-
-    setConfirmDelete(null);
-  };
-
   // Обновляем confirmActionQuantity для синхронизации с сервером
   const confirmActionQuantity = () => {
     if (!actionQuantity.itemName || isActionCooldown) return;
@@ -432,7 +410,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         const itemsToMove = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
         socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey }, () => {
-          // После успешного перемещения запрашиваем актуальные данные
           socket.emit('getItems', { owner: userOwnerKey });
           socket.emit('getItems', { owner: locationOwnerKey });
         });
@@ -444,9 +421,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setTimeout(() => {
         const itemsToDelete = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
-        // Используем itemIds вместо name и count
-        socket.emit('removeItems', { owner: userOwnerKey, itemIds }, () => {
-          socket.emit('getItems', { owner: userOwnerKey });
+        // Удаляем каждый предмет по отдельности через deleteItem
+        itemIds.forEach(itemId => {
+          socket.emit('deleteItem', { itemId }, () => {
+            socket.emit('getItems', { owner: userOwnerKey });
+          });
         });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);

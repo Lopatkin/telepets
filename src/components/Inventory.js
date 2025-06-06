@@ -33,7 +33,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [animatingItem, setAnimatingItem] = useState(null);
   const [isActionCooldown, setIsActionCooldown] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [confirmDelete, setConfirmDelete] = useState(null);
   const [actionQuantity, setActionQuantity] = useState({ itemName: null, weight: null, count: 1, action: null });
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [newAnimalName, setNewAnimalName] = useState('');
@@ -461,7 +460,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const closeModal = (e) => {
     if (e.target === e.currentTarget) {
       setSelectedItem(null);
-      setConfirmDelete(null);
       setActionQuantity({ itemName: null, weight: null, count: 1, action: null });
     }
   };
@@ -761,10 +759,10 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         )}
       </S.ContentContainer>
       <S.Modal
-        isOpen={!!selectedItem || !!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
+        isOpen={!!selectedItem || (actionQuantity.itemName && actionQuantity.weight)}
         theme={theme}
         onClick={closeModal}
-        isConfirm={!!confirmDelete || (!!(actionQuantity.itemName && actionQuantity.weight))}
+        isConfirm={!!(actionQuantity.itemName && actionQuantity.weight)}
       >
         {selectedItem && selectedItem.name === 'Паспорт животного' && (
           <S.ModalContent theme={theme}>
@@ -839,19 +837,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
               </S.ConfirmButtons>
             </S.RenameModalContent>
           </S.Modal>
-        )}
-        {confirmDelete && (
-          <S.ConfirmModalContent theme={theme}>
-            <S.ConfirmText>Вы уверены, что хотите сломать этот предмет?</S.ConfirmText>
-            <S.ConfirmButtons>
-              <S.ConfirmButton type="yes" onClick={() => confirmDeleteItem(true)} disabled={isActionCooldown}>
-                Да
-              </S.ConfirmButton>
-              <S.ConfirmButton type="no" onClick={() => confirmDeleteItem(false)} disabled={isActionCooldown}>
-                Нет
-              </S.ConfirmButton>
-            </S.ConfirmButtons>
-          </S.ConfirmModalContent>
         )}
         {actionQuantity.itemName && actionQuantity.weight && (
           <S.QuantityModalContent theme={theme}>

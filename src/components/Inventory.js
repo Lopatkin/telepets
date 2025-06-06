@@ -9,17 +9,6 @@ import collarImage from '../images/items/collar.png';
 import garbageImage from '../images/items/garbage.png';
 import leashImage from '../images/items/leash.png';
 import passportImage from '../images/items/passport.png';
-import berrysImage from '../images/items/berrys.jpg'; // Новое изображение для Лесных ягод
-import mushroomsImage from '../images/items/mushrooms.jpg'; // Новое изображение для Лесных грибов
-import chairImage from '../images/items/chair.jpg'; // Новое изображение для Стула
-import bedImage from '../images/items/sofa.jpg'; // Новое изображение для Кровати
-import wardrobeImage from '../images/items/wardrobe.jpg'; // Новое изображение для Шкафа
-import tableImage from '../images/items/table.jpg'; // Новое изображение для Стола
-import chestImage from '../images/items/chest.jpg'; // Новое изображение для Тумбы
-import firstAidKitImage from '../images/items/first-aid-kit.jpg'; // Изображение для Аптечки
-import bandageImage from '../images/items/bandage.jpg'; // Изображение для Бинта
-import cannedFoodImage from '../images/items/canned-food.jpg'; // Изображение для Консервов
-import chocolateImage from '../images/items/chocolate.jpg'; // Изображение для Шоколадки
 
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
@@ -112,54 +101,22 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   }, [userOwnerKey, locationOwnerKey]);
 
   const handleItemAction = useCallback((data) => {
-    const { action, owner, itemId, item, itemIds } = data;
+    const { action, owner, itemId, item } = data;
 
-    if (owner === locationOwnerKey) {
-      if (action === 'remove') {
-        setAnimatingItem({ itemId, action: 'shrink' });
-        setTimeout(() => {
-          setLocationItems(prevItems => prevItems.filter(i => !itemIds?.includes(i._id.toString()) && i._id.toString() !== itemId));
-          setAnimatingItem(null);
-        }, 500);
-      } else if (action === 'add') {
-        setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
-        setTimeout(() => {
-          setLocationItems(prevItems => {
-            // Проверяем, нет ли уже этого предмета
-            const exists = prevItems.some(i => i._id.toString() === item._id.toString());
-            if (!exists) {
-              return [...prevItems, { ...item, _id: item._id.toString() }];
-            }
-            return prevItems;
-          });
-          setAnimatingItem(null);
-        }, 500);
-      }
-      // Запрашиваем актуальные данные с сервера
-      socket.emit('getItems', { owner: locationOwnerKey });
-    } else if (owner === userOwnerKey) {
-      if (action === 'remove') {
-        setAnimatingItem({ itemId, action: 'shrink' });
-        setTimeout(() => {
-          setTempPersonalItems(prevItems => prevItems.filter(i => !itemIds?.includes(i._id.toString()) && i._id.toString() !== itemId));
-          setAnimatingItem(null);
-        }, 500);
-      } else if (action === 'add') {
-        setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
-        setTimeout(() => {
-          setTempPersonalItems(prevItems => {
-            const exists = prevItems.some(i => i._id.toString() === item._id.toString());
-            if (!exists) {
-              return [...prevItems, { ...item, _id: item._id.toString() }];
-            }
-            return prevItems;
-          });
-          setAnimatingItem(null);
-        }, 500);
-      }
-      socket.emit('getItems', { owner: userOwnerKey });
+    if (action === 'remove' && owner === locationOwnerKey) {
+      setAnimatingItem({ itemId, action: 'shrink' });
+      setTimeout(() => {
+        setLocationItems(prevItems => prevItems.filter(i => i._id.toString() !== itemId));
+        setAnimatingItem(null);
+      }, 500);
+    } else if (action === 'add' && owner === locationOwnerKey) {
+      setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
+      setTimeout(() => {
+        setLocationItems(prevItems => [...prevItems, item]);
+        setAnimatingItem(null);
+      }, 500);
     }
-  }, [locationOwnerKey, userOwnerKey, socket]);
+  }, [locationOwnerKey]);
 
   const handleShelterAnimals = useCallback((animals) => {
     setShelterAnimals(animals);
@@ -183,41 +140,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       weight: 0.5,
       cost: 200,
       effect: 'Вы чувствуете власть над кем-то. Приятно.',
-    }, {
-      _id: 'shop_first_aid_kit',
-      name: 'Аптечка',
-      description: 'Поможет подлечиться при проблемах со здоровьем',
-      rarity: 'Обычный',
-      weight: 0.2,
-      cost: 300,
-      effect: 'Одноразовая. Вы почувствуете себя гораздо лучше.',
-    },
-    {
-      _id: 'shop_bandage',
-      name: 'Бинт',
-      description: 'Поможет подлечить небольшие раны',
-      rarity: 'Обычный',
-      weight: 0.1,
-      cost: 50,
-      effect: 'Одноразовый. Поможет при небольших повреждениях',
-    },
-    {
-      _id: 'shop_canned_food',
-      name: 'Консервы',
-      description: 'Вкусные, сытные!',
-      rarity: 'Обычный',
-      weight: 0.5,
-      cost: 150,
-      effect: 'Отлично утоляет голод!',
-    },
-    {
-      _id: 'shop_chocolate',
-      name: 'Шоколадка',
-      description: 'Настоящий шоколад! Перекус на бегу.',
-      rarity: 'Обычный',
-      weight: 0.5,
-      cost: 30,
-      effect: 'Слегка утоляет голод.',
     },
   ], []);
 
@@ -228,9 +150,9 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   useEffect(() => {
     if (!socket || !userId) return;
 
-    console.log('Emitting getItems for location:', locationOwnerKey);
+    // console.log('Emitting getItems for location:', locationOwnerKey);
     socket.emit('getItems', { owner: locationOwnerKey });
-    console.log('Emitting getItems for user:', userOwnerKey);
+    // console.log('Emitting getItems for user:', userOwnerKey);
     socket.emit('getItems', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: userOwnerKey });
     socket.emit('getInventoryLimit', { owner: locationOwnerKey });
@@ -245,24 +167,18 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setShopItems([]);
     }
 
-    const handleItems = (data) => {
+    socket.on('items', (data) => {
       const { owner, items } = data;
-      console.log('Received items event:', data);
+      // console.log('Received items event:', data);
       if (owner === locationOwnerKey) {
         setLocationItems(items.map(item => ({
           ...item,
           _id: item._id.toString(),
         })));
       } else if (owner === userOwnerKey) {
-        setTempPersonalItems(items.map(item => ({
-          ...item,
-          _id: item._id.toString(),
-        })));
         onItemsUpdate(data);
       }
-    };
-
-    socket.on('items', handleItems);
+    });
     socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
     socket.on('shelterAnimals', handleShelterAnimals);
@@ -272,7 +188,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     });
 
     return () => {
-      socket.off('items', handleItems);
+      socket.off('items');
       socket.off('inventoryLimit', handleLimitUpdate);
       socket.off('itemAction', handleItemAction);
       socket.off('shelterAnimals', handleShelterAnimals);
@@ -367,13 +283,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     console.log(`Sent takeAnimalHome request for animal ID: ${animalId}, Name: ${animalName}`);
   };
 
-  // Обновляем handleMoveItem для корректного перемещения
   const handleMoveItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
     setActionQuantity({ itemName, weight, count: 1, action: 'move', maxCount });
   };
 
-  // Обновляем handlePickupItem
   const handlePickupItem = (itemId) => {
     if (isActionCooldown) return;
 
@@ -381,11 +295,15 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setAnimatingItem({ itemId, action: 'pickup' });
 
     setTimeout(() => {
-      socket.emit('pickupItem', { itemId }, () => {
-        socket.emit('getItems', { owner: userOwnerKey });
-        socket.emit('getItems', { owner: locationOwnerKey });
-      });
+      const itemToAdd = locationItems.find(item => item._id.toString() === itemId);
+      if (itemToAdd) {
+        setTempPersonalItems(prev => [...prev, { ...itemToAdd }]);
+      }
+      const updatedLocationItems = locationItems.filter(item => item._id.toString() !== itemId);
+      setLocationItems(updatedLocationItems);
       setAnimatingItem(null);
+      socket.emit('pickupItem', { itemId });
+
       setTimeout(() => {
         setIsActionCooldown(false);
       }, 1000);
@@ -419,7 +337,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setConfirmDelete(null);
   };
 
-  // Обновляем confirmActionQuantity для синхронизации с сервером
   const confirmActionQuantity = () => {
     if (!actionQuantity.itemName || isActionCooldown) return;
 
@@ -429,25 +346,21 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     if (action === 'move') {
       setAnimatingItem({ itemId: `${itemName}_${weight}_move`, action: 'move' });
       setTimeout(() => {
-        const itemsToMove = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
+        const itemsToMove = tempPersonalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
-        socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey }, () => {
-          // После успешного перемещения запрашиваем актуальные данные
-          socket.emit('getItems', { owner: userOwnerKey });
-          socket.emit('getItems', { owner: locationOwnerKey });
-        });
+        setTempPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
+        setLocationItems(prev => [...prev, ...itemsToMove]);
+        socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
       }, 500);
     } else if (action === 'delete') {
       setAnimatingItem({ itemId: `${itemName}_${weight}_delete`, action: 'split' });
       setTimeout(() => {
-        const itemsToDelete = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
+        const itemsToDelete = tempPersonalItems.filter(item => item.name === itemName && item.weight === weight).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
-        // Используем itemIds вместо name и count
-        socket.emit('removeItems', { owner: userOwnerKey, itemIds }, () => {
-          socket.emit('getItems', { owner: userOwnerKey });
-        });
+        setTempPersonalItems(prev => prev.filter(item => !itemIds.includes(item._id)));
+        itemIds.forEach(itemId => socket.emit('deleteItem', { itemId }));
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
       }, 1000);
@@ -581,19 +494,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           item.name === 'Ошейник' ? collarImage :
                             item.name === 'Мусор' ? garbageImage :
                               item.name === 'Поводок' ? leashImage :
-                                item.name === 'Паспорт животного' ? passportImage :
-                                  item.name === 'Лесные ягоды' ? berrysImage : // Добавляем Лесные ягоды
-                                    item.name === 'Лесные грибы' ? mushroomsImage : // Добавляем Лесные грибы
-                                      item.name === 'Стул' ? chairImage : // Добавляем Стул
-                                        item.name === 'Кровать' ? bedImage : // Добавляем Кровать
-                                          item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
-                                            item.name === 'Стол' ? tableImage : // Добавляем Стол
-                                              item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
-                                                item.name === 'Аптечка' ? firstAidKitImage :
-                                                  item.name === 'Бинт' ? bandageImage :
-                                                    item.name === 'Консервы' ? cannedFoodImage :
-                                                      item.name === 'Шоколадка' ? chocolateImage :
-                                                        defaultItemImage
+                                item.name === 'Паспорт животного' ? passportImage : defaultItemImage
                     }
                     alt={item.name}
                   />
@@ -677,12 +578,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                         <S.ItemImage
                           src={
                             item.name === 'Ошейник' ? collarImage :
-                              item.name === 'Поводок' ? leashImage :
-                                item.name === 'Аптечка' ? firstAidKitImage :
-                                  item.name === 'Бинт' ? bandageImage :
-                                    item.name === 'Консервы' ? cannedFoodImage :
-                                      item.name === 'Шоколадка' ? chocolateImage :
-                                        defaultItemImage
+                              item.name === 'Поводок' ? leashImage : defaultItemImage
                           }
                           alt={item.name}
                         />
@@ -701,7 +597,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           onClick={() => handleBuyItem(item)}
                           disabled={isActionCooldown}
                         >
-                          {item.cost} кредитов
+                          Купить за {item.cost} кредитов
                           {isActionCooldown && <S.ProgressBar />}
                         </S.PickupButton>
                       </S.ActionButtons>
@@ -724,19 +620,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                                 item.name === 'Ошейник' ? collarImage :
                                   item.name === 'Мусор' ? garbageImage :
                                     item.name === 'Поводок' ? leashImage :
-                                      item.name === 'Паспорт животного' ? passportImage :
-                                        item.name === 'Лесные ягоды' ? berrysImage : // Добавляем Лесные ягоды
-                                          item.name === 'Лесные грибы' ? mushroomsImage : // Добавляем Лесные грибы
-                                            item.name === 'Стул' ? chairImage : // Добавляем Стул
-                                              item.name === 'Кровать' ? bedImage : // Добавляем Кровать
-                                                item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
-                                                  item.name === 'Стол' ? tableImage : // Добавляем Стол
-                                                    item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
-                                                      item.name === 'Аптечка' ? firstAidKitImage :
-                                                        item.name === 'Бинт' ? bandageImage :
-                                                          item.name === 'Консервы' ? cannedFoodImage :
-                                                            item.name === 'Шоколадка' ? chocolateImage :
-                                                              defaultItemImage
+                                      item.name === 'Паспорт животного' ? passportImage : defaultItemImage
                           }
                           alt={item.name}
                         />

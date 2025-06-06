@@ -396,7 +396,21 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setActionQuantity({ itemName, weight, count: 1, action: 'delete', maxCount });
   };
 
-  // Обновляем confirmActionQuantity для синхронизации с сервером
+  // Добавляем новые обработчики для кнопок "Съесть" и "Использовать"
+  const handleEatItem = (itemName, weight, maxCount) => {
+    if (isActionCooldown) return;
+    console.log(`Съесть предмет: ${itemName}, вес: ${weight}, количество: ${maxCount}`);
+    setActionQuantity({ itemName, weight, count: 1, action: 'eat', maxCount });
+  };
+
+  // Обработчик для использования медицинских предметов
+  const handleUseItem = (itemName, weight, maxCount) => {
+    if (isActionCooldown) return;
+    console.log(`Использовать предмет: ${itemName}, вес: ${weight}, количество: ${maxCount}`);
+    setActionQuantity({ itemName, weight, count: 1, action: 'use', maxCount });
+  };
+
+  // Обновляем confirmActionQuantity для обработки новых действий
   const confirmActionQuantity = () => {
     if (!actionQuantity.itemName || isActionCooldown) return;
 
@@ -425,7 +439,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         setTempPersonalItems(prev => {
           const newItems = prev.filter(item => !itemIds.includes(item._id));
           const trashItems = itemsToDelete.map(item => ({
-            _id: `temp_${Date.now()}_${Math.random()}`, // Временный ID для Мусора
+            _id: `temp_${Date.now()}_${Math.random()}`,
             name: 'Мусор',
             description: 'Раньше это было чем-то полезным',
             rarity: 'Бесполезный',
@@ -446,7 +460,21 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
-      }, 500); // Уменьшаем задержку для более быстрого обновления
+      }, 500);
+    } else if (action === 'eat') {
+      // Пока только логируем действие, функционал будет добавлен позже
+      console.log(`Подтверждено действие: Съесть ${itemName} x${count}`);
+      setTimeout(() => {
+        setIsActionCooldown(false);
+        setAnimatingItem(null);
+      }, 500);
+    } else if (action === 'use') {
+      // Пока только логируем действие, функционал будет добавлен позже
+      console.log(`Подтверждено действие: Использовать ${itemName} x${count}`);
+      setTimeout(() => {
+        setIsActionCooldown(false);
+        setAnimatingItem(null);
+      }, 500);
     }
 
     setActionQuantity({ itemName: null, weight: null, count: 1, action: null });
@@ -652,6 +680,24 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           Сломать
                           {isActionCooldown && <S.ProgressBar />}
                         </S.DeleteButton>
+                      )}
+                      {(item.name === 'Лесные ягоды' || item.name === 'Лесные грибы' || item.name === 'Шоколадка' || item.name === 'Консервы') && (
+                        <S.ActionButton // Используем новый стиль для кнопки "Съесть"
+                          onClick={() => handleEatItem(item.name, item.weight, count)}
+                          disabled={isActionCooldown}
+                        >
+                          Съесть
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.ActionButton>
+                      )}
+                      {(item.name === 'Бинт' || item.name === 'Аптечка') && (
+                        <S.ActionButton // Используем новый стиль для кнопки "Использовать"
+                          onClick={() => handleUseItem(item.name, item.weight, count)}
+                          disabled={isActionCooldown}
+                        >
+                          Использовать
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.ActionButton>
                       )}
                     </>
                   )}
@@ -859,7 +905,10 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         {actionQuantity.itemName && actionQuantity.weight && (
           <S.QuantityModalContent theme={theme}>
             <S.ConfirmText>
-              {actionQuantity.action === 'move' ? 'Выложить' : 'Сломать'} {actionQuantity.itemName}
+              {actionQuantity.action === 'move' ? 'Выложить' :
+                actionQuantity.action === 'delete' ? 'Сломать' :
+                  actionQuantity.action === 'eat' ? 'Съесть' :
+                    'Использовать'} {actionQuantity.itemName}
             </S.ConfirmText>
             <S.QuantityText theme={theme}>
               Количество: {actionQuantity.count}

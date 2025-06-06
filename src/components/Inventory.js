@@ -672,6 +672,24 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           {isActionCooldown && <S.ProgressBar />}
                         </S.MoveButton>
                       )}
+                      {(item.name === 'Лесные ягоды' || item.name === 'Лесные грибы' || item.name === 'Шоколадка' || item.name === 'Консервы') && (
+                        <S.GreenActionButton // Используем новый компонент GreenActionButton для зелёного цвета
+                          onClick={() => handleEatItem(item.name, item.weight, count)}
+                          disabled={isActionCooldown}
+                        >
+                          Съесть
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.GreenActionButton>
+                      )}
+                      {(item.name === 'Бинт' || item.name === 'Аптечка') && (
+                        <S.GreenActionButton // Используем новый компонент GreenActionButton для зелёного цвета
+                          onClick={() => handleUseItem(item.name, item.weight, count)}
+                          disabled={isActionCooldown}
+                        >
+                          Использовать
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.GreenActionButton>
+                      )}
                       {item.name !== 'Мусор' && (
                         <S.DeleteButton
                           onClick={() => handleDeleteItem(item.name, item.weight, count)}
@@ -680,24 +698,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           Сломать
                           {isActionCooldown && <S.ProgressBar />}
                         </S.DeleteButton>
-                      )}
-                      {(item.name === 'Лесные ягоды' || item.name === 'Лесные грибы' || item.name === 'Шоколадка' || item.name === 'Консервы') && (
-                        <S.ActionButton // Используем новый стиль для кнопки "Съесть"
-                          onClick={() => handleEatItem(item.name, item.weight, count)}
-                          disabled={isActionCooldown}
-                        >
-                          Съесть
-                          {isActionCooldown && <S.ProgressBar />}
-                        </S.ActionButton>
-                      )}
-                      {(item.name === 'Бинт' || item.name === 'Аптечка') && (
-                        <S.ActionButton // Используем новый стиль для кнопки "Использовать"
-                          onClick={() => handleUseItem(item.name, item.weight, count)}
-                          disabled={isActionCooldown}
-                        >
-                          Использовать
-                          {isActionCooldown && <S.ProgressBar />}
-                        </S.ActionButton>
                       )}
                     </>
                   )}

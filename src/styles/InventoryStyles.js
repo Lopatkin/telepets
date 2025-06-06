@@ -242,6 +242,14 @@ export const ActionButtons = styled.div`
   margin-top: 5px;
 `;
 
+export const GreenActionButton = styled(ActionButton)`
+  background: #32CD32; // Зелёный фон, аналогичный PickupButton
+  color: white;
+  &:hover {
+    background: #28A828; // Чуть темнее при наведении
+  }
+`;
+
 export const ActionButton = styled.button`
   position: relative;
   padding: 5px 10px;

@@ -420,15 +420,33 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setTimeout(() => {
         const itemsToDelete = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
-        // Удаляем каждый предмет по отдельности через deleteItem
+
+        // Локально обновляем tempPersonalItems, удаляя предметы и добавляя Мусор
+        setTempPersonalItems(prev => {
+          const newItems = prev.filter(item => !itemIds.includes(item._id));
+          const trashItems = itemsToDelete.map(item => ({
+            _id: `temp_${Date.now()}_${Math.random()}`, // Временный ID для Мусора
+            name: 'Мусор',
+            description: 'Раньше это было чем-то полезным',
+            rarity: 'Бесполезный',
+            weight: item.weight,
+            cost: 1,
+            effect: 'Чувство обременения чем-то бесполезным',
+            owner: userOwnerKey
+          }));
+          return [...newItems, ...trashItems];
+        });
+
+        // Отправляем запросы на удаление
         itemIds.forEach(itemId => {
           socket.emit('deleteItem', { itemId }, () => {
             socket.emit('getItems', { owner: userOwnerKey });
           });
         });
+
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
-      }, 1000);
+      }, 500); // Уменьшаем задержку для более быстрого обновления
     }
 
     setActionQuantity({ itemName: null, weight: null, count: 1, action: null });

@@ -21,45 +21,6 @@ function registerInventoryHandlers({
         }
     });
 
-    // Добавляем обработчик для обновления позиций предметов
-    socket.on('updateItemPositions', async ({ owner, positions }, callback) => {
-        try {
-            // Проверяем интервал между действиями
-            const now = Date.now();
-            const lastActionTime = userLastAction.get(owner) || 0;
-            if (now - lastActionTime < MIN_ACTION_INTERVAL) {
-                if (callback) callback({ success: false, message: 'Слишком частые действия, подождите' });
-                return;
-            }
-            userLastAction.set(owner, now);
-
-            // Обновляем позиции предметов в базе данных
-            for (const [itemId, pos] of Object.entries(positions)) {
-                const itemKey = itemId.replace('item_', '');
-                await Item.updateOne(
-                    { _id: itemKey, owner },
-                    { $set: { x: pos.x, y: pos.y, scaleFactor: pos.scaleFactor, zIndex: pos.zIndex } }
-                );
-            }
-
-            // Получаем обновленные предметы
-            const updatedItems = await Item.find({ owner });
-            itemCache.set(owner, updatedItems);
-
-            // Отправляем обновленные предметы всем в комнате
-            const currentRoom = userCurrentRoom.get(socket.userData.userId);
-            if (currentRoom) {
-                io.to(currentRoom).emit('itemPositionsUpdate', { owner, items: updatedItems });
-                io.to(currentRoom).emit('items', { owner, items: updatedItems });
-            }
-
-            if (callback) callback({ success: true, message: 'Позиции предметов обновлены' });
-        } catch (err) {
-            console.error('Error updating item positions:', err.message, err.stack);
-            if (callback) callback({ success: false, message: 'Ошибка при обновлении позиций предметов' });
-        }
-    });
-
     socket.on('craftItem', async ({ owner, craftedItem, materials }, callback) => {
         try {
             console.log('Received craftItem data:', { owner, craftedItem, materials });

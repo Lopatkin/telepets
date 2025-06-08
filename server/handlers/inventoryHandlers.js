@@ -21,7 +21,7 @@ function registerInventoryHandlers({
         }
     });
 
-    /* Добавляем новый обработчик для использования предмета */
+    /* Обновляем обработчик useItem для удаления предмета без создания Мусора */
     socket.on('useItem', async ({ itemId }, callback) => {
         try {
             if (itemLocks.has(itemId)) {
@@ -101,23 +101,9 @@ function registerInventoryHandlers({
             // Удаляем использованный предмет
             await Item.deleteOne({ _id: itemId });
 
-            // Создаём мусор
-            const trashItem = new Item({
-                name: 'Мусор',
-                description: 'Раньше это было чем-то полезным',
-                rarity: 'Бесполезный',
-                weight: item.weight,
-                cost: 1,
-                effect: 'Чувство обременения чем-то бесполезным',
-                owner
-            });
-            await trashItem.save();
-
             // Обновляем кэш
-            const ownerItems = itemCache.get(owner) || [];
-            const updatedItems = ownerItems
-                .filter(i => i._id.toString() !== itemId)
-                .concat([trashItem]);
+            const ownerItems = insuranceCache.get(owner) || [];
+            const updatedItems = ownerItems.filter(i => i._id.toString() !== itemId);
             itemCache.set(owner, updatedItems);
 
             // Получаем обновленного пользователя
@@ -147,7 +133,6 @@ function registerInventoryHandlers({
             const currentRoom = userCurrentRoom.get(userId);
             if (currentRoom) {
                 io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemId });
-                io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: trashItem });
                 io.to(currentRoom).emit('items', { owner, items: updatedItems });
             }
 

@@ -424,21 +424,8 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setTimeout(() => {
       socket.emit('useItem', { itemId: applyModal.item._id }, (response) => {
         if (response.success) {
-          // Локально обновляем инвентарь, удаляя предмет и добавляя мусор
-          setTempPersonalItems(prev => {
-            const newItems = prev.filter(item => item._id !== applyModal.item._id);
-            const trashItem = {
-              _id: `temp_${Date.now()}_${Math.random()}`,
-              name: 'Мусор',
-              description: 'Раньше это было чем-то полезным',
-              rarity: 'Бесполезный',
-              weight: applyModal.item.weight,
-              cost: 1,
-              effect: 'Чувство обременения чем-то бесполезным',
-              owner: userOwnerKey
-            };
-            return [...newItems, trashItem];
-          });
+          // Локально обновляем инвентарь, удаляя использованный предмет
+          setTempPersonalItems(prev => prev.filter(item => item._id !== applyModal.item._id));
           // Обновляем характеристики через серверное событие userUpdate
           socket.emit('getItems', { owner: userOwnerKey });
         } else {
@@ -844,24 +831,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           Подобрать
                           {isActionCooldown && <S.ProgressBar />}
                         </S.PickupButton>
-                        {(item.name === 'Лесные ягоды' || item.name === 'Лесные грибы' || item.name === 'Шоколадка' || item.name === 'Консервы') && (
-                          <S.GreenActionButton
-                            onClick={() => handleEatItem(item.name, item.weight, count)}
-                            disabled={isActionCooldown}
-                          >
-                            Съесть
-                            {isActionCooldown && <S.ProgressBar />}
-                          </S.GreenActionButton>
-                        )}
-                        {(item.name === 'Бинт' || item.name === 'Аптечка') && (
-                          <S.GreenActionButton
-                            onClick={() => handleUseItem(item.name, item.weight, count)}
-                            disabled={isActionCooldown}
-                          >
-                            Использовать
-                            {isActionCooldown && <S.ProgressBar />}
-                          </S.GreenActionButton>
-                        )}
                       </S.ActionButtons>
                     </S.ItemCard>
                   ))

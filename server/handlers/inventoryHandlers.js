@@ -21,6 +21,145 @@ function registerInventoryHandlers({
         }
     });
 
+    /* Добавляем новый обработчик для использования предмета */
+    socket.on('useItem', async ({ itemId }, callback) => {
+        try {
+            if (itemLocks.has(itemId)) {
+                callback({ success: false, message: 'Этот предмет уже обрабатывается' });
+                return;
+            }
+
+            itemLocks.set(itemId, true);
+
+            const item = await Item.findById(itemId);
+            if (!item) {
+                itemLocks.delete(itemId);
+                callback({ success: false, message: 'Предмет не найден' });
+                return;
+            }
+
+            const owner = item.owner;
+            const userId = owner.replace('user_', '');
+            const user = await User.findOne({ userId });
+            if (!user) {
+                itemLocks.delete(itemId);
+                callback({ success: false, message: 'Пользователь не найден' });
+                return;
+            }
+
+            // Определяем эффекты предметов
+            const itemEffects = {
+                'Лесные ягоды': {
+                    health: Math.floor(Math.random() * 16) - 5, // от -5 до +10
+                    mood: Math.floor(Math.random() * 16) - 5,   // от -5 до +10
+                    satiety: Math.floor(Math.random() * 16) - 5 // от -5 до +10
+                },
+                'Лесные грибы': {
+                    health: Math.floor(Math.random() * 31) - 10, // от -10 до +20
+                    mood: Math.floor(Math.random() * 23) - 7,    // от -7 до +15
+                    satiety: Math.floor(Math.random() * 23) - 7  // от -7 до +15
+                },
+                'Шоколадка': {
+                    health: Math.floor(Math.random() * 6),       // от 0 до +5
+                    mood: Math.floor(Math.random() * 16) + 5,   // от +5 до +20
+                    satiety: Math.floor(Math.random() * 16) + 5 // от +5 до +20
+                },
+                'Консервы': {
+                    satiety: Math.floor(Math.random() * 11) + 20, // от +20 до +30
+                    mood: Math.floor(Math.random() * 6) + 5,     // от +5 до +10
+                    health: Math.floor(Math.random() * 6) + 5    // от +5 до +10
+                },
+                'Бинт': {
+                    health: Math.floor(Math.random() * 11) + 10 // от +10 до +20
+                },
+                'Аптечка': {
+                    health: Math.floor(Math.random() * 11) + 30 // от +30 до +40
+                }
+            };
+
+            const effect = itemEffects[item.name];
+            if (!effect) {
+                itemLocks.delete(itemId);
+                callback({ success: false, message: 'Этот предмет нельзя использовать' });
+                return;
+            }
+
+            // Обновляем характеристики игрока
+            const updatedStats = {
+                health: Math.min(Math.max(user.stats.health + (effect.health || 0), 0), user.stats.maxHealth),
+                mood: Math.min(Math.max(user.stats.mood + (effect.mood || 0), 0), user.stats.maxMood),
+                satiety: Math.min(Math.max(user.stats.satiety + (effect.satiety || 0), 0), user.stats.maxSatiety),
+                energy: user.stats.energy // Энергия не изменяется
+            };
+
+            // Обновляем пользователя в базе данных
+            await User.updateOne(
+                { userId },
+                { $set: { 'stats.health': updatedStats.health, 'stats.mood': updatedStats.mood, 'stats.satiety': updatedStats.satiety } }
+            );
+
+            // Удаляем использованный предмет
+            await Item.deleteOne({ _id: itemId });
+
+            // Создаём мусор
+            const trashItem = new Item({
+                name: 'Мусор',
+                description: 'Раньше это было чем-то полезным',
+                rarity: 'Бесполезный',
+                weight: item.weight,
+                cost: 1,
+                effect: 'Чувство обременения чем-то бесполезным',
+                owner
+            });
+            await trashItem.save();
+
+            // Обновляем кэш
+            const ownerItems = itemCache.get(owner) || [];
+            const updatedItems = ownerItems
+                .filter(i => i._id.toString() !== itemId)
+                .concat([trashItem]);
+            itemCache.set(owner, updatedItems);
+
+            // Получаем обновленного пользователя
+            const updatedUser = await User.findOne({ userId });
+
+            // Отправляем userUpdate
+            socket.emit('userUpdate', {
+                userId: updatedUser.userId,
+                firstName: updatedUser.firstName,
+                username: updatedUser.username,
+                lastName: updatedUser.lastName,
+                photoUrl: updatedUser.photoUrl,
+                isRegistered: updatedUser.isRegistered,
+                isHuman: updatedUser.isHuman,
+                animalType: updatedUser.animalType,
+                name: updatedUser.name,
+                owner: updatedUser.owner,
+                homeless: updatedUser.homeless,
+                credits: updatedUser.credits || 0,
+                onLeash: updatedUser.onLeash,
+                freeRoam: updatedUser.freeRoam || false,
+                stats: updatedUser.stats
+            });
+
+            // Отправляем обновленный список предметов
+            io.to(owner).emit('items', { owner, items: updatedItems });
+            const currentRoom = userCurrentRoom.get(userId);
+            if (currentRoom) {
+                io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemId });
+                io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: trashItem });
+                io.to(currentRoom).emit('items', { owner, items: updatedItems });
+            }
+
+            itemLocks.delete(itemId);
+            callback({ success: true, message: `Предмет ${item.name} использован` });
+        } catch (err) {
+            console.error('Error using item:', err.message, err.stack);
+            itemLocks.delete(itemId);
+            callback({ success: false, message: 'Ошибка при использовании предмета' });
+        }
+    });
+
     // Добавляем обработчик для обновления позиций предметов
     socket.on('updateItemPositions', async ({ owner, positions }, callback) => {
         try {

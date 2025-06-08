@@ -260,12 +260,27 @@ export const ActionButton = styled.button`
   }
 `;
 
-export const GreenActionButton = styled(ActionButton)`
-  background: #32CD32; // Зелёный фон, аналогичный PickupButton
-  color: white;
-  &:hover {
-    background: #28A828; // Чуть темнее при наведении
-  }
+/* Добавляем или проверяем стиль для GreenActionButton */
+export const GreenActionButton = styled.button`
+    background-color: ${({ theme }) => (theme === 'dark' ? '#28a745' : '#28a745')};
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    &:hover {
+      background-color: ${({ theme }) => (theme === 'dark' ? '#218838' : '#218838')};
+    }
+    &:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
 `;
 
 export const ProgressBar = styled.div`

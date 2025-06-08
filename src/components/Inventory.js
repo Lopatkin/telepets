@@ -39,6 +39,8 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [freeRoam, setFreeRoam] = useState(false);
   const [tempPersonalItems, setTempPersonalItems] = useState(personalItems);
 
+  const [applyModal, setApplyModal] = useState({ isOpen: false, item: null });
+
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
@@ -397,17 +399,57 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   };
 
   // Добавляем новые обработчики для кнопок "Съесть" и "Использовать"
+  /* Обновляем обработчики для "Съесть" и "Использовать" */
   const handleEatItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
-    console.log(`Съесть предмет: ${itemName}, вес: ${weight}, количество: ${maxCount}`);
-    setActionQuantity({ itemName, weight, count: 1, action: 'eat', maxCount });
+    console.log(`Открытие модального окна для "Съесть": ${itemName}, вес: ${weight}`);
+    const item = tempPersonalItems.find(i => i.name === itemName && i.weight === parseFloat(weight));
+    setApplyModal({ isOpen: true, item });
   };
 
-  // Обработчик для использования медицинских предметов
   const handleUseItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
-    console.log(`Использовать предмет: ${itemName}, вес: ${weight}, количество: ${maxCount}`);
-    setActionQuantity({ itemName, weight, count: 1, action: 'use', maxCount });
+    console.log(`Открытие модального окна для "Использовать": ${itemName}, вес: ${weight}`);
+    const item = tempPersonalItems.find(i => i.name === itemName && i.weight === parseFloat(weight));
+    setApplyModal({ isOpen: true, item });
+  };
+
+  /* Обработчик для подтверждения применения предмета */
+  const handleApplyItem = () => {
+    if (!applyModal.item || isActionCooldown) return;
+
+    setIsActionCooldown(true);
+    setAnimatingItem({ itemId: applyModal.item._id, action: 'split' });
+
+    setTimeout(() => {
+      socket.emit('useItem', { itemId: applyModal.item._id }, (response) => {
+        if (response.success) {
+          // Локально обновляем инвентарь, удаляя предмет и добавляя мусор
+          setTempPersonalItems(prev => {
+            const newItems = prev.filter(item => item._id !== applyModal.item._id);
+            const trashItem = {
+              _id: `temp_${Date.now()}_${Math.random()}`,
+              name: 'Мусор',
+              description: 'Раньше это было чем-то полезным',
+              rarity: 'Бесполезный',
+              weight: applyModal.item.weight,
+              cost: 1,
+              effect: 'Чувство обременения чем-то бесполезным',
+              owner: userOwnerKey
+            };
+            return [...newItems, trashItem];
+          });
+          // Обновляем характеристики через серверное событие userUpdate
+          socket.emit('getItems', { owner: userOwnerKey });
+        } else {
+          setError(response.message || 'Ошибка при использовании предмета');
+          setTimeout(() => setError(null), 3000);
+        }
+        setApplyModal({ isOpen: false, item: null });
+        setAnimatingItem(null);
+        setTimeout(() => setIsActionCooldown(false), 1000);
+      });
+    }, 500);
   };
 
   // Обновляем confirmActionQuantity для обработки новых действий
@@ -559,7 +601,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         )}
         {activeTab === 'location' && locationLimit && (
           <S.WeightLimit theme={theme}>
-            Вес: {locationLimit.currentWeight} кг / {personalLimit.maxWeight} кг
+            Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
           </S.WeightLimit>
         )}
         {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (
@@ -591,7 +633,8 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                 isAnimating={
                   animatingItem && (
                     (animatingItem.itemId === `${item.name}_${item.weight}_move`) ||
-                    (animatingItem.itemId === `${item.name}_${item.weight}_delete`)
+                    (animatingItem.itemId === `${item.name}_${item.weight}_delete`) ||
+                    (animatingItem.itemId === item._id && animatingItem.action === 'split')
                   ) ? animatingItem.action : null
                 }
               >
@@ -605,13 +648,13 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                             item.name === 'Мусор' ? garbageImage :
                               item.name === 'Поводок' ? leashImage :
                                 item.name === 'Паспорт животного' ? passportImage :
-                                  item.name === 'Лесные ягоды' ? berrysImage : // Добавляем Лесные ягоды
-                                    item.name === 'Лесные грибы' ? mushroomsImage : // Добавляем Лесные грибы
-                                      item.name === 'Стул' ? chairImage : // Добавляем Стул
-                                        item.name === 'Кровать' ? bedImage : // Добавляем Кровать
-                                          item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
-                                            item.name === 'Стол' ? tableImage : // Добавляем Стол
-                                              item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
+                                  item.name === 'Лесные ягоды' ? berrysImage :
+                                    item.name === 'Лесные грибы' ? mushroomsImage :
+                                      item.name === 'Стул' ? chairImage :
+                                        item.name === 'Кровать' ? bedImage :
+                                          item.name === 'Шкаф' ? wardrobeImage :
+                                            item.name === 'Стол' ? tableImage :
+                                              item.name === 'Тумба' ? chestImage :
                                                 item.name === 'Аптечка' ? firstAidKitImage :
                                                   item.name === 'Бинт' ? bandageImage :
                                                     item.name === 'Консервы' ? cannedFoodImage :
@@ -673,7 +716,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                         </S.MoveButton>
                       )}
                       {(item.name === 'Лесные ягоды' || item.name === 'Лесные грибы' || item.name === 'Шоколадка' || item.name === 'Консервы') && (
-                        <S.GreenActionButton // Используем новый компонент GreenActionButton для зелёного цвета
+                        <S.GreenActionButton
                           onClick={() => handleEatItem(item.name, item.weight, count)}
                           disabled={isActionCooldown}
                         >
@@ -682,7 +725,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                         </S.GreenActionButton>
                       )}
                       {(item.name === 'Бинт' || item.name === 'Аптечка') && (
-                        <S.GreenActionButton // Используем новый компонент GreenActionButton для зелёного цвета
+                        <S.GreenActionButton
                           onClick={() => handleUseItem(item.name, item.weight, count)}
                           disabled={isActionCooldown}
                         >
@@ -766,13 +809,13 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                                   item.name === 'Мусор' ? garbageImage :
                                     item.name === 'Поводок' ? leashImage :
                                       item.name === 'Паспорт животного' ? passportImage :
-                                        item.name === 'Лесные ягоды' ? berrysImage : // Добавляем Лесные ягоды
-                                          item.name === 'Лесные грибы' ? mushroomsImage : // Добавляем Лесные грибы
-                                            item.name === 'Стул' ? chairImage : // Добавляем Стул
-                                              item.name === 'Кровать' ? bedImage : // Добавляем Кровать
-                                                item.name === 'Шкаф' ? wardrobeImage : // Добавляем Шкаф
-                                                  item.name === 'Стол' ? tableImage : // Добавляем Стол
-                                                    item.name === 'Тумба' ? chestImage : // Добавляем Тумбу
+                                        item.name === 'Лесные ягоды' ? berrysImage :
+                                          item.name === 'Лесные грибы' ? mushroomsImage :
+                                            item.name === 'Стул' ? chairImage :
+                                              item.name === 'Кровать' ? bedImage :
+                                                item.name === 'Шкаф' ? wardrobeImage :
+                                                  item.name === 'Стол' ? tableImage :
+                                                    item.name === 'Тумба' ? chestImage :
                                                       item.name === 'Аптечка' ? firstAidKitImage :
                                                         item.name === 'Бинт' ? bandageImage :
                                                           item.name === 'Консервы' ? cannedFoodImage :
@@ -801,11 +844,28 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           Подобрать
                           {isActionCooldown && <S.ProgressBar />}
                         </S.PickupButton>
+                        {(item.name === 'Лесные ягоды' || item.name === 'Лесные грибы' || item.name === 'Шоколадка' || item.name === 'Консервы') && (
+                          <S.GreenActionButton
+                            onClick={() => handleEatItem(item.name, item.weight, count)}
+                            disabled={isActionCooldown}
+                          >
+                            Съесть
+                            {isActionCooldown && <S.ProgressBar />}
+                          </S.GreenActionButton>
+                        )}
+                        {(item.name === 'Бинт' || item.name === 'Аптечка') && (
+                          <S.GreenActionButton
+                            onClick={() => handleUseItem(item.name, item.weight, count)}
+                            disabled={isActionCooldown}
+                          >
+                            Использовать
+                            {isActionCooldown && <S.ProgressBar />}
+                          </S.GreenActionButton>
+                        )}
                       </S.ActionButtons>
                     </S.ItemCard>
                   ))
                 )}
-                {/* Единая проверка на отсутствие предметов */}
                 {((currentRoom === 'Магазин "Всё на свете"' && shopItems.length === 0) ||
                   (activeLocationSubTab === 'items' && locationItems.length === 0)) && (
                     <div style={{ textAlign: 'center', color: theme === 'dark' ? '#ccc' : '#666' }}>
@@ -823,10 +883,10 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         )}
       </S.ContentContainer>
       <S.Modal
-        isOpen={!!selectedItem || (actionQuantity.itemName && actionQuantity.weight)}
+        isOpen={!!selectedItem || (actionQuantity.itemName && actionQuantity.weight) || applyModal.isOpen}
         theme={theme}
         onClick={closeModal}
-        isConfirm={!!(actionQuantity.itemName && actionQuantity.weight)}
+        isConfirm={!!(actionQuantity.itemName && actionQuantity.weight) || applyModal.isOpen}
       >
         {selectedItem && selectedItem.name === 'Паспорт животного' && (
           <S.ModalContent theme={theme}>
@@ -933,8 +993,30 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             </S.ConfirmButtons>
           </S.QuantityModalContent>
         )}
+        {applyModal.isOpen && applyModal.item && (
+          <S.ModalContent theme={theme} onClick={(e) => e.stopPropagation()}>
+            <S.ItemTitle theme={theme}>{applyModal.item.name}</S.ItemTitle>
+            <S.ItemDetail theme={theme}>{applyModal.item.description}</S.ItemDetail>
+            <S.ConfirmButtons>
+              <S.ConfirmButton
+                type="yes"
+                onClick={handleApplyItem}
+                disabled={isActionCooldown}
+              >
+                Применить
+              </S.ConfirmButton>
+              <S.ConfirmButton
+                type="no"
+                onClick={() => setApplyModal({ isOpen: false, item: null })}
+                disabled={isActionCooldown}
+              >
+                Отмена
+              </S.ConfirmButton>
+            </S.ConfirmButtons>
+          </S.ModalContent>
+        )}
       </S.Modal>
-    </S.InventoryContainer >
+    </S.InventoryContainer>
   );
 }
 

@@ -102,7 +102,7 @@ function registerInventoryHandlers({
             await Item.deleteOne({ _id: itemId });
 
             // Обновляем кэш
-            const ownerItems = insuranceCache.get(owner) || [];
+            const ownerItems = itemCache.get(owner) || [];
             const updatedItems = ownerItems.filter(i => i._id.toString() !== itemId);
             itemCache.set(owner, updatedItems);
 

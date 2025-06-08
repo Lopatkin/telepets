@@ -264,12 +264,11 @@ export const ActionButton = styled.button`
 export const GreenActionButton = styled.button`
     background-color: ${({ theme }) => (theme === 'dark' ? '#28a745' : '#28a745')};
     color: white;
-    padding: 8px 16px;
+    padding: 5px 10px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
-    margin: 5px;
+    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;

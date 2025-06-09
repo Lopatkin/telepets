@@ -750,7 +750,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             ))}
             {activeTab === 'location' && (
               <S.ItemList subTab={activeTab}>
-                {currentRoom === 'Магазин "Всё на свете"' && user?.isHuman ? (
+                {(currentRoom === 'Магазин "Всё на свете"' || currentRoom === 'Кофейня "Ляля-Фа"') && user?.isHuman ? (
                   shopItems.map(item => (
                     <S.ItemCard
                       key={item._id}

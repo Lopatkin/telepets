@@ -74,6 +74,10 @@ function registerInventoryHandlers({
                 },
                 'Аптечка': {
                     health: Math.floor(Math.random() * 11) + 30 // от +30 до +40
+                },
+                'Кофе': {
+                    energy: Math.floor(Math.random() * 11) + 20, // от +20 до +30
+                    satiety: Math.floor(Math.random() * 6)       // от 0 до +5
                 }
             };
 

@@ -20,6 +20,7 @@ import firstAidKitImage from '../images/items/first-aid-kit.jpg'; // Изобр�
 import bandageImage from '../images/items/bandage.jpg'; // Изображение для Бинта
 import cannedFoodImage from '../images/items/canned-food.jpg'; // Изображение для Консервов
 import chocolateImage from '../images/items/chocolate.jpg'; // Изображение для Шоколадки
+import coffeeImage from '../images/items/coffee.jpg';
 
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
@@ -172,7 +173,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       name: 'Ошейник',
       description: 'С ним вы можете взять себе питомца из приюта.',
       rarity: 'Обычный',
-      weight: 0.5,
+      weight: 0.3,
       cost: 250,
       effect: 'Вы всегда знаете где находится ваш питомец.',
     },
@@ -181,7 +182,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       name: 'Поводок',
       description: 'Ваш питомец всегда следует за вами.',
       rarity: 'Обычный',
-      weight: 0.5,
+      weight: 0.3,
       cost: 200,
       effect: 'Вы чувствуете власть над кем-то. Приятно.',
     }, {
@@ -189,7 +190,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       name: 'Аптечка',
       description: 'Поможет подлечиться при проблемах со здоровьем',
       rarity: 'Обычный',
-      weight: 0.2,
+      weight: 0.5,
       cost: 300,
       effect: 'Одноразовая. Вы почувствуете себя гораздо лучше.',
     },
@@ -216,9 +217,18 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       name: 'Шоколадка',
       description: 'Настоящий шоколад! Перекус на бегу.',
       rarity: 'Обычный',
-      weight: 0.5,
+      weight: 0.1,
       cost: 30,
       effect: 'Слегка утоляет голод.',
+    },
+    {
+      _id: 'shop_coffee',
+      name: 'Кофе',
+      description: 'Бодрит и восстанавливает немного энергии.',
+      rarity: 'Обычный',
+      weight: 0.2,
+      cost: 100,
+      effect: 'Восстанавливает энергию и слегка утоляет голод.',
     },
   ], []);
 
@@ -241,7 +251,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     }
 
     if (currentRoom === 'Магазин "Всё на свете"' && user?.isHuman) {
-      setShopItems(shopStaticItems);
+      setShopItems(shopStaticItems.filter(item =>
+        ['Ошейник', 'Поводок', 'Аптечка', 'Бинт', 'Консервы', 'Шоколадка'].includes(item.name)
+      ));
+    } else if (currentRoom === 'Кофейня "Ляля-Фа"' && user?.isHuman) {
+      setShopItems(shopStaticItems.filter(item => item.name === 'Кофе'));
     } else {
       setShopItems([]);
     }
@@ -753,7 +767,8 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                                   item.name === 'Бинт' ? bandageImage :
                                     item.name === 'Консервы' ? cannedFoodImage :
                                       item.name === 'Шоколадка' ? chocolateImage :
-                                        defaultItemImage
+                                        item.name === 'Кофе' ? coffeeImage :
+                                          defaultItemImage
                           }
                           alt={item.name}
                         />

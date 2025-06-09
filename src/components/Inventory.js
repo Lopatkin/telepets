@@ -726,6 +726,17 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           {isActionCooldown && <S.ProgressBar />}
                         </S.GreenActionButton>
                       )}
+
+                      {item.name === 'Кофе' && (
+                        <S.GreenActionButton
+                          onClick={() => handleEatItem(item.name, item.weight, count)}
+                          disabled={isActionCooldown}
+                        >
+                          Выпить
+                          {isActionCooldown && <S.ProgressBar />}
+                        </S.GreenActionButton>
+                      )}
+
                       {(item.name === 'Бинт' || item.name === 'Аптечка') && (
                         <S.GreenActionButton
                           onClick={() => handleUseItem(item.name, item.weight, count)}

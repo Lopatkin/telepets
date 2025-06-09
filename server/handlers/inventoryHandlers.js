@@ -93,13 +93,20 @@ function registerInventoryHandlers({
                 health: Math.min(Math.max(user.stats.health + (effect.health || 0), 0), user.stats.maxHealth),
                 mood: Math.min(Math.max(user.stats.mood + (effect.mood || 0), 0), user.stats.maxMood),
                 satiety: Math.min(Math.max(user.stats.satiety + (effect.satiety || 0), 0), user.stats.maxSatiety),
-                energy: user.stats.energy // Энергия не изменяется
+                energy: Math.min(Math.max(user.stats.energy + (effect.energy || 0), 0), user.stats.maxEnergy) // Добавляем обновление энергии
             };
 
             // Обновляем пользователя в базе данных
             await User.updateOne(
                 { userId },
-                { $set: { 'stats.health': updatedStats.health, 'stats.mood': updatedStats.mood, 'stats.satiety': updatedStats.satiety } }
+                {
+                    $set: {
+                        'stats.health': updatedStats.health,
+                        'stats.mood': updatedStats.mood,
+                        'stats.satiety': updatedStats.satiety,
+                        'stats.energy': updatedStats.energy // Добавляем обновление энергии
+                    }
+                }
             );
 
             // Удаляем использованный предмет

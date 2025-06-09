@@ -732,7 +732,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           onClick={() => handleEatItem(item.name, item.weight, count)}
                           disabled={isActionCooldown}
                         >
-                          Выпить
+                          Съесть
                           {isActionCooldown && <S.ProgressBar />}
                         </S.GreenActionButton>
                       )}

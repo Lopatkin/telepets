@@ -660,7 +660,8 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                                                   item.name === 'Бинт' ? bandageImage :
                                                     item.name === 'Консервы' ? cannedFoodImage :
                                                       item.name === 'Шоколадка' ? chocolateImage :
-                                                        defaultItemImage
+                                                        item.name === 'Кофе' ? coffeeImage :
+                                                          defaultItemImage
                     }
                     alt={item.name}
                   />

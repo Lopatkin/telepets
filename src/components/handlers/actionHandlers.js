@@ -82,4 +82,4 @@ const actionHandlers = {
   },
 };
 
-export default actionHandlers;
+module.exports = actionHandlers;

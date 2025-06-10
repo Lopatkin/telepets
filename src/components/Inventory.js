@@ -51,7 +51,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
   const handleItems = useCallback((data) => {
     const { owner, items, currentWeight, maxWeight } = data;
-    console.log('Received items event:', data);
+    console.log('Received items event:', { owner, items, currentWeight, maxWeight }); // Добавляем лог
     if (owner === locationOwnerKey) {
       setLocationItems(items.map(item => ({
         ...item,
@@ -455,11 +455,21 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setAnimatingItem({ itemId: `${itemName}_${weight}_move`, action: 'move' });
       setTimeout(() => {
         const itemsToMove = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
-        const itemIds = itemsToMove.map(item => item._id);
-        socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey }, () => {
-          socket.emit('getItems', { owner: userOwnerKey });
-          socket.emit('getItems', { owner: locationOwnerKey });
+        itemsToMove.forEach(item => {
+          socket.emit('moveItem', {
+            itemId: item._id,
+            fromOwner: userOwnerKey,
+            toOwner: locationOwnerKey
+          }, (response) => {
+            if (!response.success) {
+              setError(response.message || 'Ошибка при перемещении предмета');
+              setTimeout(() => setError(null), 3000);
+            }
+          });
         });
+        // Запрашиваем актуальные данные инвентаря
+        socket.emit('getItems', { owner: userOwnerKey });
+        socket.emit('getItems', { owner: locationOwnerKey });
         setAnimatingItem(null);
         setTimeout(() => setIsActionCooldown(false), 1000);
       }, 500);

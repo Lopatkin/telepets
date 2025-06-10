@@ -359,6 +359,7 @@ function registerInventoryHandlers({
 
     socket.on('moveItem', async ({ itemId, fromOwner, toOwner }, callback) => {
         try {
+            console.log(`Moving item ${itemId}' from ${fromOwner} to ${toOwner}`); // Добавляем лог
             if (itemLocks.has(itemId)) {
                 callback({ success: false, message: 'Этот предмет уже обрабатывается' });
                 return;
@@ -394,6 +395,7 @@ function registerInventoryHandlers({
             // Обновляем владельца предмета
             item.owner = toOwner;
             await item.save();
+            console.log(`Item ${itemId} moved to ${toOwner}`);
 
             // Обновляем кэш для исходного инвентаря
             let fromItems = itemCache.get(fromOwner) || [];
@@ -424,6 +426,7 @@ function registerInventoryHandlers({
             const currentRoom = userCurrentRoom.get(socket.userData.userId);
             if (currentRoom) {
                 io.to(currentRoom).emit('itemAction', { action: 'move', fromOwner, toOwner, item });
+                console.log(`Emitted itemAction to room ${currentRoom}`);
             }
 
             itemLocks.delete(itemId);

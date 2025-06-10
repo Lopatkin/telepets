@@ -28,8 +28,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [activeLocationSubTab, setActiveLocationSubTab] = useState('items');
   const [locationItems, setLocationItems] = useState([]);
   const [shelterAnimals, setShelterAnimals] = useState([]);
-  const [personalLimit, setPersonalLimit] = useState(null);
-  const [locationLimit, setLocationLimit] = useState(null);
   const [error, setError] = useState(null);
   const [animatingItem, setAnimatingItem] = useState(null);
   const [isActionCooldown, setIsActionCooldown] = useState(false);
@@ -39,15 +37,15 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [newAnimalName, setNewAnimalName] = useState('');
   const [freeRoam, setFreeRoam] = useState(false);
   const [tempPersonalItems, setTempPersonalItems] = useState(personalItems);
-
   const [applyModal, setApplyModal] = useState({ isOpen: false, item: null });
+  const [personalWeight, setPersonalWeight] = useState({ currentWeight: 0, maxWeight: 0 });
+  const [locationWeight, setLocationWeight] = useState({ currentWeight: 0, maxWeight: 0 });
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
 
   useEffect(() => {
-    // console.log('Received personalItems in Inventory:', personalItems);
     setTempPersonalItems(personalItems);
   }, [personalItems]);
 
@@ -243,8 +241,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     socket.emit('getItems', { owner: locationOwnerKey });
     console.log('Emitting getItems for user:', userOwnerKey);
     socket.emit('getItems', { owner: userOwnerKey });
-    socket.emit('getInventoryLimit', { owner: userOwnerKey });
-    socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
     if (isShelter) {
       socket.emit('getShelterAnimals');
@@ -260,25 +256,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setShopItems([]);
     }
 
-    const handleItems = (data) => {
-      const { owner, items } = data;
-      console.log('Received items event:', data);
-      if (owner === locationOwnerKey) {
-        setLocationItems(items.map(item => ({
-          ...item,
-          _id: item._id.toString(),
-        })));
-      } else if (owner === userOwnerKey) {
-        setTempPersonalItems(items.map(item => ({
-          ...item,
-          _id: item._id.toString(),
-        })));
-        onItemsUpdate(data);
-      }
-    };
-
     socket.on('items', handleItems);
-    socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
     socket.on('shelterAnimals', handleShelterAnimals);
     socket.on('error', ({ message }) => {
@@ -288,12 +266,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
     return () => {
       socket.off('items', handleItems);
-      socket.off('inventoryLimit', handleLimitUpdate);
       socket.off('itemAction', handleItemAction);
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems, onItemsUpdate]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemAction, handleShelterAnimals, user, shopStaticItems, handleItems]);
 
   const handleBuyItem = async (item) => {
     if (isActionCooldown) return;
@@ -556,36 +533,20 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   return (
     <S.InventoryContainer theme={theme}>
       <S.Tabs>
-        <S.Tab
-          active={activeTab === 'personal'}
-          onClick={() => setActiveTab('personal')}
-          theme={theme}
-        >
+        <S.Tab active={activeTab === 'personal'} onClick={() => setActiveTab('personal')} theme={theme}>
           Личные вещи
         </S.Tab>
-        <S.Tab
-          active={activeTab === 'location'}
-          onClick={() => setActiveTab('location')}
-          theme={theme}
-        >
+        <S.Tab active={activeTab === 'location'} onClick={() => setActiveTab('location')} theme={theme}>
           Локация
         </S.Tab>
       </S.Tabs>
       <S.ContentContainer>
         {activeTab === 'location' && isShelter && (
           <S.SubTabs>
-            <S.SubTab
-              active={activeLocationSubTab === 'items'}
-              onClick={() => setActiveLocationSubTab('items')}
-              theme={theme}
-            >
+            <S.SubTab active={activeLocationSubTab === 'items'} onClick={() => setActiveLocationSubTab('items')} theme={theme}>
               Предметы
             </S.SubTab>
-            <S.SubTab
-              active={activeLocationSubTab === 'animals'}
-              onClick={() => setActiveLocationSubTab('animals')}
-              theme={theme}
-            >
+            <S.SubTab active={activeLocationSubTab === 'animals'} onClick={() => setActiveLocationSubTab('animals')} theme={theme}>
               Животные
             </S.SubTab>
           </S.SubTabs>
@@ -595,14 +556,14 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             {error}
           </div>
         )}
-        {activeTab === 'personal' && personalLimit && (
+        {activeTab === 'personal' && (
           <S.WeightLimit theme={theme}>
-            Вес: {personalLimit.currentWeight} кг / {personalLimit.maxWeight} кг
+            Вес: {personalWeight.currentWeight} кг / {personalWeight.maxWeight} кг
           </S.WeightLimit>
         )}
-        {activeTab === 'location' && locationLimit && (
+        {activeTab === 'location' && (
           <S.WeightLimit theme={theme}>
-            Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
+            Вес: {locationWeight.currentWeight} кг / {locationWeight.maxWeight} кг
           </S.WeightLimit>
         )}
         {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (

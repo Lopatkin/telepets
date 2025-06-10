@@ -11,8 +11,6 @@ const {
   isZhannaTime
 } = require('../src/utils/npcUtils');
 
-const actionHandlers = require('../src/components/handlers/actionHandlers');
-
 const { registerUserHandlers } = require('./handlers/userHandlers');
 const { registerRoomHandlers } = require('./handlers/roomHandlers');
 const { registerMessageHandlers } = require('./handlers/messageHandlers');
@@ -195,7 +193,7 @@ io.on('connection', (socket) => {
     // Инициализация состояния боя с актуальным здоровьем
     if (!fightStates.has(userId)) {
       fightStates.set(userId, {
-        playerHP: Math.min(user.stats.health, user.stats.maxHealth),
+        playerHP: Math.min(user.stats.health, user.stats.maxHealth), // Всегда используем текущее здоровье
         npcHP: npc.stats.health,
         npcId
       });
@@ -230,37 +228,16 @@ io.on('connection', (socket) => {
     }
 
     // Обновляем HP
-    fight.playerHP = fight.playerHP - damageToPlayer;
+    fight.playerHP = fight.playerHP - damageToPlayer; // Убрано Math.max(0, ...)
     fight.npcHP = Math.max(0, fight.npcHP - damageToNPC);
 
     // Ограничиваем здоровье максимальным значением
     fight.playerHP = Math.min(fight.playerHP, user.stats.maxHealth);
 
-    // Обновляем здоровье и энергию игрока в базе данных
-    const action = actionHandlers['Охотиться'];
-    const updatedStats = {
-      health: fight.playerHP,
-      energy: Math.min(Math.max(user.stats.energy + (action.statUpdates.energy || 0), 0), user.stats.maxEnergy),
-      mood: user.stats.mood
-    };
-
-    // Обновляем настроение в зависимости от исхода боя
-    if (fight.playerHP <= 0) {
-      updatedStats.health = 0;
-      updatedStats.mood = Math.min(Math.max(user.stats.mood - 10, 0), user.stats.maxMood);
-    } else if (fight.npcHP <= 0) {
-      updatedStats.mood = Math.min(Math.max(user.stats.mood + 10, 0), user.stats.maxMood);
-    }
-
+    // Обновляем здоровье игрока в базе данных
     await User.updateOne(
       { userId },
-      {
-        $set: {
-          'stats.health': updatedStats.health,
-          'stats.energy': updatedStats.energy,
-          'stats.mood': updatedStats.mood
-        }
-      }
+      { $set: { 'stats.health': fight.playerHP } }
     );
 
     // Получаем обновленного пользователя
@@ -289,6 +266,29 @@ io.on('connection', (socket) => {
     if (fight.playerHP <= 0 || fight.npcHP <= 0) {
       fightStates.delete(userId);
       if (fight.playerHP <= 0) {
+        fight.playerHP = 0; // Устанавливаем здоровье на 0 вместо 1
+        await User.updateOne(
+          { userId },
+          { $set: { 'stats.health': 0 } } // Обновляем здоровье в базе данных на 0
+        );
+        const finalUser = await User.findOne({ userId });
+        socket.emit('userUpdate', {
+          userId: finalUser.userId,
+          firstName: finalUser.firstName,
+          username: finalUser.username,
+          lastName: finalUser.lastName,
+          photoUrl: finalUser.photoUrl,
+          isRegistered: finalUser.isRegistered,
+          isHuman: finalUser.isHuman,
+          animalType: finalUser.animalType,
+          name: finalUser.name,
+          owner: finalUser.owner,
+          homeless: finalUser.homeless,
+          credits: finalUser.credits || 0,
+          onLeash: finalUser.onLeash,
+          freeRoam: finalUser.freeRoam || false,
+          stats: finalUser.stats
+        });
         message += 'Вы проиграли бой!';
       } else {
         message += 'Вы победили!';

@@ -1,8 +1,6 @@
 const userLastAction = new Map(); // Для хранения времени последнего действия пользователя
 const MIN_ACTION_INTERVAL = 1000; // Минимальный интервал между действиями (1 секунда)
 
-const actionHandlers = require('../../src/components/handlers/actionHandlers');
-
 
 function registerInventoryHandlers({
     io,
@@ -258,43 +256,6 @@ function registerInventoryHandlers({
                 { $inc: { currentWeight: weightDifference } }
             );
 
-            // Добавляем обновление энергии на основе clicksRequired
-            const userId = owner.split('_')[1];
-            const user = await User.findOne({ userId });
-            const actionConfig = require('./constants/actionsConfig').default;
-            const craftItemConfig = actionConfig.workshop.humanActions
-                .find(a => a.title === 'Столярная мастерская').craftableItems
-                .find(i => i.name === craftedItem.name);
-            const energyCost = craftItemConfig.clicksRequired || 0;
-
-            const updatedStats = {
-                energy: Math.min(Math.max(user.stats.energy - energyCost, 0), user.stats.maxEnergy)
-            };
-
-            await User.updateOne(
-                { userId },
-                { $set: { 'stats.energy': updatedStats.energy } }
-            );
-
-            const updatedUser = await User.findOne({ userId });
-            socket.emit('userUpdate', {
-                userId: updatedUser.userId,
-                firstName: updatedUser.firstName,
-                username: updatedUser.username,
-                lastName: updatedUser.lastName,
-                photoUrl: updatedUser.photoUrl,
-                isRegistered: updatedUser.isRegistered,
-                isHuman: updatedUser.isHuman,
-                animalType: updatedUser.animalType,
-                name: updatedUser.name,
-                owner: updatedUser.owner,
-                homeless: updatedUser.homeless,
-                credits: updatedUser.credits || 0,
-                onLeash: updatedUser.onLeash,
-                freeRoam: updatedUser.freeRoam || false,
-                stats: updatedUser.stats
-            });
-
             // Обновление кэша
             const ownerItems = itemCache.get(owner) || [];
             const updatedItems = ownerItems
@@ -376,40 +337,6 @@ function registerInventoryHandlers({
                 { owner },
                 { $inc: { currentWeight: itemWeight } }
             );
-
-            // Добавляем обновление энергии, если действие задано в actionHandlers
-            const userId = owner.split('_')[1];
-            const user = await User.findOne({ userId });
-            const action = Object.values(actionHandlers).find(a => a.item && a.item.name === item.name);
-            if (action && action.statUpdates) {
-                const updatedStats = {
-                    energy: Math.min(Math.max(user.stats.energy + (action.statUpdates.energy || 0), 0), user.stats.maxEnergy)
-                };
-
-                await User.updateOne(
-                    { userId },
-                    { $set: { 'stats.energy': updatedStats.energy } }
-                );
-
-                const updatedUser = await User.findOne({ userId });
-                socket.emit('userUpdate', {
-                    userId: updatedUser.userId,
-                    firstName: updatedUser.firstName,
-                    username: updatedUser.username,
-                    lastName: updatedUser.lastName,
-                    photoUrl: updatedUser.photoUrl,
-                    isRegistered: updatedUser.isRegistered,
-                    isHuman: updatedUser.isHuman,
-                    animalType: updatedUser.animalType,
-                    name: updatedUser.name,
-                    owner: updatedUser.owner,
-                    homeless: updatedUser.homeless,
-                    credits: updatedUser.credits || 0,
-                    onLeash: updatedUser.onLeash,
-                    freeRoam: updatedUser.freeRoam || false,
-                    stats: updatedUser.stats
-                });
-            }
 
             const ownerItems = itemCache.get(owner) || [];
             itemCache.set(owner, [...ownerItems, newItem]);
@@ -655,37 +582,12 @@ function registerInventoryHandlers({
                 { new: true }
             );
 
-            // Добавляем обновление энергии
-            const action = actionHandlers['Утилизировать мусор'];
-            if (action && action.statUpdates) {
-                const updatedStats = {
-                    energy: Math.min(Math.max(user.stats.energy + (action.statUpdates.energy || 0), 0), user.stats.maxEnergy)
-                };
-
-                await User.updateOne(
-                    { userId: socket.userData.userId },
-                    { $set: { 'stats.energy': updatedStats.energy } }
-                );
+            if (user) {
+                socket.emit('userUpdate', {
+                    userId: user.userId,
+                    credits: user.credits
+                });
             }
-
-            const updatedUser = await User.findOne({ userId: socket.userData.userId });
-            socket.emit('userUpdate', {
-                userId: updatedUser.userId,
-                firstName: updatedUser.firstName,
-                username: updatedUser.username,
-                lastName: updatedUser.lastName,
-                photoUrl: updatedUser.photoUrl,
-                isRegistered: updatedUser.isRegistered,
-                isHuman: updatedUser.isHuman,
-                animalType: updatedUser.animalType,
-                name: updatedUser.name,
-                owner: updatedUser.owner,
-                homeless: updatedUser.homeless,
-                credits: updatedUser.credits || 0,
-                onLeash: updatedUser.onLeash,
-                freeRoam: updatedUser.freeRoam || false,
-                stats: updatedUser.stats
-            });
 
             const updatedItems = await Item.find({ owner });
             itemCache.set(owner, updatedItems);

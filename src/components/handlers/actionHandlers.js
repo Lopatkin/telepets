@@ -11,6 +11,7 @@ const actionHandlers = {
     },
     successMessage: 'Вы нашли палку!',
     cooldownKey: 'findStick',
+    statUpdates: { energy: -1 }
   },
   'Найти ягоды': {
     item: {
@@ -23,6 +24,7 @@ const actionHandlers = {
     },
     successMessage: 'Вы нашли лесные ягоды!',
     cooldownKey: 'findBerries',
+    statUpdates: { energy: -1 }
   },
   'Найти грибы': {
     item: {
@@ -35,10 +37,12 @@ const actionHandlers = {
     },
     successMessage: 'Вы нашли лесные грибы!',
     cooldownKey: 'findMushrooms',
+    statUpdates: { energy: -1 }
   },
   'Утилизировать мусор': {
     action: 'utilizeTrash',
     successMessage: 'Мусор утилизирован!',
+    statUpdates: { energy: -1 }
   },
   'Попросить еды': {
     systemMessage: user => `${user.name} хочет есть`,
@@ -73,7 +77,8 @@ const actionHandlers = {
   'Охотиться': {
     action: 'hunt',
     successMessage: 'Бой начался!',
-    cooldownKey: 'hunt'
+    cooldownKey: 'hunt',
+    statUpdates: { energy: -5 }
   },
 };
 

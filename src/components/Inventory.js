@@ -125,11 +125,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     return Object.values(grouped);
   };
 
-  const handleLimitUpdate = useCallback((limit) => {
-    if (limit.owner === userOwnerKey) setPersonalLimit(limit);
-    else if (limit.owner === locationOwnerKey) setLocationLimit(limit);
-  }, [userOwnerKey, locationOwnerKey]);
-
   const handleItemAction = useCallback((data) => {
     const { action, owner, itemId, item, itemIds } = data;
 

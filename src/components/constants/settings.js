@@ -7,3 +7,10 @@ export const WEIGHT_LIMITS = {
     ANIMAL: 10, // Лимит веса для игрока-животного (кошка или собака) (кг)
     LOCATION: 10000 // Лимит веса для любой локации (кг)
   };
+
+  // Экспортируем через CommonJS
+module.exports = {
+  COOLDOWN_DURATION_CONST,
+  NOTIFICATION_DURATION_CONST,
+  WEIGHT_LIMITS
+};

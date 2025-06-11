@@ -107,13 +107,6 @@ const itemSchema = new mongoose.Schema({
 }, { timestamps: true });
 const Item = mongoose.model('Item', itemSchema);
 
-const inventoryLimitSchema = new mongoose.Schema({
-  owner: String,
-  maxWeight: Number,
-  currentWeight: { type: Number, default: 0 }
-});
-const InventoryLimit = mongoose.model('InventoryLimit', inventoryLimitSchema);
-
 // Хранилища
 const roomUsers = {};
 const userCurrentRoom = new Map();
@@ -156,7 +149,6 @@ io.on('connection', (socket) => {
     User,
     Message,
     Item,
-    InventoryLimit,
     roomUsers,
     userCurrentRoom,
     activeSockets,

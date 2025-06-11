@@ -44,7 +44,6 @@ function registerUserHandlers({
     User,
     Message,
     Item,
-    InventoryLimit,
     roomUsers,
     userCurrentRoom,
     activeSockets,
@@ -74,7 +73,6 @@ function registerUserHandlers({
             console.log('New user created:', user.userId);
         }
 
-        // В функции registerUserHandlers, замените блок кода, связанный с созданием записей в diary, на следующий:
         const now = new Date();
         const lastActivity = user.lastActivity || now;
         const hoursPassed = Math.floor((now - lastActivity) / (1000 * 60 * 60)); // Кол-во полных часов
@@ -221,54 +219,6 @@ function registerUserHandlers({
 
         const userOwnerKey = `user_${socket.userData.userId}`;
         const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
-
-        const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
-        if (!userLimit) {
-            await InventoryLimit.create({
-                owner: userOwnerKey,
-                maxWeight: 40
-            });
-            const stick = new Item({
-                name: 'Палка',
-                description: 'Многофункциональная вещь',
-                rarity: 'Обычный',
-                weight: 1,
-                cost: 5,
-                effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
-                owner: userOwnerKey
-            });
-            await stick.save();
-            await InventoryLimit.updateOne(
-                { owner: userOwnerKey },
-                { $inc: { currentWeight: 1 } }
-            );
-        }
-
-        const myHomeLimit = await InventoryLimit.findOne({ owner: myHomeOwnerKey });
-        if (!myHomeLimit) {
-            await InventoryLimit.create({
-                owner: myHomeOwnerKey,
-                maxWeight: 500
-            });
-        }
-
-        const workshopLimit = await InventoryLimit.findOne({ owner: 'Мастерская' });
-        if (!workshopLimit) {
-            await InventoryLimit.create({
-                owner: 'Мастерская',
-                maxWeight: 1000
-            });
-        }
-
-        for (const room of rooms) {
-            const roomLimit = await InventoryLimit.findOne({ owner: room });
-            if (!roomLimit) {
-                await InventoryLimit.create({
-                    owner: room,
-                    maxWeight: 10000,
-                });
-            }
-        }
 
         console.log('Available static rooms:', rooms);
         console.log('Received lastRoom:', userData.lastRoom);

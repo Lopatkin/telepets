@@ -1,13 +1,26 @@
+const { WEIGHT_LIMITS } = require('../../src/components/constants/settings'); // Импортируем константы лимитов
 const userLastAction = new Map(); // Для хранения времени последнего действия пользователя
 const MIN_ACTION_INTERVAL = 1000; // Минимальный интервал между действиями (1 секунда)
 
+// Вспомогательная функция для расчета текущего веса
+const calculateCurrentWeight = (items) => {
+    return items.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
+};
+
+// Вспомогательная функция для получения лимита веса
+const getWeightLimit = async (owner, userId) => {
+    if (owner.startsWith('user_')) {
+        const user = await User.findOne({ userId: owner.replace('user_', '') });
+        return user.isHuman ? WEIGHT_LIMITS.HUMAN : WEIGHT_LIMITS.ANIMAL;
+    }
+    return WEIGHT_LIMITS.LOCATION;
+};
 
 function registerInventoryHandlers({
     io,
     socket,
     Item,
     User,
-    InventoryLimit,
     itemCache,
     itemLocks,
     userCurrentRoom
@@ -15,7 +28,10 @@ function registerInventoryHandlers({
     socket.on('getItems', async ({ owner }) => {
         try {
             const items = await Item.find({ owner });
-            socket.emit('items', { owner, items });
+            // Добавляем текущий вес в ответ
+            const currentWeight = calculateCurrentWeight(items);
+            const maxWeight = await getWeightLimit(owner, socket.userData.userId);
+            socket.emit('items', { owner, items, currentWeight, maxWeight });
         } catch (err) {
             console.error('Error fetching items:', err.message, err.stack);
         }
@@ -47,37 +63,36 @@ function registerInventoryHandlers({
                 return;
             }
 
-            // Определяем эффекты предметов
             const itemEffects = {
                 'Лесные ягоды': {
-                    health: Math.floor(Math.random() * 16) - 5, // от -5 до +10
-                    mood: Math.floor(Math.random() * 16) - 5,   // от -5 до +10
-                    satiety: Math.floor(Math.random() * 16) - 5 // от -5 до +10
+                    health: Math.floor(Math.random() * 16) - 5,
+                    mood: Math.floor(Math.random() * 16) - 5,
+                    satiety: Math.floor(Math.random() * 16) - 5
                 },
                 'Лесные грибы': {
-                    health: Math.floor(Math.random() * 31) - 10, // от -10 до +20
-                    mood: Math.floor(Math.random() * 23) - 7,    // от -7 до +15
-                    satiety: Math.floor(Math.random() * 23) - 7  // от -7 до +15
+                    health: Math.floor(Math.random() * 31) - 10,
+                    mood: Math.floor(Math.random() * 23) - 7,
+                    satiety: Math.floor(Math.random() * 23) - 7
                 },
                 'Шоколадка': {
-                    health: Math.floor(Math.random() * 6),       // от 0 до +5
-                    mood: Math.floor(Math.random() * 16) + 5,   // от +5 до +20
-                    satiety: Math.floor(Math.random() * 16) + 5 // от +5 до +20
+                    health: Math.floor(Math.random() * 6),
+                    mood: Math.floor(Math.random() * 16) + 5,
+                    satiety: Math.floor(Math.random() * 16) + 5
                 },
                 'Консервы': {
-                    satiety: Math.floor(Math.random() * 11) + 20, // от +20 до +30
-                    mood: Math.floor(Math.random() * 6) + 5,     // от +5 до +10
-                    health: Math.floor(Math.random() * 6) + 5    // от +5 до +10
+                    satiety: Math.floor(Math.random() * 11) + 20,
+                    mood: Math.floor(Math.random() * 6) + 5,
+                    health: Math.floor(Math.random() * 6) + 5
                 },
                 'Бинт': {
-                    health: Math.floor(Math.random() * 11) + 10 // от +10 до +20
+                    health: Math.floor(Math.random() * 11) + 10
                 },
                 'Аптечка': {
-                    health: Math.floor(Math.random() * 11) + 30 // от +30 до +40
+                    health: Math.floor(Math.random() * 11) + 30
                 },
                 'Кофе': {
-                    energy: Math.floor(Math.random() * 11) + 20, // от +20 до +30
-                    satiety: Math.floor(Math.random() * 6)       // от 0 до +5
+                    energy: Math.floor(Math.random() * 11) + 20,
+                    satiety: Math.floor(Math.random() * 6)
                 }
             };
 
@@ -88,15 +103,13 @@ function registerInventoryHandlers({
                 return;
             }
 
-            // Обновляем характеристики игрока
             const updatedStats = {
                 health: Math.min(Math.max(user.stats.health + (effect.health || 0), 0), user.stats.maxHealth),
                 mood: Math.min(Math.max(user.stats.mood + (effect.mood || 0), 0), user.stats.maxMood),
                 satiety: Math.min(Math.max(user.stats.satiety + (effect.satiety || 0), 0), user.stats.maxSatiety),
-                energy: Math.min(Math.max(user.stats.energy + (effect.energy || 0), 0), user.stats.maxEnergy) // Добавляем обновление энергии
+                energy: Math.min(Math.max(user.stats.energy + (effect.energy || 0), 0), user.stats.maxEnergy)
             };
 
-            // Обновляем пользователя в базе данных
             await User.updateOne(
                 { userId },
                 {
@@ -104,23 +117,19 @@ function registerInventoryHandlers({
                         'stats.health': updatedStats.health,
                         'stats.mood': updatedStats.mood,
                         'stats.satiety': updatedStats.satiety,
-                        'stats.energy': updatedStats.energy // Добавляем обновление энергии
+                        'stats.energy': updatedStats.energy
                     }
                 }
             );
 
-            // Удаляем использованный предмет
             await Item.deleteOne({ _id: itemId });
 
-            // Обновляем кэш
             const ownerItems = itemCache.get(owner) || [];
             const updatedItems = ownerItems.filter(i => i._id.toString() !== itemId);
             itemCache.set(owner, updatedItems);
 
-            // Получаем обновленного пользователя
             const updatedUser = await User.findOne({ userId });
 
-            // Отправляем userUpdate
             socket.emit('userUpdate', {
                 userId: updatedUser.userId,
                 firstName: updatedUser.firstName,
@@ -139,12 +148,21 @@ function registerInventoryHandlers({
                 stats: updatedUser.stats
             });
 
-            // Отправляем обновленный список предметов
-            io.to(owner).emit('items', { owner, items: updatedItems });
+            io.to(owner).emit('items', {
+                owner,
+                items: updatedItems,
+                currentWeight: calculateCurrentWeight(updatedItems),
+                maxWeight: await getWeightLimit(owner, userId)
+            });
             const currentRoom = userCurrentRoom.get(userId);
             if (currentRoom) {
                 io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemId });
-                io.to(currentRoom).emit('items', { owner, items: updatedItems });
+                io.to(currentRoom).emit('items', {
+                    owner,
+                    items: updatedItems,
+                    currentWeight: calculateCurrentWeight(updatedItems),
+                    maxWeight: await getWeightLimit(owner, userId)
+                });
             }
 
             itemLocks.delete(itemId);
@@ -159,7 +177,6 @@ function registerInventoryHandlers({
     // Добавляем обработчик для обновления позиций предметов
     socket.on('updateItemPositions', async ({ owner, positions }, callback) => {
         try {
-            // Проверяем интервал между действиями
             const now = Date.now();
             const lastActionTime = userLastAction.get(owner) || 0;
             if (now - lastActionTime < MIN_ACTION_INTERVAL) {
@@ -168,7 +185,6 @@ function registerInventoryHandlers({
             }
             userLastAction.set(owner, now);
 
-            // Обновляем позиции предметов в базе данных
             for (const [itemId, pos] of Object.entries(positions)) {
                 const itemKey = itemId.replace('item_', '');
                 await Item.updateOne(
@@ -177,15 +193,18 @@ function registerInventoryHandlers({
                 );
             }
 
-            // Получаем обновленные предметы
             const updatedItems = await Item.find({ owner });
             itemCache.set(owner, updatedItems);
 
-            // Отправляем обновленные предметы всем в комнате
             const currentRoom = userCurrentRoom.get(socket.userData.userId);
             if (currentRoom) {
                 io.to(currentRoom).emit('itemPositionsUpdate', { owner, items: updatedItems });
-                io.to(currentRoom).emit('items', { owner, items: updatedItems });
+                io.to(currentRoom).emit('items', {
+                    owner,
+                    items: updatedItems,
+                    currentWeight: calculateCurrentWeight(updatedItems),
+                    maxWeight: await getWeightLimit(owner, socket.userData.userId)
+                });
             }
 
             if (callback) callback({ success: true, message: 'Позиции предметов обновлены' });
@@ -204,7 +223,6 @@ function registerInventoryHandlers({
                 return;
             }
 
-            // Проверка интервала между действиями
             const now = Date.now();
             const lastActionTime = userLastAction.get(owner) || 0;
             if (now - lastActionTime < MIN_ACTION_INTERVAL) {
@@ -213,7 +231,6 @@ function registerInventoryHandlers({
             }
             userLastAction.set(owner, now);
 
-            // Проверка наличия материалов
             const requiredSticks = materials.sticks || 0;
             const requiredBoards = materials.boards || 0;
             const stickItems = requiredSticks > 0 ? await Item.find({ owner, name: 'Палка' }).limit(requiredSticks) : [];
@@ -224,58 +241,52 @@ function registerInventoryHandlers({
                 return;
             }
 
-            // Проверка лимитов инвентаря
-            const ownerLimit = await InventoryLimit.findOne({ owner });
-            if (!ownerLimit) {
-                if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
-                return;
-            }
-
+            const ownerItems = await Item.find({ owner });
+            const currentWeight = calculateCurrentWeight(ownerItems);
             const craftedItemWeight = parseFloat(craftedItem.weight) || 0;
             const materialsWeight = stickItems.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0) +
                 boardItems.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
             const weightDifference = craftedItemWeight - materialsWeight;
+            const maxWeight = await getWeightLimit(owner, socket.userData.userId);
 
-            if (ownerLimit.currentWeight + weightDifference > ownerLimit.maxWeight) {
+            if (currentWeight + weightDifference > maxWeight) {
                 if (callback) callback({ success: false, message: 'Превышен лимит веса инвентаря' });
                 return;
             }
 
-            // Удаление материалов
             const stickIds = stickItems.map(item => item._id);
             const boardIds = boardItems.map(item => item._id);
             await Item.deleteMany({ _id: { $in: [...stickIds, ...boardIds] } });
 
-            // Создание нового предмета
             const newItem = await Item.create({ owner, ...craftedItem });
             console.log('Crafted item:', newItem);
 
-            // Обновление веса инвентаря
-            await InventoryLimit.updateOne(
-                { owner },
-                { $inc: { currentWeight: weightDifference } }
-            );
-
-            // Обновление кэша
-            const ownerItems = itemCache.get(owner) || [];
-            const updatedItems = ownerItems
-                .filter(i => !stickIds.includes(i._id) && !boardIds.includes(i._id))
-                .concat([newItem]);
+            const updatedItems = await Item.find({ owner });
             itemCache.set(owner, updatedItems);
 
-            // Получение обновленных лимитов
-            const updatedLimit = await InventoryLimit.findOne({ owner });
-
-            // Уведомление клиентов
-            socket.emit('inventoryLimit', updatedLimit);
-            io.to(owner).emit('items', { owner, items: updatedItems });
+            socket.emit('items', {
+                owner,
+                items: updatedItems,
+                currentWeight: calculateCurrentWeight(updatedItems),
+                maxWeight
+            });
+            io.to(owner).emit('items', {
+                owner,
+                items: updatedItems,
+                currentWeight: calculateCurrentWeight(updatedItems),
+                maxWeight
+            });
 
             const currentRoom = userCurrentRoom.get(socket.userData.userId);
             if (currentRoom) {
                 io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemIds: [...stickIds, ...boardIds] });
                 io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: newItem });
-                io.to(currentRoom).emit('items', { owner, items: updatedItems });
-                io.to(currentRoom).emit('inventoryLimit', updatedLimit);
+                io.to(currentRoom).emit('items', {
+                    owner,
+                    items: updatedItems,
+                    currentWeight: calculateCurrentWeight(updatedItems),
+                    maxWeight
+                });
             }
 
             if (callback) callback({ success: true, item: newItem });
@@ -287,8 +298,10 @@ function registerInventoryHandlers({
 
     socket.on('getInventoryLimit', async ({ owner }) => {
         try {
-            const limit = await InventoryLimit.findOne({ owner });
-            socket.emit('inventoryLimit', limit);
+            const items = await Item.find({ owner });
+            const currentWeight = calculateCurrentWeight(items);
+            const maxWeight = await getWeightLimit(owner, socket.userData.userId);
+            socket.emit('inventoryLimit', { owner, currentWeight, maxWeight });
         } catch (err) {
             console.error('Error fetching inventory limit:', err.message, err.stack);
         }
@@ -303,28 +316,24 @@ function registerInventoryHandlers({
                 return;
             }
 
-            // Проверка интервала между действиями
             const now = Date.now();
             const lastActionTime = userLastAction.get(owner) || 0;
             if (now - lastActionTime < MIN_ACTION_INTERVAL) {
                 if (callback) callback({ success: false, message: 'Слишком частые действия, подождите' });
                 return;
             }
-            userLastAction.set(owner, now); // Обновляем время последнего действия
+            userLastAction.set(owner, now);
 
             if (item._id) {
                 itemLocks.set(item._id, true);
             }
 
-            const ownerLimit = await InventoryLimit.findOne({ owner });
-            if (!ownerLimit) {
-                if (item._id) itemLocks.delete(item._id);
-                if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
-                return;
-            }
-
+            const ownerItems = await Item.find({ owner });
+            const currentWeight = calculateCurrentWeight(ownerItems);
             const itemWeight = parseFloat(item.weight) || 0;
-            if (ownerLimit.currentWeight + itemWeight > ownerLimit.maxWeight) {
+            const maxWeight = await getWeightLimit(owner, socket.userData.userId);
+
+            if (currentWeight + itemWeight > maxWeight) {
                 if (item._id) itemLocks.delete(item._id);
                 if (callback) callback({ success: false, message: 'Превышен лимит веса' });
                 return;
@@ -333,25 +342,30 @@ function registerInventoryHandlers({
             const newItem = await Item.create({ owner, ...item });
             console.log('Saved item:', newItem);
 
-            await InventoryLimit.updateOne(
-                { owner },
-                { $inc: { currentWeight: itemWeight } }
-            );
+            const ownerItemsUpdated = [...ownerItems, newItem];
+            itemCache.set(owner, ownerItemsUpdated);
 
-            const ownerItems = itemCache.get(owner) || [];
-            itemCache.set(owner, [...ownerItems, newItem]);
-
-            const updatedLimit = await InventoryLimit.findOne({ owner });
-            socket.emit('inventoryLimit', updatedLimit);
+            const updatedCurrentWeight = calculateCurrentWeight(ownerItemsUpdated);
+            socket.emit('inventoryLimit', { owner, currentWeight: updatedCurrentWeight, maxWeight });
 
             const currentRoom = userCurrentRoom.get(socket.userData.userId);
             if (currentRoom) {
                 io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: newItem });
-                io.to(currentRoom).emit('items', { owner, items: itemCache.get(owner) });
-                io.to(currentRoom).emit('inventoryLimit', updatedLimit);
+                io.to(currentRoom).emit('items', {
+                    owner,
+                    items: ownerItemsUpdated,
+                    currentWeight: updatedCurrentWeight,
+                    maxWeight
+                });
+                io.to(currentRoom).emit('inventoryLimit', { owner, currentWeight: updatedCurrentWeight, maxWeight });
             }
 
-            io.to(owner).emit('items', { owner, items: itemCache.get(owner) });
+            io.to(owner).emit('items', {
+                owner,
+                items: ownerItemsUpdated,
+                currentWeight: updatedCurrentWeight,
+                maxWeight
+            });
 
             if (callback) callback({ success: true, item: newItem });
             if (item._id) itemLocks.delete(item._id);
@@ -372,17 +386,18 @@ function registerInventoryHandlers({
             }
 
             const oldOwner = items[0].owner;
-            const totalWeight = items.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
+            const totalWeight = calculateCurrentWeight(items);
 
-            const newOwnerLimit = await InventoryLimit.findOne({ owner: newOwner });
-            if (!newOwnerLimit || newOwnerLimit.currentWeight + totalWeight > newOwnerLimit.maxWeight) {
+            const newOwnerItems = await Item.find({ owner: newOwner });
+            const newOwnerCurrentWeight = calculateCurrentWeight(newOwnerItems);
+            const newOwnerMaxWeight = await getWeightLimit(newOwner, socket.userData.userId);
+
+            if (newOwnerCurrentWeight + totalWeight > newOwnerMaxWeight) {
                 socket.emit('error', { message: 'Превышен лимит веса в месте назначения' });
                 return;
             }
 
             await Item.updateMany({ _id: { $in: ids } }, { owner: newOwner });
-            await InventoryLimit.updateOne({ owner: oldOwner }, { $inc: { currentWeight: -totalWeight } });
-            await InventoryLimit.updateOne({ owner: newOwner }, { $inc: { currentWeight: totalWeight } });
 
             const updatedItems = await Item.find({ _id: { $in: ids } });
             updatedItems.forEach(item => {
@@ -392,20 +407,34 @@ function registerInventoryHandlers({
                 itemCache.set(newOwner, [...cachedNewOwnerItems, item]);
             });
 
-            const oldOwnerLimit = await InventoryLimit.findOne({ owner: oldOwner });
-            const newOwnerLimitUpdated = await InventoryLimit.findOne({ owner: newOwner });
+            const oldOwnerItems = await Item.find({ owner: oldOwner });
+            const oldOwnerCurrentWeight = calculateCurrentWeight(oldOwnerItems);
+            const oldOwnerMaxWeight = await getWeightLimit(oldOwner, socket.userData.userId);
 
-            socket.emit('inventoryLimit', oldOwnerLimit);
-            socket.emit('inventoryLimit', newOwnerLimitUpdated);
-            io.to(oldOwner).emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) });
-            io.to(newOwner).emit('items', { owner: newOwner, items: itemCache.get(newOwner) });
+            const newOwnerUpdatedItems = await Item.find({ owner: newOwner });
+            const newOwnerUpdatedCurrentWeight = calculateCurrentWeight(newOwnerUpdatedItems);
+
+            socket.emit('inventoryLimit', { owner: oldOwner, currentWeight: oldOwnerCurrentWeight, maxWeight: oldOwnerMaxWeight });
+            socket.emit('inventoryLimit', { owner: newOwner, currentWeight: newOwnerUpdatedCurrentWeight, maxWeight: newOwnerMaxWeight });
+            io.to(oldOwner).emit('items', {
+                owner: oldOwner,
+                items: oldOwnerItems,
+                currentWeight: oldOwnerCurrentWeight,
+                maxWeight: oldOwnerMaxWeight
+            });
+            io.to(newOwner).emit('items', {
+                owner: newOwner,
+                items: newOwnerUpdatedItems,
+                currentWeight: newOwnerUpdatedCurrentWeight,
+                maxWeight: newOwnerMaxWeight
+            });
 
             const currentRoom = userCurrentRoom.get(socket.userData.userId);
             if (currentRoom) {
                 io.to(currentRoom).emit('itemAction', { action: 'remove', owner: oldOwner, itemId: ids });
                 io.to(currentRoom).emit('itemAction', { action: 'add', owner: newOwner, item: updatedItems[0] });
-                io.to(currentRoom).emit('inventoryLimit', oldOwnerLimit);
-                io.to(currentRoom).emit('inventoryLimit', newOwnerLimitUpdated);
+                io.to(currentRoom).emit('inventoryLimit', { owner: oldOwner, currentWeight: oldOwnerCurrentWeight, maxWeight: oldOwnerMaxWeight });
+                io.to(currentRoom).emit('inventoryLimit', { owner: newOwner, currentWeight: newOwnerUpdatedCurrentWeight, maxWeight: newOwnerMaxWeight });
             }
         } catch (err) {
             console.error('Error moving items:', err.message, err.stack);
@@ -433,50 +462,50 @@ function registerInventoryHandlers({
             const oldOwner = item.owner;
             const itemWeight = parseFloat(item.weight) || 0;
 
-            const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
-            if (userLimit.currentWeight + itemWeight > userLimit.maxWeight) {
+            const userItems = await Item.find({ owner: userOwnerKey });
+            const userCurrentWeight = calculateCurrentWeight(userItems);
+            const userMaxWeight = await getWeightLimit(userOwnerKey, socket.userData.userId);
+
+            if (userCurrentWeight + itemWeight > userMaxWeight) {
                 itemLocks.delete(itemId);
                 socket.emit('error', { message: 'Превышен лимит веса у пользователя' });
-                return;
-            }
-
-            const oldOwnerLimit = await InventoryLimit.findOne({ owner: oldOwner });
-            if (!oldOwnerLimit) {
-                itemLocks.delete(itemId);
-                socket.emit('error', { message: 'Лимиты инвентаря не найдены' });
                 return;
             }
 
             item.owner = userOwnerKey;
             await item.save();
 
-            await InventoryLimit.updateOne(
-                { owner: oldOwner },
-                { $inc: { currentWeight: -itemWeight } }
-            );
-            await InventoryLimit.updateOne(
-                { owner: userOwnerKey },
-                { $inc: { currentWeight: itemWeight } }
-            );
+            const oldOwnerItems = await Item.find({ owner: oldOwner });
+            const oldOwnerCurrentWeight = calculateCurrentWeight(oldOwnerItems);
+            const oldOwnerMaxWeight = await getWeightLimit(oldOwner, socket.userData.userId);
 
-            const oldOwnerItems = itemCache.get(oldOwner) || [];
-            itemCache.set(oldOwner, oldOwnerItems.filter(i => i._id.toString() !== itemId));
-            const userItems = itemCache.get(userOwnerKey) || [];
-            itemCache.set(userOwnerKey, [...userItems, item]);
+            const userUpdatedItems = await Item.find({ owner: userOwnerKey });
+            const userUpdatedCurrentWeight = calculateCurrentWeight(userUpdatedItems);
 
-            const updatedOldLimit = await InventoryLimit.findOne({ owner: oldOwner });
-            const updatedUserLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
-            socket.emit('inventoryLimit', updatedOldLimit);
-            socket.emit('inventoryLimit', updatedUserLimit);
+            itemCache.set(oldOwner, oldOwnerItems);
+            itemCache.set(userOwnerKey, userUpdatedItems);
+
+            socket.emit('inventoryLimit', { owner: oldOwner, currentWeight: oldOwnerCurrentWeight, maxWeight: oldOwnerMaxWeight });
+            socket.emit('inventoryLimit', { owner: userOwnerKey, currentWeight: userUpdatedCurrentWeight, maxWeight: userMaxWeight });
 
             const currentRoom = userCurrentRoom.get(socket.userData.userId);
             if (currentRoom) {
                 io.to(currentRoom).emit('itemAction', { action: 'remove', owner: oldOwner, itemId });
                 io.to(currentRoom).emit('itemAction', { action: 'add', owner: userOwnerKey, item });
-                io.to(currentRoom).emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) });
-                io.to(currentRoom).emit('items', { owner: userOwnerKey, items: itemCache.get(userOwnerKey) });
-                io.to(currentRoom).emit('inventoryLimit', updatedOldLimit);
-                io.to(currentRoom).emit('inventoryLimit', updatedUserLimit);
+                io.to(currentRoom).emit('items', {
+                    owner: oldOwner,
+                    items: oldOwnerItems,
+                    currentWeight: oldOwnerCurrentWeight,
+                    maxWeight: oldOwnerMaxWeight
+                });
+                io.to(currentRoom).emit('items', {
+                    owner: userOwnerKey,
+                    items: userUpdatedItems,
+                    currentWeight: userUpdatedCurrentWeight,
+                    maxWeight: userMaxWeight
+                });
+                io.to(currentRoom).emit('inventoryLimit', { owner: oldOwner, currentWeight: oldOwnerCurrentWeight, maxWeight: oldOwnerMaxWeight });
+                io.to(currentRoom).emit('inventoryLimit', { owner: userOwnerKey, currentWeight: userUpdatedCurrentWeight, maxWeight: userMaxWeight });
             }
 
             itemLocks.delete(itemId);
@@ -523,20 +552,22 @@ function registerInventoryHandlers({
                 console.log('Created trash item:', trashItem);
             }
 
-            await InventoryLimit.updateOne(
-                { owner },
-                { $inc: { currentWeight: trashItem ? 0 : -itemWeight } }
-            );
-
-            const ownerItems = itemCache.get(owner) || [];
-            itemCache.set(owner, ownerItems.filter(i => i._id.toString() !== itemId).concat(trashItem ? [trashItem] : []));
-
-            const updatedLimit = await InventoryLimit.findOne({ owner });
-            socket.emit('inventoryLimit', updatedLimit);
-
             const updatedItems = await Item.find({ owner });
+            itemCache.set(owner, updatedItems);
+
+            const currentWeight = calculateCurrentWeight(updatedItems);
+            const maxWeight = await getWeightLimit(owner, socket.userData.userId);
+
+            socket.emit('inventoryLimit', { owner, currentWeight, maxWeight });
+
             console.log('Sending updated items after delete:', updatedItems);
-            io.to(owner).emit('items', { owner, items: updatedItems });
+            io.to(owner).emit('items', { owner, items: updatedItems, currentWeight, maxWeight });
+
+            const currentRoom = userCurrentRoom.get(socket.userData.userId);
+            if (currentRoom) {
+                io.to(currentRoom).emit('items', { owner, items: updatedItems, currentWeight, maxWeight });
+                io.to(currentRoom).emit('inventoryLimit', { owner, currentWeight, maxWeight });
+            }
 
             itemLocks.delete(itemId);
         } catch (err) {
@@ -571,11 +602,6 @@ function registerInventoryHandlers({
 
             const creditsEarned = Math.floor(totalCredits);
 
-            await InventoryLimit.updateOne(
-                { owner },
-                { $inc: { currentWeight: -totalWeight } }
-            );
-
             const user = await User.findOneAndUpdate(
                 { userId: socket.userData.userId },
                 { $inc: { credits: creditsEarned } },
@@ -591,13 +617,20 @@ function registerInventoryHandlers({
 
             const updatedItems = await Item.find({ owner });
             itemCache.set(owner, updatedItems);
+            const currentWeight = calculateCurrentWeight(updatedItems);
+            const maxWeight = await getWeightLimit(owner, socket.userData.userId);
+
             console.log('Trash items deleted for:', owner);
             console.log('Credits earned:', creditsEarned);
             console.log('Sending updated items:', updatedItems);
-            io.to(owner).emit('items', { owner, items: updatedItems });
+            io.to(owner).emit('items', { owner, items: updatedItems, currentWeight, maxWeight });
+            io.to(owner).emit('inventoryLimit', { owner, currentWeight, maxWeight });
 
-            const updatedLimit = await InventoryLimit.findOne({ owner });
-            io.to(owner).emit('inventoryLimit', updatedLimit);
+            const currentRoom = userCurrentRoom.get(socket.userData.userId);
+            if (currentRoom) {
+                io.to(currentRoom).emit('items', { owner, items: updatedItems, currentWeight, maxWeight });
+                io.to(currentRoom).emit('inventoryLimit', { owner, currentWeight, maxWeight });
+            }
 
             if (callback) callback({ success: true, message: `Мусор утилизирован. Получено ${creditsEarned} кредитов.` });
         } catch (err) {
@@ -611,14 +644,13 @@ function registerInventoryHandlers({
         try {
             const { owner, name, count } = data;
 
-            // Проверка интервала между действиями
             const now = Date.now();
             const lastActionTime = userLastAction.get(owner) || 0;
             if (now - lastActionTime < MIN_ACTION_INTERVAL) {
                 socket.emit('error', { message: 'Слишком частые действия, подождите' });
                 return;
             }
-            userLastAction.set(owner, now); // Обновляем время последнего действия
+            userLastAction.set(owner, now);
 
             const items = await Item.find({ owner, name }).limit(count);
 
@@ -628,27 +660,23 @@ function registerInventoryHandlers({
             }
 
             const itemIds = items.map(item => item._id);
-            const totalWeight = items.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
 
             await Item.deleteMany({ _id: { $in: itemIds } });
-
-            await InventoryLimit.updateOne(
-                { owner },
-                { $inc: { currentWeight: -totalWeight } }
-            );
 
             const updatedItems = await Item.find({ owner });
             itemCache.set(owner, updatedItems);
 
-            const updatedLimit = await InventoryLimit.findOne({ owner });
-            io.to(owner).emit('items', { owner, items: updatedItems });
-            io.to(owner).emit('inventoryLimit', updatedLimit);
+            const currentWeight = calculateCurrentWeight(updatedItems);
+            const maxWeight = await getWeightLimit(owner, socket.userData.userId);
+
+            io.to(owner).emit('items', { owner, items: updatedItems, currentWeight, maxWeight });
+            io.to(owner).emit('inventoryLimit', { owner, currentWeight, maxWeight });
 
             const currentRoom = userCurrentRoom.get(socket.userData.userId);
             if (currentRoom) {
                 io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemIds });
-                io.to(currentRoom).emit('items', { owner, items: updatedItems });
-                io.to(currentRoom).emit('inventoryLimit', updatedLimit);
+                io.to(currentRoom).emit('items', { owner, items: updatedItems, currentWeight, maxWeight });
+                io.to(currentRoom).emit('inventoryLimit', { owner, currentWeight, maxWeight });
             }
         } catch (err) {
             console.error('Error removing items:', err.message, err.stack);

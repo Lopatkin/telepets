@@ -156,6 +156,7 @@ io.on('connection', (socket) => {
     User,
     Message,
     Item,
+    InventoryLimit,
     roomUsers,
     userCurrentRoom,
     activeSockets,

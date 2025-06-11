@@ -51,22 +51,45 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
   const handleItems = useCallback((data) => {
     const { owner, items, currentWeight, maxWeight } = data;
-    console.log('Received items event:', { owner, items, currentWeight, maxWeight }); // Добавляем лог
+    console.log('Received items event:', { owner, items, currentWeight, maxWeight }); // Лог для диагностики
     if (owner === locationOwnerKey) {
       setLocationItems(items.map(item => ({
         ...item,
         _id: item._id.toString(),
       })));
-      setLocationWeight({ currentWeight, maxWeight }); // Используем setLocationWeight вместо setLocationLimit
+      if (currentWeight !== undefined && maxWeight !== undefined) {
+        setLocationWeight({ currentWeight, maxWeight });
+      }
     } else if (owner === userOwnerKey) {
       setTempPersonalItems(items.map(item => ({
         ...item,
         _id: item._id.toString(),
       })));
-      setPersonalWeight({ currentWeight, maxWeight }); // Используем setPersonalWeight вместо setPersonalLimit
-      onItemsUpdate(data);
+      if (currentWeight !== undefined && maxWeight !== undefined) {
+        setPersonalWeight({ currentWeight, maxWeight });
+      }
+      onItemsUpdate({ owner, items });
     }
   }, [locationOwnerKey, userOwnerKey, onItemsUpdate]);
+
+  /* Добавляем обработчик события itemAction */
+  useEffect(() => {
+    const handleItemAction = ({ action, owner, item, itemId, itemIds }) => {
+      console.log('Received itemAction:', { action, owner, item, itemId, itemIds }); // Лог для диагностики
+      if (action === 'remove' && owner === userOwnerKey) {
+        setTempPersonalItems(prev => prev.filter(i => !(itemIds || [itemId]).includes(i._id)));
+      } else if (action === 'add' && owner === userOwnerKey) {
+        setTempPersonalItems(prev => [...prev, { ...item, _id: item._id.toString() }]);
+      } else if (action === 'remove' && owner === locationOwnerKey) {
+        setLocationItems(prev => prev.filter(i => !(itemIds || [itemId]).includes(i._id)));
+      } else if (action === 'add' && owner === locationOwnerKey) {
+        setLocationItems(prev => [...prev, { ...item, _id: item._id.toString() }]);
+      }
+    };
+
+    socket.on('itemAction', handleItemAction);
+    return () => socket.off('itemAction', handleItemAction);
+  }, [socket, userOwnerKey, locationOwnerKey]);
 
   const handleRenameAnimal = (animalId, newName) => {
     socket.emit('renameAnimal', { animalId, newName }, (response) => {

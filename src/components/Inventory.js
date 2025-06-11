@@ -55,25 +55,27 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     else if (limit.owner === locationOwnerKey) setLocationLimit({ currentWeight: limit.currentWeight, maxWeight: limit.maxWeight });
   }, [userOwnerKey, locationOwnerKey]);
 
-  const handleItems = (data) => {
+  const handleItems = useCallback((data) => {
     const { owner, items, currentWeight, maxWeight } = data;
     console.log('Received items event:', data);
     if (owner === locationOwnerKey) {
-      setLocationItems(items.map(item => ({
-        ...item,
-        _id: item._id.toString(),
-      })));
+      setLocationItems(
+        items.map((item) => ({
+          ...item,
+          _id: item._id.toString()
+        }))
+      );
       setLocationLimit({ currentWeight, maxWeight });
     } else if (owner === userOwnerKey) {
-      const updatedItems = items.map(item => ({
+      const updatedItems = items.map((item) => ({
         ...item,
-        _id: item._id.toString(),
+        _id: item._id.toString()
       }));
       setTempPersonalItems(updatedItems);
       setPersonalLimit({ currentWeight, maxWeight });
       onItemsUpdate({ owner, items: updatedItems });
     }
-  };
+  }, [userOwnerKey, locationOwnerKey, onItemsUpdate]);
 
   const handleRenameAnimal = (animalId, newName) => {
     socket.emit('renameAnimal', { animalId, newName }, (response) => {

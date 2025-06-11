@@ -290,7 +290,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems, onItemsUpdate]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems, onItemsUpdate, handleItems]);
 
   const handleBuyItem = async (item) => {
     if (isActionCooldown) return;

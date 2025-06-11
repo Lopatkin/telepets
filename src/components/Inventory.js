@@ -379,6 +379,10 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     console.log(`Sent takeAnimalHome request for animal ID: ${animalId}, Name: ${animalName}`);
   };
 
+  const countItems = useCallback((items, itemName) => {
+    return items.reduce((count, item) => (item.name === itemName ? count + 1 : count), 0);
+  }, []);
+
   // Обновляем handleMoveItem для корректного перемещения
   const handleMoveItem = (itemName, weight, maxCountItems) => {
     if (isActionCooldown) {

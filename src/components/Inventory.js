@@ -40,6 +40,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [newAnimalName, setNewAnimalName] = useState('');
   const [freeRoam, setFreeRoam] = useState(false);
   const [applyModal, setApplyModal] = useState({ isOpen: false, item: null });
+  const [tempPersonalItems, setTempPersonalItems] = useState(personalItems);
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;

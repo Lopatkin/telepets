@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
 import { FaEdit } from 'react-icons/fa';
-
-const { WEIGHT_LIMITS } = require('./constants/settings.js'); // Предполагаем, что settings.js доступен
-
 import stickImage from '../images/items/stick.jpg';
 import defaultItemImage from '../images/items/default-item.png';
 import boardImage from '../images/items/board.png';
@@ -23,6 +20,8 @@ import bandageImage from '../images/items/bandage.jpg'; // Изображени�
 import cannedFoodImage from '../images/items/canned-food.jpg'; // Изображение для Консервов
 import chocolateImage from '../images/items/chocolate.jpg'; // Изображение для Шоколадки
 import coffeeImage from '../images/items/coffee.jpg';
+
+const { WEIGHT_LIMITS } = require('./constants/settings.js'); // Предполагаем, что settings.js доступен
 
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);

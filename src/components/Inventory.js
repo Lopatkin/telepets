@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
 import { FaEdit } from 'react-icons/fa';
+
 import stickImage from '../images/items/stick.jpg';
 import defaultItemImage from '../images/items/default-item.png';
 import boardImage from '../images/items/board.png';
@@ -21,16 +22,14 @@ import cannedFoodImage from '../images/items/canned-food.jpg'; // Изображ
 import chocolateImage from '../images/items/chocolate.jpg'; // Изображение для Шоколадки
 import coffeeImage from '../images/items/coffee.jpg';
 
-const { WEIGHT_LIMITS } = require('./constants/settings.js'); // Предполагаем, что settings.js доступен
-
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
   const [activeTab, setActiveTab] = useState('personal');
   const [activeLocationSubTab, setActiveLocationSubTab] = useState('items');
   const [locationItems, setLocationItems] = useState([]);
   const [shelterAnimals, setShelterAnimals] = useState([]);
-  const [personalLimit, setPersonalLimit] = useState({ currentWeight: 0, maxWeight: user?.isHuman ? WEIGHT_LIMITS.HUMAN : WEIGHT_LIMITS.ANIMAL });
-  const [locationLimit, setLocationLimit] = useState({ currentWeight: 0, maxWeight: WEIGHT_LIMITS.LOCATION });
+  const [personalLimit, setPersonalLimit] = useState(null);
+  const [locationLimit, setLocationLimit] = useState(null);
   const [error, setError] = useState(null);
   const [animatingItem, setAnimatingItem] = useState(null);
   const [isActionCooldown, setIsActionCooldown] = useState(false);
@@ -39,43 +38,18 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [newAnimalName, setNewAnimalName] = useState('');
   const [freeRoam, setFreeRoam] = useState(false);
-  const [applyModal, setApplyModal] = useState({ isOpen: false, item: null });
   const [tempPersonalItems, setTempPersonalItems] = useState(personalItems);
+
+  const [applyModal, setApplyModal] = useState({ isOpen: false, item: null });
 
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
 
   useEffect(() => {
+    // console.log('Received personalItems in Inventory:', personalItems);
     setTempPersonalItems(personalItems);
   }, [personalItems]);
-
-  const handleLimitUpdate = useCallback((limit) => {
-    if (limit.owner === userOwnerKey) setPersonalLimit({ currentWeight: limit.currentWeight, maxWeight: limit.maxWeight });
-    else if (limit.owner === locationOwnerKey) setLocationLimit({ currentWeight: limit.currentWeight, maxWeight: limit.maxWeight });
-  }, [userOwnerKey, locationOwnerKey]);
-
-  const handleItems = useCallback((data) => {
-    const { owner, items, currentWeight, maxWeight } = data;
-    console.log('Received items event:', data);
-    if (owner === locationOwnerKey) {
-      setLocationItems(
-        items.map((item) => ({
-          ...item,
-          _id: item._id.toString()
-        }))
-      );
-      setLocationLimit({ currentWeight, maxWeight });
-    } else if (owner === userOwnerKey) {
-      const updatedItems = items.map((item) => ({
-        ...item,
-        _id: item._id.toString()
-      }));
-      setTempPersonalItems(updatedItems);
-      setPersonalLimit({ currentWeight, maxWeight });
-      onItemsUpdate({ owner, items: updatedItems });
-    }
-  }, [userOwnerKey, locationOwnerKey, onItemsUpdate]);
 
   const handleRenameAnimal = (animalId, newName) => {
     socket.emit('renameAnimal', { animalId, newName }, (response) => {
@@ -119,6 +93,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   };
 
   const groupItemsByNameAndWeight = (items) => {
+    // console.log('Grouping items:', items);
     const grouped = items.reduce((acc, item) => {
       const key = item.name === 'Паспорт животного' && item.animalId
         ? `${item.name}_${item.weight}_${item.animalId}`
@@ -132,6 +107,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     }, {});
     return Object.values(grouped);
   };
+
+  const handleLimitUpdate = useCallback((limit) => {
+    if (limit.owner === userOwnerKey) setPersonalLimit(limit);
+    else if (limit.owner === locationOwnerKey) setLocationLimit(limit);
+  }, [userOwnerKey, locationOwnerKey]);
 
   const handleItemAction = useCallback((data) => {
     const { action, owner, itemId, item, itemIds } = data;
@@ -147,6 +127,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
         setTimeout(() => {
           setLocationItems(prevItems => {
+            // Проверяем, нет ли уже этого предмета
             const exists = prevItems.some(i => i._id.toString() === item._id.toString());
             if (!exists) {
               return [...prevItems, { ...item, _id: item._id.toString() }];
@@ -156,6 +137,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
           setAnimatingItem(null);
         }, 500);
       }
+      // Запрашиваем актуальные данные с сервера
       socket.emit('getItems', { owner: locationOwnerKey });
     } else if (owner === userOwnerKey) {
       if (action === 'remove') {
@@ -269,12 +251,31 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     }
 
     if (currentRoom === 'Магазин "Всё на свете"' && user?.isHuman) {
-      setShopItems(shopStaticItems.filter(item => ['Ошейник', 'Поводок', 'Аптечка', 'Бинт', 'Консервы', 'Шоколадка'].includes(item.name)));
+      setShopItems(shopStaticItems.filter(item =>
+        ['Ошейник', 'Поводок', 'Аптечка', 'Бинт', 'Консервы', 'Шоколадка'].includes(item.name)
+      ));
     } else if (currentRoom === 'Кофейня "Ляля-Фа"' && user?.isHuman) {
       setShopItems(shopStaticItems.filter(item => item.name === 'Кофе'));
     } else {
       setShopItems([]);
     }
+
+    const handleItems = (data) => {
+      const { owner, items } = data;
+      console.log('Received items event:', data);
+      if (owner === locationOwnerKey) {
+        setLocationItems(items.map(item => ({
+          ...item,
+          _id: item._id.toString(),
+        })));
+      } else if (owner === userOwnerKey) {
+        setTempPersonalItems(items.map(item => ({
+          ...item,
+          _id: item._id.toString(),
+        })));
+        onItemsUpdate(data);
+      }
+    };
 
     socket.on('items', handleItems);
     socket.on('inventoryLimit', handleLimitUpdate);
@@ -292,7 +293,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems, onItemsUpdate, handleItems]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems, onItemsUpdate]);
 
   const handleBuyItem = async (item) => {
     if (isActionCooldown) return;
@@ -381,16 +382,10 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     console.log(`Sent takeAnimalHome request for animal ID: ${animalId}, Name: ${animalName}`);
   };
 
-  const countItems = useCallback((items, itemName) => {
-    return items.reduce((count, item) => (item.name === itemName ? count + 1 : count), 0);
-  }, []);
-
   // Обновляем handleMoveItem для корректного перемещения
-  const handleMoveItem = (itemName, weight, maxCountItems) => {
-    if (isActionCooldown) {
-      return;
-    }
-    setActionQuantity({ itemName, weight, countItems, action: 'move', maxCount: maxCountItems });
+  const handleMoveItem = (itemName, weight, maxCount) => {
+    if (isActionCooldown) return;
+    setActionQuantity({ itemName, weight, count: 1, action: 'move', maxCount });
   };
 
   // Обновляем handlePickupItem
@@ -839,8 +834,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                                                         item.name === 'Бинт' ? bandageImage :
                                                           item.name === 'Консервы' ? cannedFoodImage :
                                                             item.name === 'Шоколадка' ? chocolateImage :
-                                                              item.name === 'Кофе' ? coffeeImage :
-                                                                defaultItemImage
+                                                              defaultItemImage
                           }
                           alt={item.name}
                         />

@@ -8,7 +8,7 @@ const calculateCurrentWeight = (items) => {
 };
 
 // Вспомогательная функция для получения лимита веса
-const getWeightLimit = async (owner, userId) => {
+const getWeightLimit = async (owner, userId, User) => { // Добавляем параметр User
     if (owner.startsWith('user_')) {
         const user = await User.findOne({ userId: owner.replace('user_', '') });
         return user.isHuman ? WEIGHT_LIMITS.HUMAN : WEIGHT_LIMITS.ANIMAL;

@@ -171,7 +171,7 @@ function Header({ user, room, theme, socket }) {
 
     socket.emit('getCredits', {}, (response) => {
       if (response?.success) {
-        console.log('Initial credits received:', response.credits);
+        // console.log('Initial credits received:', response.credits);
         setCredits(response.credits);
       }
     });

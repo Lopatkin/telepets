@@ -232,9 +232,9 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   useEffect(() => {
     if (!socket || !userId) return;
 
-    console.log('Emitting getItems for location:', locationOwnerKey);
+    // console.log('Emitting getItems for location:', locationOwnerKey);
     socket.emit('getItems', { owner: locationOwnerKey });
-    console.log('Emitting getItems for user:', userOwnerKey);
+    // console.log('Emitting getItems for user:', userOwnerKey);
     socket.emit('getItems', { owner: userOwnerKey });
 
     if (isShelter) {

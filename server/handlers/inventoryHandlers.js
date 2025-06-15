@@ -197,7 +197,7 @@ function registerInventoryHandlers({
 
     socket.on('addItem', async ({ owner, item }, callback) => {
         try {
-            console.log('Received item data:', { owner, item });
+            // console.log('Received item data:', { owner, item });
             if (!item || typeof item !== 'object') {
                 console.error('Invalid item data:', item);
                 if (callback) callback({ success: false, message: 'Некорректные данные предмета' });
@@ -218,7 +218,7 @@ function registerInventoryHandlers({
             }
 
             const newItem = await Item.create({ owner, ...item });
-            console.log('Saved item:', newItem);
+            // console.log('Saved item:', newItem);
 
             const ownerItems = itemCache.get(owner) || [];
             itemCache.set(owner, [...ownerItems, newItem]);
@@ -350,14 +350,14 @@ function registerInventoryHandlers({
                     owner: owner
                 });
                 await trashItem.save();
-                console.log('Created trash item:', trashItem);
+                // console.log('Created trash item:', trashItem);
             }
 
             const ownerItems = itemCache.get(owner) || [];
             itemCache.set(owner, ownerItems.filter(i => i._id.toString() !== itemId).concat(trashItem ? [trashItem] : []));
 
             const updatedItems = await Item.find({ owner });
-            console.log('Sending updated items after delete:', updatedItems);
+            // console.log('Sending updated items after delete:', updatedItems);
             io.to(owner).emit('items', { owner, items: updatedItems });
 
             itemLocks.delete(itemId);
@@ -406,9 +406,9 @@ function registerInventoryHandlers({
 
             const updatedItems = await Item.find({ owner });
             itemCache.set(owner, updatedItems);
-            console.log('Trash items deleted for:', owner);
-            console.log('Credits earned:', creditsEarned);
-            console.log('Sending updated items:', updatedItems);
+            // console.log('Trash items deleted for:', owner);
+            // console.log('Credits earned:', creditsEarned);
+            // console.log('Sending updated items:', updatedItems);
             io.to(owner).emit('items', { owner, items: updatedItems });
 
             if (callback) callback({ success: true, message: `Мусор утилизирован. Получено ${creditsEarned} кредитов.` });
@@ -495,7 +495,7 @@ function registerInventoryHandlers({
 
             // Создание нового предмета
             const newItem = await Item.create({ owner, ...craftedItem });
-            console.log('Crafted item:', newItem);
+            // console.log('Crafted item:', newItem);
 
             // Обновление кэша
             const ownerItems = itemCache.get(owner) || [];

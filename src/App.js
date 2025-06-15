@@ -141,8 +141,8 @@ function App() {
               firstName: 'Test User',
               isHuman: false
             };
-            const lastRoom = 'Полигон утилизации';
-            console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
+            // const lastRoom = 'Полигон утилизации';
+            // console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
             socketRef.current.emit('auth', { ...testUser });
             setTelegramTheme('light');
           }
@@ -152,8 +152,8 @@ function App() {
             firstName: 'Test User',
             isHuman: false
           };
-          const lastRoom = 'Полигон утилизации';
-          console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
+          // const lastRoom = 'Полигон утилизации';
+          // console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
           socketRef.current.emit('auth', { ...testUser });
           setTelegramTheme('light');
         }
@@ -336,7 +336,7 @@ function App() {
 
   useEffect(() => {
     if (socket && user?.userId && isAuthenticated && isRegistered && personalItems.length === 0) {
-      console.log('Emitting getItems for user:', `user_${user.userId}`);
+      // console.log('Emitting getItems for user:', `user_${user.userId}`);
       socket.emit('getItems', { owner: `user_${user.userId}` });
     }
   }, [socket, user, isAuthenticated, isRegistered, personalItems.length]);

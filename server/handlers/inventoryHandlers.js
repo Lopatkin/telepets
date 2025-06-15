@@ -461,9 +461,9 @@ function registerInventoryHandlers({
 
     socket.on('craftItem', async ({ owner, craftedItem, materials }, callback) => {
         try {
-            console.log('Received craftItem data:', { owner, craftedItem, materials });
+            // console.log('Received craftItem data:', { owner, craftedItem, materials });
             if (!craftedItem || typeof craftedItem !== 'object' || !materials || typeof materials !== 'object') {
-                console.error('Invalid craftItem data:', { craftedItem, materials });
+                // console.error('Invalid craftItem data:', { craftedItem, materials });
                 if (callback) callback({ success: false, message: 'Некорректные данные предмета или материалов' });
                 return;
             }

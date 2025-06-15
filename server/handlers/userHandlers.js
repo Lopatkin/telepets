@@ -270,11 +270,11 @@ function registerUserHandlers({
             }
         }
 
-        console.log('Available static rooms:', rooms);
-        console.log('Received lastRoom:', userData.lastRoom);
+        // console.log('Available static rooms:', rooms);
+        // console.log('Received lastRoom:', userData.lastRoom);
 
         const defaultRoom = user.isRegistered ? (user.lastRoom || 'Полигон утилизации') : 'Автобусная остановка';
-        console.log('Выбрана стартовая комната:', defaultRoom);
+        // console.log('Выбрана стартовая комната:', defaultRoom);
 
         socket.join(defaultRoom);
         userCurrentRoom.set(socket.userData.userId, defaultRoom);

@@ -58,7 +58,6 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         // console.log('Unsubscribing from items event in Actions');
         socket.off('items');
       };
-      
     }
   }, [socket, userId, onItemsUpdate]);
 

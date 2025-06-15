@@ -298,11 +298,11 @@ io.on('connection', (socket) => {
   // Добавление обработчика getUser
   socket.on('getUser', async (data, callback) => {
     const { userId } = data;
-    console.log(`Received getUser for user ${userId}`);
+    // console.log(`Received getUser for user ${userId}`);
 
     const user = await User.findOne({ userId });
     if (user) {
-      console.log(`Sending user data for ${userId}:`, user);
+      // console.log(`Sending user data for ${userId}:`, user);
       callback({
         success: true,
         user: {
@@ -324,7 +324,7 @@ io.on('connection', (socket) => {
         }
       });
     } else {
-      console.log(`User ${userId} not found for getUser`);
+      // console.log(`User ${userId} not found for getUser`);
       callback({ success: false, message: 'Пользователь не найден' });
     }
   });
@@ -332,18 +332,18 @@ io.on('connection', (socket) => {
   // Улучшенный обработчик endFight
   socket.on('endFight', async (data) => {
     const { userId } = data;
-    console.log(`Received endFight for user ${userId}`); // Лог получения события
+    // console.log(`Received endFight for user ${userId}`); // Лог получения события
 
     if (fightStates.has(userId)) {
       fightStates.delete(userId);
-      console.log(`Fight state cleared for user ${userId}`); // Лог очистки состояния
+      // console.log(`Fight state cleared for user ${userId}`); // Лог очистки состояния
     } else {
-      console.log(`No active fight state found for user ${userId}`); // Лог отсутствия состояния
+      // console.log(`No active fight state found for user ${userId}`); // Лог отсутствия состояния
     }
 
     const user = await User.findOne({ userId });
     if (user) {
-      console.log(`Preparing userUpdate for user ${userId} with stats:`, user.stats); // Лог перед отправкой
+      // console.log(`Preparing userUpdate for user ${userId} with stats:`, user.stats); // Лог перед отправкой
       try {
         socket.emit('userUpdate', {
           userId: user.userId,
@@ -362,12 +362,12 @@ io.on('connection', (socket) => {
           freeRoam: user.freeRoam || false,
           stats: user.stats
         });
-        console.log(`Sent userUpdate for user ${userId}`); // Лог успешной отправки
+        // console.log(`Sent userUpdate for user ${userId}`); // Лог успешной отправки
       } catch (error) {
         console.error(`Failed to send userUpdate for user ${userId}:`, error.message); // Лог ошибки отправки
       }
     } else {
-      console.log(`User ${userId} not found for userUpdate`); // Лог отсутствия пользователя
+      // console.log(`User ${userId} not found for userUpdate`); // Лог отсутствия пользователя
     }
   });
 

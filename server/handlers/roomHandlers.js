@@ -236,7 +236,7 @@ function registerRoomHandlers({
         if (user.userId === socket.userData.userId) {
           roomUsers[roomToLeave].delete(user);
           io.to(roomToLeave).emit('roomUsers', Array.from(roomUsers[roomToLeave]));
-          console.log(`User ${socket.userData.userId} left room: ${roomToLeave}`);
+          // console.log(`User ${socket.userData.userId} left room: ${roomToLeave}`);
         }
       });
     }

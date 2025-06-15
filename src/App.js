@@ -289,7 +289,7 @@ function App() {
         if (user?.userId) {
           socketRef.current.emit('getUser', { userId: user.userId }, (response) => {
             if (response.success && response.user) {
-              console.log('Received user data on connect:', response.user);
+              // console.log('Received user data on connect:', response.user);
               updateUser(response.user);
               setIsRegistered(response.user.isRegistered);
             }

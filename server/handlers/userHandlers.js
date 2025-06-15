@@ -68,7 +68,7 @@ function registerUserHandlers({
                 diary: []
             });
             await user.save();
-            console.log('New user created:', user.userId);
+            // console.log('New user created:', user.userId);
         }
 
         const now = new Date();
@@ -121,7 +121,7 @@ function registerUserHandlers({
                         }
                     }
                 );
-                console.log(`Added ${diaryEntries.length} diary entries and updated stats for user ${user.userId}:`, updatedStats);
+                // console.log(`Added ${diaryEntries.length} diary entries and updated stats for user ${user.userId}:`, updatedStats);
 
                 user = await User.findOne({ userId: user.userId });
 
@@ -258,7 +258,7 @@ function registerUserHandlers({
                 isRegistered
             } = data;
 
-            console.log('Получены данные регистрации:', data);
+            // console.log('Получены данные регистрации:', data);
 
             const maxStats = isHuman
                 ? { maxHealth: 100, maxEnergy: 100, maxMood: 100, maxSatiety: 100, freeWill: 100 }
@@ -307,7 +307,7 @@ function registerUserHandlers({
                 return;
             }
 
-            console.log('Обновлённый пользователь:', user);
+            // console.log('Обновлённый пользователь:', user);
 
             socket.userData = {
                 userId: user.userId,
@@ -347,7 +347,7 @@ function registerUserHandlers({
             });
 
             io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
-            console.log(`Пользователь ${user.userId} присоединился к комнате после регистрации: ${defaultRoom}`);
+            // console.log(`Пользователь ${user.userId} присоединился к комнате после регистрации: ${defaultRoom}`);
 
             try {
                 const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
@@ -375,7 +375,7 @@ function registerUserHandlers({
                 stats: user.stats
             });
 
-            console.log('Отправлен userUpdate с параметрами:', { stats: user.stats });
+            // console.log('Отправлен userUpdate с параметрами:', { stats: user.stats });
 
             if (callback) callback({ success: true, defaultRoom });
         } catch (err) {

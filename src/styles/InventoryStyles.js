@@ -427,3 +427,15 @@ export const FreeRoamCheckbox = styled.div`
     font-size: 16px;
   }
 `;
+
+export const WeightWidget = styled.div`
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  background: ${props => props.theme === 'dark' ? '#333' : '#f0f0f0'};
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+`;

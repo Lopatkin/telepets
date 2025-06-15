@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
 import { FaEdit } from 'react-icons/fa';
+import { INVENTORY_WEIGHT_LIMIT } from '../settings'; // Добавлен импорт констант лимитов веса
+
 
 import stickImage from '../images/items/stick.jpg';
 import defaultItemImage from '../images/items/default-item.png';
@@ -43,6 +45,14 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const userOwnerKey = `user_${userId}`;
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
+
+  // Текущий общий вес для теста
+  const currentPersonalWeight = 6; // Тестовое значение 6 кг
+  const currentLocationWeight = 6; // Тестовое значение 6 кг
+
+  // Определяем максимальный лимит веса в зависимости от типа игрока
+  const maxPersonalWeight = user?.isHuman ? inventory_weight_limit.human : inventory_weight_limit.animal;
+  const maxLocationWeight = inventory_weight_limit.location;
 
   useEffect(() => {
     // console.log('Received personalItems in Inventory:', personalItems);
@@ -561,6 +571,17 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         </S.Tab>
       </S.Tabs>
       <S.ContentContainer>
+        {/* Добавлен виджет отображения веса */}
+        {activeTab === 'personal' && (
+          <S.WeightWidget theme={theme}>
+            Вес: {currentPersonalWeight} кг / {maxPersonalWeight} кг
+          </S.WeightWidget>
+        )}
+        {activeTab === 'location' && (
+          <S.WeightWidget theme={theme}>
+            Вес: {currentLocationWeight} кг / {maxLocationWeight} кг
+          </S.WeightWidget>
+        )}
         {activeTab === 'location' && isShelter && (
           <S.SubTabs>
             <S.SubTab

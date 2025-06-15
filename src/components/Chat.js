@@ -112,7 +112,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user, setShowMyShel
       // Добавляем активных NPC в начало списка
       setUsers([...activeNPCs, ...updatedUsers.filter(user => !activeNPCIds.includes(user.userId))]);
 
-      console.log('Updated users in room:', [...activeNPCs, ...updatedUsers]);
+      // console.log('Updated users in room:', [...activeNPCs, ...updatedUsers]);
     });
 
     if (!messageCacheRef.current[room]?.length) {

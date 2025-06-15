@@ -584,16 +584,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             {error}
           </div>
         )}
-        {activeTab === 'personal' && personalLimit && (
-          <S.WeightLimit theme={theme}>
-            Вес: {personalLimit.currentWeight} кг / {personalLimit.maxWeight} кг
-          </S.WeightLimit>
-        )}
-        {activeTab === 'location' && locationLimit && (
-          <S.WeightLimit theme={theme}>
-            Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
-          </S.WeightLimit>
-        )}
         {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (
           <S.AnimalList>
             {shelterAnimals.map(animal => (

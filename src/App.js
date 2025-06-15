@@ -132,7 +132,7 @@ function App() {
               owner: telegramData.isHuman === false ? null : undefined
             };
             const lastRoom = JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации';
-            // console.log('Загружена последняя комната из localStorage:', lastRoom);
+            console.log('Загружена последняя комната из localStorage:', lastRoom);
             socketRef.current.emit('auth', { ...initialUserData });
             setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
           } else {
@@ -142,7 +142,7 @@ function App() {
               isHuman: false
             };
             const lastRoom = 'Полигон утилизации';
-            // console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
+            console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
             socketRef.current.emit('auth', { ...testUser });
             setTelegramTheme('light');
           }
@@ -153,7 +153,7 @@ function App() {
             isHuman: false
           };
           const lastRoom = 'Полигон утилизации';
-          // console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
+          console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
           socketRef.current.emit('auth', { ...testUser });
           setTelegramTheme('light');
         }

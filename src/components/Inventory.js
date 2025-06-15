@@ -46,11 +46,14 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const locationOwnerKey = currentRoom;
   const isShelter = currentRoom === 'Приют для животных "Кошкин дом"';
 
-  // Текущий общий вес для теста
-  const currentPersonalWeight = 6; // Тестовое значение 6 кг
-  const currentLocationWeight = 6; // Тестовое значение 6 кг
+  const currentPersonalWeight = useMemo(() => {
+    return tempPersonalItems.reduce((total, item) => total + (parseFloat(item.weight) || 0), 0);
+  }, [tempPersonalItems]);
 
-  // Определяем максимальный лимит веса в зависимости от типа игрока
+  const currentLocationWeight = useMemo(() => {
+    return locationItems.reduce((total, item) => total + (parseFloat(item.weight) || 0), 0);
+  }, [locationItems]);
+
   const maxPersonalWeight = user?.isHuman ? INVENTORY_WEIGHT_LIMIT.human : INVENTORY_WEIGHT_LIMIT.animal;
   const maxLocationWeight = INVENTORY_WEIGHT_LIMIT.location;
 
@@ -574,20 +577,24 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         </S.Tab>
       </S.Tabs>
       <S.ContentContainer>
-        {/* Прогресс-бар для личного инвентаря */}
         {activeTab === 'personal' && (
           <S.WeightWidget theme={theme}>
             <S.ProgressBarContainer>
               <S.ProgressBarFill percentage={personalWeightPercentage} theme={theme} />
             </S.ProgressBarContainer>
+            <S.WeightText theme={theme}>
+              Вес: {currentPersonalWeight.toFixed(2)} / {maxPersonalWeight} кг
+            </S.WeightText>
           </S.WeightWidget>
         )}
-        {/* Прогресс-бар для инвентаря локации */}
         {activeTab === 'location' && (
           <S.WeightWidget theme={theme}>
             <S.ProgressBarContainer>
               <S.ProgressBarFill percentage={locationWeightPercentage} theme={theme} />
             </S.ProgressBarContainer>
+            <S.WeightText theme={theme}>
+              Вес: {currentLocationWeight.toFixed(2)} / {maxLocationWeight} кг
+            </S.WeightText>
           </S.WeightWidget>
         )}
         {activeTab === 'location' && isShelter && (
@@ -734,7 +741,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           {isActionCooldown && <S.ProgressBar />}
                         </S.GreenActionButton>
                       )}
-
                       {item.name === 'Кофе' && (
                         <S.GreenActionButton
                           onClick={() => handleEatItem(item.name, item.weight, count)}
@@ -744,7 +750,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                           {isActionCooldown && <S.ProgressBar />}
                         </S.GreenActionButton>
                       )}
-
                       {(item.name === 'Бинт' || item.name === 'Аптечка') && (
                         <S.GreenActionButton
                           onClick={() => handleUseItem(item.name, item.weight, count)}

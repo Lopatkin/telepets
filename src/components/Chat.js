@@ -180,7 +180,7 @@ function Chat({ userId, room, theme, socket, joinedRoomsRef, user, setShowMyShel
   };
 
   const getAvatar = (msg) => {
-    console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
+    // console.log('Getting avatar for:', { userId: msg.userId, photoUrl: msg.photoUrl, currentUserPhotoUrl });
     const initial = (msg.firstName || msg.userId || 'U').charAt(0).toUpperCase();
 
     // Проверяем кэш для NPC и системных сообщений

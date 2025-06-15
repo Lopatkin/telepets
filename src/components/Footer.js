@@ -43,7 +43,7 @@ const TabButton = styled.button`
 function Footer({ activeTab, setActiveTab, theme, user, currentRoom, isAnimalAtHome, isAnimalOnLeashWithOwnerOnline }) {
   const isAnimalInShelter = !user?.isHuman && currentRoom === 'Приют для животных "Кошкин дом"';
   const isMapDisabled = isAnimalInShelter || (isAnimalAtHome && !user?.freeRoam) || isAnimalOnLeashWithOwnerOnline;
-  console.log('isMapDisabled:', isMapDisabled, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalInShelter:', isAnimalInShelter, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline); // Отладка
+  // console.log('isMapDisabled:', isMapDisabled, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalInShelter:', isAnimalInShelter, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline); // Отладка
 
   const handleTabClick = (tab) => {
     if (tab === 'map') {

@@ -28,8 +28,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [activeLocationSubTab, setActiveLocationSubTab] = useState('items');
   const [locationItems, setLocationItems] = useState([]);
   const [shelterAnimals, setShelterAnimals] = useState([]);
-  const [personalLimit, setPersonalLimit] = useState(null);
-  const [locationLimit, setLocationLimit] = useState(null);
   const [error, setError] = useState(null);
   const [animatingItem, setAnimatingItem] = useState(null);
   const [isActionCooldown, setIsActionCooldown] = useState(false);
@@ -107,11 +105,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     }, {});
     return Object.values(grouped);
   };
-
-  const handleLimitUpdate = useCallback((limit) => {
-    if (limit.owner === userOwnerKey) setPersonalLimit(limit);
-    else if (limit.owner === locationOwnerKey) setLocationLimit(limit);
-  }, [userOwnerKey, locationOwnerKey]);
 
   const handleItemAction = useCallback((data) => {
     const { action, owner, itemId, item, itemIds } = data;
@@ -243,8 +236,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     socket.emit('getItems', { owner: locationOwnerKey });
     console.log('Emitting getItems for user:', userOwnerKey);
     socket.emit('getItems', { owner: userOwnerKey });
-    socket.emit('getInventoryLimit', { owner: userOwnerKey });
-    socket.emit('getInventoryLimit', { owner: locationOwnerKey });
 
     if (isShelter) {
       socket.emit('getShelterAnimals');
@@ -278,7 +269,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     };
 
     socket.on('items', handleItems);
-    socket.on('inventoryLimit', handleLimitUpdate);
     socket.on('itemAction', handleItemAction);
     socket.on('shelterAnimals', handleShelterAnimals);
     socket.on('error', ({ message }) => {
@@ -288,12 +278,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
     return () => {
       socket.off('items', handleItems);
-      socket.off('inventoryLimit', handleLimitUpdate);
       socket.off('itemAction', handleItemAction);
       socket.off('shelterAnimals', handleShelterAnimals);
       socket.off('error');
     };
-  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleLimitUpdate, handleItemAction, handleShelterAnimals, user, shopStaticItems, onItemsUpdate]);
+  }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemAction, handleShelterAnimals, user, shopStaticItems, onItemsUpdate]);
 
   const handleBuyItem = async (item) => {
     if (isActionCooldown) return;
@@ -594,6 +583,16 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
           <div style={{ textAlign: 'center', color: 'red', marginBottom: '10px' }}>
             {error}
           </div>
+        )}
+        {activeTab === 'personal' && personalLimit && (
+          <S.WeightLimit theme={theme}>
+            Вес: {personalLimit.currentWeight} кг / {personalLimit.maxWeight} кг
+          </S.WeightLimit>
+        )}
+        {activeTab === 'location' && locationLimit && (
+          <S.WeightLimit theme={theme}>
+            Вес: {locationLimit.currentWeight} кг / {locationLimit.maxWeight} кг
+          </S.WeightLimit>
         )}
         {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (
           <S.AnimalList>

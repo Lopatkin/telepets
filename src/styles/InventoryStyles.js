@@ -429,8 +429,6 @@ export const FreeRoamCheckbox = styled.div`
 `;
 
 export const WeightWidget = styled.div`
-  padding: 8px 2px;
-  border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;

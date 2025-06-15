@@ -177,7 +177,6 @@ export const ContentContainer = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 0px;
-  margin-top: 10px; /* Добавлен отступ для учета фиксированного WeightWidget */
 `;
 
 export const ItemList = styled.div`

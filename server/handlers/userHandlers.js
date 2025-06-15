@@ -27,10 +27,8 @@ const getRandomWalkMessage = (user) => {
     if (room.startsWith('myhome_') && roomSpecificMessages[playerType]?.myhome?.[messageCategory]) {
         messages = roomSpecificMessages[playerType].myhome[messageCategory];
     } else if (roomSpecificMessages[playerType]?.[room]?.[messageCategory]) {
-        // Используем сообщения для конкретной комнаты
         messages = roomSpecificMessages[playerType][room][messageCategory];
     } else {
-        // Используем общие сообщения, если нет специфичных
         messages = user.isHuman ? humanMessages[messageCategory] : user.animalType === 'Кошка' ? catMessages[messageCategory] : dogMessages[messageCategory];
     }
 
@@ -44,7 +42,6 @@ function registerUserHandlers({
     User,
     Message,
     Item,
-    InventoryLimit,
     roomUsers,
     userCurrentRoom,
     activeSockets,
@@ -68,16 +65,15 @@ function registerUserHandlers({
                 isRegistered: false,
                 lastRoom: 'Полигон утилизации',
                 owner: userData.owner || null,
-                diary: [] // Инициализируем пустой diary
+                diary: []
             });
             await user.save();
             console.log('New user created:', user.userId);
         }
 
-        // В функции registerUserHandlers, замените блок кода, связанный с созданием записей в diary, на следующий:
         const now = new Date();
         const lastActivity = user.lastActivity || now;
-        const hoursPassed = Math.floor((now - lastActivity) / (1000 * 60 * 60)); // Кол-во полных часов
+        const hoursPassed = Math.floor((now - lastActivity) / (1000 * 60 * 60));
 
         if (hoursPassed > 0) {
             const diaryEntries = [];
@@ -87,12 +83,10 @@ function registerUserHandlers({
                 mood: 0,
                 satiety: 0
             };
-            const freeWill = user.stats?.freeWill || 0; // Получаем freeWill, по умолчанию 0
+            const freeWill = user.stats?.freeWill || 0;
             for (let i = 0; i < hoursPassed; i++) {
-                // Генерируем случайное число от 0 до 100
                 const chance = Math.random() * 100;
-                if (chance <= freeWill) { // Создаём запись, если шанс меньше или равен freeWill
-                    // Генерируем случайное время в пределах часа
+                if (chance <= freeWill) {
                     const randomMinutes = Math.floor(Math.random() * 60);
                     const entryTime = new Date(lastActivity.getTime() + (i * 60 * 60 * 1000) + (randomMinutes * 60 * 1000));
                     const entry = getRandomWalkMessage(user);
@@ -100,16 +94,13 @@ function registerUserHandlers({
                         timestamp: entryTime,
                         message: entry.message
                     });
-                    // Накапливаем изменения параметров
                     if (entry.effect.health) statUpdates.health += entry.effect.health;
                     if (entry.effect.energy) statUpdates.energy += entry.effect.energy;
                     if (entry.effect.mood) statUpdates.mood += entry.effect.mood;
                     if (entry.effect.satiety) statUpdates.satiety += entry.effect.satiety;
                 }
             }
-            // Добавляем записи в diary и обновляем параметры, если есть изменения
             if (diaryEntries.length > 0) {
-                // Ограничиваем параметры минимальными (0) и максимальными значениями
                 const updatedStats = {
                     health: Math.min(Math.max(user.stats.health + statUpdates.health, 0), user.stats.maxHealth),
                     energy: Math.min(Math.max(user.stats.energy + statUpdates.energy, 0), user.stats.maxEnergy),
@@ -120,7 +111,7 @@ function registerUserHandlers({
                 await User.updateOne(
                     { userId: user.userId },
                     {
-                        $push: { diary: { $each: diaryEntries, $slice: -250 } }, // Ограничиваем diary до 250 записей
+                        $push: { diary: { $each: diaryEntries, $slice: -250 } },
                         $set: {
                             lastActivity: now,
                             'stats.health': updatedStats.health,
@@ -132,10 +123,8 @@ function registerUserHandlers({
                 );
                 console.log(`Added ${diaryEntries.length} diary entries and updated stats for user ${user.userId}:`, updatedStats);
 
-                // Обновляем user после изменений
                 user = await User.findOne({ userId: user.userId });
 
-                // Отправляем userUpdate клиенту
                 socket.emit('userUpdate', {
                     userId: user.userId,
                     firstName: user.firstName,
@@ -155,15 +144,13 @@ function registerUserHandlers({
                     diary: user.diary
                 });
             } else {
-                // Обновляем lastActivity, если записей нет
                 await User.updateOne(
                     { userId: user.userId },
                     { $set: { lastActivity: now } }
                 );
             }
-            user = await User.findOne({ userId: user.userId }); // Обновляем user после изменений
+            user = await User.findOne({ userId: user.userId });
         } else {
-            // Обновляем lastActivity, если не прошло полного часа
             await User.updateOne(
                 { userId: user.userId },
                 { $set: { lastActivity: now } }
@@ -182,11 +169,8 @@ function registerUserHandlers({
             owner: user.owner,
             homeless: user.homeless
         };
-        // console.log('Received auth data:', userData);
-        // console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
 
         if (activeSockets.has(socket.userData.userId)) {
-            // console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
             const oldSocket = activeSockets.get(socket.userData.userId);
             oldSocket.disconnect();
         }
@@ -215,67 +199,13 @@ function registerUserHandlers({
             credits: user.credits || 0,
             freeRoam: user.freeRoam || false,
             stats: user.stats,
-            diary: user.diary // Отправляем diary клиенту
+            diary: user.diary
         });
-        // console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 
         const userOwnerKey = `user_${socket.userData.userId}`;
         const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
 
-        const userLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
-        if (!userLimit) {
-            await InventoryLimit.create({
-                owner: userOwnerKey,
-                maxWeight: 40
-            });
-            const stick = new Item({
-                name: 'Палка',
-                description: 'Многофункциональная вещь',
-                rarity: 'Обычный',
-                weight: 1,
-                cost: 5,
-                effect: 'Вы чувствуете себя более уверенно в тёмное время суток',
-                owner: userOwnerKey
-            });
-            await stick.save();
-            await InventoryLimit.updateOne(
-                { owner: userOwnerKey },
-                { $inc: { currentWeight: 1 } }
-            );
-        }
-
-        const myHomeLimit = await InventoryLimit.findOne({ owner: myHomeOwnerKey });
-        if (!myHomeLimit) {
-            await InventoryLimit.create({
-                owner: myHomeOwnerKey,
-                maxWeight: 500
-            });
-        }
-
-        const workshopLimit = await InventoryLimit.findOne({ owner: 'Мастерская' });
-        if (!workshopLimit) {
-            await InventoryLimit.create({
-                owner: 'Мастерская',
-                maxWeight: 1000
-            });
-        }
-
-        for (const room of rooms) {
-            const roomLimit = await InventoryLimit.findOne({ owner: room });
-            if (!roomLimit) {
-                await InventoryLimit.create({
-                    owner: room,
-                    maxWeight: 10000,
-                });
-            }
-        }
-
-        // console.log('Available static rooms:', rooms);
-        // console.log('Received lastRoom:', userData.lastRoom);
-
         const defaultRoom = user.isRegistered ? (user.lastRoom || 'Полигон утилизации') : 'Автобусная остановка';
-        // console.log('Выбрана стартовая комната:', defaultRoom);
-
         socket.join(defaultRoom);
         userCurrentRoom.set(socket.userData.userId, defaultRoom);
 
@@ -300,7 +230,6 @@ function registerUserHandlers({
         });
 
         io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
-        // console.log(`User ${socket.userData.userId} auto-joined room: ${defaultRoom}`);
 
         try {
             const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);
@@ -314,7 +243,6 @@ function registerUserHandlers({
         if (callback) callback({ success: true });
     });
 
-    // Остальной код остаётся без изменений
     socket.on('completeRegistration', async (data, callback) => {
         try {
             const {
@@ -471,7 +399,7 @@ function registerUserHandlers({
             });
         } catch (err) {
             console.error('Error fetching credits:', err.message);
-            callback({ success: false, message: 'Ошибка при получении кредитов' });
+            callback.error('error', { message: 'Ошибка при получении кредитов' });
         }
     });
 
@@ -485,13 +413,6 @@ function registerUserHandlers({
                 { $inc: { credits: -amount } },
                 { new: true }
             );
-
-            if (user) {
-                socket.emit('userUpdate', {
-                    userId: user.userId,
-                    credits: user.credits
-                });
-            }
 
             if (!user) {
                 return callback({

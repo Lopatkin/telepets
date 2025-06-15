@@ -1,3 +1,4 @@
+// В обработчике takeAnimalHome удаляем обновления currentWeight
 const mongoose = require('mongoose');
 
 function registerAnimalHandlers({
@@ -5,7 +6,6 @@ function registerAnimalHandlers({
   socket,
   User,
   Item,
-  InventoryLimit,
   itemCache,
   activeSockets,
   userCurrentRoom
@@ -190,39 +190,22 @@ function registerAnimalHandlers({
       let passport;
       let newCollar;
       try {
+        // Удаляем ошейник пользователя
         await Item.deleteOne({ _id: collar._id }, { session });
-        await InventoryLimit.updateOne(
-          { owner: userOwnerKey },
-          { $inc: { currentWeight: -collar.weight } },
-          { session }
-        );
 
+        // Создаём новый ошейник для животного (вес сохраняется)
         newCollar = new Item({
           owner: animalOwnerKey,
           name: 'Ошейник',
           description: 'С ним вы можете взять себе питомца из приюта.',
           rarity: 'Обычный',
-          weight: 0.5,
+          weight: 0.5, // Сохраняем вес
           cost: 250,
           effect: 'Вы всегда знаете где находится ваш питомец.',
         });
         await newCollar.save({ session });
 
-        let animalLimit = await InventoryLimit.findOne({ owner: animalOwnerKey }, null, { session });
-        if (!animalLimit) {
-          animalLimit = new InventoryLimit({
-            owner: animalOwnerKey,
-            maxWeight: 10,
-          });
-          await animalLimit.save({ session });
-        }
-
-        await InventoryLimit.updateOne(
-          { owner: animalOwnerKey },
-          { $inc: { currentWeight: newCollar.weight } },
-          { session }
-        );
-
+        // Обновляем данные животного
         await User.updateOne(
           { userId: animalId },
           {
@@ -234,23 +217,18 @@ function registerAnimalHandlers({
           { session }
         );
 
+        // Создаём паспорт животного (вес сохраняется)
         passport = new Item({
           owner: userOwnerKey,
           name: 'Паспорт животного',
           description: `Ваш питомец - ${animalName || 'Без имени'}`,
           rarity: 'Обычный',
-          weight: 0.1,
+          weight: 0.1, // Сохраняем вес
           cost: 100,
           effect: 'Вы чувствуете ответственность за кого-то.',
           animalId,
         });
         await passport.save({ session });
-
-        await InventoryLimit.updateOne(
-          { owner: userOwnerKey },
-          { $inc: { currentWeight: passport.weight } },
-          { session }
-        );
 
         await session.commitTransaction();
         console.log(`Successfully committed transaction for animal ${animalId}`);
@@ -263,6 +241,7 @@ function registerAnimalHandlers({
         session.endSession();
       }
 
+      // Обновляем кэш предметов
       let humanItems = itemCache.get(userOwnerKey) || [];
       humanItems = humanItems.filter(i => i._id.toString() !== collar._id.toString());
       if (passport) {
@@ -276,6 +255,7 @@ function registerAnimalHandlers({
       }
       itemCache.set(animalOwnerKey, animalItems);
 
+      // Обновляем список животных в приюте
       const shelterAnimals = await User.find({
         lastRoom: 'Приют для животных "Кошкин дом"',
         homeless: true,
@@ -297,23 +277,14 @@ function registerAnimalHandlers({
 
       io.to('Приют для животных "Кошкин дом"').emit('shelterAnimals', animalsWithStatus);
 
-      const updatedAnimal = await User.findOne({ userId: animalId });
-      if (!updatedAnimal) {
-        socket.emit('error', { message: 'Ошибка: данные животного не найдены после обновления' });
-        return;
-      }
-
+      // Отправляем обновлённые данные предметов
       const updatedHumanItems = await Item.find({ owner: userOwnerKey });
-      const updatedHumanLimit = await InventoryLimit.findOne({ owner: userOwnerKey });
       socket.emit('items', { owner: userOwnerKey, items: updatedHumanItems });
-      socket.emit('inventoryLimit', updatedHumanLimit);
 
       const updatedAnimalItems = await Item.find({ owner: animalOwnerKey });
-      const updatedAnimalLimit = await InventoryLimit.findOne({ owner: animalOwnerKey });
       const animalSocket = activeSockets.get(animalId);
       if (animalSocket) {
         animalSocket.emit('items', { owner: animalOwnerKey, items: updatedAnimalItems });
-        animalSocket.emit('inventoryLimit', updatedAnimalLimit);
       }
 
       socket.emit('takeAnimalHomeSuccess', {

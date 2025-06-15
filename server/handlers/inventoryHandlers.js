@@ -7,7 +7,6 @@ function registerInventoryHandlers({
     socket,
     Item,
     User,
-    InventoryLimit,
     itemCache,
     itemLocks,
     userCurrentRoom

@@ -392,7 +392,7 @@ function App() {
 
   useEffect(() => {
     if (activeTab !== 'chat' && currentRoom && socket) {
-      console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
+      // console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
     }
   }, [activeTab, currentRoom, socket]);
 

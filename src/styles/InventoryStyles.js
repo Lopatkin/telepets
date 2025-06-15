@@ -430,20 +430,11 @@ export const FreeRoamCheckbox = styled.div`
 
 export const WeightWidget = styled.div`
   padding: 8px 12px;
-  margin-bottom: 10px;
-  background: ${props => props.theme === 'dark' ? '#333' : '#f0f0f0'};
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   gap: 8px;
-`;
-
-export const WeightLabel = styled.div`
-  font-size: 14px;
-  font-weight: 500;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  text-align: center;
 `;
 
 export const ProgressBarContainer = styled.div`

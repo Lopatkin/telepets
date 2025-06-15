@@ -577,7 +577,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         {/* Прогресс-бар для личного инвентаря */}
         {activeTab === 'personal' && (
           <S.WeightWidget theme={theme}>
-            <S.WeightLabel>Вес: {currentPersonalWeight} кг / {maxPersonalWeight} кг</S.WeightLabel>
             <S.ProgressBarContainer>
               <S.ProgressBarFill percentage={personalWeightPercentage} theme={theme} />
             </S.ProgressBarContainer>
@@ -586,7 +585,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         {/* Прогресс-бар для инвентаря локации */}
         {activeTab === 'location' && (
           <S.WeightWidget theme={theme}>
-            <S.WeightLabel>Вес: {currentLocationWeight} кг / {maxLocationWeight} кг</S.WeightLabel>
             <S.ProgressBarContainer>
               <S.ProgressBarFill percentage={locationWeightPercentage} theme={theme} />
             </S.ProgressBarContainer>

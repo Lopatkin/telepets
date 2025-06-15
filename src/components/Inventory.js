@@ -253,7 +253,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
     const handleItems = (data) => {
       const { owner, items } = data;
-      console.log('Received items event:', data);
+      // console.log('Received items event:', data);
       if (owner === locationOwnerKey) {
         setLocationItems(items.map(item => ({
           ...item,

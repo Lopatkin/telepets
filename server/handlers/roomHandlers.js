@@ -58,7 +58,7 @@ function registerRoomHandlers({
         { userId: socket.userData.userId },
         { lastRoom: room }
       );
-      console.log(`Updated lastRoom for user ${socket.userData.userId} to ${room}`);
+      // console.log(`Updated lastRoom for user ${socket.userData.userId} to ${room}`);
     } catch (error) {
       console.error(`Error updating lastRoom for user ${socket.userData.userId}:`, error);
     }

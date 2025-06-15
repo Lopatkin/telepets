@@ -44,7 +44,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   // Добавляем новый useEffect для обработки ответа от события 'items'
   useEffect(() => {
     if (socket && onItemsUpdate) {
-      console.log('Subscribing to items event in Actions');
+      // console.log('Subscribing to items event in Actions');
       socket.on('items', (data) => {
         onItemsUpdate(data);
         // Устанавливаем isLoading в false после получения данных

@@ -182,11 +182,11 @@ function registerUserHandlers({
             owner: user.owner,
             homeless: user.homeless
         };
-        console.log('Received auth data:', userData);
-        console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
+        // console.log('Received auth data:', userData);
+        // console.log('Authenticated user:', socket.userData.userId, 'PhotoURL:', socket.userData.photoUrl);
 
         if (activeSockets.has(socket.userData.userId)) {
-            console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
+            // console.log(`User ${socket.userData.userId} already connected with socket ${activeSockets.get(socket.userData.userId)}. Disconnecting old socket.`);
             const oldSocket = activeSockets.get(socket.userData.userId);
             oldSocket.disconnect();
         }
@@ -217,7 +217,7 @@ function registerUserHandlers({
             stats: user.stats,
             diary: user.diary // Отправляем diary клиенту
         });
-        console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
+        // console.log('Sent userUpdate on auth with photoUrl:', user.photoUrl);
 
         const userOwnerKey = `user_${socket.userData.userId}`;
         const myHomeOwnerKey = `myhome_${socket.userData.userId}`;
@@ -300,7 +300,7 @@ function registerUserHandlers({
         });
 
         io.to(defaultRoom).emit('roomUsers', Array.from(roomUsers[defaultRoom]));
-        console.log(`User ${socket.userData.userId} auto-joined room: ${defaultRoom}`);
+        // console.log(`User ${socket.userData.userId} auto-joined room: ${defaultRoom}`);
 
         try {
             const messages = await Message.find({ room: defaultRoom }).sort({ timestamp: 1 }).limit(100);

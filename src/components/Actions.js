@@ -55,9 +55,10 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
       // console.log('Emitting getItems for user in Actions:', `user_${userId}`);
       socket.emit('getItems', { owner: `user_${userId}` });
       return () => {
-        console.log('Unsubscribing from items event in Actions');
+        // console.log('Unsubscribing from items event in Actions');
         socket.off('items');
       };
+      
     }
   }, [socket, userId, onItemsUpdate]);
 

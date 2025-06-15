@@ -429,7 +429,6 @@ export const FreeRoamCheckbox = styled.div`
 `;
 
 export const WeightWidget = styled.div`
-  padding: 8px 12px;
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -440,7 +439,6 @@ export const WeightWidget = styled.div`
 export const ProgressBarContainer = styled.div`
   width: 100%;
   height: 10px;
-  background: ${props => props.theme === 'dark' ? '#444' : '#e0e0e0'};
   border-radius: 5px;
   overflow: hidden;
 `;
@@ -448,6 +446,5 @@ export const ProgressBarContainer = styled.div`
 export const ProgressBarFill = styled.div`
   width: ${props => props.percentage}%;
   height: 100%;
-  background: ${props => props.theme === 'dark' ? '#28a745' : '#32CD32'};
   transition: width 0.3s ease-in-out;
 `;

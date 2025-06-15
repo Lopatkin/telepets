@@ -582,9 +582,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             <S.ProgressBarContainer>
               <S.ProgressBarFill percentage={personalWeightPercentage} theme={theme} />
             </S.ProgressBarContainer>
-            <S.WeightText theme={theme}>
-              Вес: {currentPersonalWeight.toFixed(2)} / {maxPersonalWeight} кг
-            </S.WeightText>
           </S.WeightWidget>
         )}
         {activeTab === 'location' && (
@@ -592,9 +589,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             <S.ProgressBarContainer>
               <S.ProgressBarFill percentage={locationWeightPercentage} theme={theme} />
             </S.ProgressBarContainer>
-            <S.WeightText theme={theme}>
-              Вес: {currentLocationWeight.toFixed(2)} / {maxLocationWeight} кг
-            </S.WeightText>
           </S.WeightWidget>
         )}
         {activeTab === 'location' && isShelter && (

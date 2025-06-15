@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
 import { FaEdit } from 'react-icons/fa';
-import { INVENTORY_WEIGHT_LIMIT } from '../settings'; // Добавлен импорт констант лимитов веса
+import { INVENTORY_WEIGHT_LIMIT } from './constants/settings'; // Добавлен импорт констант лимитов веса
 
 
 import stickImage from '../images/items/stick.jpg';
@@ -51,8 +51,8 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const currentLocationWeight = 6; // Тестовое значение 6 кг
 
   // Определяем максимальный лимит веса в зависимости от типа игрока
-  const maxPersonalWeight = user?.isHuman ? inventory_weight_limit.human : inventory_weight_limit.animal;
-  const maxLocationWeight = inventory_weight_limit.location;
+  const maxPersonalWeight = user?.isHuman ? INVENTORY_WEIGHT_LIMIT.human : INVENTORY_WEIGHT_LIMIT.animal;
+  const maxLocationWeight = INVENTORY_WEIGHT_LIMIT.location;
 
   useEffect(() => {
     // console.log('Received personalItems in Inventory:', personalItems);

@@ -116,7 +116,7 @@ function App() {
       });
 
       socketRef.current.on('connect', () => {
-        console.log('Socket connected:', socketRef.current.id);
+        // console.log('Socket connected:', socketRef.current.id);
         setSocket(socketRef.current);
 
         if (window.Telegram?.WebApp) {
@@ -132,7 +132,7 @@ function App() {
               owner: telegramData.isHuman === false ? null : undefined
             };
             const lastRoom = JSON.parse(localStorage.getItem('userRooms') || '{}')[telegramData.user.id] || 'Полигон утилизации';
-            console.log('Загружена последняя комната из localStorage:', lastRoom);
+            // console.log('Загружена последняя комната из localStorage:', lastRoom);
             socketRef.current.emit('auth', { ...initialUserData });
             setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
           } else {
@@ -142,7 +142,7 @@ function App() {
               isHuman: false
             };
             const lastRoom = 'Полигон утилизации';
-            console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
+            // console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
             socketRef.current.emit('auth', { ...testUser });
             setTelegramTheme('light');
           }
@@ -153,7 +153,7 @@ function App() {
             isHuman: false
           };
           const lastRoom = 'Полигон утилизации';
-          console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
+          // console.log('Используется дефолтная комната для тестового пользователя:', lastRoom);
           socketRef.current.emit('auth', { ...testUser });
           setTelegramTheme('light');
         }
@@ -161,7 +161,7 @@ function App() {
         // Добавляем обработчик для всех ответов getUser
         socketRef.current.on('getUser', (response) => {
           if (response.success && response.user) {
-            console.log('Received getUser response:', response.user);
+            // console.log('Received getUser response:', response.user);
             updateUser(response.user);
           }
         });
@@ -169,7 +169,7 @@ function App() {
         // Улучшение обработки userUpdate для надежного обновления stats
         // В useEffect для инициализации сокета обновляем обработчик userUpdate
         socketRef.current.on('userUpdate', (updatedUser) => {
-          console.log('Received userUpdate from server:', updatedUser);
+          // console.log('Received userUpdate from server:', updatedUser);
           setUser(prevUser => {
             const newUser = {
               ...prevUser,
@@ -180,7 +180,7 @@ function App() {
               stats: { ...prevUser?.stats, ...updatedUser.stats },
               diary: updatedUser.diary || prevUser?.diary || [] // Добавляем diary
             };
-            console.log('Updated user state after userUpdate:', newUser);
+            // console.log('Updated user state after userUpdate:', newUser);
             return newUser;
           });
           if (updatedUser.isRegistered !== undefined) {
@@ -256,7 +256,7 @@ function App() {
       });
 
       socketRef.current.on('authSuccess', ({ defaultRoom, isRegistered }) => {
-        console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
+        // console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
         setIsAuthenticated(true);
         setIsRegistered(isRegistered);
         if (isRegistered) {
@@ -264,7 +264,7 @@ function App() {
           joinedRoomsRef.current.add(defaultRoom);
           socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
           if (user?.userId) {
-            console.log('Emitting getItems for user:', `user_${user.userId}`);
+            // console.log('Emitting getItems for user:', `user_${user.userId}`);
             socketRef.current.emit('getItems', { owner: `user_${user.userId}` });
           } else {
             console.warn('user.userId is undefined during authSuccess');
@@ -273,7 +273,7 @@ function App() {
       });
 
       socketRef.current.on('forceRoomChange', ({ newRoom }) => {
-        console.log('Перемещение в новую комнату:', newRoom);
+        // console.log('Перемещение в новую комнату:', newRoom);
         setCurrentRoom(newRoom);
         joinedRoomsRef.current.add(newRoom);
         socketRef.current.emit('joinRoom', { room: newRoom, lastTimestamp: null });
@@ -285,7 +285,7 @@ function App() {
 
       // Добавляем запрос getUser при подключении
       socketRef.current.on('connect', () => {
-        console.log('Socket connected, requesting user data');
+        // console.log('Socket connected, requesting user data');
         if (user?.userId) {
           socketRef.current.emit('getUser', { userId: user.userId }, (response) => {
             if (response.success && response.user) {

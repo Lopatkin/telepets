@@ -54,6 +54,9 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const maxPersonalWeight = user?.isHuman ? INVENTORY_WEIGHT_LIMIT.human : INVENTORY_WEIGHT_LIMIT.animal;
   const maxLocationWeight = INVENTORY_WEIGHT_LIMIT.location;
 
+  const personalWeightPercentage = Math.min((currentPersonalWeight / maxPersonalWeight) * 100, 100);
+  const locationWeightPercentage = Math.min((currentLocationWeight / maxLocationWeight) * 100, 100);
+
   useEffect(() => {
     // console.log('Received personalItems in Inventory:', personalItems);
     setTempPersonalItems(personalItems);
@@ -571,15 +574,22 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         </S.Tab>
       </S.Tabs>
       <S.ContentContainer>
-        {/* Добавлен виджет отображения веса */}
+        {/* Прогресс-бар для личного инвентаря */}
         {activeTab === 'personal' && (
           <S.WeightWidget theme={theme}>
-            Вес: {currentPersonalWeight} кг / {maxPersonalWeight} кг
+            <S.WeightLabel>Вес: {currentPersonalWeight} кг / {maxPersonalWeight} кг</S.WeightLabel>
+            <S.ProgressBarContainer>
+              <S.ProgressBarFill percentage={personalWeightPercentage} theme={theme} />
+            </S.ProgressBarContainer>
           </S.WeightWidget>
         )}
+        {/* Прогресс-бар для инвентаря локации */}
         {activeTab === 'location' && (
           <S.WeightWidget theme={theme}>
-            Вес: {currentLocationWeight} кг / {maxLocationWeight} кг
+            <S.WeightLabel>Вес: {currentLocationWeight} кг / {maxLocationWeight} кг</S.WeightLabel>
+            <S.ProgressBarContainer>
+              <S.ProgressBarFill percentage={locationWeightPercentage} theme={theme} />
+            </S.ProgressBarContainer>
           </S.WeightWidget>
         )}
         {activeTab === 'location' && isShelter && (

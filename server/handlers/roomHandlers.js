@@ -179,16 +179,16 @@ function registerRoomHandlers({
     const JOIN_COOLDOWN = 1000;
 
     if (isRejoining && (now - lastJoinTime < JOIN_COOLDOWN)) {
-      console.log(`User ${socket.userData.userId} attempted to rejoin room: ${room} too quickly - sending current room data`);
+      // console.log(`User ${socket.userData.userId} attempted to rejoin room: ${room} too quickly - sending current room data`);
       callback({ success: false, message: 'Повторное присоединение слишком быстро' });
       return;
     }
 
     if (isRejoining) {
-      console.log(`User ${socket.userData.userId} already in room: ${room} — rejoining to fetch messages`);
+      // console.log(`User ${socket.userData.userId} already in room: ${room} — rejoining to fetch messages`);
     } else {
       socket.join(room);
-      console.log(`User ${socket.userData.userId} joined room: ${room}`);
+      // console.log(`User ${socket.userData.userId} joined room: ${room}`);
     }
 
     roomTimes.set(room, now);

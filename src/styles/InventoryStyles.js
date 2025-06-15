@@ -439,7 +439,6 @@ export const ProgressBarContainer = styled.div`
   width: 100%;
   height: 10px;
   background: ${props => props.theme === 'dark' ? '#444' : '#e0e0e0'};
-  border-radius: 5px;
   overflow: hidden;
 `;
 

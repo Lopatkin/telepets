@@ -177,6 +177,7 @@ export const ContentContainer = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 0px;
+  margin-top: 10px; /* Добавлен отступ для учета фиксированного WeightWidget */
 `;
 
 export const ItemList = styled.div`
@@ -431,12 +432,15 @@ export const FreeRoamCheckbox = styled.div`
 export const WeightWidget = styled.div`
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 10; /* Обеспечивает, что прогресс-бар выше других элементов */
 `;
 
 export const ProgressBarContainer = styled.div`
-  width: 100%;
+  flex: 1;
   height: 10px;
   background: ${props => props.theme === 'dark' ? '#444' : '#e0e0e0'};
   overflow: hidden;
@@ -447,4 +451,11 @@ export const ProgressBarFill = styled.div`
   height: 100%;
   background: ${props => props.theme === 'dark' ? '#28a745' : '#32CD32'};
   transition: width 0.3s ease-in-out;
+`;
+
+export const WeightLabel = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  text-align: center;
 `;

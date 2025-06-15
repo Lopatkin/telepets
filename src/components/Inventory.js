@@ -576,21 +576,22 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
           Локация
         </S.Tab>
       </S.Tabs>
+      {/* Добавлен WeightWidget вне ContentContainer для фиксации */}
+      {activeTab === 'personal' && (
+        <S.WeightWidget theme={theme}>
+          <S.ProgressBarContainer>
+            <S.ProgressBarFill percentage={personalWeightPercentage} theme={theme} />
+          </S.ProgressBarContainer>
+        </S.WeightWidget>
+      )}
+      {activeTab === 'location' && (
+        <S.WeightWidget theme={theme}>
+          <S.ProgressBarContainer>
+            <S.ProgressBarFill percentage={locationWeightPercentage} theme={theme} />
+          </S.ProgressBarContainer>
+        </S.WeightWidget>
+      )}
       <S.ContentContainer>
-        {activeTab === 'personal' && (
-          <S.WeightWidget theme={theme}>
-            <S.ProgressBarContainer>
-              <S.ProgressBarFill percentage={personalWeightPercentage} theme={theme} />
-            </S.ProgressBarContainer>
-          </S.WeightWidget>
-        )}
-        {activeTab === 'location' && (
-          <S.WeightWidget theme={theme}>
-            <S.ProgressBarContainer>
-              <S.ProgressBarFill percentage={locationWeightPercentage} theme={theme} />
-            </S.ProgressBarContainer>
-          </S.WeightWidget>
-        )}
         {activeTab === 'location' && isShelter && (
           <S.SubTabs>
             <S.SubTab

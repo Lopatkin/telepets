@@ -488,23 +488,6 @@ function registerInventoryHandlers({
                 return;
             }
 
-            // Проверка лимитов инвентаря
-            const ownerLimit = await InventoryLimit.findOne({ owner });
-            if (!ownerLimit) {
-                if (callback) callback({ success: false, message: 'Лимиты инвентаря не найдены' });
-                return;
-            }
-
-            const craftedItemWeight = parseFloat(craftedItem.weight) || 0;
-            const materialsWeight = stickItems.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0) +
-                boardItems.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
-            const weightDifference = craftedItemWeight - materialsWeight;
-
-            if (ownerLimit.currentWeight + weightDifference > ownerLimit.maxWeight) {
-                if (callback) callback({ success: false, message: 'Превышен лимит веса инвентаря' });
-                return;
-            }
-
             // Удаление материалов
             const stickIds = stickItems.map(item => item._id);
             const boardIds = boardItems.map(item => item._id);
@@ -514,12 +497,6 @@ function registerInventoryHandlers({
             const newItem = await Item.create({ owner, ...craftedItem });
             console.log('Crafted item:', newItem);
 
-            // Обновление веса инвентаря
-            await InventoryLimit.updateOne(
-                { owner },
-                { $inc: { currentWeight: weightDifference } }
-            );
-
             // Обновление кэша
             const ownerItems = itemCache.get(owner) || [];
             const updatedItems = ownerItems
@@ -527,11 +504,7 @@ function registerInventoryHandlers({
                 .concat([newItem]);
             itemCache.set(owner, updatedItems);
 
-            // Получение обновленных лимитов
-            const updatedLimit = await InventoryLimit.findOne({ owner });
-
             // Уведомление клиентов
-            socket.emit('inventoryLimit', updatedLimit);
             io.to(owner).emit('items', { owner, items: updatedItems });
 
             const currentRoom = userCurrentRoom.get(socket.userData.userId);
@@ -539,7 +512,6 @@ function registerInventoryHandlers({
                 io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemIds: [...stickIds, ...boardIds] });
                 io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: newItem });
                 io.to(currentRoom).emit('items', { owner, items: updatedItems });
-                io.to(currentRoom).emit('inventoryLimit', updatedLimit);
             }
 
             if (callback) callback({ success: true, item: newItem });

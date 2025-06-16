@@ -1,4 +1,4 @@
-import styled, { keyframes } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 
 export const ItemEffect = styled.p`
   font-size: 12px;
@@ -449,8 +449,20 @@ export const ProgressBarContainer = styled.div`
 export const ProgressBarFill = styled.div`
   width: ${props => props.percentage}%;
   height: 100%;
-  background: ${props => props.theme === 'dark' ? '#28a745' : '#32CD32'};
-  transition: width 0.3s ease-in-out;
+  transition: width 0.3s ease-in-out, background 0.3s ease-in-out;
+
+  /* Цветовая логика в зависимости от процента заполнения */
+  ${({ percentage }) => {
+    if (percentage <= 50) {
+      return css`background: #32CD32;`; // Зелёный
+    } else if (percentage <= 75) {
+      return css`background: #FFEB3B;`; // Жёлтый
+    } else if (percentage <= 90) {
+      return css`background: #FF9800;`; // Оранжевый
+    } else {
+      return css`background: #FF0000;`; // Красный
+    }
+  }}
 `;
 
 export const WeightLabel = styled.div`

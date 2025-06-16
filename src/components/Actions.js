@@ -87,9 +87,9 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
     }
   }, [selectedAction, currentRoom]);
 
-  const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
-    setNotification({ show: true, message });
-    setTimeout(() => setNotification({ show: false, message: '' }), duration);
+  const showNotification = useCallback((message, type = 'success', duration = NOTIFICATION_DURATION_CONST) => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => setNotification({ show: false, message: '', type: '' }), duration);
   }, []);
 
   const handleActionClick = useCallback((action) => {
@@ -115,28 +115,28 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   const handleButtonClick = useCallback(() => {
     if (!socket) {
       console.error('Socket is not initialized');
-      showNotification('Ошибка соединения');
+      showNotification('Ошибка соединения', 'error');
       return;
     }
 
     if (isProcessing) {
-      showNotification('Действие уже выполняется, подождите');
+      showNotification('Действие уже выполняется, подождите', 'error');
       return;
     }
 
     const action = actionHandlers[selectedAction.title];
     if (!action) {
-      showNotification('Действие не поддерживается');
+      showNotification('Действие не поддерживается', 'error');
       return;
     }
 
     if (action.requiresOwner && !user.owner) {
-      showNotification('У вас нет владельца!');
+      showNotification('У вас нет владельца!', 'error');
       return;
     }
 
     if (action.cooldownKey && cooldowns[action.cooldownKey]?.active) {
-      showNotification('Действие недоступно, подождите');
+      showNotification('Действие недоступно, подождите', 'error');
       return;
     }
 
@@ -146,13 +146,23 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
-          showNotification(action.successMessage);
+          // Указываем конкретные сообщения для каждого действия
+          const successMessage =
+            action.title === 'Найти палку' ? 'Палка найдена!' :
+              action.title === 'Найти ягоды' ? 'Ягоды найдены!' :
+                action.title === 'Найти грибы' ? 'Грибы найдены!' :
+                  action.successMessage;
+          showNotification(successMessage, 'success');
           if (action.cooldownKey) {
             startCooldown(action.cooldownKey);
           }
         } else {
+          // Проверяем, связана ли ошибка с превышением лимита веса
+          const errorMessage = response?.message === 'Превышен лимит веса инвентаря'
+            ? 'В инвентаре нет места'
+            : response?.message || 'Ошибка при добавлении предмета';
+          showNotification(errorMessage, 'error');
           setSelectedAction(null);
-          showNotification(response?.message || 'Ошибка при добавлении предмета');
         }
       });
     } else if (action.action === 'utilizeTrash') {
@@ -161,11 +171,11 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
-          showNotification(response.message);
+          showNotification(response.message, 'success');
           socket.emit('getItems', { owner: `user_${userId}` });
         } else {
+          showNotification(response?.message || 'Ошибка при утилизации', 'error');
           setSelectedAction(null);
-          showNotification(response?.message || 'Ошибка при утилизации');
         }
       });
     } else if (action.action === 'hunt') {
@@ -179,7 +189,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
       }, () => {
         setIsProcessing(false);
         setSelectedAction(null);
-        showNotification(action.successMessage);
+        showNotification(action.successMessage, 'success');
       });
     }
   }, [socket, selectedAction, user, userId, currentRoom, showNotification, startCooldown, isProcessing, cooldowns]);
@@ -333,7 +343,9 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
           </ModalContent>
         </ModalOverlay>
       )}
-      <Notification show={notification.show}>{notification.message}</Notification>
+      <Notification show={notification.show} type={notification.type}>
+        {notification.message}
+      </Notification>
     </ActionsContainer>
   );
 }

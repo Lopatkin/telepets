@@ -10,7 +10,7 @@ import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from '../utils/WorkshopCrafting';
 import Fight from './Fight';
-import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
+import { COOLDOWN_DURATION_CONST } from './constants/settings';
 import { ClipLoader } from 'react-spinners';
 import { getActiveNPCs } from '../utils/npcData';
 
@@ -355,7 +355,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         </ModalOverlay>
       )}
       <Notification key={notification.message} show={true} type={notification.type}>
-        {notification.message || 'Тестовое уведомление'} // Добавляем заглушку
+        {notification.message || 'Тестовое уведомление'}
       </Notification>
     </ActionsContainer>
   );

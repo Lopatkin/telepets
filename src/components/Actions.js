@@ -87,11 +87,11 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
     }
   }, [selectedAction, currentRoom]);
 
-  const showNotification = useCallback((message, type = 'success', duration = NOTIFICATION_DURATION_CONST) => {
-    console.log('showNotification called:', { message, type, duration }); // Лог для проверки
+  const showNotification = useCallback((message, type = 'success', duration = 3000) => { // Устанавливаем 3 секунды по умолчанию
+    console.log('showNotification called:', { message, type, duration });
     setNotification({ show: true, message, type });
     setTimeout(() => {
-      console.log('Hiding notification:', { message }); // Лог для проверки скрытия
+      console.log('Hiding notification:', { message });
       setNotification({ show: false, message: '', type: '' });
     }, duration);
   }, []);
@@ -354,8 +354,8 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
           </ModalContent>
         </ModalOverlay>
       )}
-      <Notification key={notification.message} show={notification.show} type={notification.type}>
-        {notification.message}
+      <Notification key={notification.message} show={true} type={notification.type}>
+        {notification.message || 'Тестовое уведомление'} // Добавляем заглушку
       </Notification>
     </ActionsContainer>
   );

@@ -260,13 +260,14 @@ export const Notification = styled.div`
   padding: 10px 20px;
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  z-index: 1001;
+  z-index: 1002; // Увеличиваем, чтобы быть выше ModalOverlay (z-index: 1000)
   opacity: ${({ show }) => (show ? 1 : 0)};
-  transition: opacity 0.5s;
+  transition: opacity 0.5s, transform 0.5s; // Добавляем анимацию transform
+  transform: ${({ show }) => show ? 'translate(-50%, 0)' : 'translate(-50%, -20px)'}; // Появление сверху
   pointer-events: none;
-  border: 2px solid yellow; // Временная рамка для видимости
-  min-width: 200px; // Устанавливаем минимальную ширину
-  text-align: center; // Центрируем текст
+  border: 2px solid yellow; // Оставляем рамку для видимости
+  min-width: 200px;
+  text-align: center;
 `;
 
 export const TimerDisplay = styled.div`

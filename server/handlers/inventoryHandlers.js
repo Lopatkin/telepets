@@ -1,6 +1,13 @@
 const userLastAction = new Map(); // Для хранения времени последнего действия пользователя
 const MIN_ACTION_INTERVAL = 1000; // Минимальный интервал между действиями (1 секунда)
 
+const { INVENTORY_WEIGHT_LIMIT } = require('../../src/components/constants/settings');
+
+// Функция для вычисления текущего веса инвентаря
+const calculateInventoryWeight = async (Item, owner) => {
+    const items = await Item.find({ owner });
+    return items.reduce((total, item) => total + (parseFloat(item.weight) || 0), 0);
+};
 
 function registerInventoryHandlers({
     io,
@@ -210,7 +217,22 @@ function registerInventoryHandlers({
                 if (callback) callback({ success: false, message: 'Слишком частые действия, подождите' });
                 return;
             }
-            userLastAction.set(owner, now); // Обновляем время последнего действия
+            userLastAction.set(owner, now);
+
+            // Проверка лимита веса
+            const currentWeight = await calculateInventoryWeight(Item, owner);
+            const newItemWeight = parseFloat(item.weight) || 0;
+            const isUserInventory = owner.startsWith('user_');
+            const weightLimit = isUserInventory
+                ? (await User.findOne({ userId: owner.replace('user_', '') }))?.isHuman
+                    ? INVENTORY_WEIGHT_LIMIT.human
+                    : INVENTORY_WEIGHT_LIMIT.animal
+                : INVENTORY_WEIGHT_LIMIT.location;
+
+            if (currentWeight + newItemWeight > weightLimit) {
+                if (callback) callback({ success: false, message: 'Превышен лимит веса инвентаря' });
+                return;
+            }
 
             if (item._id) {
                 itemLocks.set(item._id, true);
@@ -245,6 +267,21 @@ function registerInventoryHandlers({
             const items = await Item.find({ _id: { $in: ids } });
             if (items.length !== ids.length) {
                 socket.emit('error', { message: 'Некоторые предметы не найдены' });
+                return;
+            }
+
+            // Проверка лимита веса для нового владельца
+            const currentWeight = await calculateInventoryWeight(Item, newOwner);
+            const itemsWeight = items.reduce((total, item) => total + (parseFloat(item.weight) || 0), 0);
+            const isNewOwnerUser = newOwner.startsWith('user_');
+            const weightLimit = isNewOwnerUser
+                ? (await User.findOne({ userId: newOwner.replace('user_', '') }))?.isHuman
+                    ? INVENTORY_WEIGHT_LIMIT.human
+                    : INVENTORY_WEIGHT_LIMIT.animal
+                : INVENTORY_WEIGHT_LIMIT.location;
+
+            if (currentWeight + itemsWeight > weightLimit) {
+                socket.emit('error', { message: 'Превышен лимит веса инвентаря' });
                 return;
             }
 
@@ -292,6 +329,18 @@ function registerInventoryHandlers({
 
             const userOwnerKey = `user_${socket.userData.userId}`;
             const oldOwner = item.owner;
+
+            // Проверка лимита веса личного инвентаря
+            const currentWeight = await calculateInventoryWeight(Item, userOwnerKey);
+            const itemWeight = parseFloat(item.weight) || 0;
+            const user = await User.findOne({ userId: socket.userData.userId });
+            const weightLimit = user.isHuman ? INVENTORY_WEIGHT_LIMIT.human : INVENTORY_WEIGHT_LIMIT.animal;
+
+            if (currentWeight + itemWeight > weightLimit) {
+                itemLocks.delete(itemId);
+                socket.emit('error', { message: 'Превышен лимит веса личного инвентаря' });
+                return;
+            }
 
             item.owner = userOwnerKey;
             await item.save();
@@ -484,6 +533,21 @@ function registerInventoryHandlers({
 
             if (stickItems.length < requiredSticks || boardItems.length < requiredBoards) {
                 if (callback) callback({ success: false, message: 'Недостаточно материалов для крафта' });
+                return;
+            }
+
+            // Проверка лимита веса
+            const currentWeight = await calculateInventoryWeight(Item, owner);
+            const newItemWeight = parseFloat(craftedItem.weight) || 0;
+            const isUserInventory = owner.startsWith('user_');
+            const weightLimit = isUserInventory
+                ? (await User.findOne({ userId: owner.replace('user_', '') }))?.isHuman
+                    ? INVENTORY_WEIGHT_LIMIT.human
+                    : INVENTORY_WEIGHT_LIMIT.animal
+                : INVENTORY_WEIGHT_LIMIT.location;
+
+            if (currentWeight + newItemWeight > weightLimit) {
+                if (callback) callback({ success: false, message: 'Превышен лимит веса инвентаря' });
                 return;
             }
 

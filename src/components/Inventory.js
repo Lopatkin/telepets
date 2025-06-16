@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
 import { FaEdit } from 'react-icons/fa';
-import { INVENTORY_WEIGHT_LIMIT } from './constants/settings'; // Добавлен импорт констант лимитов веса
-
+import { INVENTORY_WEIGHT_LIMIT } from './constants/settings';
 
 import stickImage from '../images/items/stick.jpg';
 import defaultItemImage from '../images/items/default-item.png';
@@ -11,17 +10,17 @@ import collarImage from '../images/items/collar.png';
 import garbageImage from '../images/items/garbage.png';
 import leashImage from '../images/items/leash.png';
 import passportImage from '../images/items/passport.png';
-import berrysImage from '../images/items/berrys.jpg'; // Новое изображение для Лесных ягод
-import mushroomsImage from '../images/items/mushrooms.jpg'; // Новое изображение для Лесных грибов
-import chairImage from '../images/items/chair.jpg'; // Новое изображение для Стула
-import bedImage from '../images/items/sofa.jpg'; // Новое изображение для Кровати
-import wardrobeImage from '../images/items/wardrobe.jpg'; // Новое изображение для Шкафа
-import tableImage from '../images/items/table.jpg'; // Новое изображение для Стола
-import chestImage from '../images/items/chest.jpg'; // Новое изображение для Тумбы
-import firstAidKitImage from '../images/items/first-aid-kit.jpg'; // Изображение для Аптечки
-import bandageImage from '../images/items/bandage.jpg'; // Изображение для Бинта
-import cannedFoodImage from '../images/items/canned-food.jpg'; // Изображение для Консервов
-import chocolateImage from '../images/items/chocolate.jpg'; // Изображение для Шоколадки
+import berrysImage from '../images/items/berrys.jpg';
+import mushroomsImage from '../images/items/mushrooms.jpg';
+import chairImage from '../images/items/chair.jpg';
+import bedImage from '../images/items/sofa.jpg';
+import wardrobeImage from '../images/items/wardrobe.jpg';
+import tableImage from '../images/items/table.jpg';
+import chestImage from '../images/items/chest.jpg';
+import firstAidKitImage from '../images/items/first-aid-kit.jpg';
+import bandageImage from '../images/items/bandage.jpg';
+import cannedFoodImage from '../images/items/canned-food.jpg';
+import chocolateImage from '../images/items/chocolate.jpg';
 import coffeeImage from '../images/items/coffee.jpg';
 
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
@@ -39,7 +38,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
   const [newAnimalName, setNewAnimalName] = useState('');
   const [freeRoam, setFreeRoam] = useState(false);
   const [tempPersonalItems, setTempPersonalItems] = useState(personalItems);
-
   const [applyModal, setApplyModal] = useState({ isOpen: false, item: null });
 
   const userOwnerKey = `user_${userId}`;
@@ -136,7 +134,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         setAnimatingItem({ itemId: item._id.toString(), action: 'grow' });
         setTimeout(() => {
           setLocationItems(prevItems => {
-            // Проверяем, нет ли уже этого предмета
             const exists = prevItems.some(i => i._id.toString() === item._id.toString());
             if (!exists) {
               return [...prevItems, { ...item, _id: item._id.toString() }];
@@ -146,7 +143,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
           setAnimatingItem(null);
         }, 500);
       }
-      // Запрашиваем актуальные данные с сервера
       socket.emit('getItems', { owner: locationOwnerKey });
     } else if (owner === userOwnerKey) {
       if (action === 'remove') {
@@ -387,13 +383,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     console.log(`Sent takeAnimalHome request for animal ID: ${animalId}, Name: ${animalName}`);
   };
 
-  // Обновляем handleMoveItem для корректного перемещения
   const handleMoveItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
     setActionQuantity({ itemName, weight, count: 1, action: 'move', maxCount });
   };
 
-  // Обновляем handlePickupItem
   const handlePickupItem = (itemId) => {
     if (isActionCooldown) return;
 
@@ -401,7 +395,10 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setAnimatingItem({ itemId, action: 'pickup' });
 
     setTimeout(() => {
-      socket.emit('pickupItem', { itemId }, () => {
+      socket.emit('pickupItem', { itemId }, (response) => {
+        if (!response?.success) {
+          setError(response?.message || 'Ошибка при подборе предмета');
+        }
         socket.emit('getItems', { owner: userOwnerKey });
         socket.emit('getItems', { owner: locationOwnerKey });
       });
@@ -417,8 +414,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setActionQuantity({ itemName, weight, count: 1, action: 'delete', maxCount });
   };
 
-  // Добавляем новые обработчики для кнопок "Съесть" и "Использовать"
-  /* Обновляем обработчики для "Съесть" и "Использовать" */
   const handleEatItem = (itemName, weight, maxCount) => {
     if (isActionCooldown) return;
     console.log(`Открытие модального окна для "Съесть": ${itemName}, вес: ${weight}`);
@@ -433,7 +428,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setApplyModal({ isOpen: true, item });
   };
 
-  /* Обработчик для подтверждения применения предмета */
   const handleApplyItem = () => {
     if (!applyModal.item || isActionCooldown) return;
 
@@ -443,9 +437,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setTimeout(() => {
       socket.emit('useItem', { itemId: applyModal.item._id }, (response) => {
         if (response.success) {
-          // Локально обновляем инвентарь, удаляя использованный предмет
           setTempPersonalItems(prev => prev.filter(item => item._id !== applyModal.item._id));
-          // Обновляем характеристики через серверное событие userUpdate
           socket.emit('getItems', { owner: userOwnerKey });
         } else {
           setError(response.message || 'Ошибка при использовании предмета');
@@ -458,7 +450,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     }, 500);
   };
 
-  // Обновляем confirmActionQuantity для обработки новых действий
   const confirmActionQuantity = () => {
     if (!actionQuantity.itemName || isActionCooldown) return;
 
@@ -470,7 +461,10 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setTimeout(() => {
         const itemsToMove = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
         const itemIds = itemsToMove.map(item => item._id);
-        socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey }, () => {
+        socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey }, (response) => {
+          if (!response?.success) {
+            setError(response?.message || 'Ошибка при перемещении предметов');
+          }
           socket.emit('getItems', { owner: userOwnerKey });
           socket.emit('getItems', { owner: locationOwnerKey });
         });
@@ -483,7 +477,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         const itemsToDelete = tempPersonalItems.filter(item => item.name === itemName && item.weight === parseFloat(weight)).slice(0, count);
         const itemIds = itemsToDelete.map(item => item._id);
 
-        // Локально обновляем tempPersonalItems, удаляя предметы и добавляя Мусор
         setTempPersonalItems(prev => {
           const newItems = prev.filter(item => !itemIds.includes(item._id));
           const trashItems = itemsToDelete.map(item => ({
@@ -499,7 +492,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
           return [...newItems, ...trashItems];
         });
 
-        // Отправляем запросы на удаление
         itemIds.forEach(itemId => {
           socket.emit('deleteItem', { itemId }, () => {
             socket.emit('getItems', { owner: userOwnerKey });
@@ -510,14 +502,12 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         setTimeout(() => setIsActionCooldown(false), 1000);
       }, 500);
     } else if (action === 'eat') {
-      // Пока только логируем действие, функционал будет добавлен позже
       console.log(`Подтверждено действие: Съесть ${itemName} x${count}`);
       setTimeout(() => {
         setIsActionCooldown(false);
         setAnimatingItem(null);
       }, 500);
     } else if (action === 'use') {
-      // Пока только логируем действие, функционал будет добавлен позже
       console.log(`Подтверждено действие: Использовать ${itemName} x${count}`);
       setTimeout(() => {
         setIsActionCooldown(false);
@@ -547,14 +537,11 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     });
   };
 
-  // const openModal = (item) => {
-  //   setSelectedItem(item);
-  // };
-
   const closeModal = (e) => {
     if (e.target === e.currentTarget) {
       setSelectedItem(null);
       setActionQuantity({ itemName: null, weight: null, count: 1, action: null });
+      setApplyModal({ isOpen: false, item: null });
     }
   };
 
@@ -576,7 +563,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
           Локация
         </S.Tab>
       </S.Tabs>
-      {/* Добавлен WeightWidget вне ContentContainer для фиксации */}
       {activeTab === 'personal' && (
         <S.WeightWidget theme={theme}>
           <S.ProgressBarContainer>

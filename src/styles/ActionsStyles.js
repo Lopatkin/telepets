@@ -255,13 +255,13 @@ export const Notification = styled.div`
   background: ${({ type }) =>
     type === 'success' ? '#32CD32' : // Зелёный фон для успешных уведомлений
       type === 'error' ? '#DC3545' :   // Красный фон для ошибок
-        '#32CD32'};                      // Фallback на зелёный, если тип не указан
+        '#32CD32'};                      // Fallback на зелёный, если тип не указан
   color: white;
   padding: 10px 20px;
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.2); // Добавляем тень для лучшей видимости
   z-index: 1001;
-  opacity: ${({ show }) => (props.show ? 1 : 0)};
+  opacity: ${({ show }) => (show ? 1 : 0)}; // Исправлено: props.show -> show
   transition: opacity 0.5s;
   pointer-events: none; // Убираем взаимодействие с уведомлением
 `;

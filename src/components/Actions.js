@@ -88,8 +88,12 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   }, [selectedAction, currentRoom]);
 
   const showNotification = useCallback((message, type = 'success', duration = NOTIFICATION_DURATION_CONST) => {
+    console.log('showNotification called:', { message, type, duration }); // Лог для проверки
     setNotification({ show: true, message, type });
-    setTimeout(() => setNotification({ show: false, message: '', type: '' }), duration);
+    setTimeout(() => {
+      console.log('Hiding notification:', { message }); // Лог для проверки скрытия
+      setNotification({ show: false, message: '', type: '' });
+    }, duration);
   }, []);
 
   const handleActionClick = useCallback((action) => {
@@ -113,6 +117,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   }, []);
 
   const handleButtonClick = useCallback(() => {
+    console.log('handleButtonClick started:', { selectedAction, isProcessing }); // Лог входа
     if (!socket) {
       console.error('Socket is not initialized');
       showNotification('Ошибка соединения', 'error');
@@ -120,22 +125,26 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
     }
 
     if (isProcessing) {
+      console.log('Action is processing');
       showNotification('Действие уже выполняется, подождите', 'error');
       return;
     }
 
     const action = actionHandlers[selectedAction.title];
     if (!action) {
+      console.log('Action not supported:', selectedAction?.title);
       showNotification('Действие не поддерживается', 'error');
       return;
     }
 
     if (action.requiresOwner && !user.owner) {
+      console.log('No owner for action:', action.title);
       showNotification('У вас нет владельца!', 'error');
       return;
     }
 
     if (action.cooldownKey && cooldowns[action.cooldownKey]?.active) {
+      console.log('Cooldown active for:', action.cooldownKey);
       showNotification('Действие недоступно, подождите', 'error');
       return;
     }
@@ -143,10 +152,10 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
     if (action.item) {
       setIsProcessing(true);
       socket.emit('addItem', { owner: `user_${userId}`, item: action.item }, (response) => {
+        console.log('addItem response:', response); // Лог ответа сервера
         setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
-          // Указываем конкретные сообщения для каждого действия
           const successMessage =
             action.title === 'Найти палку' ? 'Палка найдена!' :
               action.title === 'Найти ягоды' ? 'Ягоды найдены!' :
@@ -157,7 +166,6 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
             startCooldown(action.cooldownKey);
           }
         } else {
-          // Проверяем, связана ли ошибка с превышением лимита веса
           const errorMessage = response?.message === 'Превышен лимит веса инвентаря'
             ? 'В инвентаре нет места'
             : response?.message || 'Ошибка при добавлении предмета';
@@ -168,6 +176,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
     } else if (action.action === 'utilizeTrash') {
       setIsProcessing(true);
       socket.emit('utilizeTrash', (response) => {
+        console.log('utilizeTrash response:', response); // Лог ответа сервера
         setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
@@ -179,6 +188,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         }
       });
     } else if (action.action === 'hunt') {
+      console.log('Hunt action selected, no action taken');
       return;
     } else if (action.systemMessage) {
       setIsProcessing(true);
@@ -187,6 +197,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         room: currentRoom,
         timestamp: new Date().toISOString(),
       }, () => {
+        console.log('sendSystemMessage success');
         setIsProcessing(false);
         setSelectedAction(null);
         showNotification(action.successMessage, 'success');
@@ -343,7 +354,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
           </ModalContent>
         </ModalOverlay>
       )}
-      <Notification show={notification.show} type={notification.type}>
+      <Notification key={notification.message} show={notification.show} type={notification.type}>
         {notification.message}
       </Notification>
     </ActionsContainer>

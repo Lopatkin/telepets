@@ -252,22 +252,13 @@ export const Notification = styled.div`
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: ${({ type }) =>
-    type === 'success' ? '#32CD32' : // Зелёный фон для успешных уведомлений
-      type === 'error' ? '#DC3545' :   // Красный фон для ошибок
-        '#32CD32'};                      // Fallback на зелёный
+  background: #32CD32;
   color: white;
   padding: 10px 20px;
   border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  z-index: 1002; // Увеличиваем, чтобы быть выше ModalOverlay (z-index: 1000)
-  opacity: ${({ show }) => (show ? 1 : 0)};
-  transition: opacity 0.5s, transform 0.5s; // Добавляем анимацию transform
-  transform: ${({ show }) => show ? 'translate(-50%, 0)' : 'translate(-50%, -20px)'}; // Появление сверху
-  pointer-events: none;
-  border: 2px solid yellow; // Оставляем рамку для видимости
-  min-width: 200px;
-  text-align: center;
+  z-index: 1001;
+  opacity: ${props => (props.show ? 1 : 0)};
+  transition: opacity 0.5s;
 `;
 
 export const TimerDisplay = styled.div`

@@ -10,7 +10,7 @@ import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from '../utils/WorkshopCrafting';
 import Fight from './Fight';
-import { COOLDOWN_DURATION_CONST } from './constants/settings';
+import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 import { ClipLoader } from 'react-spinners';
 import { getActiveNPCs } from '../utils/npcData';
 
@@ -87,13 +87,9 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
     }
   }, [selectedAction, currentRoom]);
 
-  const showNotification = useCallback((message, type = 'success', duration = 3000) => { // Устанавливаем 3 секунды по умолчанию
-    console.log('showNotification called:', { message, type, duration });
-    setNotification({ show: true, message, type });
-    setTimeout(() => {
-      console.log('Hiding notification:', { message });
-      setNotification({ show: false, message: '', type: '' });
-    }, duration);
+  const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
+    setNotification({ show: true, message });
+    setTimeout(() => setNotification({ show: false, message: '' }), duration);
   }, []);
 
   const handleActionClick = useCallback((action) => {
@@ -117,78 +113,62 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   }, []);
 
   const handleButtonClick = useCallback(() => {
-    console.log('handleButtonClick started:', { selectedAction, isProcessing }); // Лог входа
     if (!socket) {
       console.error('Socket is not initialized');
-      showNotification('Ошибка соединения', 'error');
+      showNotification('Ошибка соединения');
       return;
     }
 
     if (isProcessing) {
-      console.log('Action is processing');
-      showNotification('Действие уже выполняется, подождите', 'error');
+      showNotification('Действие уже выполняется, подождите');
       return;
     }
 
     const action = actionHandlers[selectedAction.title];
     if (!action) {
-      console.log('Action not supported:', selectedAction?.title);
-      showNotification('Действие не поддерживается', 'error');
+      showNotification('Действие не поддерживается');
       return;
     }
 
     if (action.requiresOwner && !user.owner) {
-      console.log('No owner for action:', action.title);
-      showNotification('У вас нет владельца!', 'error');
+      showNotification('У вас нет владельца!');
       return;
     }
 
     if (action.cooldownKey && cooldowns[action.cooldownKey]?.active) {
-      console.log('Cooldown active for:', action.cooldownKey);
-      showNotification('Действие недоступно, подождите', 'error');
+      showNotification('Действие недоступно, подождите');
       return;
     }
 
     if (action.item) {
       setIsProcessing(true);
       socket.emit('addItem', { owner: `user_${userId}`, item: action.item }, (response) => {
-        console.log('addItem response:', response); // Лог ответа сервера
         setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
-          const successMessage =
-            action.title === 'Найти палку' ? 'Палка найдена!' :
-              action.title === 'Найти ягоды' ? 'Ягоды найдены!' :
-                action.title === 'Найти грибы' ? 'Грибы найдены!' :
-                  action.successMessage;
-          showNotification(successMessage, 'success');
+          showNotification(action.successMessage);
           if (action.cooldownKey) {
             startCooldown(action.cooldownKey);
           }
         } else {
-          const errorMessage = response?.message === 'Превышен лимит веса инвентаря'
-            ? 'В инвентаре нет места'
-            : response?.message || 'Ошибка при добавлении предмета';
-          showNotification(errorMessage, 'error');
           setSelectedAction(null);
+          showNotification(response?.message || 'Ошибка при добавлении предмета');
         }
       });
     } else if (action.action === 'utilizeTrash') {
       setIsProcessing(true);
       socket.emit('utilizeTrash', (response) => {
-        console.log('utilizeTrash response:', response); // Лог ответа сервера
         setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
-          showNotification(response.message, 'success');
+          showNotification(response.message);
           socket.emit('getItems', { owner: `user_${userId}` });
         } else {
-          showNotification(response?.message || 'Ошибка при утилизации', 'error');
           setSelectedAction(null);
+          showNotification(response?.message || 'Ошибка при утилизации');
         }
       });
     } else if (action.action === 'hunt') {
-      console.log('Hunt action selected, no action taken');
       return;
     } else if (action.systemMessage) {
       setIsProcessing(true);
@@ -197,10 +177,9 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         room: currentRoom,
         timestamp: new Date().toISOString(),
       }, () => {
-        console.log('sendSystemMessage success');
         setIsProcessing(false);
         setSelectedAction(null);
-        showNotification(action.successMessage, 'success');
+        showNotification(action.successMessage);
       });
     }
   }, [socket, selectedAction, user, userId, currentRoom, showNotification, startCooldown, isProcessing, cooldowns]);
@@ -354,9 +333,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
           </ModalContent>
         </ModalOverlay>
       )}
-      <Notification key={notification.message} show={true} type={notification.type}>
-        {notification.message || 'Тестовое уведомление'}
-      </Notification>
+      <Notification show={notification.show}>{notification.message}</Notification>
     </ActionsContainer>
   );
 }

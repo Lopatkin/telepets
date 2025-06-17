@@ -63,12 +63,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setTempPersonalItems(personalItems);
   }, [personalItems]);
 
-  /* Добавляем отображение здоровья для отладки и обработку userUpdate */
-  useEffect(() => {
-    // Логируем изменение user.stats для отладки
-    console.log('User stats updated:', user?.stats);
-  }, [user?.stats]);
-
   const handleRenameAnimal = (animalId, newName) => {
     socket.emit('renameAnimal', { animalId, newName }, (response) => {
       if (response.success) {
@@ -445,15 +439,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         if (response.success) {
           setTempPersonalItems(prev => prev.filter(item => item._id !== applyModal.item._id));
           socket.emit('getItems', { owner: userOwnerKey });
-          // Запрашиваем актуальные данные пользователя после использования предмета
-          socket.emit('getUserInfo', { userId }, (userResponse) => {
-            if (userResponse.success) {
-              console.log('Updated user data:', userResponse.user); // Для отладки
-            } else {
-              setError(userResponse.message || 'Ошибка при получении данных пользователя');
-              setTimeout(() => setError(null), 3000);
-            }
-          });
         } else {
           setError(response.message || 'Ошибка при использовании предмета');
           setTimeout(() => setError(null), 3000);
@@ -562,10 +547,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
   return (
     <S.InventoryContainer theme={theme}>
-      {/* Добавляем отображение здоровья для отладки */}
-      <S.DebugHealth theme={theme}>
-        Здоровье: {user?.stats?.health || 'N/A'} / {user?.stats?.maxHealth || 'N/A'}
-      </S.DebugHealth>
       <S.Tabs>
         <S.Tab
           active={activeTab === 'personal'}

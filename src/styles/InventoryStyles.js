@@ -356,14 +356,6 @@ export const ConfirmButtons = styled.div`
   gap: 20px;
 `;
 
-/* Добавляем стиль для отображения здоровья */
-export const DebugHealth = styled.div`
-  color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
-  font-size: 16px;
-  margin-bottom: 10px;
-  text-align: center;
-`;
-
 export const ConfirmButton = styled(ActionButton)`
   width: 60px; /* Уменьшаем ширину кнопки, так как теперь там только иконка */
   height: 40px;

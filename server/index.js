@@ -185,12 +185,11 @@ io.on('connection', (socket) => {
     // Инициализация состояния боя с актуальным здоровьем
     if (!fightStates.has(userId)) {
       fightStates.set(userId, {
-        playerHP: Math.min(user.stats.health, user.stats.maxHealth), // Всегда используем текущее здоровье
+        playerHP: Math.min(user.stats.health, user.stats.maxHealth),
         npcHP: npc.stats.health,
         npcId
       });
     } else {
-      // Обновляем playerHP до актуального значения из базы данных
       const fight = fightStates.get(userId);
       fight.playerHP = Math.min(user.stats.health, user.stats.maxHealth);
     }
@@ -220,16 +219,24 @@ io.on('connection', (socket) => {
     }
 
     // Обновляем HP
-    fight.playerHP = fight.playerHP - damageToPlayer; // Убрано Math.max(0, ...)
+    fight.playerHP = fight.playerHP - damageToPlayer;
     fight.npcHP = Math.max(0, fight.npcHP - damageToNPC);
 
     // Ограничиваем здоровье максимальным значением
     fight.playerHP = Math.min(fight.playerHP, user.stats.maxHealth);
 
-    // Обновляем здоровье игрока в базе данных
+    // Обновляем здоровье и энергию игрока в базе данных
     await User.updateOne(
       { userId },
-      { $set: { 'stats.health': fight.playerHP } }
+      {
+        $set: {
+          'stats.health': fight.playerHP,
+          // Уменьшаем энергию на 10, но не ниже 0, если бой завершён
+          'stats.energy': fight.playerHP <= 0 || fight.npcHP <= 0
+            ? Math.max(0, user.stats.energy - 10)
+            : user.stats.energy
+        }
+      }
     );
 
     // Получаем обновленного пользователя
@@ -258,10 +265,16 @@ io.on('connection', (socket) => {
     if (fight.playerHP <= 0 || fight.npcHP <= 0) {
       fightStates.delete(userId);
       if (fight.playerHP <= 0) {
-        fight.playerHP = 0; // Устанавливаем здоровье на 0 вместо 1
+        fight.playerHP = 0;
         await User.updateOne(
           { userId },
-          { $set: { 'stats.health': 0 } } // Обновляем здоровье в базе данных на 0
+          {
+            $set: {
+              'stats.health': 0,
+              // Уменьшаем энергию на 10, но не ниже 0
+              'stats.energy': Math.max(0, updatedUser.stats.energy - 10)
+            }
+          }
         );
         const finalUser = await User.findOne({ userId });
         socket.emit('userUpdate', {

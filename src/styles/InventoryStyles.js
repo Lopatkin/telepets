@@ -351,12 +351,15 @@ export const ConfirmButtons = styled.div`
 `;
 
 export const ConfirmButton = styled(ActionButton)`
-  width: 80px;
+  width: 60px; /* Уменьшаем ширину кнопки, так как теперь там только иконка */
   height: 40px;
   background: ${props => props.type === 'yes' ? '#32CD32' : '#FF0000'};
   color: white;
-  font-size: 16px;
+  font-size: 20px; /* Увеличиваем размер иконки */
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   &:hover {
     opacity: ${props => props.disabled ? 0.5 : 0.9};
   }

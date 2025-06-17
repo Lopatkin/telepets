@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
 import { INVENTORY_WEIGHT_LIMIT } from './constants/settings';
 
 import stickImage from '../images/items/stick.jpg';
@@ -940,14 +940,14 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                   onClick={() => handleRenameAnimal(selectedItem.animalId, newAnimalName)}
                   disabled={isActionCooldown || !newAnimalName.trim()}
                 >
-                  ОК
+                  <FaCheck /> {/* Заменяем текст "ОК" на иконку галочки */}
                 </S.ConfirmButton>
                 <S.ConfirmButton
                   type="no"
                   onClick={() => setRenameModalOpen(false)}
                   disabled={isActionCooldown}
                 >
-                  Отмена
+                  <FaTimes /> {/* Заменяем текст "Отмена" на иконку крестика */}
                 </S.ConfirmButton>
               </S.ConfirmButtons>
             </S.RenameModalContent>
@@ -972,14 +972,14 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             />
             <S.ConfirmButtons>
               <S.ConfirmButton type="yes" onClick={confirmActionQuantity} disabled={isActionCooldown}>
-                ОК
+                <FaCheck /> {/* Заменяем текст "ОК" на иконку галочки */}
               </S.ConfirmButton>
               <S.ConfirmButton
                 type="no"
                 onClick={() => setActionQuantity({ itemName: null, weight: null, count: 1, action: null })}
                 disabled={isActionCooldown}
               >
-                Отмена
+                <FaTimes /> {/* Заменяем текст "Отмена" на иконку крестика */}
               </S.ConfirmButton>
             </S.ConfirmButtons>
           </S.QuantityModalContent>
@@ -994,14 +994,14 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                 onClick={handleApplyItem}
                 disabled={isActionCooldown}
               >
-                Применить
+                <FaCheck /> {/* Заменяем текст "Применить" на иконку галочки */}
               </S.ConfirmButton>
               <S.ConfirmButton
                 type="no"
                 onClick={() => setApplyModal({ isOpen: false, item: null })}
                 disabled={isActionCooldown}
               >
-                Отмена
+                <FaTimes /> {/* Заменяем текст "Отмена" на иконку крестика */}
               </S.ConfirmButton>
             </S.ConfirmButtons>
           </S.ModalContent>

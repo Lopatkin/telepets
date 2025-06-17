@@ -122,7 +122,8 @@ const CreditsContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-right: 10px;
+  margin-left: auto; /* Прижимает блок к правой стороне */
+  padding-right: 10px; /* Небольшой отступ от правого края */
 `;
 
 const CreditsText = styled.span`

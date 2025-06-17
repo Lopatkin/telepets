@@ -329,41 +329,45 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Улучшенный обработчик endFight
   socket.on('endFight', async (data) => {
     const { userId } = data;
-    // console.log(`Received endFight for user ${userId}`);
+    // console.log(`Received endFight for user ${userId}`); // Лог получения события
 
     if (fightStates.has(userId)) {
       fightStates.delete(userId);
-      // console.log(`Fight state cleared for user ${userId}`);
+      // console.log(`Fight state cleared for user ${userId}`); // Лог очистки состояния
     } else {
-      // console.log(`No active fight state found for user ${userId}`);
+      // console.log(`No active fight state found for user ${userId}`); // Лог отсутствия состояния
     }
 
     const user = await User.findOne({ userId });
     if (user) {
-      // Уменьшаем энергию на 10
-      const newEnergy = Math.max(user.stats.energy - 10, 0);
-      await User.updateOne(
-        { userId },
-        { $set: { 'stats.energy': newEnergy } }
-      );
-
-      // Получаем обновленного пользователя
-      const updatedUser = await User.findOne({ userId });
-
-      // Отправляем только stats
+      // console.log(`Preparing userUpdate for user ${userId} with stats:`, user.stats); // Лог перед отправкой
       try {
-        socket.emit('updateUserStats', {
-          userId: updatedUser.userId,
-          stats: updatedUser.stats
+        socket.emit('userUpdate', {
+          userId: user.userId,
+          firstName: user.firstName,
+          username: user.username,
+          lastName: user.lastName,
+          photoUrl: user.photoUrl,
+          isRegistered: user.isRegistered,
+          isHuman: user.isHuman,
+          animalType: user.animalType,
+          name: user.name,
+          owner: user.owner,
+          homeless: user.homeless,
+          credits: user.credits || 0,
+          onLeash: user.onLeash,
+          freeRoam: user.freeRoam || false,
+          stats: user.stats
         });
-        // console.log(`Sent updateUserStats for user ${userId}`);
+        // console.log(`Sent userUpdate for user ${userId}`); // Лог успешной отправки
       } catch (error) {
-        console.error(`Failed to send updateUserStats for user ${userId}:`, error.message);
+        console.error(`Failed to send userUpdate for user ${userId}:`, error.message); // Лог ошибки отправки
       }
     } else {
-      // console.log(`User ${userId} not found for updateUserStats`);
+      // console.log(`User ${userId} not found for userUpdate`); // Лог отсутствия пользователя
     }
   });
 

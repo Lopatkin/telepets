@@ -191,17 +191,6 @@ function App() {
           }
         });
 
-        socketRef.current.on('updateUserStats', ({ userId, stats }) => {
-          // console.log('Received updateUserStats:', { userId, stats });
-          setUser(prevUser => {
-            if (prevUser.userId !== userId) return prevUser;
-            return {
-              ...prevUser,
-              stats: { ...prevUser.stats, ...stats }
-            };
-          });
-        });
-
         socketRef.current.on('takeAnimalHomeSuccess', ({ animalId, owner, animal }) => {
           if (owner === user?.userId) {
             setPets(prevPets => [...prevPets, animal]);

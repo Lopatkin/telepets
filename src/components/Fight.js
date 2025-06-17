@@ -265,21 +265,12 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
       if (updatedUser.stats?.health !== undefined) {
         console.log('Received userUpdate in Fight.js:', updatedUser.stats.health);
         setPlayerHP(updatedUser.stats.health);
-        updateUser(updatedUser);
-      }
-    });
-
-    socket.on('updateUserStats', ({ userId, stats }) => {
-      if (stats?.health !== undefined) {
-        console.log('Received updateUserStats in Fight.js:', stats.health);
-        setPlayerHP(stats.health);
-        updateUser({ userId, stats }); // Передаем минимальный объект
+        updateUser(updatedUser); // Передаем обновление в App.js
       }
     });
 
     return () => {
       socket.off('userUpdate');
-      socket.off('updateUserStats');
     };
   }, [socket, updateUser]);
 

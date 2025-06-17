@@ -343,24 +343,34 @@ io.on('connection', (socket) => {
 
     const user = await User.findOne({ userId });
     if (user) {
-      // console.log(`Preparing userUpdate for user ${userId} with stats:`, user.stats); // Лог перед отправкой
+      // Уменьшаем энергию на 10, но не ниже 0
+      const newEnergy = Math.max(user.stats.energy - 10, 0);
+      await User.updateOne(
+        { userId },
+        { $set: { 'stats.energy': newEnergy } }
+      );
+
+      // Получаем обновленного пользователя
+      const updatedUser = await User.findOne({ userId });
+
+      // console.log(`Preparing userUpdate for user ${userId} with stats:`, updatedUser.stats); // Лог перед отправкой
       try {
         socket.emit('userUpdate', {
-          userId: user.userId,
-          firstName: user.firstName,
-          username: user.username,
-          lastName: user.lastName,
-          photoUrl: user.photoUrl,
-          isRegistered: user.isRegistered,
-          isHuman: user.isHuman,
-          animalType: user.animalType,
-          name: user.name,
-          owner: user.owner,
-          homeless: user.homeless,
-          credits: user.credits || 0,
-          onLeash: user.onLeash,
-          freeRoam: user.freeRoam || false,
-          stats: user.stats
+          userId: updatedUser.userId,
+          firstName: updatedUser.firstName,
+          username: updatedUser.username,
+          lastName: updatedUser.lastName,
+          photoUrl: updatedUser.photoUrl,
+          isRegistered: updatedUser.isRegistered,
+          isHuman: updatedUser.isHuman,
+          animalType: updatedUser.animalType,
+          name: updatedUser.name,
+          owner: updatedUser.owner,
+          homeless: updatedUser.homeless,
+          credits: updatedUser.credits || 0,
+          onLeash: updatedUser.onLeash,
+          freeRoam: updatedUser.freeRoam || false,
+          stats: updatedUser.stats
         });
         // console.log(`Sent userUpdate for user ${userId}`); // Лог успешной отправки
       } catch (error) {

@@ -332,6 +332,11 @@ export const ModalContent = styled.div`
   overflow-y: auto;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   text-align: center;
+
+  /* Добавляем отступ после ItemDetail */
+  ${ItemDetail} {
+    margin-bottom: 20px; /* Отступ после описания предмета */
+  }
 `;
 
 export const ConfirmModalContent = styled(ModalContent)`
@@ -347,6 +352,7 @@ export const ConfirmText = styled.p`
 
 export const ConfirmButtons = styled.div`
   display: flex;
+  justify-content: center; /* Центрируем кнопки по горизонтали */
   gap: 20px;
 `;
 

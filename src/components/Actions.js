@@ -10,9 +10,12 @@ import actionHandlers from './handlers/actionHandlers';
 import useCooldowns from './hooks/useCooldowns';
 import WorkshopCrafting from '../utils/WorkshopCrafting';
 import Fight from './Fight';
-import { COOLDOWN_DURATION_CONST, NOTIFICATION_DURATION_CONST } from './constants/settings';
 import { ClipLoader } from 'react-spinners';
 import { getActiveNPCs } from '../utils/npcData';
+
+const COOLDOWN_DURATION_CONST = 10 * 100;
+const NOTIFICATION_DURATION_CONST = 10 * 100;
+
 
 function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user, updateUser }) {
   const [selectedAction, setSelectedAction] = useState(null);
@@ -22,6 +25,8 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedNPC, setSelectedNPC] = useState(null);
   const [npcs, setNpcs] = useState([]);
+
+  
 
   useEffect(() => {
     if (socket && onItemsUpdate) {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'; // Добавляем импорт useMemo
-import { COOLDOWN_DURATION_CONST } from '../constants/settings';
+
+const COOLDOWN_DURATION_CONST = 10 * 100;
 
 // Кастомный хук для управления кулдаунами
 const useCooldowns = (userId, COOLDOWN_DURATION = COOLDOWN_DURATION_CONST) => {

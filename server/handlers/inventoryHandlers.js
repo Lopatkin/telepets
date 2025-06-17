@@ -252,6 +252,24 @@ function registerInventoryHandlers({
 
             io.to(owner).emit('items', { owner, items: itemCache.get(owner) });
 
+            // Добавляем логику для уменьшения энергии
+            const energyConsumingItems = ['Палка', 'Лесные ягоды', 'Лесные грибы'];
+            if (energyConsumingItems.includes(item.name)) {
+                const userId = owner.replace('user_', '');
+                const user = await User.findOne({ userId });
+                if (user) {
+                    const newEnergy = Math.max(user.stats.energy - 1, 0); // Уменьшаем энергию на 1, но не ниже 0
+                    await User.updateOne(
+                        { userId },
+                        { $set: { 'stats.energy': newEnergy } }
+                    );
+                    const updatedUser = await User.findOne({ userId });
+                    socket.emit('userUpdate', {
+                        stats: updatedUser.stats
+                    });
+                }
+            }
+
             if (callback) callback({ success: true, item: newItem });
             if (item._id) itemLocks.delete(item._id);
         } catch (err) {

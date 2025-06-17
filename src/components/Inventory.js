@@ -448,11 +448,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
           // Запрашиваем актуальные данные пользователя после использования предмета
           socket.emit('getUserInfo', { userId }, (userResponse) => {
             if (userResponse.success) {
-              console.log('Updated user data:', userResponse.user);
-              // Если есть пропс onUserUpdate, вызываем его
-              if (typeof onUserUpdate === 'function') {
-                onUserUpdate(userResponse.user);
-              }
+              console.log('Updated user data:', userResponse.user); // Для отладки
             } else {
               setError(userResponse.message || 'Ошибка при получении данных пользователя');
               setTimeout(() => setError(null), 3000);

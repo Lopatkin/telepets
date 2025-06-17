@@ -19,10 +19,9 @@ const RoomTitle = styled.h3`
   font-size: 18px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 70%;
+  word-wrap: break-word; /* Позволяет перенос слов на новую строку */
+  line-height: 1.2; /* Устанавливает высоту строки для лучшей читаемости */
 `;
 
 const AvatarContainer = styled.div`

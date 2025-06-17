@@ -269,9 +269,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
       }
     });
 
-    return () => {
-      socket.off('userUpdate');
-    };
+    // return () => {
+    //   socket.off('userUpdate');
+    // };
   }, [socket, updateUser]);
 
   // Функция для получения текста надписи для защиты

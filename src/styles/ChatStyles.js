@@ -71,7 +71,7 @@ export const MessagesContainer = styled.div`
       return `url(${villageImage}) no-repeat center center fixed`;
     } else if (props.room === 'Бар "У бобра" (18+)') {
       return `url(${barImage}) no-repeat center center fixed`;
-    } else if (props.room === 'Кофейня "Ляля-Фа"') {
+    } else if (props.room === 'Кофейня "Ля Фафан"') {
       return `url(${cafeImage}) no-repeat center center fixed`;
     } else if (props.room === 'Приют для животных "Кошкин дом"') {
       return `url(${priyutImage}) no-repeat center center fixed`;

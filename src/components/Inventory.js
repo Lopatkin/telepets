@@ -257,7 +257,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       setShopItems(shopStaticItems.filter(item =>
         ['Ошейник', 'Поводок', 'Аптечка', 'Бинт', 'Консервы', 'Шоколадка'].includes(item.name)
       ));
-    } else if (currentRoom === 'Кофейня "Ляля-Фа"' && user?.isHuman) {
+    } else if (currentRoom === 'Кофейня "Ля Фафан"' && user?.isHuman) {
       setShopItems(shopStaticItems.filter(item => item.name === 'Кофе'));
     } else {
       setShopItems([]);
@@ -756,7 +756,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             ))}
             {activeTab === 'location' && (
               <S.ItemList subTab={activeTab}>
-                {(currentRoom === 'Магазин "Всё на свете"' || currentRoom === 'Кофейня "Ляля-Фа"') && user?.isHuman ? (
+                {(currentRoom === 'Магазин "Всё на свете"' || currentRoom === 'Кофейня "Ля Фафан"') && user?.isHuman ? (
                   shopItems.map(item => (
                     <S.ItemCard
                       key={item._id}

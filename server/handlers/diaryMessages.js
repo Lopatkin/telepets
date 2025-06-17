@@ -933,7 +933,7 @@ const roomSpecificMessages = {
                 { message: 'Пошёл по заводу, чувствуя себя героем.', effect: { mood: 3, energy: -3 } }
             ]
         },
-        'Кофейня "Ляля-Фа"': {
+        'Кофейня "Ля Фафан"': {
             tragic: [
                 { message: 'Заказал кофе, но вкус не спасает от тоски.', effect: { mood: 2, satiety: 5 } },
                 { message: 'Сидел у окна, глядя на дождь, с чашкой чая.', effect: { mood: 3, satiety: 3 } },
@@ -3017,7 +3017,7 @@ const roomSpecificMessages = {
                 { message: 'Смотрел на тени, придумал игру.', effect: { mood: 3, energy: -3 } }
             ]
         },
-        'Кофейня "Ляля-Фа"': {
+        'Кофейня "Ля Фафан"': {
             tragic: [
                 { message: 'Лежал под столом, но запах еды чуть поднял дух.', effect: { mood: 2, satiety: 3 } },
                 { message: 'Нашёл крошку круассана, немного поел.', effect: { mood: 2, satiety: 5 } },
@@ -5099,7 +5099,7 @@ const roomSpecificMessages = {
                 { message: 'Смотрел на тени, придумал игру.', effect: { mood: 3, energy: -3 } }
             ]
         },
-        'Кофейня "Ляля-Фа"': {
+        'Кофейня "Ля Фафан"': {
             tragic: [
                 { message: 'Лежал у входа, но запах еды поднял дух.', effect: { mood: 2, satiety: 3 } },
                 { message: 'Нашёл крошку круассана, немного поел.', effect: { mood: 2, satiety: 5 } },

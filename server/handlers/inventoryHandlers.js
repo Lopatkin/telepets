@@ -99,7 +99,7 @@ function registerInventoryHandlers({
                 health: Math.min(Math.max(user.stats.health + (effect.health || 0), 0), user.stats.maxHealth),
                 mood: Math.min(Math.max(user.stats.mood + (effect.mood || 0), 0), user.stats.maxMood),
                 satiety: Math.min(Math.max(user.stats.satiety + (effect.satiety || 0), 0), user.stats.maxSatiety),
-                energy: Math.min(Math.max(user.stats.energy + (effect.energy || 0), 0), user.stats.maxEnergy) // Добавляем обновление энергии
+                energy: Math.min(Math.max(user.stats.energy + (effect.energy || 0), 0), user.stats.maxEnergy)
             };
 
             // Обновляем пользователя в базе данных
@@ -110,7 +110,7 @@ function registerInventoryHandlers({
                         'stats.health': updatedStats.health,
                         'stats.mood': updatedStats.mood,
                         'stats.satiety': updatedStats.satiety,
-                        'stats.energy': updatedStats.energy // Добавляем обновление энергии
+                        'stats.energy': updatedStats.energy
                     }
                 }
             );
@@ -126,7 +126,7 @@ function registerInventoryHandlers({
             // Получаем обновленного пользователя
             const updatedUser = await User.findOne({ userId });
 
-            // Отправляем userUpdate
+            // Отправляем userUpdate с полными данными пользователя
             socket.emit('userUpdate', {
                 userId: updatedUser.userId,
                 firstName: updatedUser.firstName,
@@ -142,7 +142,8 @@ function registerInventoryHandlers({
                 credits: updatedUser.credits || 0,
                 onLeash: updatedUser.onLeash,
                 freeRoam: updatedUser.freeRoam || false,
-                stats: updatedUser.stats
+                stats: updatedUser.stats,
+                diary: updatedUser.diary || [] // Добавляем diary для полноты
             });
 
             // Отправляем обновленный список предметов

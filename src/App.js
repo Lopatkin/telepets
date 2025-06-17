@@ -355,6 +355,14 @@ function App() {
   };
 
   useEffect(() => {
+    socket.on('userUpdate', (updatedUser) => {
+      setUser(prev => ({ ...prev, ...updatedUser }));
+      console.log('User updated:', updatedUser); // Для отладки
+    });
+    return () => socket.off('userUpdate');
+  }, [socket]);
+
+  useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'telegram';
     setTheme(savedTheme);
   }, []);

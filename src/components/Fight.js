@@ -259,20 +259,9 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
     defense: npc.stats?.defense || 20
   };
 
-  // Обработка обновления здоровья игрока от сервера
   useEffect(() => {
-    socket.on('userUpdate', (updatedUser) => {
-      if (updatedUser.stats?.health !== undefined) {
-        console.log('Received userUpdate in Fight.js:', updatedUser.stats.health);
-        setPlayerHP(updatedUser.stats.health);
-        updateUser(updatedUser); // Передаем обновление в App.js
-      }
-    });
-
-    return () => {
-      socket.off('userUpdate');
-    };
-  }, [socket, updateUser]);
+    setPlayerHP(user.stats?.health ?? 0);
+  }, [user.stats?.health]);
 
   // Функция для получения текста надписи для защиты
   const getDefenseInstruction = () => {

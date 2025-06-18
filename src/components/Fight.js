@@ -156,6 +156,7 @@ const Zone = styled.div`
   text-align: center;
   cursor: pointer;
   font-size: 0.9em;
+  text-shadow: ${({ theme }) => (theme === 'dark' ? '1px 1px 2px rgba(0, 0, 0, 0.5)' : '1px 1px 2px rgba(0, 0, 0, 0.3)')}; /* Добавляем тень для текста */
 
   &.head { grid-area: head; }
   &.back { grid-area: back; }

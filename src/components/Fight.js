@@ -7,8 +7,7 @@ import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 const CloseButton = styled.button`
   position: absolute;
   top: 10px;
-  right: 10px;
-  left: 10px;
+  right: 8px;
   background: none;
   border: none;
   color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};

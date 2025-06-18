@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaUser, FaBook, FaPalette, FaSave, FaStar } from 'react-icons/fa';
 
+// Стили для вкладок
 const TabsContainer = styled.div`
   display: flex;
   justify-content: center;
@@ -63,7 +64,7 @@ const LogWrapper = styled.div`
 `;
 
 const LogEntry = styled.div`
-    padding: 8px 2px;
+    padding: 8px 2px; // Уменьшаем отступы: 6px сверху/снизу, 2px слева/справа
     text-align: left;
     border-bottom: 1px solid ${props => props.theme === 'dark' ? '#444' : '#ddd'};
     font-size: 14px;
@@ -73,7 +74,7 @@ const LogEntry = styled.div`
 `;
 
 const Timestamp = styled.span`
-    font-weight: bold;
+    font-weight: bold; // Выделяем дату и время жирным
 `;
 
 const SliderLabel = styled.label`
@@ -240,7 +241,7 @@ const ThemeLabel = styled.span`
   font-size: 16px;
 `;
 
-function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, socket }) {
+function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, progressValues, socket }) {
   const [activeTab, setActiveTab] = useState('stats');
   const [freeWill, setFreeWill] = useState(user.stats.freeWill || 0);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -316,32 +317,35 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, soc
           ) : (
             <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
           )}
+          
           <Name theme={theme}>{displayName}</Name>
           {username && <Username theme={theme}>@{username}</Username>}
           <Info theme={theme}>ID: {user.userId}</Info>
           <ExpInfo theme={theme}><FaStar /> Опыт: {user.exp || 0}</ExpInfo>
-          <ProgressWidget theme={theme}>
-            <ProgressBarContainer>
-              <ProgressLabel theme={theme}>Энергия</ProgressLabel>
-              <ProgressBar value={user.stats.energy || 0} max={user.stats.maxEnergy || 100} type="energy" />
-              <ProgressValue theme={theme}>{user.stats.energy || 0}%</ProgressValue>
-            </ProgressBarContainer>
-            <ProgressBarContainer>
-              <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
-              <ProgressBar value={user.stats.health || 0} max={user.stats.maxHealth || 100} type="health" />
-              <ProgressValue theme={theme}>{user.stats.health || 0}%</ProgressValue>
-            </ProgressBarContainer>
-            <ProgressBarContainer>
-              <ProgressLabel theme={theme}>Настроение</ProgressLabel>
-              <ProgressBar value={user.stats.mood || 0} max={user.stats.maxMood || 100} type="mood" />
-              <ProgressValue theme={theme}>{user.stats.mood || 0}%</ProgressValue>
-            </ProgressBarContainer>
-            <ProgressBarContainer>
-              <ProgressLabel theme={theme}>Сытость</ProgressLabel>
-              <ProgressBar value={user.stats.satiety || 0} max={user.stats.maxSatiety || 100} type="fullness" />
-              <ProgressValue theme={theme}>{user.stats.satiety || 0}%</ProgressValue>
-            </ProgressBarContainer>
-          </ProgressWidget>
+          {progressValues && (
+            <ProgressWidget theme={theme}>
+              <ProgressBarContainer>
+                <ProgressLabel theme={theme}>Энергия</ProgressLabel>
+                <ProgressBar value={user.stats.energy || 0} max={user.stats.maxEnergy || 100} type="energy" />
+                <ProgressValue theme={theme}>{user.stats.energy || 0}%</ProgressValue>
+              </ProgressBarContainer>
+              <ProgressBarContainer>
+                <ProgressLabel theme={theme}>Здоровье</ProgressLabel>
+                <ProgressBar value={user.stats.health || 0} max={user.stats.maxHealth || 100} type="health" />
+                <ProgressValue theme={theme}>{user.stats.health || 0}%</ProgressValue>
+              </ProgressBarContainer>
+              <ProgressBarContainer>
+                <ProgressLabel theme={theme}>Настроение</ProgressLabel>
+                <ProgressBar value={user.stats.mood || 0} max={user.stats.maxMood || 100} type="mood" />
+                <ProgressValue theme={theme}>{user.stats.mood || 0}%</ProgressValue>
+              </ProgressBarContainer>
+              <ProgressBarContainer>
+                <ProgressLabel theme={theme}>Сытость</ProgressLabel>
+                <ProgressBar value={user.stats.satiety || 0} max={user.stats.maxSatiety || 100} type="fullness" />
+                <ProgressValue theme={theme}>{user.stats.satiety || 0}%</ProgressValue>
+              </ProgressBarContainer>
+            </ProgressWidget>
+          )}
         </>
       )}
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { FaRunning } from 'react-icons/fa';
+import { FaRunning, FaFistRaised, FaShieldAlt } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 
@@ -100,6 +100,7 @@ const StatsDisplay = styled.div`
   margin-bottom: 10px;
   font-size: 0.9em;
   color: ${({ theme }) => (theme === 'dark' ? '#ccc' : '#333')};
+  align-items: center; /* Выравниваем иконки по центру */
 `;
 
 const HPBar = styled.div`
@@ -469,8 +470,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
             )}
           </AvatarContainer>
           <StatsDisplay theme={theme}>
-            <span>Атака: {user.stats?.attack || 10}</span>
-            <span>Защита: {user.stats?.defense || 20}</span>
+            <span><FaFistRaised style={{ marginRight: '5px' }} />{user.stats?.attack || 10}</span>
+            <span><FaShieldAlt style={{ marginRight: '5px' }} />{user.stats?.defense || 20}</span>
           </StatsDisplay>
           <HPBar>
             <HPFill hpPercentage={playerHPPercentage} />
@@ -504,8 +505,8 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
             )}
           </AvatarContainer>
           <StatsDisplay theme={theme}>
-            <span>Атака: {npcStats.attack}</span>
-            <span>Защита: {npcStats.defense}</span>
+            <span><FaFistRaised style={{ marginRight: '5px' }} />{npcStats.attack}</span>
+            <span><FaShieldAlt style={{ marginRight: '5px' }} />{npcStats.defense}</span>
           </StatsDisplay>
           <HPBar>
             <HPFill hpPercentage={npcHPPercentage} />

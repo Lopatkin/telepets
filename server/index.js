@@ -257,6 +257,7 @@ io.on('connection', (socket) => {
       owner: updatedUser.owner,
       homeless: updatedUser.homeless,
       credits: updatedUser.credits || 0,
+      exp: updatedUser.exp || 0,
       onLeash: updatedUser.onLeash,
       freeRoam: updatedUser.freeRoam || false,
       stats: updatedUser.stats
@@ -291,6 +292,7 @@ io.on('connection', (socket) => {
           owner: finalUser.owner,
           homeless: finalUser.homeless,
           credits: finalUser.credits || 0,
+          exp: finalUser.exp || 0,
           onLeash: finalUser.onLeash,
           freeRoam: finalUser.freeRoam || false,
           stats: finalUser.stats
@@ -332,6 +334,7 @@ io.on('connection', (socket) => {
           owner: user.owner,
           homeless: user.homeless,
           credits: user.credits || 0,
+          exp: user.exp || 0,
           onLeash: user.onLeash,
           freeRoam: user.freeRoam || false,
           stats: user.stats
@@ -372,6 +375,7 @@ io.on('connection', (socket) => {
           owner: user.owner,
           homeless: user.homeless,
           credits: user.credits || 0,
+          exp: user.exp || 0,
           onLeash: user.onLeash,
           freeRoam: user.freeRoam || false,
           stats: user.stats

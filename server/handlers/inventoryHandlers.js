@@ -140,6 +140,7 @@ function registerInventoryHandlers({
                 owner: updatedUser.owner,
                 homeless: updatedUser.homeless,
                 credits: updatedUser.credits || 0,
+                exp: updatedUser.exp || 0,
                 onLeash: updatedUser.onLeash,
                 freeRoam: updatedUser.freeRoam || false,
                 stats: updatedUser.stats

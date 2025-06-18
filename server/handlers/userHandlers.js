@@ -138,6 +138,7 @@ function registerUserHandlers({
                     owner: user.owner,
                     homeless: user.homeless,
                     credits: user.credits || 0,
+                    exp: user.exp || 0,
                     onLeash: user.onLeash,
                     freeRoam: user.freeRoam || false,
                     stats: user.stats,
@@ -197,6 +198,7 @@ function registerUserHandlers({
             ownerOnline,
             homeless: user.homeless,
             credits: user.credits || 0,
+            exp: user.exp || 0,
             freeRoam: user.freeRoam || false,
             stats: user.stats,
             diary: user.diary
@@ -370,6 +372,7 @@ function registerUserHandlers({
                 owner: user.owner,
                 homeless: user.homeless,
                 credits: user.credits || 0,
+                exp: user.exp || 0,
                 onLeash: user.onLeash,
                 freeRoam: user.freeRoam || false,
                 stats: user.stats
@@ -472,6 +475,7 @@ function registerUserHandlers({
                 owner: user.owner,
                 homeless: user.homeless,
                 credits: user.credits || 0,
+                exp: user.exp || 0,
                 onLeash: user.onLeash,
                 freeRoam: user.freeRoam || false,
                 stats: user.stats

@@ -5,6 +5,12 @@ import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 import fightImage from '../images/fight.jpg'; // Импортируем изображение
 
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 15px; /* Расстояние между кнопками */
+  margin-top: 10px;
+`;
 
 const CloseButton = styled.button`
   position: absolute;
@@ -461,15 +467,12 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
 
   return (
     <FightContainer theme={theme}>
-
       <HeaderContainer>
         <TimeProgressBar theme={theme}>
           <TimeProgressFill progress={timeProgress} />
         </TimeProgressBar>
         <CloseButton theme={theme} onClick={handleClose}><FaRunning /></CloseButton>
       </HeaderContainer>
-
-
       <MannequinContainer>
         <Mannequin>
           <MannequinLabel theme={theme}>{displayName}</MannequinLabel>
@@ -542,18 +545,20 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           </InstructionLabel>
         </Mannequin>
       </MannequinContainer>
-      <ActionButton
-        onClick={() => handleRoundEnd()}
-        disabled={isProcessing || !playerAttackZone || playerDefenseZones.length !== 2}
-      >
-        {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Подтвердить ход'}
-      </ActionButton>
-      <AutoStrikeButton
-        onClick={handleAutoStrike}
-        disabled={!isRoundActive || isProcessing}
-      >
-        {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Автоудар'}
-      </AutoStrikeButton>
+      <ButtonContainer>
+        <ActionButton
+          onClick={() => handleRoundEnd()}
+          disabled={isProcessing || !playerAttackZone || playerDefenseZones.length !== 2}
+        >
+          {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Атаковать'}
+        </ActionButton>
+        <AutoStrikeButton
+          onClick={handleAutoStrike}
+          disabled={!isRoundActive || isProcessing}
+        >
+          {isProcessing ? <ClipLoader color="#fff" size={20} /> : 'Автоудар'}
+        </AutoStrikeButton>
+      </ButtonContainer>
       <LogContainer theme={theme}>
         {battleLogs.map((log, index) => (
           <LogItem

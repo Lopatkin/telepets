@@ -359,7 +359,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
     }
   }, [activeTab, user.diary]);
 
-  const level = calculateLevel(user.exp || 0);
+  const { level, min, max } = calculateLevel(user.exp || 0);
 
   return (
     <ProfileContainer theme={theme}>

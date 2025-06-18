@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FaUser, FaBook, FaPalette, FaSave } from 'react-icons/fa';
+import { FaUser, FaBook, FaPalette, FaSave, FaStar } from 'react-icons/fa';
 
 // Стили для вкладок
 const TabsContainer = styled.div`
@@ -8,6 +8,15 @@ const TabsContainer = styled.div`
   justify-content: center;
   gap: 20px;
   margin-bottom: 20px;
+`;
+
+const ExpInfo = styled.p`
+  font-size: 16px;
+  color: ${props => props.theme === 'dark' ? '#999' : '#888'};
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const TabButton = styled.button`
@@ -308,6 +317,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
           ) : (
             <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
           )}
+          <ExpInfo theme={theme}><FaStar /> Опыт: {user.exp || 0}</ExpInfo>
           <Name theme={theme}>{displayName}</Name>
           {username && <Username theme={theme}>@{username}</Username>}
           <Info theme={theme}>ID: {user.userId}</Info>

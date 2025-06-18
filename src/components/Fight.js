@@ -8,6 +8,7 @@ const CloseButton = styled.button`
   position: absolute;
   top: 10px;
   right: 10px;
+  left: 10px;
   background: none;
   border: none;
   color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};

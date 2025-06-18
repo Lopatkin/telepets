@@ -10,15 +10,6 @@ const TabsContainer = styled.div`
   margin-bottom: 20px;
 `;
 
-const ExpInfo = styled.p`
-  font-size: 16px;
-  color: ${props => props.theme === 'dark' ? '#999' : '#888'};
-  margin: 0 0 20px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
 const LevelInfo = styled.p`
   font-size: 16px;
   color: ${props => props.theme === 'dark' ? '#999' : '#888'};

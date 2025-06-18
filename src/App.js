@@ -175,6 +175,7 @@ function App() {
               ...prevUser,
               ...updatedUser,
               credits: updatedUser.credits !== undefined ? updatedUser.credits : (prevUser?.credits || 0),
+              exp: updatedUser.exp !== undefined ? updatedUser.exp : (prevUser?.exp || 0),
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
               freeRoam: updatedUser.freeRoam ?? false,
               stats: { ...prevUser?.stats, ...updatedUser.stats },

@@ -7,7 +7,7 @@ import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 const CloseButton = styled.button`
   position: absolute;
   top: 10px;
-  right: 8px;
+  right: 10px;
   background: none;
   border: none;
   color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
@@ -19,7 +19,7 @@ const HeaderContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: calc(100% - 0px); /* Учитываем padding */
+  width: calc(100% - 20px); /* Учитываем padding */
   margin-bottom: 20px;
 `;
 

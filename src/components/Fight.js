@@ -4,6 +4,27 @@ import { FaRunning } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 
+const CloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
+  font-size: 1.5em;
+  cursor: pointer;
+  z-index: 1001; /* Добавляем z-index, чтобы иконка была выше прогрессбара */
+`;
+
+const TimeProgressBar = styled.div`
+  width: calc(100% - 60px); /* Уменьшаем ширину, чтобы избежать наложения */
+  height: 10px;
+  background: ${({ theme }) => (theme === 'dark' ? '#555' : '#ccc')};
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 20px auto 20px auto; /* Центрируем и добавляем отступы */
+`;
+
 const FightContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -18,15 +39,6 @@ const FightContainer = styled.div`
   left: 0;
   z-index: 1000;
   box-sizing: border-box;
-`;
-
-const TimeProgressBar = styled.div`
-  width: 100%;
-  height: 10px;
-  background: ${({ theme }) => (theme === 'dark' ? '#555' : '#ccc')};
-  border-radius: 5px;
-  overflow: hidden;
-  margin-bottom: 20px;
 `;
 
 const TimeProgressFill = styled.div`
@@ -169,17 +181,6 @@ const ActionButton = styled.button`
 const AutoStrikeButton = styled(ActionButton)`
   background: #28a745; /* Зелёный цвет для отличия от основной кнопки */
   margin-top: 10px;
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
-  font-size: 1.5em;
-  cursor: pointer;
 `;
 
 const LogContainer = styled.div`

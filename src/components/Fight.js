@@ -24,7 +24,7 @@ const HeaderContainer = styled.div`
 `;
 
 const TimeProgressBar = styled.div`
-  width: calc(100% - 20px); /* Уменьшаем ширину для размещения иконки */
+  width: calc(100% - 0px); /* Уменьшаем ширину для размещения иконки */
   height: 8px;
   background: ${({ theme }) => (theme === 'dark' ? '#555' : '#ccc')};
   border-radius: 4px;

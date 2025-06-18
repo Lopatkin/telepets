@@ -38,7 +38,7 @@ const FightContainer = styled.div`
   flex-direction: column;
   align-items: center;
   padding: 20px;
-  background: ${({ theme }) => (theme === 'dark' ? 'rgba(26, 26, 26, 0.8)' : 'rgba(255, 255, 255, 0.8)')} url(${fightImage}) no-repeat center center;
+  background: ${({ theme }) => (theme === 'dark' ? 'rgba(26, 26, 26, 0.95)' : 'rgba(255, 255, 255, 0.95)')} url(${fightImage}) no-repeat center center;
   background-size: cover; /* Растягиваем изображение на весь контейнер */
   color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
   width: 100vw;
@@ -148,7 +148,9 @@ const Zone = styled.div`
   border: 2px solid ${({ theme, selected, isAttack }) =>
     selected ? (isAttack ? 'red' : 'blue') : theme === 'dark' ? '#555' : '#ccc'};
   background: ${({ theme, selected, isAttack }) =>
-    selected ? (isAttack ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 0, 255, 0.2)') : 'transparent'};
+    selected
+      ? (isAttack ? 'rgba(255, 0, 0, 1)' : 'rgba(0, 0, 255, 1)')
+      : theme === 'dark' ? '#333' : '#f5f5f5'};
   border-radius: 5px;
   text-align: center;
   cursor: pointer;

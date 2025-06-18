@@ -317,10 +317,10 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
           ) : (
             <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
           )}
-          <ExpInfo theme={theme}><FaStar /> Опыт: {user.exp || 0}</ExpInfo>
           <Name theme={theme}>{displayName}</Name>
           {username && <Username theme={theme}>@{username}</Username>}
           <Info theme={theme}>ID: {user.userId}</Info>
+          <ExpInfo theme={theme}><FaStar /> Опыт: {user.exp || 0}</ExpInfo>
           {progressValues && (
             <ProgressWidget theme={theme}>
               <ProgressBarContainer>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
-import { FaTimes } from 'react-icons/fa';
+import { FaRunning } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 
@@ -442,7 +442,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
 
   return (
     <FightContainer theme={theme}>
-      <CloseButton theme={theme} onClick={handleClose}><FaTimes /></CloseButton>
+      <CloseButton theme={theme} onClick={handleClose}><FaRunning /></CloseButton>
       <TimeProgressBar theme={theme}>
         <TimeProgressFill progress={timeProgress} />
       </TimeProgressBar>

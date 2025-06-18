@@ -399,7 +399,6 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
           {username && <Username theme={theme}>@{username}</Username>}
           <Info theme={theme}>ID: {user.userId}</Info>
           <LevelInfo theme={theme}><FaStar /> Уровень: {level}</LevelInfo>
-          <ExpInfo theme={theme}><FaStar /> Опыт: {user.exp || 0}</ExpInfo>
           <ProgressWidget theme={theme}>
             <ProgressBarContainer>
               <ProgressLabel theme={theme}>Опыт</ProgressLabel>

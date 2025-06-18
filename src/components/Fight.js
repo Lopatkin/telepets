@@ -289,7 +289,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
 
   // Функция для получения текста надписи для атаки
   const getAttackInstruction = () => {
-    return playerAttackZone ? 'Вы готовы атаковать!' : 'Укажите место атаки';
+    return playerAttackZone ? 'Атака готова!' : 'Укажите место атаки';
   };
 
   const replaceZoneNames = (message) => {

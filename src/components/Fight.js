@@ -168,6 +168,9 @@ const InstructionLabel = styled.div`
   color: ${({ theme, isReady }) => (isReady ? '#28a745' : theme === 'dark' ? '#aaa' : '#666')};
   text-align: center;
   transition: color 0.3s ease;
+  background: ${({ theme }) => (theme === 'dark' ? 'rgba(50, 50, 50, 0.8)' : 'rgba(245, 245, 245, 0.8)')}; /* Добавляем полупрозрачный фон */
+  padding: 5px 10px; /* Добавляем внутренние отступы для лучшего вида */
+  border-radius: 5px; /* Скругляем углы */
 `;
 
 const ActionButton = styled.button`

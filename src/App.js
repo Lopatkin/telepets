@@ -178,8 +178,7 @@ function App() {
               homeless: updatedUser.homeless ?? (updatedUser.isHuman ? false : true),
               freeRoam: updatedUser.freeRoam ?? false,
               stats: { ...prevUser?.stats, ...updatedUser.stats },
-              diary: updatedUser.diary || prevUser?.diary || [],
-              exp: updatedUser.exp,
+              diary: updatedUser.diary || prevUser?.diary || []
             };
             console.log('Updated user state after userUpdate:', newUser);
             return newUser;

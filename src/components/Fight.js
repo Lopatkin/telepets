@@ -15,14 +15,20 @@ const CloseButton = styled.button`
   cursor: pointer;
   z-index: 1001; /* Добавляем z-index, чтобы иконка была выше прогрессбара */
 `;
+const HeaderContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(100% - 40px); /* Учитываем padding */
+  margin-bottom: 20px;
+`;
 
 const TimeProgressBar = styled.div`
-  width: calc(100% - 60px); /* Уменьшаем ширину, чтобы избежать наложения */
+  width: calc(100% - 50px); /* Уменьшаем ширину для размещения иконки */
   height: 10px;
   background: ${({ theme }) => (theme === 'dark' ? '#555' : '#ccc')};
   border-radius: 5px;
   overflow: hidden;
-  margin: 20px auto 20px auto; /* Центрируем и добавляем отступы */
 `;
 
 const FightContainer = styled.div`
@@ -443,10 +449,15 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
 
   return (
     <FightContainer theme={theme}>
-      <CloseButton theme={theme} onClick={handleClose}><FaRunning /></CloseButton>
-      <TimeProgressBar theme={theme}>
-        <TimeProgressFill progress={timeProgress} />
-      </TimeProgressBar>
+
+      <HeaderContainer>
+        <TimeProgressBar theme={theme}>
+          <TimeProgressFill progress={timeProgress} />
+        </TimeProgressBar>
+        <CloseButton theme={theme} onClick={handleClose}><FaRunning /></CloseButton>
+      </HeaderContainer>
+
+
       <MannequinContainer>
         <Mannequin>
           <MannequinLabel theme={theme}>{displayName}</MannequinLabel>

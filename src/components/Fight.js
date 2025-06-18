@@ -36,7 +36,7 @@ const FightContainer = styled.div`
   flex-direction: column;
   align-items: center;
   padding: 20px;
-  background: ${({ theme }) => (theme === 'dark' ? '#1A1A1A' : '#fff')} url('./images/fight.jpg') no-repeat center center;
+  background: ${({ theme }) => (theme === 'dark' ? '#1A1A1A' : '#fff')} url('../images/fight.jpg') no-repeat center center;
   background-size: cover; /* Растягиваем изображение на весь контейнер */
   color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
   width: 100vw;

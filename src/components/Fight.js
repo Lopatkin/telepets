@@ -165,13 +165,14 @@ const Zone = styled.div`
 
 const InstructionLabel = styled.div`
   margin-top: 10px;
-  font-size: 0.8em; /* Уменьшаем размер шрифта с 0.9em до 0.8em */
+  font-size: 0.8em;
   color: ${({ theme, isReady }) => (isReady ? '#28a745' : theme === 'dark' ? '#aaa' : '#666')};
   text-align: center;
   transition: color 0.3s ease;
   background: ${({ theme }) => (theme === 'dark' ? 'rgba(50, 50, 50, 0.8)' : 'rgba(245, 245, 245, 0.8)')};
   padding: 5px 10px;
   border-radius: 5px;
+  text-shadow: ${({ theme }) => (theme === 'dark' ? '1px 1px 2px rgba(0, 0, 0, 0.5)' : '1px 1px 2px rgba(0, 0, 0, 0.3)')}; /* Добавляем тень для текста */
 `;
 
 const ActionButton = styled.button`

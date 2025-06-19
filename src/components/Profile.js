@@ -131,7 +131,7 @@ const ProgressValue = styled.span`
   margin-left: 10px;
 `;
 
-ProgressBar = styled.progress`
+const ProgressBar = styled.progress`
     width: 140px;
     height: 8px;
     border-radius: 4px;

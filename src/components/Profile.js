@@ -1,12 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FaUser, FaBook, FaPalette, FaSave } from 'react-icons/fa';
+import { FaUser, FaBook, FaPalette, FaSave, FaStar } from 'react-icons/fa';
 
 const LevelLabel = styled.span`
-font-size: 24px; /* Совпадает с размером Name */
-color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-margin-right: 10px;
-`;
+    font-size: 24px; /* Совпадает с размером Name */
+    color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    &::before {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 5px;
+      background: url('data:image/svg+xml;utf8,${encodeURIComponent(<FaStar />)}') no-repeat center;
+      background-size: contain;
+      color: ${props => props.theme === 'dark' ? '#FFD700' : '#FFD700'}; /* Золотой цвет иконки */
+    }
+  `;
 
 // Стили для вкладок
 const TabsContainer = styled.div`

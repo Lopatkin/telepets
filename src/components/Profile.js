@@ -123,7 +123,7 @@ const ProgressLabel = styled.span`
   font-size: 16px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#666'};
   width: 80px;
-  text-align: center;
+  text-align: right;
 `;
 
 const ProgressValue = styled.span`

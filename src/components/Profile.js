@@ -192,7 +192,7 @@ const DefaultAvatar = styled.div`
 const Name = styled.h2`
   font-size: 24px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  margin: 0 0 10px 0;
+  margin: 0 0 0 0;
 `;
 
 const Username = styled.p`

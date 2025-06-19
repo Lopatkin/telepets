@@ -300,8 +300,8 @@ const getLevelInfo = (exp) => {
     if (exp >= levelTable[i].minExp) {
       return {
         level: levelTable[i].level,
-        currentExp: exp - levelTable[i].minExp,
-        maxExp: levelTable[i].maxExp - levelTable[i].minExp,
+        currentExp: exp,
+        maxExp: levelTable[i].maxExp,
         totalMaxExp: levelTable[i].maxExp
       };
     }

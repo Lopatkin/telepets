@@ -381,12 +381,12 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
       {activeTab === 'stats' && (
         <>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <LevelLabel theme={theme}>Ур. {getLevelInfo(user.exp || 0).level}</LevelLabel>
+            <LevelLabel theme={theme}>{getLevelInfo(user.exp || 0).level}</LevelLabel>
             <Name theme={theme}>{displayName}</Name>
           </div>
           {username && <Username theme={theme}>@{username}</Username>}
           <ProgressBarContainer>
-            <ProgressLabel theme={theme}>Опыт</ProgressLabel>
+            <ProgressLabel theme={theme}></ProgressLabel>
             <ProgressBar
               value={getLevelInfo(user.exp || 0).currentExp}
               max={getLevelInfo(user.exp || 0).maxExp}

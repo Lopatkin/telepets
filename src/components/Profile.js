@@ -5,7 +5,8 @@ import { FaUser, FaBook, FaPalette, FaSave, FaStar } from 'react-icons/fa';
 const ExpValueContainer = styled.div`
     display: flex;
     justify-content: center;
-    margin-top: 4px;
+    margin-top: 0px;
+    margin-bottom: 8px;
     font-size: 14px;
     color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   `;

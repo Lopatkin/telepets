@@ -131,7 +131,7 @@ const ProgressBarContainer = styled.div`
 const ProgressLabel = styled.span`
   font-size: 16px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#666'};
-  width: 80px;
+  width: 120px;
   text-align: left;
 `;
 

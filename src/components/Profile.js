@@ -397,7 +397,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
             </LevelLabel>
             <Name theme={theme}>{displayName}</Name>
           </div>
-          {username && <Username theme={theme}>@{username}</Username>}
+          
           <ProgressBarContainer style={{ justifyContent: 'center', margin: '0px auto' }}>
             <ProgressLabel theme={theme} style={{ width: '0' }}></ProgressLabel>
             <ProgressBar
@@ -415,6 +415,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
             <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
           )}
           <Info theme={theme}>ID: {user.userId}</Info>
+          {username && <Username theme={theme}>@{username}</Username>}
           {progressValues && (
             <ProgressWidget theme={theme}>
               <ProgressBarContainer>

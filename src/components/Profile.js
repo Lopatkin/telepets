@@ -198,7 +198,7 @@ const Name = styled.h2`
 const Username = styled.p`
   font-size: 18px;
   color: ${props => props.theme === 'dark' ? '#bbb' : '#666'};
-  margin: 0 0 10px 0;
+  margin: 0 0 0 0;
 `;
 
 const Info = styled.p`

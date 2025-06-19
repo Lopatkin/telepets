@@ -3,10 +3,9 @@ import styled from 'styled-components';
 import { FaUser, FaBook, FaPalette, FaSave } from 'react-icons/fa';
 
 const LevelLabel = styled.span`
-  font-size: 20px;
-  font-weight: bold;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  margin-right: 10px;
+font-size: 24px; /* Совпадает с размером Name */
+color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+margin-right: 10px;
 `;
 
 // Стили для вкладок

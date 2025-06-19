@@ -398,7 +398,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
             <Name theme={theme}>{displayName}</Name>
           </div>
           {username && <Username theme={theme}>@{username}</Username>}
-          <ProgressBarContainer style={{ justifyContent: 'center', margin: '8px auto' }}>
+          <ProgressBarContainer style={{ justifyContent: 'center', margin: '0px auto' }}>
             <ProgressLabel theme={theme} style={{ width: '0' }}></ProgressLabel>
             <ProgressBar
               value={getLevelInfo(user.exp || 0).currentExp}

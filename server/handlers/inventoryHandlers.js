@@ -253,19 +253,43 @@ function registerInventoryHandlers({
 
             io.to(owner).emit('items', { owner, items: itemCache.get(owner) });
 
-            // Добавляем логику для уменьшения энергии
+            // Добавляем логику для уменьшения энергии и начисления опыта
             const energyConsumingItems = ['Палка', 'Лесные ягоды', 'Лесные грибы'];
             if (energyConsumingItems.includes(item.name)) {
                 const userId = owner.replace('user_', '');
                 const user = await User.findOne({ userId });
                 if (user) {
                     const newEnergy = Math.max(user.stats.energy - 1, 0); // Уменьшаем энергию на 1, но не ниже 0
+                    // Начисляем случайное количество опыта (от 1 до 5) за указанные предметы
+                    const expGain = Math.floor(Math.random() * 5) + 1; // Случайное число от 1 до 5
+                    const newExp = (user.exp || 0) + expGain;
+
                     await User.updateOne(
                         { userId },
-                        { $set: { 'stats.energy': newEnergy } }
+                        {
+                            $set: {
+                                'stats.energy': newEnergy,
+                                exp: newExp
+                            }
+                        }
                     );
                     const updatedUser = await User.findOne({ userId });
                     socket.emit('userUpdate', {
+                        userId: updatedUser.userId,
+                        firstName: updatedUser.firstName,
+                        username: updatedUser.username,
+                        lastName: updatedUser.lastName,
+                        photoUrl: updatedUser.photoUrl,
+                        isRegistered: updatedUser.isRegistered,
+                        isHuman: updatedUser.isHuman,
+                        animalType: updatedUser.animalType,
+                        name: updatedUser.name,
+                        owner: updatedUser.owner,
+                        homeless: updatedUser.homeless,
+                        credits: updatedUser.credits || 0,
+                        exp: updatedUser.exp || 0,
+                        onLeash: updatedUser.onLeash,
+                        freeRoam: updatedUser.freeRoam || false,
                         stats: updatedUser.stats
                     });
                 }

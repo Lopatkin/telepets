@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaUser, FaBook, FaPalette, FaSave, FaStar } from 'react-icons/fa';
 
+const ExpValueContainer = styled.div`
+    display: flex;
+    justify-content: center;
+    margin-top: 4px;
+    font-size: 14px;
+    color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  `;
+
 const LevelLabel = styled.span`
     font-size: 24px; /* Совпадает с размером Name */
     color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
@@ -396,10 +404,10 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
               max={getLevelInfo(user.exp || 0).maxExp}
               type="exp"
             />
-            <ProgressValue theme={theme}>
-              {getLevelInfo(user.exp || 0).currentExp}/{getLevelInfo(user.exp || 0).maxExp}
-            </ProgressValue>
           </ProgressBarContainer>
+          <ExpValueContainer theme={theme}>
+            {getLevelInfo(user.exp || 0).currentExp}/{getLevelInfo(user.exp || 0).maxExp}
+          </ExpValueContainer>
           {photoUrl ? (
             <Avatar src={photoUrl} alt={`${displayName}'s avatar`} />
           ) : (

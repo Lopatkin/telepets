@@ -303,13 +303,13 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
 
       {activeTab === 'stats' && (
         <>
+          <Name theme={theme}>{displayName}</Name>
+          {username && <Username theme={theme}>@{username}</Username>}
           {photoUrl ? (
             <Avatar src={photoUrl} alt={`${displayName}'s avatar`} />
           ) : (
             <DefaultAvatar>{defaultAvatarLetter}</DefaultAvatar>
           )}
-          <Name theme={theme}>{displayName}</Name>
-          {username && <Username theme={theme}>@{username}</Username>}
           <Info theme={theme}>ID: {user.userId}</Info>
           {progressValues && (
             <ProgressWidget theme={theme}>

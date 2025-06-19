@@ -8,17 +8,7 @@ const LevelLabel = styled.span`
     margin-right: 10px;
     display: flex;
     align-items: center;
-    &::before {
-      content: '';
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      margin-right: 5px;
-      background: url('data:image/svg+xml;utf8,${encodeURIComponent(<FaStar />)}') no-repeat center;
-      background-size: contain;
-      color: ${props => props.theme === 'dark' ? '#FFD700' : '#FFD700'}; /* Золотой цвет иконки */
-    }
-  `;
+`;
 
 // Стили для вкладок
 const TabsContainer = styled.div`
@@ -392,7 +382,10 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
       {activeTab === 'stats' && (
         <>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <LevelLabel theme={theme}>{getLevelInfo(user.exp || 0).level}</LevelLabel>
+            <LevelLabel theme={theme}>
+              <FaStar style={{ color: theme === 'dark' ? '#FFD700' : '#FFD700', marginRight: '5px', fontSize: '20px' }} />
+              {getLevelInfo(user.exp || 0).level}
+            </LevelLabel>
             <Name theme={theme}>{displayName}</Name>
           </div>
           {username && <Username theme={theme}>@{username}</Username>}

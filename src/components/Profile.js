@@ -131,7 +131,7 @@ const ProgressBarContainer = styled.div`
 const ProgressLabel = styled.span`
   font-size: 16px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#666'};
-  width: 120px;
+  width: 80px;
   text-align: left;
 `;
 
@@ -399,7 +399,7 @@ function Profile({ user, theme, selectedTheme, telegramTheme, onThemeChange, pro
           </div>
           
           <ProgressBarContainer style={{ justifyContent: 'center', margin: '0px auto' }}>
-            <ProgressLabel theme={theme} ></ProgressLabel>
+            <ProgressLabel theme={theme} style={{ width: '0' }}></ProgressLabel>
             <ProgressBar
               value={getLevelInfo(user.exp || 0).currentExp}
               max={getLevelInfo(user.exp || 0).maxExp}

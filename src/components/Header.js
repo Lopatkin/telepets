@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components'; // Объединяем импорт
+import styled, { keyframes } from 'styled-components';
 import { FaCoins, FaStar } from 'react-icons/fa';
 
 // Анимация мерцания и масштабирования (3 секунды)
@@ -11,6 +11,13 @@ const levelAnimation = keyframes`
   50% {
     opacity: 0.3;
     transform: scale(2);
+  }
+`;
+
+// Контейнер для анимации через CSS-класс
+const AnimationWrapper = styled.div`
+  &.animate {
+    animation: ${levelAnimation} 3s ease-in-out;
   }
 `;
 
@@ -133,22 +140,18 @@ const StatsContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 5px;
-  margin-left: auto;
-  padding-right: 10px;
+  gap: 15px;
 `;
 
 const LevelContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
-  animation: ${props => props.isFlickering ? `${levelAnimation} 3s ease-in-out` : 'none'};
 `;
 
 const LevelText = styled.span`
   font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  animation: ${props => props.isFlickering ? `${levelAnimation} 3s ease-in-out` : 'none'};
 `;
 
 const CreditsContainer = styled.div`
@@ -313,9 +316,13 @@ function Header({ user, room, theme, socket }) {
     <HeaderContainer theme={theme}>
       <RoomTitle theme={theme}>{roomName}</RoomTitle>
       <StatsContainer>
-        <LevelContainer isFlickering={isFlickering}>
-          <FaStar color="#FFD700" />
-          <LevelText theme={theme} isFlickering={isFlickering}>{level}</LevelText>
+        <LevelContainer>
+          <AnimationWrapper className={isFlickering ? 'animate' : ''}>
+            <FaStar color="#FFD700" />
+          </AnimationWrapper>
+          <AnimationWrapper className={isFlickering ? 'animate' : ''}>
+            <LevelText theme={theme}>{level}</LevelText>
+          </AnimationWrapper>
         </LevelContainer>
         <CreditsContainer>
           <FaCoins color="#FFD700" />

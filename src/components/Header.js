@@ -2,13 +2,18 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaCoins, FaStar } from 'react-icons/fa'; // Добавляем FaStar
 
-// Добавляем keyframes для анимации мерцания
 import { keyframes } from 'styled-components';
 
-// Определяем анимацию мерцания
+// Анимация мерцания (3 секунды)
 const flickerAnimation = keyframes`
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
+`;
+
+// Анимация увеличения на 200% (3 секунды)
+const scaleAnimation = keyframes`
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(2); }
 `;
 
 const HeaderContainer = styled.div`
@@ -139,13 +144,13 @@ const LevelContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
-  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 1s ease-in-out; // Применяем анимацию
+  animation: ${props => props.isFlickering ? `${flickerAnimation} 3s ease-in-out, ${scaleAnimation} 3s ease-in-out` : 'none'};
 `;
 
 const LevelText = styled.span`
   font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 1s ease-in-out; // Применяем анимацию
+  animation: ${props => props.isFlickering ? `${flickerAnimation} 3s ease-in-out, ${scaleAnimation} 3s ease-in-out` : 'none'};
 `;
 
 const CreditsContainer = styled.div`
@@ -210,7 +215,7 @@ const getLevelInfo = (exp) => {
     { level: 47, minExp: 10811, maxExp: 11280 },
     { level: 48, minExp: 11281, maxExp: 11760 },
     { level: 49, minExp: 11761, maxExp: 12250 },
-    { level: 50, minExp: 12251, maxExp: 12750 }
+    { level: 50, minExp: 12251, maxExp: 12750 },
   ];
 
   for (let i = levelTable.length - 1; i >= 0; i--) {
@@ -260,8 +265,8 @@ function Header({ user, room, theme, socket }) {
         if (newLevel !== level) {
           console.log('Updating level from userUpdate:', newLevel);
           setLevel(newLevel);
-          setIsFlickering(true); // Запускаем анимацию
-          setTimeout(() => setIsFlickering(false), 1000); // Отключаем через 1 секунду
+          setIsFlickering(true);
+          setTimeout(() => setIsFlickering(false), 3000); // Увеличиваем до 3 секунд
         }
       }
     };
@@ -285,7 +290,7 @@ function Header({ user, room, theme, socket }) {
       socket.off('userUpdate', handleUserUpdate);
       socket.off('creditsUpdate', handleCreditsUpdate);
     };
-  }, [socket, user?.userId, level]); // Добавляем level в зависимости
+  }, [socket, user?.userId, level]);
 
   const averageValue = Math.round(
     (progressValues.health + progressValues.mood + progressValues.fullness + progressValues.energy) / 4

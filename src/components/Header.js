@@ -1,25 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
-import { FaCoins, FaStar } from 'react-icons/fa';
-
-// Анимация мерцания и масштабирования (3 секунды)
-const levelAnimation = keyframes`
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.3;
-    transform: scale(2);
-  }
-`;
-
-// Контейнер для анимации через CSS-класс
-const AnimationWrapper = styled.div`
-  &.animate {
-    animation: ${levelAnimation} 3s ease-in-out;
-  }
-`;
+import styled from 'styled-components';
+import { FaCoins, FaStar } from 'react-icons/fa'; // Добавляем FaStar
 
 const HeaderContainer = styled.div`
   position: sticky;
@@ -140,18 +121,22 @@ const StatsContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 15px;
+  gap: 5px;
+  margin-left: auto;
+  padding-right: 10px;
 `;
 
 const LevelContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
+  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 1s ease-in-out; // Применяем анимацию
 `;
 
 const LevelText = styled.span`
   font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 1s ease-in-out; // Применяем анимацию
 `;
 
 const CreditsContainer = styled.div`
@@ -236,7 +221,7 @@ function Header({ user, room, theme, socket }) {
   const [showProgress, setShowProgress] = useState(false);
   const [credits, setCredits] = useState(user?.credits || 0);
   const [level, setLevel] = useState(getLevelInfo(user?.exp || 0).level);
-  const [isFlickering, setIsFlickering] = useState(false);
+  const [isFlickering, setIsFlickering] = useState(false); // Состояние для анимации
 
   const roomName = room
     ? (room.startsWith('myhome_') ? 'Мой дом' : room)
@@ -266,8 +251,8 @@ function Header({ user, room, theme, socket }) {
         if (newLevel !== level) {
           console.log('Updating level from userUpdate:', newLevel);
           setLevel(newLevel);
-          setIsFlickering(true);
-          setTimeout(() => setIsFlickering(false), 3000);
+          setIsFlickering(true); // Запускаем анимацию
+          setTimeout(() => setIsFlickering(false), 1000); // Отключаем через 1 секунду
         }
       }
     };
@@ -291,7 +276,7 @@ function Header({ user, room, theme, socket }) {
       socket.off('userUpdate', handleUserUpdate);
       socket.off('creditsUpdate', handleCreditsUpdate);
     };
-  }, [socket, user?.userId, level]);
+  }, [socket, user?.userId, level]); // Добавляем level в зависимости
 
   const averageValue = Math.round(
     (progressValues.health + progressValues.mood + progressValues.fullness + progressValues.energy) / 4
@@ -316,13 +301,9 @@ function Header({ user, room, theme, socket }) {
     <HeaderContainer theme={theme}>
       <RoomTitle theme={theme}>{roomName}</RoomTitle>
       <StatsContainer>
-        <LevelContainer>
-          <AnimationWrapper className={isFlickering ? 'animate' : ''}>
-            <FaStar color="#FFD700" />
-          </AnimationWrapper>
-          <AnimationWrapper className={isFlickering ? 'animate' : ''}>
-            <LevelText theme={theme}>{level}</LevelText>
-          </AnimationWrapper>
+        <LevelContainer isFlickering={isFlickering}>
+          <FaStar color="#FFD700" />
+          <LevelText theme={theme} isFlickering={isFlickering}>{level}</LevelText>
         </LevelContainer>
         <CreditsContainer>
           <FaCoins color="#FFD700" />

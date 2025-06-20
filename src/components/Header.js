@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components'; // Объединяем импорт
-import { FaCoins, FaStar } from 'react-icons/fa'; // Добавляем FaStar
+import { FaCoins, FaStar } from 'react-icons/fa';
 
-// Анимация мерцания (3 секунды)
-const flickerAnimation = keyframes`
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-`;
-
-// Анимация увеличения на 200% (3 секунды)
-const scaleAnimation = keyframes`
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(2); }
+// Анимация мерцания и масштабирования (3 секунды)
+const levelAnimation = keyframes`
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(2);
+  }
 `;
 
 const HeaderContainer = styled.div`
@@ -142,13 +142,13 @@ const LevelContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
-  animation: ${props => props.isFlickering ? `${flickerAnimation} 3s ease-in-out, ${scaleAnimation} 3s ease-in-out` : 'none'};
+  animation: ${props => props.isFlickering ? `${levelAnimation} 3s ease-in-out` : 'none'};
 `;
 
 const LevelText = styled.span`
   font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  animation: ${props => props.isFlickering ? `${flickerAnimation} 3s ease-in-out, ${scaleAnimation} 3s ease-in-out` : 'none'};
+  animation: ${props => props.isFlickering ? `${levelAnimation} 3s ease-in-out` : 'none'};
 `;
 
 const CreditsContainer = styled.div`
@@ -213,7 +213,7 @@ const getLevelInfo = (exp) => {
     { level: 47, minExp: 10811, maxExp: 11280 },
     { level: 48, minExp: 11281, maxExp: 11760 },
     { level: 49, minExp: 11761, maxExp: 12250 },
-    { level: 50, minExp: 12251, maxExp: 12750 },
+    { level: 50, minExp: 12251, maxExp: 12750 }
   ];
 
   for (let i = levelTable.length - 1; i >= 0; i--) {
@@ -233,7 +233,7 @@ function Header({ user, room, theme, socket }) {
   const [showProgress, setShowProgress] = useState(false);
   const [credits, setCredits] = useState(user?.credits || 0);
   const [level, setLevel] = useState(getLevelInfo(user?.exp || 0).level);
-  const [isFlickering, setIsFlickering] = useState(false); // Состояние для анимации
+  const [isFlickering, setIsFlickering] = useState(false);
 
   const roomName = room
     ? (room.startsWith('myhome_') ? 'Мой дом' : room)
@@ -264,7 +264,7 @@ function Header({ user, room, theme, socket }) {
           console.log('Updating level from userUpdate:', newLevel);
           setLevel(newLevel);
           setIsFlickering(true);
-          setTimeout(() => setIsFlickering(false), 3000); // Увеличиваем до 3 секунд
+          setTimeout(() => setIsFlickering(false), 3000);
         }
       }
     };

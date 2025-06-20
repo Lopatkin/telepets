@@ -2,6 +2,15 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaCoins, FaStar } from 'react-icons/fa'; // Добавляем FaStar
 
+// Добавляем keyframes для анимации мерцания
+import { keyframes } from 'styled-components';
+
+// Определяем анимацию мерцания
+const flickerAnimation = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+`;
+
 const HeaderContainer = styled.div`
   position: sticky;
   top: 0;
@@ -18,7 +27,7 @@ const RoomTitle = styled.h3`
   font-size: 18px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   margin: 0;
-  max-width: 50%; /* Уменьшаем ширину, чтобы вместить уровень и кредиты */
+  max-width: 50%;
   word-wrap: break-word;
   line-height: 1.2;
 `;
@@ -119,7 +128,7 @@ const ProgressBar = styled.progress`
 
 const StatsContainer = styled.div`
   display: flex;
-  flex-direction: column; /* Располагаем уровень над кредитами */
+  flex-direction: column;
   align-items: flex-end;
   gap: 5px;
   margin-left: auto;
@@ -130,11 +139,13 @@ const LevelContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
+  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 1s ease-in-out; // Применяем анимацию
 `;
 
 const LevelText = styled.span`
   font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 1s ease-in-out; // Применяем анимацию
 `;
 
 const CreditsContainer = styled.div`
@@ -148,7 +159,6 @@ const CreditsText = styled.span`
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
 `;
 
-// Функция для определения уровня игрока
 const getLevelInfo = (exp) => {
   const levelTable = [
     { level: 1, minExp: 0, maxExp: 10 },
@@ -219,7 +229,8 @@ const getLevelInfo = (exp) => {
 function Header({ user, room, theme, socket }) {
   const [showProgress, setShowProgress] = useState(false);
   const [credits, setCredits] = useState(user?.credits || 0);
-  const [level, setLevel] = useState(getLevelInfo(user?.exp || 0).level); // Добавляем состояние для уровня
+  const [level, setLevel] = useState(getLevelInfo(user?.exp || 0).level);
+  const [isFlickering, setIsFlickering] = useState(false); // Состояние для анимации
 
   const roomName = room
     ? (room.startsWith('myhome_') ? 'Мой дом' : room)
@@ -245,8 +256,13 @@ function Header({ user, room, theme, socket }) {
         setCredits(updatedUser.credits);
       }
       if (updatedUser.exp !== undefined) {
-        console.log('Updating level from userUpdate:', updatedUser.exp);
-        setLevel(getLevelInfo(updatedUser.exp).level); // Обновляем уровень
+        const newLevel = getLevelInfo(updatedUser.exp).level;
+        if (newLevel !== level) {
+          console.log('Updating level from userUpdate:', newLevel);
+          setLevel(newLevel);
+          setIsFlickering(true); // Запускаем анимацию
+          setTimeout(() => setIsFlickering(false), 1000); // Отключаем через 1 секунду
+        }
       }
     };
 
@@ -269,7 +285,7 @@ function Header({ user, room, theme, socket }) {
       socket.off('userUpdate', handleUserUpdate);
       socket.off('creditsUpdate', handleCreditsUpdate);
     };
-  }, [socket, user?.userId]);
+  }, [socket, user?.userId, level]); // Добавляем level в зависимости
 
   const averageValue = Math.round(
     (progressValues.health + progressValues.mood + progressValues.fullness + progressValues.energy) / 4
@@ -294,9 +310,9 @@ function Header({ user, room, theme, socket }) {
     <HeaderContainer theme={theme}>
       <RoomTitle theme={theme}>{roomName}</RoomTitle>
       <StatsContainer>
-        <LevelContainer>
+        <LevelContainer isFlickering={isFlickering}>
           <FaStar color="#FFD700" />
-          <LevelText theme={theme}>{level}</LevelText>
+          <LevelText theme={theme} isFlickering={isFlickering}>{level}</LevelText>
         </LevelContainer>
         <CreditsContainer>
           <FaCoins color="#FFD700" />

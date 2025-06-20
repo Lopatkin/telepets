@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components'; // Объединяем импорт
 import { FaCoins, FaStar } from 'react-icons/fa'; // Добавляем FaStar
-
-import { keyframes } from 'styled-components';
 
 // Анимация мерцания (3 секунды)
 const flickerAnimation = keyframes`

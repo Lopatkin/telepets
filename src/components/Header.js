@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaCoins, FaStar } from 'react-icons/fa'; // Добавляем FaStar
+import { keyframes } from 'styled-components';
+
+// Определяем анимацию мерцания
+const flickerAnimation = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+`;
 
 const HeaderContainer = styled.div`
   position: sticky;

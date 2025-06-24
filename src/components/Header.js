@@ -148,14 +148,14 @@ const LevelContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
-  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 1s ease-in-out; // Применяем анимацию
+  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 3s ease-in-out; // Применяем анимацию
 `;
 
 const LevelText = styled.span`
   font-size: 14px;
   font-weight: bold; /* Делаем текст жирным */
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 1s ease-in-out;
+  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 3s ease-in-out;
 `;
 
 const CreditsContainer = styled.div`
@@ -168,7 +168,7 @@ const CreditsText = styled.span`
   font-size: 14px;
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
   animation: ${props => props.creditsFlicker === 'green' ? creditsFlickerGreen :
-    props.creditsFlicker === 'red' ? creditsFlickerRed : 'none'} 0.5s ease-in-out 4; // 2 секунды (4 итерации по 0.5с)
+    props.creditsFlicker === 'red' ? creditsFlickerRed : 'none'} 0.5s ease-in-out 2; // 2 секунды (2 итерации по 0.5с)
 `;
 
 const getLevelInfo = (exp) => {

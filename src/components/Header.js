@@ -148,14 +148,14 @@ const LevelContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 5px;
-  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 3s ease-in-out; // Применяем анимацию
+  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 0.5s ease-in-out 6; // Применяем анимацию
 `;
 
 const LevelText = styled.span`
   font-size: 14px;
   font-weight: bold; /* Делаем текст жирным */
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 3s ease-in-out;
+  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 0.5s ease-in-out 6;
 `;
 
 const CreditsContainer = styled.div`

@@ -26,7 +26,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   const [selectedNPC, setSelectedNPC] = useState(null);
   const [npcs, setNpcs] = useState([]);
 
-  
+
 
   useEffect(() => {
     if (socket && onItemsUpdate) {
@@ -75,9 +75,9 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         id: npc.userId,
         name: npc.firstName,
         description: {
-          'npc_fox': 'Хитрая лисичка, быстрая и ловкая',
-          'npc_ezhik': 'Маленький ёжик, осторожный и колючий',
           'npc_mouse': 'Проворная мышка, маленькая и шустрая',
+          'npc_ezhik': 'Маленький ёжик, осторожный и колючий',
+          'npc_fox': 'Хитрая лисичка, быстрая и ловкая',
           'npc_wolf': 'Грозный волк, сильный и опасный',
           'npc_boar': 'Мощный кабан, крепкий и агрессивный',
           'npc_bear': 'Громадный медведь, невероятно сильный'

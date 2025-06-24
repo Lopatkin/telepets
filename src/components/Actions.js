@@ -151,7 +151,11 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
-          showNotification(action.successMessage);
+          // Проверяем, есть ли expGain в ответе и добавляем его в уведомление
+          const message = action.expGain && response.expGain > 0
+            ? `${action.successMessage} +${response.expGain} опыта`
+            : action.successMessage;
+          showNotification(message);
           if (action.cooldownKey) {
             startCooldown(action.cooldownKey);
           }

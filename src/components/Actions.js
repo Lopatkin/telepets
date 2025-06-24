@@ -26,7 +26,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   const [selectedNPC, setSelectedNPC] = useState(null);
   const [npcs, setNpcs] = useState([]);
 
-
+  
 
   useEffect(() => {
     if (socket && onItemsUpdate) {
@@ -75,9 +75,9 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         id: npc.userId,
         name: npc.firstName,
         description: {
-          'npc_mouse': 'Проворная мышка, маленькая и шустрая',
-          'npc_ezhik': 'Маленький ёжик, осторожный и колючий',
           'npc_fox': 'Хитрая лисичка, быстрая и ловкая',
+          'npc_ezhik': 'Маленький ёжик, осторожный и колючий',
+          'npc_mouse': 'Проворная мышка, маленькая и шустрая',
           'npc_wolf': 'Грозный волк, сильный и опасный',
           'npc_boar': 'Мощный кабан, крепкий и агрессивный',
           'npc_bear': 'Громадный медведь, невероятно сильный'
@@ -149,26 +149,13 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
       setIsProcessing(true);
       socket.emit('addItem', { owner: `user_${userId}`, item: action.item }, (response) => {
         setIsProcessing(false);
-        console.log('Received addItem response:', response); // Лог ответа
         if (response && response.success) {
           setSelectedAction(null);
-          const message = action.expGain && response.expGain > 0
-            ? `${action.successMessage} +${response.expGain} опыта`
-            : action.successMessage;
-          showNotification(message);
+          showNotification(action.successMessage);
           if (action.cooldownKey) {
             startCooldown(action.cooldownKey);
           }
-          // Запрашиваем обновленные данные пользователя после добавления предмета
-          socket.emit('getUser', { userId }, (userResponse) => {
-            if (userResponse.success) {
-              updateUser(userResponse.user);
-            } else {
-              console.error('Failed to fetch user data:', userResponse.message);
-            }
-          });
         } else {
-          console.error('addItem failed:', response ? response.message : 'No response received');
           setSelectedAction(null);
           showNotification(response?.message || 'Ошибка при добавлении предмета');
         }
@@ -200,7 +187,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         showNotification(action.successMessage);
       });
     }
-  }, [socket, selectedAction, user, userId, currentRoom, showNotification, startCooldown, isProcessing, cooldowns, updateUser]); // Добавляем updateUser в зависимости
+  }, [socket, selectedAction, user, userId, currentRoom, showNotification, startCooldown, isProcessing, cooldowns]);
 
   const availableActions = useMemo(() => {
     if (!user || !currentRoom) return [];

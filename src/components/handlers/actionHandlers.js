@@ -11,7 +11,6 @@ const actionHandlers = {
     },
     successMessage: 'Вы нашли палку!',
     cooldownKey: 'findStick',
-    expGain: true
   },
   'Найти ягоды': {
     item: {
@@ -24,7 +23,6 @@ const actionHandlers = {
     },
     successMessage: 'Вы нашли лесные ягоды!',
     cooldownKey: 'findBerries',
-    expGain: true
   },
   'Найти грибы': {
     item: {
@@ -37,7 +35,6 @@ const actionHandlers = {
     },
     successMessage: 'Вы нашли лесные грибы!',
     cooldownKey: 'findMushrooms',
-    expGain: true
   },
   'Утилизировать мусор': {
     action: 'utilizeTrash',

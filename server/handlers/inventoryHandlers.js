@@ -262,14 +262,17 @@ function registerInventoryHandlers({
                     let newEnergy = user.stats.energy;
                     let newMood = user.stats.mood;
                     let newSatiety = user.stats.satiety;
+                    let newHealth = user.stats.health;
 
-                    // Проверяем энергию и настроение, обновляем сытость при необходимости
+                    // Проверяем энергию, настроение, сытость и здоровье
                     if (user.stats.energy > 0) {
                         newEnergy = Math.max(user.stats.energy - 1, 0); // Уменьшаем энергию на 1, но не ниже 0
                     } else if (user.stats.mood > 0) {
                         newMood = Math.max(user.stats.mood - 2, 0); // Если энергия 0, уменьшаем настроение на 2
-                    } else {
+                    } else if (user.stats.satiety > 0) {
                         newSatiety = Math.max(user.stats.satiety - 3, 0); // Если настроение 0, уменьшаем сытость на 3
+                    } else {
+                        newHealth = Math.max(user.stats.health - 4, 0); // Если сытость 0, уменьшаем здоровье на 4
                     }
 
                     // Начисляем случайное количество опыта (от 1 до 5)
@@ -284,6 +287,7 @@ function registerInventoryHandlers({
                                 'stats.energy': newEnergy,
                                 'stats.mood': newMood,
                                 'stats.satiety': newSatiety,
+                                'stats.health': newHealth,
                                 exp: newExp
                             }
                         }

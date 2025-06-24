@@ -149,6 +149,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
       setIsProcessing(true);
       socket.emit('addItem', { owner: `user_${userId}`, item: action.item }, (response) => {
         setIsProcessing(false);
+        console.log('Received addItem response:', response); // Добавляем лог ответа
         if (response && response.success) {
           setSelectedAction(null);
           // Проверяем, есть ли expGain в ответе и добавляем его в уведомление
@@ -159,7 +160,19 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
           if (action.cooldownKey) {
             startCooldown(action.cooldownKey);
           }
+
+          socket.emit('getUser', { userId }, (userResponse) => {
+            if (userResponse.success) {
+              updateUser(userResponse.user);
+            } else {
+              console.error('Failed to fetch user data:', userResponse.message);
+            }
+          });
+
+
+
         } else {
+          console.error('addItem failed:', response ? response.message : 'No response received');
           setSelectedAction(null);
           showNotification(response?.message || 'Ошибка при добавлении предмета');
         }

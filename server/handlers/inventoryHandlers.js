@@ -295,7 +295,10 @@ function registerInventoryHandlers({
                 }
             }
 
-            if (callback) callback({ success: true, item: newItem, expGain: expGain || 0 }); // Добавляем expGain в ответ
+            if (callback) {
+                console.log(`Sending addItem response for owner ${owner}:`, { success: true, item: newItem, expGain: expGain || 0 });
+                callback({ success: true, item: newItem, expGain: expGain || 0 });
+            }
             if (item._id) itemLocks.delete(item._id);
         } catch (err) {
             console.error('Error adding item:', err.message, err.stack);

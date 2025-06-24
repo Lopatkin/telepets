@@ -223,8 +223,8 @@ io.on('connection', (socket) => {
     fight.playerHP = fight.playerHP - damageToPlayer;
     fight.npcHP = Math.max(0, fight.npcHP - damageToNPC);
 
-    // Ограничиваем здоровье максимальным значением
-    fight.playerHP = Math.min(fight.playerHP, user.stats.maxHealth);
+    // Ограничиваем здоровье минимальным значением 0 и максимальным значением
+    fight.playerHP = Math.min(Math.max(fight.playerHP, 0), user.stats.maxHealth);
 
     // Обновляем здоровье и энергию игрока в базе данных
     // Уменьшаем энергию на 10 только если бой завершён

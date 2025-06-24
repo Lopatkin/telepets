@@ -154,9 +154,9 @@ const CreditsContainer = styled.div`
 `;
 
 const CreditsText = styled.span`
-  font-size: 14px;
-  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-`;
+    font-size: 14px;
+    color: ${props => props.creditsColor || (props.theme === 'dark' ? '#ccc' : '#333')}; // Используем creditsColor, если задан
+  `;
 
 const getLevelInfo = (exp) => {
   const levelTable = [
@@ -229,7 +229,8 @@ function Header({ user, room, theme, socket }) {
   const [showProgress, setShowProgress] = useState(false);
   const [credits, setCredits] = useState(user?.credits || 0);
   const [level, setLevel] = useState(getLevelInfo(user?.exp || 0).level);
-  const [isFlickering, setIsFlickering] = useState(false); // Состояние для анимации
+  const [isFlickering, setIsFlickering] = useState(false);
+  const [creditsColor, setCreditsColor] = useState(null); // Новое состояние для цвета кредитов
 
   const roomName = room
     ? (room.startsWith('myhome_') ? 'Мой дом' : room)
@@ -252,22 +253,38 @@ function Header({ user, room, theme, socket }) {
     const handleUserUpdate = (updatedUser) => {
       if (updatedUser.credits !== undefined) {
         console.log('Updating credits from userUpdate:', updatedUser.credits);
+        // Определяем цвет в зависимости от изменения кредитов
+        if (updatedUser.credits > credits) {
+          setCreditsColor('green');
+        } else if (updatedUser.credits < credits) {
+          setCreditsColor('red');
+        }
         setCredits(updatedUser.credits);
+        // Сбрасываем цвет через 2 секунды
+        setTimeout(() => setCreditsColor(null), 2000);
       }
       if (updatedUser.exp !== undefined) {
         const newLevel = getLevelInfo(updatedUser.exp).level;
         if (newLevel !== level) {
           console.log('Updating level from userUpdate:', newLevel);
           setLevel(newLevel);
-          setIsFlickering(true); // Запускаем анимацию
-          setTimeout(() => setIsFlickering(false), 3000); // Отключаем через 1 секунду
+          setIsFlickering(true);
+          setTimeout(() => setIsFlickering(false), 3000);
         }
       }
     };
 
     const handleCreditsUpdate = (newCredits) => {
       console.log('Credits updated via creditsUpdate:', newCredits);
+      // Определяем цвет в зависимости от изменения кредитов
+      if (newCredits > credits) {
+        setCreditsColor('green');
+      } else if (newCredits < credits) {
+        setCreditsColor('red');
+      }
       setCredits(newCredits);
+      // Сбрасываем цвет через 2 секунды
+      setTimeout(() => setCreditsColor(null), 2000);
     };
 
     socket.on('userUpdate', handleUserUpdate);
@@ -284,7 +301,7 @@ function Header({ user, room, theme, socket }) {
       socket.off('userUpdate', handleUserUpdate);
       socket.off('creditsUpdate', handleCreditsUpdate);
     };
-  }, [socket, user?.userId, level]); // Добавляем level в зависимости
+  }, [socket, user?.userId, level, credits]); // Добавляем credits в зависимости
 
   const averageValue = Math.round(
     (progressValues.health + progressValues.mood + progressValues.fullness + progressValues.energy) / 4
@@ -311,13 +328,11 @@ function Header({ user, room, theme, socket }) {
       <StatsContainer>
         <LevelContainer isFlickering={isFlickering}>
           <FaStar color="#FFD700" />
-          <LevelText theme={theme} isFlickering={isFlickering}>
-            {level} уровень
-          </LevelText>
+          <LevelText theme={theme} isFlickering={isFlickering}>{level} уровень</LevelText>
         </LevelContainer>
         <CreditsContainer>
           <FaCoins color="#FFD700" />
-          <CreditsText theme={theme}>{credits}</CreditsText>
+          <CreditsText theme={theme} creditsColor={creditsColor}>{credits}</CreditsText>
         </CreditsContainer>
       </StatsContainer>
       <AvatarContainer className="avatar-container" onClick={toggleProgressModal}>

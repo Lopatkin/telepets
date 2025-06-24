@@ -261,9 +261,7 @@ function registerInventoryHandlers({
                 if (user) {
                     // Проверяем здоровье игрока
                     if (user.stats.health === 0) {
-                        socket.emit('error', {
-                            message: 'Невозможно выполнить действие: здоровье равно 0!'
-                        });
+                        socket.emit('error', { message: 'Восстановите здоровье' });
                         return;
                     }
 

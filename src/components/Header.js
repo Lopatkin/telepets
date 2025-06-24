@@ -142,8 +142,9 @@ const LevelContainer = styled.div`
 
 const LevelText = styled.span`
   font-size: 14px;
+  font-weight: bold; /* Делаем текст жирным */
   color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
-  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 1s ease-in-out; // Применяем анимацию
+  animation: ${props => props.isFlickering ? flickerAnimation : 'none'} 1s ease-in-out;
 `;
 
 const CreditsContainer = styled.div`
@@ -259,7 +260,7 @@ function Header({ user, room, theme, socket }) {
           console.log('Updating level from userUpdate:', newLevel);
           setLevel(newLevel);
           setIsFlickering(true); // Запускаем анимацию
-          setTimeout(() => setIsFlickering(false), 1000); // Отключаем через 1 секунду
+          setTimeout(() => setIsFlickering(false), 3000); // Отключаем через 1 секунду
         }
       }
     };
@@ -310,7 +311,9 @@ function Header({ user, room, theme, socket }) {
       <StatsContainer>
         <LevelContainer isFlickering={isFlickering}>
           <FaStar color="#FFD700" />
-          <LevelText theme={theme} isFlickering={isFlickering}>{level}</LevelText>
+          <LevelText theme={theme} isFlickering={isFlickering}>
+            {level} уровень
+          </LevelText>
         </LevelContainer>
         <CreditsContainer>
           <FaCoins color="#FFD700" />

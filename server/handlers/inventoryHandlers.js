@@ -261,8 +261,8 @@ function registerInventoryHandlers({
                 if (user) {
                     // Проверяем здоровье игрока
                     if (user.stats.health === 0) {
-                        socket.emit('error', { message: 'Восстановите здоровье' });
-                        return;
+                        if (callback) callback({ success: false, message: 'Восстановите здоровье' });
+
                     }
 
                     let newEnergy = user.stats.energy;

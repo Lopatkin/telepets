@@ -227,15 +227,14 @@ io.on('connection', (socket) => {
     fight.playerHP = Math.min(fight.playerHP, user.stats.maxHealth);
 
     // Обновляем здоровье и энергию игрока в базе данных
+    // Уменьшаем энергию на 10 только если бой завершён
+    const isFightOver = fight.playerHP <= 0 || fight.npcHP <= 0;
     await User.updateOne(
       { userId },
       {
         $set: {
           'stats.health': fight.playerHP,
-          // Уменьшаем энергию на 10, но не ниже 0, если бой завершён
-          'stats.energy': fight.playerHP <= 0 || fight.npcHP <= 0
-            ? Math.max(0, user.stats.energy - 10)
-            : user.stats.energy
+          'stats.energy': isFightOver ? Math.max(0, user.stats.energy - 10) : user.stats.energy
         }
       }
     );
@@ -264,43 +263,9 @@ io.on('connection', (socket) => {
     });
 
     // Проверяем завершение боя
-    if (fight.playerHP <= 0 || fight.npcHP <= 0) {
+    if (isFightOver) {
       fightStates.delete(userId);
-      if (fight.playerHP <= 0) {
-        fight.playerHP = 0;
-        await User.updateOne(
-          { userId },
-          {
-            $set: {
-              'stats.health': 0,
-              // Уменьшаем энергию на 10, но не ниже 0
-              'stats.energy': Math.max(0, updatedUser.stats.energy - 10)
-            }
-          }
-        );
-        const finalUser = await User.findOne({ userId });
-        socket.emit('userUpdate', {
-          userId: finalUser.userId,
-          firstName: finalUser.firstName,
-          username: finalUser.username,
-          lastName: finalUser.lastName,
-          photoUrl: finalUser.photoUrl,
-          isRegistered: finalUser.isRegistered,
-          isHuman: finalUser.isHuman,
-          animalType: finalUser.animalType,
-          name: finalUser.name,
-          owner: finalUser.owner,
-          homeless: finalUser.homeless,
-          credits: finalUser.credits || 0,
-          exp: finalUser.exp || 0,
-          onLeash: finalUser.onLeash,
-          freeRoam: finalUser.freeRoam || false,
-          stats: finalUser.stats
-        });
-        message += 'Вы проиграли бой!';
-      } else {
-        message += 'Вы победили!';
-      }
+      message += fight.playerHP <= 0 ? 'Вы проиграли бой!' : 'Вы победили!';
     }
 
     callback({

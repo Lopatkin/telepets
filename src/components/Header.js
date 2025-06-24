@@ -260,7 +260,7 @@ function Header({ user, room, theme, socket }) {
           console.log('Updating level from userUpdate:', newLevel);
           setLevel(newLevel);
           setIsFlickering(true); // Запускаем анимацию
-          setTimeout(() => setIsFlickering(false), 5000); // Отключаем через 1 секунду
+          setTimeout(() => setIsFlickering(false), 3000); // Отключаем через 1 секунду
         }
       }
     };

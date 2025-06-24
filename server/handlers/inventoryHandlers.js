@@ -259,20 +259,33 @@ function registerInventoryHandlers({
                 const userId = owner.replace('user_', '');
                 const user = await User.findOne({ userId });
                 if (user) {
-                    const newEnergy = Math.max(user.stats.energy - 1, 0); // Уменьшаем энергию на 1, но не ниже 0
-                    // Начисляем случайное количество опыта (от 1 до 5) за указанные предметы
+                    let newEnergy = user.stats.energy;
+                    let newMood = user.stats.mood;
+
+                    // Проверяем энергию и применяем логику
+                    if (user.stats.energy > 0) {
+                        newEnergy = Math.max(user.stats.energy - 1, 0); // Уменьшаем энергию на 1, но не ниже 0
+                    } else {
+                        newMood = Math.max(user.stats.mood - 2, 0); // Если энергия 0, уменьшаем настроение на 2
+                    }
+
+                    // Начисляем случайное количество опыта (от 1 до 5)
                     const expGain = Math.floor(Math.random() * 5) + 1; // Случайное число от 1 до 5
                     const newExp = (user.exp || 0) + expGain;
 
+                    // Обновляем пользователя
                     await User.updateOne(
                         { userId },
                         {
                             $set: {
                                 'stats.energy': newEnergy,
+                                'stats.mood': newMood,
                                 exp: newExp
                             }
                         }
                     );
+
+                    // Получаем обновленного пользователя
                     const updatedUser = await User.findOne({ userId });
                     socket.emit('userUpdate', {
                         userId: updatedUser.userId,

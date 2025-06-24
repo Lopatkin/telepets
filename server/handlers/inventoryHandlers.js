@@ -262,7 +262,7 @@ function registerInventoryHandlers({
                     // Проверяем здоровье игрока
                     if (user.stats.health === 0) {
                         if (callback) callback({ success: false, message: 'Восстановите здоровье' });
-
+                        return;
                     }
 
                     let newEnergy = user.stats.energy;

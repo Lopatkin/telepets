@@ -3,6 +3,17 @@ import styled from 'styled-components';
 import { FaCoins, FaStar } from 'react-icons/fa'; // Добавляем FaStar
 import { keyframes } from 'styled-components';
 
+// Добавление анимаций мерцания для кредитов
+const creditsFlickerGreen = keyframes`
+  0%, 100% { color: ${props => props.theme === 'dark' ? '#ccc' : '#333'}; }
+  50% { color: #32CD32; } // Зелёный цвет для увеличения
+`;
+
+const creditsFlickerRed = keyframes`
+  0%, 100% { color: ${props => props.theme === 'dark' ? '#ccc' : '#333'}; }
+  50% { color: #FF0000; } // Красный цвет для уменьшения
+`;
+
 // Определяем анимацию мерцания
 const flickerAnimation = keyframes`
   0%, 100% { opacity: 1; }
@@ -154,9 +165,11 @@ const CreditsContainer = styled.div`
 `;
 
 const CreditsText = styled.span`
-    font-size: 14px;
-    color: ${props => props.creditsColor || (props.theme === 'dark' ? '#ccc' : '#333')}; // Используем creditsColor, если задан
-  `;
+  font-size: 14px;
+  color: ${props => props.theme === 'dark' ? '#ccc' : '#333'};
+  animation: ${props => props.creditsFlicker === 'green' ? creditsFlickerGreen :
+    props.creditsFlicker === 'red' ? creditsFlickerRed : 'none'} 0.5s ease-in-out 4; // 2 секунды (4 итерации по 0.5с)
+`;
 
 const getLevelInfo = (exp) => {
   const levelTable = [
@@ -230,7 +243,7 @@ function Header({ user, room, theme, socket }) {
   const [credits, setCredits] = useState(user?.credits || 0);
   const [level, setLevel] = useState(getLevelInfo(user?.exp || 0).level);
   const [isFlickering, setIsFlickering] = useState(false);
-  const [creditsColor, setCreditsColor] = useState(null); // Новое состояние для цвета кредитов
+  const [creditsFlicker, setCreditsFlicker] = useState(null); // Состояние для типа мерцания кредитов
 
   const roomName = room
     ? (room.startsWith('myhome_') ? 'Мой дом' : room)
@@ -253,15 +266,15 @@ function Header({ user, room, theme, socket }) {
     const handleUserUpdate = (updatedUser) => {
       if (updatedUser.credits !== undefined) {
         console.log('Updating credits from userUpdate:', updatedUser.credits);
-        // Определяем цвет в зависимости от изменения кредитов
+        // Определяем тип мерцания в зависимости от изменения кредитов
         if (updatedUser.credits > credits) {
-          setCreditsColor('green');
+          setCreditsFlicker('green');
         } else if (updatedUser.credits < credits) {
-          setCreditsColor('red');
+          setCreditsFlicker('red');
         }
         setCredits(updatedUser.credits);
-        // Сбрасываем цвет через 2 секунды
-        setTimeout(() => setCreditsColor(null), 2000);
+        // Сбрасываем мерцание через 2 секунды
+        setTimeout(() => setCreditsFlicker(null), 2000);
       }
       if (updatedUser.exp !== undefined) {
         const newLevel = getLevelInfo(updatedUser.exp).level;
@@ -276,15 +289,15 @@ function Header({ user, room, theme, socket }) {
 
     const handleCreditsUpdate = (newCredits) => {
       console.log('Credits updated via creditsUpdate:', newCredits);
-      // Определяем цвет в зависимости от изменения кредитов
+      // Определяем тип мерцания в зависимости от изменения кредитов
       if (newCredits > credits) {
-        setCreditsColor('green');
+        setCreditsFlicker('green');
       } else if (newCredits < credits) {
-        setCreditsColor('red');
+        setCreditsFlicker('red');
       }
       setCredits(newCredits);
-      // Сбрасываем цвет через 2 секунды
-      setTimeout(() => setCreditsColor(null), 2000);
+      // Сбрасываем мерцание через 2 секунды
+      setTimeout(() => setCreditsFlicker(null), 2000);
     };
 
     socket.on('userUpdate', handleUserUpdate);
@@ -301,7 +314,7 @@ function Header({ user, room, theme, socket }) {
       socket.off('userUpdate', handleUserUpdate);
       socket.off('creditsUpdate', handleCreditsUpdate);
     };
-  }, [socket, user?.userId, level, credits]); // Добавляем credits в зависимости
+  }, [socket, user?.userId, level, credits]);
 
   const averageValue = Math.round(
     (progressValues.health + progressValues.mood + progressValues.fullness + progressValues.energy) / 4
@@ -328,11 +341,11 @@ function Header({ user, room, theme, socket }) {
       <StatsContainer>
         <LevelContainer isFlickering={isFlickering}>
           <FaStar color="#FFD700" />
-          <LevelText theme={theme} isFlickering={isFlickering}>{level} уровень</LevelText>
+          <LevelText theme={theme} isFlickering={isFlickering}>{level} ур.</LevelText>
         </LevelContainer>
         <CreditsContainer>
           <FaCoins color="#FFD700" />
-          <CreditsText theme={theme} creditsColor={creditsColor}>{credits}</CreditsText>
+          <CreditsText theme={theme} creditsFlicker={creditsFlicker}>{credits}</CreditsText>
         </CreditsContainer>
       </StatsContainer>
       <AvatarContainer className="avatar-container" onClick={toggleProgressModal}>

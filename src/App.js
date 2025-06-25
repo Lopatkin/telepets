@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import styled from 'styled-components';
 import io from 'socket.io-client';
 import Chat from './components/Chat';
@@ -13,6 +15,8 @@ import Registration from './components/Registration';
 import BouncingBall from './components/BouncingBall';
 import MyShelter from './components/MyShelter'; // Новый импорт
 import startLoadingImage from './images/start_loading.jpg';
+
+import { toastConfig } from './utils/toastConfig';
 
 const BouncingBallOverlay = styled.div`
   position: absolute;
@@ -522,6 +526,7 @@ function App() {
         isAnimalAtHome={isAnimalAtHome}
         isAnimalOnLeashWithOwnerOnline={isAnimalOnLeashWithOwnerOnline}
       />
+      <ToastContainer {...toastConfig} theme={appliedTheme} />
     </AppContainer>
   );
 }

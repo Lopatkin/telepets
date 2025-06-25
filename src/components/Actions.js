@@ -1,4 +1,4 @@
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Импортируем стили для react-toastify
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
@@ -16,7 +16,6 @@ import { ClipLoader } from 'react-spinners';
 import { getActiveNPCs } from '../utils/npcData';
 
 const COOLDOWN_DURATION_CONST = 10 * 100;
-const NOTIFICATION_DURATION_CONST = 10 * 100;
 
 
 function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user, updateUser }) {
@@ -93,16 +92,8 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
     }
   }, [selectedAction, currentRoom]);
 
-  const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
-    toast(message, {
-      position: "top-center", // Устанавливаем положение уведомления в центре сверху
-      autoClose: duration,
-      hideProgressBar: true, // Отключаем прогресс-бар
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      theme: theme === 'dark' ? 'dark' : 'light',
-    });
+  const showNotification = useCallback((message) => {
+    toast(message, { ...toastConfig, theme: theme === 'dark' ? 'dark' : 'light' });
   }, [theme]);
 
   const handleActionClick = useCallback((action) => {
@@ -346,18 +337,6 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
           </ModalContent>
         </ModalOverlay>
       )}
-      <ToastContainer
-        position="top-center" // Устанавливаем положение контейнера в центре сверху
-        autoClose={NOTIFICATION_DURATION_CONST}
-        hideProgressBar={true} // Отключаем прогресс-бар
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme={theme === 'dark' ? 'dark' : 'light'}
-      />
     </ActionsContainer>
   );
 }

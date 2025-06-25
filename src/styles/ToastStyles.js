@@ -1,4 +1,4 @@
-// Обновление файла стилей для тостов с коррекцией анимации и удаления из DOM
+// Обновление файла стилей для тостов с полной очисткой после анимации
 import { createGlobalStyle } from 'styled-components';
 
 // Глобальные стили для тостов
@@ -14,6 +14,7 @@ export const ToastGlobalStyles = createGlobalStyle`
     justify-content: center;
     animation: fadeIn 0.5s ease-in-out, fadeOut 0.5s ease-in-out 1s forwards; /* Анимация появления и исчезновения */
     pointer-events: auto; /* Включаем взаимодействие во время отображения */
+    overflow: hidden; /* Предотвращаем выход содержимого за границы */
   }
 
   .Toastify__toast--success {
@@ -37,9 +38,13 @@ export const ToastGlobalStyles = createGlobalStyle`
     display: none; /* Убираем крестик */
   }
 
-  /* Отключаем взаимодействие после исчезновения */
+  /* Отключаем взаимодействие и сворачиваем контейнер после анимации */
   .Toastify__toast--closing {
     pointer-events: none; /* Отключаем клики на исчезающих тостах */
+    height: 0 !important; /* Принудительно сворачиваем высоту */
+    margin: 0 !important; /* Убираем отступы */
+    padding: 0 !important; /* Убираем внутренние отступы */
+    overflow: hidden !important; /* Скрываем содержимое */
   }
 
   /* Определение анимации появления */
@@ -63,7 +68,7 @@ export const ToastGlobalStyles = createGlobalStyle`
     to {
       opacity: 0;
       transform: translateY(-10px);
-      height: 0; /* Сворачиваем высоту для полного удаления */
+      height: 0; /* Сворачиваем высоту */
       margin: 0; /* Убираем отступы */
       padding: 0; /* Убираем внутренние отступы */
     }
@@ -79,5 +84,6 @@ export const toastStyles = {
   minHeight: '60px',
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center'
+  justifyContent: 'center',
+  overflow: 'hidden' /* Добавляем для предотвращения артефактов */
 };

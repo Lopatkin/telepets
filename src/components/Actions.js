@@ -1,3 +1,5 @@
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // Импортируем стили для react-toastify
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   ActionsContainer, ActionGrid, ContentContainer, ActionCard, ActionTitle,
@@ -26,7 +28,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   const [selectedNPC, setSelectedNPC] = useState(null);
   const [npcs, setNpcs] = useState([]);
 
-  
+
 
   useEffect(() => {
     if (socket && onItemsUpdate) {
@@ -93,9 +95,17 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   }, [selectedAction, currentRoom]);
 
   const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
-    setNotification({ show: true, message });
-    setTimeout(() => setNotification({ show: false, message: '' }), duration);
-  }, []);
+    // Используем toast для отображения уведомления
+    toast(message, {
+      position: "top-right",
+      autoClose: duration,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: theme === 'dark' ? 'dark' : 'light', // Устанавливаем тему в зависимости от текущей
+    });
+  }, [theme]);
 
   const handleActionClick = useCallback((action) => {
     if (action.cooldownKey && cooldowns[action.cooldownKey]?.active) {
@@ -338,7 +348,18 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
           </ModalContent>
         </ModalOverlay>
       )}
-      <Notification show={notification.show}>{notification.message}</Notification>
+      <ToastContainer
+        position="top-right"
+        autoClose={NOTIFICATION_DURATION_CONST}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme={theme === 'dark' ? 'dark' : 'light'}
+      />
     </ActionsContainer>
   );
 }

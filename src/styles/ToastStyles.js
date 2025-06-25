@@ -1,4 +1,4 @@
-// Обновление файла стилей для тостов с анимацией появления и исчезновения
+// Обновление файла стилей для тостов с коррекцией анимации и удаления из DOM
 import { createGlobalStyle } from 'styled-components';
 
 // Глобальные стили для тостов
@@ -13,6 +13,7 @@ export const ToastGlobalStyles = createGlobalStyle`
     align-items: center;
     justify-content: center;
     animation: fadeIn 0.5s ease-in-out, fadeOut 0.5s ease-in-out 1s forwards; /* Анимация появления и исчезновения */
+    pointer-events: auto; /* Включаем взаимодействие во время отображения */
   }
 
   .Toastify__toast--success {
@@ -36,6 +37,11 @@ export const ToastGlobalStyles = createGlobalStyle`
     display: none; /* Убираем крестик */
   }
 
+  /* Отключаем взаимодействие после исчезновения */
+  .Toastify__toast--closing {
+    pointer-events: none; /* Отключаем клики на исчезающих тостах */
+  }
+
   /* Определение анимации появления */
   @keyframes fadeIn {
     from {
@@ -57,6 +63,9 @@ export const ToastGlobalStyles = createGlobalStyle`
     to {
       opacity: 0;
       transform: translateY(-10px);
+      height: 0; /* Сворачиваем высоту для полного удаления */
+      margin: 0; /* Убираем отступы */
+      padding: 0; /* Убираем внутренние отступы */
     }
   }
 `;

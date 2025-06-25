@@ -1,4 +1,4 @@
-// Обновление конфигурации тостов для управления временем отображения
+// Обновление конфигурации тостов для отображения новых тостов сверху
 import { toastStyles } from '../styles/ToastStyles';
 
 const NOTIFICATION_DURATION_CONST = 1500; // 1.5 секунды (1с задержка + 0.5с анимация исчезновения)
@@ -10,7 +10,7 @@ export const toastConfig = {
   closeOnClick: true,
   pauseOnHover: true,
   draggable: true,
-  newestOnTop: false,
+  newestOnTop: true, // Новые тосты отображаются сверху
   rtl: false,
   pauseOnFocusLoss: true,
   closeButton: false, // Отключаем кнопку закрытия

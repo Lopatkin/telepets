@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   ActionsContainer, ActionGrid, ContentContainer, ActionCard, ActionTitle,
   ActionDescription, ModalOverlay, ModalContent, ModalTitle, ModalDescription,
-  CloseButton, ActionButton, ProgressBar, Notification, TimerDisplay
+  CloseButton, ActionButton, ProgressBar, TimerDisplay
 } from '../styles/ActionsStyles';
 import { FaTimes } from 'react-icons/fa';
 import actionsConfig from './constants/actionsConfig';
@@ -21,7 +21,6 @@ const NOTIFICATION_DURATION_CONST = 10 * 100;
 
 function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user, updateUser }) {
   const [selectedAction, setSelectedAction] = useState(null);
-  const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);

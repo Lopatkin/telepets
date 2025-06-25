@@ -15,6 +15,8 @@ import Fight from './Fight';
 import { ClipLoader } from 'react-spinners';
 import { getActiveNPCs } from '../utils/npcData';
 
+import { toastConfig } from '../utils/toastConfig';
+
 const COOLDOWN_DURATION_CONST = 10 * 100;
 
 

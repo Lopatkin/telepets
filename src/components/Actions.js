@@ -1,10 +1,8 @@
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'; // Импортируем стили для react-toastify
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   ActionsContainer, ActionGrid, ContentContainer, ActionCard, ActionTitle,
   ActionDescription, ModalOverlay, ModalContent, ModalTitle, ModalDescription,
-  CloseButton, ActionButton, ProgressBar, TimerDisplay
+  CloseButton, ActionButton, ProgressBar, Notification, TimerDisplay
 } from '../styles/ActionsStyles';
 import { FaTimes } from 'react-icons/fa';
 import actionsConfig from './constants/actionsConfig';
@@ -15,20 +13,20 @@ import Fight from './Fight';
 import { ClipLoader } from 'react-spinners';
 import { getActiveNPCs } from '../utils/npcData';
 
-import { toastConfig } from '../utils/toastConfig';
-
 const COOLDOWN_DURATION_CONST = 10 * 100;
+const NOTIFICATION_DURATION_CONST = 10 * 100;
 
 
 function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user, updateUser }) {
   const [selectedAction, setSelectedAction] = useState(null);
+  const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedNPC, setSelectedNPC] = useState(null);
   const [npcs, setNpcs] = useState([]);
 
-
+  
 
   useEffect(() => {
     if (socket && onItemsUpdate) {
@@ -94,9 +92,10 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
     }
   }, [selectedAction, currentRoom]);
 
-  const showNotification = useCallback((message) => {
-    toast(message, { ...toastConfig, theme: theme === 'dark' ? 'dark' : 'light' });
-  }, [theme]);
+  const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
+    setNotification({ show: true, message });
+    setTimeout(() => setNotification({ show: false, message: '' }), duration);
+  }, []);
 
   const handleActionClick = useCallback((action) => {
     if (action.cooldownKey && cooldowns[action.cooldownKey]?.active) {
@@ -339,6 +338,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
           </ModalContent>
         </ModalOverlay>
       )}
+      <Notification show={notification.show}>{notification.message}</Notification>
     </ActionsContainer>
   );
 }

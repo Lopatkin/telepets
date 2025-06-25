@@ -259,6 +259,12 @@ function registerInventoryHandlers({
                 const userId = owner.replace('user_', '');
                 const user = await User.findOne({ userId });
                 if (user) {
+                    // Проверяем здоровье игрока
+                    if (user.stats.health === 0) {
+                        if (callback) callback({ success: false, message: 'Восстановите здоровье' });
+                        return;
+                    }
+
                     let newEnergy = user.stats.energy;
                     let newMood = user.stats.mood;
                     let newSatiety = user.stats.satiety;

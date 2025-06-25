@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import styled from 'styled-components';
 import io from 'socket.io-client';
 import Chat from './components/Chat';
@@ -15,9 +13,6 @@ import Registration from './components/Registration';
 import BouncingBall from './components/BouncingBall';
 import MyShelter from './components/MyShelter'; // Новый импорт
 import startLoadingImage from './images/start_loading.jpg';
-import { toastConfig } from './utils/toastConfig';
-
-import './styles/ToastStyles'; // Импортируем ToastStyles.js для применения глобальных стилей
 
 const BouncingBallOverlay = styled.div`
   position: absolute;
@@ -445,8 +440,8 @@ function App() {
             theme={appliedTheme}
             setShowMyShelter={setShowMyShelter}
             userId={user?.userId}
-            socket={socket}
-            currentRoom={currentRoom}
+            socket={socket} // Добавляем socket
+            currentRoom={currentRoom} // Добавляем currentRoom
           />
         ) : (
           <>
@@ -515,10 +510,7 @@ function App() {
       </Content>
       <BouncingBallOverlay ref={bouncingBallContainerRef}>
         {activeTab === 'chat' && currentRoom && !showMyShelter && (
-          <>
-            {console.log('Rendering BouncingBall', { room: currentRoom })}
-            <BouncingBall room={currentRoom} containerRef={bouncingBallContainerRef} />
-          </>
+          <BouncingBall room={currentRoom} containerRef={bouncingBallContainerRef} />
         )}
       </BouncingBallOverlay>
       <Footer
@@ -530,7 +522,6 @@ function App() {
         isAnimalAtHome={isAnimalAtHome}
         isAnimalOnLeashWithOwnerOnline={isAnimalOnLeashWithOwnerOnline}
       />
-      <ToastContainer {...toastConfig} theme={appliedTheme} />
     </AppContainer>
   );
 }

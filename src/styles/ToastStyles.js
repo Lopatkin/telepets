@@ -5,7 +5,10 @@ import { createGlobalStyle } from 'styled-components';
 export const ToastGlobalStyles = createGlobalStyle`
   .Toastify__toast-container {
     pointer-events: none; /* Отключаем взаимодействие с контейнером */
-    padding: 0; /* Убираем отступы контейнера */
+    padding: 0; /* Убираем отступы */
+    margin: 0; /* Убираем внешние отступы */
+    width: auto; /* Адаптивная ширина */
+    z-index: 9999; /* Высокий z-index для видимости */
   }
 
   .Toastify__toast {
@@ -19,8 +22,8 @@ export const ToastGlobalStyles = createGlobalStyle`
     justify-content: center;
     animation: fadeIn 0.5s ease-in-out, fadeOut 0.5s ease-in-out 1s forwards; /* Анимация появления и исчезновения */
     pointer-events: auto; /* Включаем взаимодействие во время отображения */
-    overflow: hidden; /* Предотвращаем выход содержимого за границы */
-    margin-bottom: 0; /* Убираем нижний отступ */
+    overflow: hidden; /* Предотвращаем выход содержимого */
+    margin: 0; /* Убираем все отступы */
   }
 
   .Toastify__toast--success {
@@ -37,6 +40,7 @@ export const ToastGlobalStyles = createGlobalStyle`
     width: 100%;
     display: flex;
     justify-content: center;
+    margin: 0; /* Убираем отступы */
   }
 
   /* Скрытие крестика закрытия */
@@ -48,11 +52,13 @@ export const ToastGlobalStyles = createGlobalStyle`
   .Toastify__toast--closing {
     pointer-events: none !important; /* Отключаем клики */
     height: 0 !important; /* Сворачиваем высоту */
+    min-height: 0 !important; /* Убираем минимальную высоту */
     margin: 0 !important; /* Убираем все отступы */
     padding: 0 !important; /* Убираем внутренние отступы */
     overflow: hidden !important; /* Скрываем содержимое */
     opacity: 0 !important; /* Гарантируем прозрачность */
     visibility: hidden !important; /* Полностью скрываем элемент */
+    transform: translateY(-10px) !important; /* Синхронизируем с анимацией */
   }
 
   /* Определение анимации появления */
@@ -77,9 +83,10 @@ export const ToastGlobalStyles = createGlobalStyle`
       opacity: 0;
       transform: translateY(-10px);
       height: 0;
+      min-height: 0;
       margin: 0;
       padding: 0;
-      visibility: hidden; /* Скрываем элемент */
+      visibility: hidden;
     }
   }
 `;
@@ -95,5 +102,5 @@ export const toastStyles = {
   alignItems: 'center',
   justifyContent: 'center',
   overflow: 'hidden',
-  marginBottom: '0' /* Убираем нижний отступ */
+  margin: '0'
 };

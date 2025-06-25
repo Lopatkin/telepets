@@ -438,15 +438,15 @@ function App() {
 
   return (
     <AppContainer>
-         <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
+      <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
       <Content>
         {showMyShelter ? (
           <MyShelter
             theme={appliedTheme}
             setShowMyShelter={setShowMyShelter}
             userId={user?.userId}
-            socket={socket} // Добавляем socket
-            currentRoom={currentRoom} // Добавляем currentRoom
+            socket={socket}
+            currentRoom={currentRoom}
           />
         ) : (
           <>
@@ -515,7 +515,10 @@ function App() {
       </Content>
       <BouncingBallOverlay ref={bouncingBallContainerRef}>
         {activeTab === 'chat' && currentRoom && !showMyShelter && (
-          <BouncingBall room={currentRoom} containerRef={bouncingBallContainerRef} />
+          <>
+            {console.log('Rendering BouncingBall', { room: currentRoom })}
+            <BouncingBall room={currentRoom} containerRef={bouncingBallContainerRef} />
+          </>
         )}
       </BouncingBallOverlay>
       <Footer

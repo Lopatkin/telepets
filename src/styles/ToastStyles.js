@@ -1,8 +1,13 @@
-// Проверка ToastStyles.js
+// Обновление стилей для полного удаления тостов из DOM
 import { createGlobalStyle } from 'styled-components';
 
 // Глобальные стили для тостов
 export const ToastGlobalStyles = createGlobalStyle`
+  .Toastify__toast-container {
+    pointer-events: none; /* Отключаем взаимодействие с контейнером */
+    padding: 0; /* Убираем отступы контейнера */
+  }
+
   .Toastify__toast {
     text-align: center; /* Центрирование текста */
     font-size: 16px;
@@ -15,6 +20,7 @@ export const ToastGlobalStyles = createGlobalStyle`
     animation: fadeIn 0.5s ease-in-out, fadeOut 0.5s ease-in-out 1s forwards; /* Анимация появления и исчезновения */
     pointer-events: auto; /* Включаем взаимодействие во время отображения */
     overflow: hidden; /* Предотвращаем выход содержимого за границы */
+    margin-bottom: 0; /* Убираем нижний отступ */
   }
 
   .Toastify__toast--success {
@@ -38,20 +44,22 @@ export const ToastGlobalStyles = createGlobalStyle`
     display: none; /* Убираем крестик */
   }
 
-  /* Отключаем взаимодействие и сворачиваем контейнер после анимации */
+  /* Полное сворачивание тоста после анимации */
   .Toastify__toast--closing {
-    pointer-events: none; /* Отключаем клики на исчезающих тостах */
-    height: 0 !important; /* Принудительно сворачиваем высоту */
-    margin: 0 !important; /* Убираем отступы */
+    pointer-events: none !important; /* Отключаем клики */
+    height: 0 !important; /* Сворачиваем высоту */
+    margin: 0 !important; /* Убираем все отступы */
     padding: 0 !important; /* Убираем внутренние отступы */
     overflow: hidden !important; /* Скрываем содержимое */
+    opacity: 0 !important; /* Гарантируем прозрачность */
+    visibility: hidden !important; /* Полностью скрываем элемент */
   }
 
   /* Определение анимации появления */
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(-10px); /* Небольшое смещение вверх для эффекта */
+      transform: translateY(-10px);
     }
     to {
       opacity: 1;
@@ -68,9 +76,10 @@ export const ToastGlobalStyles = createGlobalStyle`
     to {
       opacity: 0;
       transform: translateY(-10px);
-      height: 0; /* Сворачиваем высоту */
-      margin: 0; /* Убираем отступы */
-      padding: 0; /* Убираем внутренние отступы */
+      height: 0;
+      margin: 0;
+      padding: 0;
+      visibility: hidden; /* Скрываем элемент */
     }
   }
 `;
@@ -85,5 +94,6 @@ export const toastStyles = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  overflow: 'hidden'
+  overflow: 'hidden',
+  marginBottom: '0' /* Убираем нижний отступ */
 };

@@ -94,15 +94,14 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   }, [selectedAction, currentRoom]);
 
   const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
-    // Используем toast для отображения уведомления
     toast(message, {
-      position: "top-right",
+      position: "top-center", // Устанавливаем положение уведомления в центре сверху
       autoClose: duration,
-      hideProgressBar: false,
+      hideProgressBar: true, // Отключаем прогресс-бар
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
-      theme: theme === 'dark' ? 'dark' : 'light', // Устанавливаем тему в зависимости от текущей
+      theme: theme === 'dark' ? 'dark' : 'light',
     });
   }, [theme]);
 
@@ -348,9 +347,9 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         </ModalOverlay>
       )}
       <ToastContainer
-        position="top-right"
+        position="top-center" // Устанавливаем положение контейнера в центре сверху
         autoClose={NOTIFICATION_DURATION_CONST}
-        hideProgressBar={false}
+        hideProgressBar={true} // Отключаем прогресс-бар
         newestOnTop={false}
         closeOnClick
         rtl={false}

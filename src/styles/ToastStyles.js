@@ -1,4 +1,4 @@
-// Обновление файла стилей для тостов
+// Обновление файла стилей для тостов с добавлением анимации
 import { createGlobalStyle } from 'styled-components';
 
 // Глобальные стили для тостов
@@ -12,6 +12,7 @@ export const ToastGlobalStyles = createGlobalStyle`
     display: flex;
     align-items: center;
     justify-content: center;
+    animation: fadeIn 0.5s ease-in-out; /* Добавляем анимацию появления */
   }
 
   .Toastify__toast--success {
@@ -28,6 +29,18 @@ export const ToastGlobalStyles = createGlobalStyle`
     width: 100%;
     display: flex;
     justify-content: center;
+  }
+
+  /* Определение анимации fadeIn */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px); /* Небольшое смещение вверх для эффекта */
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 `;
 

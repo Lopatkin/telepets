@@ -1,4 +1,4 @@
-// Обновление файла стилей для тостов с полной очисткой после анимации
+// Проверка ToastStyles.js
 import { createGlobalStyle } from 'styled-components';
 
 // Глобальные стили для тостов
@@ -85,5 +85,5 @@ export const toastStyles = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  overflow: 'hidden' /* Добавляем для предотвращения артефактов */
+  overflow: 'hidden'
 };

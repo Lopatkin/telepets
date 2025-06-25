@@ -15,9 +15,9 @@ import Registration from './components/Registration';
 import BouncingBall from './components/BouncingBall';
 import MyShelter from './components/MyShelter'; // Новый импорт
 import startLoadingImage from './images/start_loading.jpg';
-
-import { ToastGlobalStyles } from './styles/ToastStyles'; // Новый импорт
 import { toastConfig } from './utils/toastConfig';
+
+import './styles/ToastStyles'; // Импортируем ToastStyles.js для применения глобальных стилей
 
 const BouncingBallOverlay = styled.div`
   position: absolute;
@@ -438,8 +438,7 @@ function App() {
 
   return (
     <AppContainer>
-      <ToastGlobalStyles />
-      <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
+         <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
       <Content>
         {showMyShelter ? (
           <MyShelter

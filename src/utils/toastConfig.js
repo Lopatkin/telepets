@@ -1,3 +1,5 @@
+import { toastStyles } from '../styles/ToastStyles';
+
 const NOTIFICATION_DURATION_CONST = 10 * 100;
 
 export const toastConfig = {
@@ -10,4 +12,5 @@ export const toastConfig = {
     newestOnTop: false,
     rtl: false,
     pauseOnFocusLoss: true,
-  };
+    style: toastStyles, // Добавляем кастомные стили
+};

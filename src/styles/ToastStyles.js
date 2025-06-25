@@ -1,0 +1,31 @@
+// Новый файл стилей для тостов
+import { css } from 'styled-components';
+
+export const toastStyles = css`
+  .Toastify__toast {
+    text-align: center; /* Центрирование текста */
+    font-size: 16px;
+    padding: 16px;
+    border-radius: 8px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .Toastify__toast--success {
+    background: ${props => props.theme === 'dark' ? '#4CAF50' : '#E8F5E9'};
+    color: ${props => props.theme === 'dark' ? '#fff' : '#2E7D32'};
+  }
+
+  .Toastify__toast--error {
+    background: ${props => props.theme === 'dark' ? '#F44336' : '#FFEBEE'};
+    color: ${props => props.theme === 'dark' ? '#fff' : '#B71C1C'};
+  }
+
+  .Toastify__toast-body {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+`;

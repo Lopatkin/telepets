@@ -1,7 +1,8 @@
-// Новый файл стилей для тостов
-import { css } from 'styled-components';
+// Обновление файла стилей для тостов
+import { createGlobalStyle } from 'styled-components';
 
-export const toastStyles = css`
+// Глобальные стили для тостов
+export const ToastGlobalStyles = createGlobalStyle`
   .Toastify__toast {
     text-align: center; /* Центрирование текста */
     font-size: 16px;
@@ -29,3 +30,15 @@ export const toastStyles = css`
     justify-content: center;
   }
 `;
+
+// Объект стилей для прямого использования в toastConfig
+export const toastStyles = {
+  textAlign: 'center',
+  fontSize: '16px',
+  padding: '16px',
+  borderRadius: '8px',
+  minHeight: '60px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+};

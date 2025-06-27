@@ -7,7 +7,7 @@ const NotificationContext = createContext();
 export const NotificationProvider = ({ children }) => {
     const showNotification = (message, type = 'info') => {
         toast[type](message, {
-            position: "top-right",
+            position: "center",
             autoClose: 2000,
             hideProgressBar: true,
             closeOnClick: true,

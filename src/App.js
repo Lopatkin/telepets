@@ -14,9 +14,6 @@ import BouncingBall from './components/BouncingBall';
 import MyShelter from './components/MyShelter'; // Новый импорт
 import startLoadingImage from './images/start_loading.jpg';
 
-// Импортируем необходимые компоненты и стили
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { NotificationProvider } from './utils/NotificationContext';
 
 const BouncingBallOverlay = styled.div`

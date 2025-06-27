@@ -4,7 +4,7 @@ import { FaRunning, FaFistRaised, FaShieldAlt } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 import fightImage from '../images/fight.jpg'; // Импортируем изображение
-import { useNotification } from '../utils/NotificationContext'; // Новый импорт
+//import { useNotification } from '../utils/NotificationContext'; // Новый импорт
 
 const ButtonContainer = styled.div`
   display: flex;

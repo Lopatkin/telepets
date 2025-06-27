@@ -11,10 +11,12 @@ export const NotificationProvider = ({ children }) => {
             autoClose: 2000,
             hideProgressBar: true,
             closeOnClick: true,
-            limit: 1,
             pauseOnHover: true,
             draggable: true,
-            theme: 'colored'
+            theme: 'colored',
+            style: {
+                textAlign: 'center' // Добавляем стиль для центрирования текста
+            }
         });
     };
 

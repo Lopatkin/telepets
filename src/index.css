@@ -12,8 +12,7 @@ code {
     monospace;
 }
 
-.centered-toast {
+/* Центрирование текста в уведомлениях */
+.Toastify__toast.centered-toast .Toastify__toast-body {
   text-align: center !important;
-  font-size: 32px;
-  font-weight: 500;
 }

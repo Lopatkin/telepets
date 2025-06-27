@@ -8,8 +8,8 @@ export const NotificationProvider = ({ children }) => {
     const showNotification = (message, type = 'info') => {
         toast[type](message, {
             position: "top-right",
-            autoClose: 1000,
-            hideProgressBar: false,
+            autoClose: 2000,
+            hideProgressBar: true,
             closeOnClick: true,
             limit: 1,
             pauseOnHover: true,

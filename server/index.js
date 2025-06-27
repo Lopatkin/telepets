@@ -144,7 +144,7 @@ const getActiveNPCs = (room) => {
 // Добавляем маппинг NPC для опыта и энергии
 const npcRewards = {
   'npc_mouse': { exp: () => Math.floor(Math.random() * (10 - 5 + 1)) + 5, energy: 2, mood: 10 },
-  'npc_hedgehog': { exp: () => Math.floor(Math.random() * (20 - 10 + 1)) + 10, energy: 4, mood: 10 },
+  'npc_ezhik': { exp: () => Math.floor(Math.random() * (20 - 10 + 1)) + 10, energy: 4, mood: 10 },
   'npc_fox': { exp: () => Math.floor(Math.random() * (40 - 20 + 1)) + 20, energy: 10, mood: 10 },
   'npc_wolf': { exp: () => Math.floor(Math.random() * (130 - 50 + 1)) + 50, energy: 30, mood: 10 },
   'npc_boar': { exp: () => Math.floor(Math.random() * (300 - 100 + 1)) + 100, energy: 60, mood: 10 },

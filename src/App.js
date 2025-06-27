@@ -17,7 +17,7 @@ import startLoadingImage from './images/start_loading.jpg';
 // Импортируем необходимые компоненты и стили
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { NotificationProvider } from './NotificationContext';
+import { NotificationProvider } from './utils/NotificationContext';
 
 const BouncingBallOverlay = styled.div`
   position: absolute;

@@ -16,7 +16,6 @@ import { getActiveNPCs } from '../utils/npcData';
 import { useNotification } from '../utils/NotificationContext';
 
 const COOLDOWN_DURATION_CONST = 10 * 100;
-const NOTIFICATION_DURATION_CONST = 10 * 100;
 
 
 function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user, updateUser }) {

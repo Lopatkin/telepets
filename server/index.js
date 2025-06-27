@@ -141,6 +141,16 @@ const getActiveNPCs = (room) => {
   return npcs.filter(npc => !npc.condition || npc.condition());
 };
 
+// Добавляем маппинг NPC для опыта и энергии
+const npcRewards = {
+  'npc_mouse': { exp: () => Math.floor(Math.random() * (10 - 5 + 1)) + 5, energy: 2, mood: 10 },
+  'npc_hedgehog': { exp: () => Math.floor(Math.random() * (20 - 10 + 1)) + 10, energy: 4, mood: 10 },
+  'npc_fox': { exp: () => Math.floor(Math.random() * (40 - 20 + 1)) + 20, energy: 10, mood: 10 },
+  'npc_wolf': { exp: () => Math.floor(Math.random() * (130 - 50 + 1)) + 50, energy: 30, mood: 10 },
+  'npc_boar': { exp: () => Math.floor(Math.random() * (300 - 100 + 1)) + 100, energy: 60, mood: 10 },
+  'npc_bear': { exp: () => Math.floor(Math.random() * (1300 - 500 + 1)) + 500, energy: 100, mood: 10 }
+};
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -226,16 +236,35 @@ io.on('connection', (socket) => {
     // Ограничиваем здоровье минимальным значением 0 и максимальным значением
     fight.playerHP = Math.min(Math.max(fight.playerHP, 0), user.stats.maxHealth);
 
-    // Обновляем здоровье и энергию игрока в базе данных
-    // Уменьшаем энергию на 10 только если бой завершён
+    // Получаем параметры NPC из npcRewards
+    const npcReward = npcRewards[npcId] || { exp: () => 0, energy: 0, mood: 0 };
+
+    // Проверяем завершение боя
     const isFightOver = fight.playerHP <= 0 || fight.npcHP <= 0;
+    let moodChange = 0;
+    let expGain = 0;
+
+    if (isFightOver) {
+      if (fight.playerHP <= 0) {
+        message += 'Вы проиграли бой!';
+        moodChange = -10; // Уменьшаем настроение при поражении
+      } else {
+        message += 'Вы победили!';
+        moodChange = npcReward.mood; // Увеличиваем настроение при победе
+        expGain = npcReward.exp(); // Начисляем опыт при победе
+      }
+    }
+
+    // Обновляем здоровье, энергию, настроение и опыт игрока в базе данных
     await User.updateOne(
       { userId },
       {
         $set: {
           'stats.health': fight.playerHP,
-          'stats.energy': isFightOver ? Math.max(0, user.stats.energy - 10) : user.stats.energy
-        }
+          'stats.energy': Math.max(0, user.stats.energy - (isFightOver ? npcReward.energy + 10 : 0)), // Уменьшаем энергию только при завершении боя
+          'stats.mood': Math.min(Math.max(user.stats.mood + moodChange, 0), user.stats.maxMood),
+        },
+        $inc: { exp: expGain } // Начисляем опыт
       }
     );
 
@@ -265,7 +294,6 @@ io.on('connection', (socket) => {
     // Проверяем завершение боя
     if (isFightOver) {
       fightStates.delete(userId);
-      message += fight.playerHP <= 0 ? 'Вы проиграли бой!' : 'Вы победили!';
     }
 
     callback({

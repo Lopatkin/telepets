@@ -14,7 +14,9 @@ export const NotificationProvider = ({ children }) => {
             pauseOnHover: true,
             draggable: true,
             theme: 'colored',
-            toastClassName: 'centered-toast' // Добавляем кастомный класс для уведомлений
+            style: { // Добавляем inline-стили для центрирования
+                textAlign: 'center'
+            }
         });
     };
 

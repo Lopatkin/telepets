@@ -13,7 +13,8 @@ export const NotificationProvider = ({ children }) => {
             closeOnClick: true,
             pauseOnHover: true,
             draggable: true,
-            theme: 'colored'
+            theme: 'colored',
+            toastClassName: 'centered-toast' // Добавляем кастомный класс для уведомлений
         });
     };
 

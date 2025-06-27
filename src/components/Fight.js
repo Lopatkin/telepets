@@ -4,6 +4,7 @@ import { FaRunning, FaFistRaised, FaShieldAlt } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 import fightImage from '../images/fight.jpg'; // Импортируем изображение
+import { useNotification } from '../utils/NotificationContext'; // Новый импорт
 
 const ButtonContainer = styled.div`
   display: flex;
@@ -364,12 +365,18 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
         if (response.playerHP <= 0 || response.npcHP <= 0) {
           setIsRoundActive(false);
           const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
+          // Формируем сообщение для уведомления
+          const changes = [];
+          if (response.expGain > 0) changes.push(`+${response.expGain} опыта`);
+          if (response.moodChange !== 0) changes.push(`${response.moodChange > 0 ? '+' : ''}${response.moodChange} настроения`);
+          if (response.energyChange !== 0) changes.push(`-${response.energyChange} энергии`);
+          const notificationMessage = `${finalMessage}${changes.length > 0 ? ' ' + changes.join(', ') : ''}`;
+          showNotification(notificationMessage, response.playerHP <= 0 ? 'error' : 'success');
           setBattleLogs((prev) => [
             `${new Date().toLocaleTimeString()}: ${finalMessage}`,
             ...prev
           ]);
           setHighlightNewLog(true);
-          showNotification(finalMessage);
           // Запрашиваем актуальные данные пользователя перед закрытием
           socket.emit('getUser', { userId: user.userId }, (getUserResponse) => {
             if (getUserResponse.success && getUserResponse.user) {

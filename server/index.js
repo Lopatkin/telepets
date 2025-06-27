@@ -243,6 +243,7 @@ io.on('connection', (socket) => {
     const isFightOver = fight.playerHP <= 0 || fight.npcHP <= 0;
     let moodChange = 0;
     let expGain = 0;
+    let energyChange = isFightOver ? npcReward.energy : 0;
 
     if (isFightOver) {
       if (fight.playerHP <= 0) {
@@ -261,7 +262,7 @@ io.on('connection', (socket) => {
       {
         $set: {
           'stats.health': fight.playerHP,
-          'stats.energy': Math.max(0, user.stats.energy - (isFightOver ? npcReward.energy : 0)), // Уменьшаем энергию только на значение из npcReward
+          'stats.energy': Math.max(0, user.stats.energy - energyChange),
           'stats.mood': Math.min(Math.max(user.stats.mood + moodChange, 0), user.stats.maxMood),
         },
         $inc: { exp: expGain } // Начисляем опыт
@@ -300,7 +301,10 @@ io.on('connection', (socket) => {
       success: true,
       playerHP: fight.playerHP,
       npcHP: fight.npcHP,
-      message
+      message,
+      expGain, // Добавляем в ответ
+      moodChange, // Добавляем в ответ
+      energyChange // Добавляем в ответ
     });
   });
 

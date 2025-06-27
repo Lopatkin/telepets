@@ -14,4 +14,6 @@ code {
 
 .centered-toast {
   text-align: center !important;
+  font-size: 32px;
+  font-weight: 500;
 }

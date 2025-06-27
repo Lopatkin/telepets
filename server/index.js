@@ -261,7 +261,7 @@ io.on('connection', (socket) => {
       {
         $set: {
           'stats.health': fight.playerHP,
-          'stats.energy': Math.max(0, user.stats.energy - (isFightOver ? npcReward.energy + 10 : 0)), // Уменьшаем энергию только при завершении боя
+          'stats.energy': Math.max(0, user.stats.energy - (isFightOver ? npcReward.energy : 0)), // Уменьшаем энергию только на значение из npcReward
           'stats.mood': Math.min(Math.max(user.stats.mood + moodChange, 0), user.stats.maxMood),
         },
         $inc: { exp: expGain } // Начисляем опыт

@@ -23,13 +23,15 @@ import cannedFoodImage from '../images/items/canned-food.jpg';
 import chocolateImage from '../images/items/chocolate.jpg';
 import coffeeImage from '../images/items/coffee.jpg';
 
+import { useNotification } from '../utils/NotificationContext';
+
 function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user }) {
   const [shopItems, setShopItems] = useState([]);
   const [activeTab, setActiveTab] = useState('personal');
   const [activeLocationSubTab, setActiveLocationSubTab] = useState('items');
   const [locationItems, setLocationItems] = useState([]);
   const [shelterAnimals, setShelterAnimals] = useState([]);
-  const [error, setError] = useState(null);
+  const { showNotification } = useNotification();
   const [animatingItem, setAnimatingItem] = useState(null);
   const [isActionCooldown, setIsActionCooldown] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -73,9 +75,9 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         }));
         setRenameModalOpen(false);
         setNewAnimalName('');
+        showNotification('Имя животного успешно изменено', 'success');
       } else {
-        setError(response.message || 'Ошибка при переименовании животного');
-        setTimeout(() => setError(null), 3000);
+        showNotification(response.message || 'Ошибка при переименовании животного', 'error');
       }
     });
   };
@@ -90,16 +92,13 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
               freeRoam: infoResponse.animal.freeRoam || false
             }));
             setFreeRoam(infoResponse.animal.freeRoam || false);
-            setError(`Свободный выгул ${checked ? 'включён' : 'выключён'}`);
-            setTimeout(() => setError(null), 3000);
+            showNotification(`Свободный выгул ${checked ? 'включён' : 'выключён'}`, 'success');
           } else {
-            setError(infoResponse.message || 'Ошибка при получении данных животного');
-            setTimeout(() => setError(null), 3000);
+            showNotification(infoResponse.message || 'Ошибка при получении данных животного', 'error');
           }
         });
       } else {
-        setError(response.message || 'Ошибка при изменении статуса выгула');
-        setTimeout(() => setError(null), 3000);
+        showNotification(response.message || 'Ошибка при изменении статуса выгула', 'error');
       }
     });
   };
@@ -283,16 +282,12 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     socket.on('items', handleItems);
     socket.on('itemAction', handleItemAction);
     socket.on('shelterAnimals', handleShelterAnimals);
-    socket.on('error', ({ message }) => {
-      setError(message);
-      setTimeout(() => setError(null), 3000);
-    });
 
     return () => {
       socket.off('items', handleItems);
       socket.off('itemAction', handleItemAction);
       socket.off('shelterAnimals', handleShelterAnimals);
-      socket.off('error');
+
     };
   }, [socket, userId, currentRoom, userOwnerKey, locationOwnerKey, isShelter, handleItemAction, handleShelterAnimals, user, shopStaticItems, onItemsUpdate]);
 
@@ -307,13 +302,13 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       });
 
       if (!creditsResponse?.success) {
-        setError('Не удалось проверить баланс');
+        showNotification('Не удалось проверить баланс', 'error');
         setIsActionCooldown(false);
         return;
       }
 
       if (creditsResponse.credits < item.cost) {
-        setError('Недостаточно кредитов');
+        showNotification('Недостаточно кредитов', 'error');
         setIsActionCooldown(false);
         return;
       }
@@ -333,7 +328,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       });
 
       if (!addItemResponse?.success) {
-        setError(addItemResponse?.message || 'Ошибка при покупке');
+        showNotification(addItemResponse?.message || 'Ошибка при покупке', 'error');
         setIsActionCooldown(false);
         return;
       }
@@ -346,7 +341,9 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       });
 
       if (!spendResponse?.success) {
-        setError(spendResponse?.message || 'Ошибка при списании кредитов');
+        showNotification(spendResponse?.message || 'Ошибка при списании кредитов', 'error');
+      } else {
+        showNotification(`Успешно куплен предмет: ${item.name}`, 'success');
       }
 
       setTempPersonalItems(prev => [...prev, {
@@ -356,17 +353,15 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
       setIsActionCooldown(false);
     } catch (err) {
-      console.error('Ошибка при покупке:', err);
-      setError('Ошибка при покупке');
+      showNotification('Ошибка при покупке', 'error');
       setIsActionCooldown(false);
     }
   };
 
   const handleTakeHome = (animalId, animalName) => {
     if (!socket || !userId) {
-      console.error('Socket or userId not available');
-      setError('Ошибка: пользователь не аутентифицирован');
-      setTimeout(() => setError(null), 3000);
+
+      showNotification('Ошибка: пользователь не аутентифицирован', 'error');
       return;
     }
 
@@ -374,8 +369,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     const hasLeash = tempPersonalItems.some(item => item.name === 'Поводок');
 
     if (!hasCollar || !hasLeash) {
-      setError('Чтобы забрать питомца из приюта, вам нужен ошейник и поводок.');
-      setTimeout(() => setError(null), 3000);
+      showNotification('Чтобы забрать питомца из приюта, вам нужен ошейник и поводок.', 'error');
       return;
     }
 
@@ -397,7 +391,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
     setTimeout(() => {
       socket.emit('pickupItem', { itemId }, (response) => {
         if (!response?.success) {
-          setError(response?.message || 'Ошибка при подборе предмета');
+          showNotification(response?.message || 'Ошибка при подборе предмета', 'error');
         }
         socket.emit('getItems', { owner: userOwnerKey });
         socket.emit('getItems', { owner: locationOwnerKey });
@@ -439,9 +433,9 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         if (response.success) {
           setTempPersonalItems(prev => prev.filter(item => item._id !== applyModal.item._id));
           socket.emit('getItems', { owner: userOwnerKey });
+          showNotification(response.message, 'success');
         } else {
-          setError(response.message || 'Ошибка при использовании предмета');
-          setTimeout(() => setError(null), 3000);
+          showNotification(response.message || 'Ошибка при использовании предмета', 'error');
         }
         setApplyModal({ isOpen: false, item: null });
         setAnimatingItem(null);
@@ -463,7 +457,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         const itemIds = itemsToMove.map(item => item._id);
         socket.emit('moveItem', { itemIds, newOwner: locationOwnerKey }, (response) => {
           if (!response?.success) {
-            setError(response?.message || 'Ошибка при перемещении предметов');
+            showNotification(response?.message || 'Ошибка при перемещении предметов', 'error');
           }
           socket.emit('getItems', { owner: userOwnerKey });
           socket.emit('getItems', { owner: locationOwnerKey });
@@ -530,9 +524,6 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
           freeRoam: response.animal.freeRoam || false
         });
         setFreeRoam(response.animal.freeRoam || false);
-      } else {
-        setError(response.message || 'Ошибка при получении данных животного');
-        setTimeout(() => setError(null), 3000);
       }
     });
   };
@@ -596,11 +587,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             </S.SubTab>
           </S.SubTabs>
         )}
-        {error && (
-          <div style={{ textAlign: 'center', color: 'red', marginBottom: '10px' }}>
-            {error}
-          </div>
-        )}
+
         {activeTab === 'location' && isShelter && activeLocationSubTab === 'animals' ? (
           <S.AnimalList>
             {shelterAnimals.map(animal => (

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   ActionsContainer, ActionGrid, ContentContainer, ActionCard, ActionTitle,
   ActionDescription, ModalOverlay, ModalContent, ModalTitle, ModalDescription,
-  CloseButton, ActionButton, ProgressBar, Notification, TimerDisplay
+  CloseButton, ActionButton, ProgressBar, TimerDisplay
 } from '../styles/ActionsStyles';
 import { FaTimes } from 'react-icons/fa';
 import actionsConfig from './constants/actionsConfig';
@@ -13,20 +13,20 @@ import Fight from './Fight';
 import { ClipLoader } from 'react-spinners';
 import { getActiveNPCs } from '../utils/npcData';
 
+import { useNotification } from '../utils/NotificationContext';
+
 const COOLDOWN_DURATION_CONST = 10 * 100;
 const NOTIFICATION_DURATION_CONST = 10 * 100;
 
 
 function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpdate, user, updateUser }) {
   const [selectedAction, setSelectedAction] = useState(null);
-  const [notification, setNotification] = useState({ show: false, message: '' });
   const [cooldowns, , startCooldown] = useCooldowns(userId, COOLDOWN_DURATION_CONST);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [selectedNPC, setSelectedNPC] = useState(null);
   const [npcs, setNpcs] = useState([]);
-
-  
+  const { showNotification } = useNotification();
 
   useEffect(() => {
     if (socket && onItemsUpdate) {
@@ -92,19 +92,12 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
     }
   }, [selectedAction, currentRoom]);
 
-  const showNotification = useCallback((message, duration = NOTIFICATION_DURATION_CONST) => {
-    setNotification({ show: true, message });
-    setTimeout(() => setNotification({ show: false, message: '' }), duration);
-  }, []);
-
   const handleActionClick = useCallback((action) => {
     if (action.cooldownKey && cooldowns[action.cooldownKey]?.active) {
-      showNotification('Действие недоступно, подождите');
+      showNotification('Действие недоступно, подождите', 'warning');
       return;
     }
-    // console.log('Selected action:', action.title, 'personalItems:', personalItems);
     setSelectedAction(action);
-    // }, [cooldowns, showNotification, personalItems]);
   }, [cooldowns, showNotification]);
 
 
@@ -120,28 +113,28 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   const handleButtonClick = useCallback(() => {
     if (!socket) {
       console.error('Socket is not initialized');
-      showNotification('Ошибка соединения');
+      showNotification('Ошибка соединения', 'error');
       return;
     }
 
     if (isProcessing) {
-      showNotification('Действие уже выполняется, подождите');
+      showNotification('Действие уже выполняется, подождите', 'warning');
       return;
     }
 
     const action = actionHandlers[selectedAction.title];
     if (!action) {
-      showNotification('Действие не поддерживается');
+      showNotification('Действие не поддерживается', 'error');
       return;
     }
 
     if (action.requiresOwner && !user.owner) {
-      showNotification('У вас нет владельца!');
+      showNotification('У вас нет владельца!', 'error');
       return;
     }
 
     if (action.cooldownKey && cooldowns[action.cooldownKey]?.active) {
-      showNotification('Действие недоступно, подождите');
+      showNotification('Действие недоступно, подождите', 'warning');
       return;
     }
 
@@ -151,13 +144,13 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
-          showNotification(action.successMessage);
+          showNotification(action.successMessage, 'success');
           if (action.cooldownKey) {
             startCooldown(action.cooldownKey);
           }
         } else {
           setSelectedAction(null);
-          showNotification(response?.message || 'Ошибка при добавлении предмета');
+          showNotification(response?.message || 'Ошибка при добавлении предмета', 'error');
         }
       });
     } else if (action.action === 'utilizeTrash') {
@@ -166,11 +159,11 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         setIsProcessing(false);
         if (response && response.success) {
           setSelectedAction(null);
-          showNotification(response.message);
+          showNotification(response.message, 'success');
           socket.emit('getItems', { owner: `user_${userId}` });
         } else {
           setSelectedAction(null);
-          showNotification(response?.message || 'Ошибка при утилизации');
+          showNotification(response?.message || 'Ошибка при утилизации', 'error');
         }
       });
     } else if (action.action === 'hunt') {
@@ -184,7 +177,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
       }, () => {
         setIsProcessing(false);
         setSelectedAction(null);
-        showNotification(action.successMessage);
+        showNotification(action.successMessage, 'success');
       });
     }
   }, [socket, selectedAction, user, userId, currentRoom, showNotification, startCooldown, isProcessing, cooldowns]);
@@ -246,7 +239,6 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
         <ActionGrid>
           {availableActions.length > 0 ? (
             availableActions.map((action) => {
-              // console.log('Rendering action:', action.title, 'cooldownKey:', action.cooldownKey);
               return (
                 <ActionCard
                   key={action.id}
@@ -330,15 +322,14 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
               theme={theme}
               socket={socket}
               user={user}
-              npc={selectedNPC} // Используем selectedNPC напрямую
+              npc={selectedNPC}
               onClose={handleCloseModal}
-              showNotification={showNotification}
-              updateUser={updateUser} // Передаем updateUser
+              showNotification={showNotification} // Передаём showNotification
+              updateUser={updateUser}
             />
           </ModalContent>
         </ModalOverlay>
       )}
-      <Notification show={notification.show}>{notification.message}</Notification>
     </ActionsContainer>
   );
 }

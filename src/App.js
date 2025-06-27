@@ -14,6 +14,11 @@ import BouncingBall from './components/BouncingBall';
 import MyShelter from './components/MyShelter'; // Новый импорт
 import startLoadingImage from './images/start_loading.jpg';
 
+// Импортируем необходимые компоненты и стили
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { NotificationProvider } from './NotificationContext';
+
 const BouncingBallOverlay = styled.div`
   position: absolute;
   top: 0;
@@ -432,97 +437,99 @@ function App() {
   // console.log('canAccessMap:', canAccessMap, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline);
 
   return (
-    <AppContainer>
-      <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
-      <Content>
-        {showMyShelter ? (
-          <MyShelter
-            theme={appliedTheme}
-            setShowMyShelter={setShowMyShelter}
-            userId={user?.userId}
-            socket={socket} // Добавляем socket
-            currentRoom={currentRoom} // Добавляем currentRoom
-          />
-        ) : (
-          <>
-            {activeTab === 'chat' && (
-              <Chat
-                userId={user?.userId}
-                room={currentRoom}
-                theme={appliedTheme}
-                socket={socket}
-                joinedRoomsRef={joinedRoomsRef}
-                user={user}
-                setShowMyShelter={setShowMyShelter} // Передаем новый проп
-              />
-            )}
-            {activeTab === 'actions' && socket && (
-              <Actions
-                userId={user?.userId}
-                currentRoom={currentRoom}
-                theme={appliedTheme}
-                socket={socket}
-                personalItems={personalItems}
-                onItemsUpdate={handleItemsUpdate}
-                pets={pets}
-                isModalOpen={isActionModalOpen}
-                setIsModalOpen={setIsActionModalOpen}
-                user={user}
-                updateUser={updateUser}
-              />
-            )}
-            {activeTab === 'housing' && socket && (
-              <Inventory
-                userId={user?.userId}
-                currentRoom={currentRoom}
-                theme={appliedTheme}
-                socket={socket}
-                personalItems={personalItems}
-                onItemsUpdate={handleItemsUpdate}
-                closeActionModal={closeActionModal}
-                setIsModalOpen={setIsActionModalOpen}
-                user={user}
-                updateUser={updateUser}
-              />
-            )}
-            {activeTab === 'map' && canAccessMap && (
-              <Map
-                userId={user?.userId}
-                onRoomSelect={handleRoomSelect}
-                theme={appliedTheme}
-                currentRoom={currentRoom}
-                user={user}
-              />
-            )}
-            {activeTab === 'profile' && (
-              <Profile
-                user={user}
-                theme={appliedTheme}
-                selectedTheme={theme}
-                telegramTheme={telegramTheme}
-                onThemeChange={handleThemeChange}
-                progressValues={{ health: 50, mood: 50, fullness: 50 }}
-                socket={socket}
-              />
-            )}
-          </>
-        )}
-      </Content>
-      <BouncingBallOverlay ref={bouncingBallContainerRef}>
-        {activeTab === 'chat' && currentRoom && !showMyShelter && (
-          <BouncingBall room={currentRoom} containerRef={bouncingBallContainerRef} />
-        )}
-      </BouncingBallOverlay>
-      <Footer
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        theme={appliedTheme}
-        user={user}
-        currentRoom={currentRoom}
-        isAnimalAtHome={isAnimalAtHome}
-        isAnimalOnLeashWithOwnerOnline={isAnimalOnLeashWithOwnerOnline}
-      />
-    </AppContainer>
+    <NotificationProvider>
+      <AppContainer>
+        <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
+        <Content>
+          {showMyShelter ? (
+            <MyShelter
+              theme={appliedTheme}
+              setShowMyShelter={setShowMyShelter}
+              userId={user?.userId}
+              socket={socket} // Добавляем socket
+              currentRoom={currentRoom} // Добавляем currentRoom
+            />
+          ) : (
+            <>
+              {activeTab === 'chat' && (
+                <Chat
+                  userId={user?.userId}
+                  room={currentRoom}
+                  theme={appliedTheme}
+                  socket={socket}
+                  joinedRoomsRef={joinedRoomsRef}
+                  user={user}
+                  setShowMyShelter={setShowMyShelter} // Передаем новый проп
+                />
+              )}
+              {activeTab === 'actions' && socket && (
+                <Actions
+                  userId={user?.userId}
+                  currentRoom={currentRoom}
+                  theme={appliedTheme}
+                  socket={socket}
+                  personalItems={personalItems}
+                  onItemsUpdate={handleItemsUpdate}
+                  pets={pets}
+                  isModalOpen={isActionModalOpen}
+                  setIsModalOpen={setIsActionModalOpen}
+                  user={user}
+                  updateUser={updateUser}
+                />
+              )}
+              {activeTab === 'housing' && socket && (
+                <Inventory
+                  userId={user?.userId}
+                  currentRoom={currentRoom}
+                  theme={appliedTheme}
+                  socket={socket}
+                  personalItems={personalItems}
+                  onItemsUpdate={handleItemsUpdate}
+                  closeActionModal={closeActionModal}
+                  setIsModalOpen={setIsActionModalOpen}
+                  user={user}
+                  updateUser={updateUser}
+                />
+              )}
+              {activeTab === 'map' && canAccessMap && (
+                <Map
+                  userId={user?.userId}
+                  onRoomSelect={handleRoomSelect}
+                  theme={appliedTheme}
+                  currentRoom={currentRoom}
+                  user={user}
+                />
+              )}
+              {activeTab === 'profile' && (
+                <Profile
+                  user={user}
+                  theme={appliedTheme}
+                  selectedTheme={theme}
+                  telegramTheme={telegramTheme}
+                  onThemeChange={handleThemeChange}
+                  progressValues={{ health: 50, mood: 50, fullness: 50 }}
+                  socket={socket}
+                />
+              )}
+            </>
+          )}
+        </Content>
+        <BouncingBallOverlay ref={bouncingBallContainerRef}>
+          {activeTab === 'chat' && currentRoom && !showMyShelter && (
+            <BouncingBall room={currentRoom} containerRef={bouncingBallContainerRef} />
+          )}
+        </BouncingBallOverlay>
+        <Footer
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          theme={appliedTheme}
+          user={user}
+          currentRoom={currentRoom}
+          isAnimalAtHome={isAnimalAtHome}
+          isAnimalOnLeashWithOwnerOnline={isAnimalOnLeashWithOwnerOnline}
+        />
+      </AppContainer>
+    </NotificationProvider>
   );
 }
 

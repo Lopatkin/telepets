@@ -16,6 +16,9 @@ import startLoadingImage from './images/start_loading.jpg';
 
 import { NotificationProvider } from './utils/NotificationContext';
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; // Новый импорт
+
 const BouncingBallOverlay = styled.div`
   position: absolute;
   top: 0;
@@ -443,8 +446,8 @@ function App() {
               theme={appliedTheme}
               setShowMyShelter={setShowMyShelter}
               userId={user?.userId}
-              socket={socket} // Добавляем socket
-              currentRoom={currentRoom} // Добавляем currentRoom
+              socket={socket}
+              currentRoom={currentRoom}
             />
           ) : (
             <>
@@ -456,7 +459,7 @@ function App() {
                   socket={socket}
                   joinedRoomsRef={joinedRoomsRef}
                   user={user}
-                  setShowMyShelter={setShowMyShelter} // Передаем новый проп
+                  setShowMyShelter={setShowMyShelter}
                 />
               )}
               {activeTab === 'actions' && socket && (
@@ -525,6 +528,7 @@ function App() {
           isAnimalAtHome={isAnimalAtHome}
           isAnimalOnLeashWithOwnerOnline={isAnimalOnLeashWithOwnerOnline}
         />
+        <ToastContainer />
       </AppContainer>
     </NotificationProvider>
   );

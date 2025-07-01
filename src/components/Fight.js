@@ -373,9 +373,13 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           if (response.energyChange !== 0) changes.push(<span key="energy">-{response.energyChange} <FaBolt /></span>);
 
           const notificationMessage = (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <strong>{finalMessage}</strong>
-              {changes.length > 0 && <div style={{ display: 'flex', gap: '8px' }}>{changes}</div>}
+            <div style={{ textAlign: 'center' }}>
+              <div><strong>{finalMessage}</strong></div>
+              {changes.length > 0 && (
+                <div style={{ marginTop: '4px', display: 'inline-flex', gap: '8px', justifyContent: 'center' }}>
+                  {changes}
+                </div>
+              )}
             </div>
           );
           showNotification(notificationMessage, response.playerHP <= 0 ? 'error' : 'success');

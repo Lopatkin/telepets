@@ -376,7 +376,6 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
             </div>,
             response.playerHP <= 0 ? 'error' : 'success'
           );
-          showNotification(notificationMessage, response.playerHP <= 0 ? 'error' : 'success');
           setBattleLogs((prev) => [
             `${new Date().toLocaleTimeString()}: ${finalMessage}`,
             ...prev

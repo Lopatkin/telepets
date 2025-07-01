@@ -4,6 +4,7 @@ import { FaRunning, FaFistRaised, FaShieldAlt } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 import fightImage from '../images/fight.jpg'; // Импортируем изображение
+import { FaStar, FaSmile, FaBolt } from 'react-icons/fa';
 //import { useNotification } from '../utils/NotificationContext'; // Новый импорт
 
 const ButtonContainer = styled.div`
@@ -367,15 +368,17 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
           // Формируем сообщение для уведомления
           const changes = [];
-          if (response.expGain > 0) changes.push(`+${response.expGain} опыта`);
-          if (response.moodChange !== 0) changes.push(`${response.moodChange > 0 ? '+' : ''}${response.moodChange} настроения`);
-          if (response.energyChange !== 0) changes.push(`-${response.energyChange} энергии`);
-          showNotification(
-            <div style={{ whiteSpace: 'pre-line' }}>
-              {`${finalMessage}\n${changes.join(', ')}`}
-            </div>,
-            response.playerHP <= 0 ? 'error' : 'success'
+          if (response.expGain > 0) changes.push(<span key="exp">+{response.expGain} <FaStar /></span>);
+          if (response.moodChange !== 0) changes.push(<span key="mood">{response.moodChange > 0 ? '+' : ''}{response.moodChange} <FaSmile /></span>);
+          if (response.energyChange !== 0) changes.push(<span key="energy">-{response.energyChange} <FaBolt /></span>);
+
+          const notificationMessage = (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <strong>{finalMessage}</strong>
+              {changes.length > 0 && <div style={{ display: 'flex', gap: '8px' }}>{changes}</div>}
+            </div>
           );
+          showNotification(notificationMessage, response.playerHP <= 0 ? 'error' : 'success');
           setBattleLogs((prev) => [
             `${new Date().toLocaleTimeString()}: ${finalMessage}`,
             ...prev

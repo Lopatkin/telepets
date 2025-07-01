@@ -370,8 +370,14 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           if (response.expGain > 0) changes.push(`+${response.expGain} опыта`);
           if (response.moodChange !== 0) changes.push(`${response.moodChange > 0 ? '+' : ''}${response.moodChange} настроения`);
           if (response.energyChange !== 0) changes.push(`-${response.energyChange} энергии`);
-          const notificationMessage = `${finalMessage}${changes.length > 0 ? ' ' + changes.join(', ') : ''}`;
+          const notificationMessage = (
+            <>
+              <div>{finalMessage}</div>
+              {changes.length > 0 && <div>{changes.join(', ')}</div>}
+            </>
+          );
           showNotification(notificationMessage, response.playerHP <= 0 ? 'error' : 'success');
+          
           setBattleLogs((prev) => [
             `${new Date().toLocaleTimeString()}: ${finalMessage}`,
             ...prev

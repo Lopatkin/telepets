@@ -370,11 +370,11 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           if (response.expGain > 0) changes.push(`+${response.expGain} опыта`);
           if (response.moodChange !== 0) changes.push(`${response.moodChange > 0 ? '+' : ''}${response.moodChange} настроения`);
           if (response.energyChange !== 0) changes.push(`-${response.energyChange} энергии`);
-          const notificationMessage = (
-            <>
-              <div>{finalMessage}</div>
-              {changes.length > 0 && <div>{changes.join(', ')}</div>}
-            </>
+          showNotification(
+            <div style={{ whiteSpace: 'pre-line' }}>
+              {`${finalMessage}\n${changes.join(', ')}`}
+            </div>,
+            response.playerHP <= 0 ? 'error' : 'success'
           );
           showNotification(notificationMessage, response.playerHP <= 0 ? 'error' : 'success');
           setBattleLogs((prev) => [

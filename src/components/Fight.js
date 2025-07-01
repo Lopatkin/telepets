@@ -373,7 +373,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           if (response.energyChange !== 0) changes.push(<span key="energy">-{response.energyChange} <FaBolt /></span>);
 
           const notificationMessage = (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <strong>{finalMessage}</strong>
               {changes.length > 0 && <div style={{ display: 'flex', gap: '8px' }}>{changes}</div>}
             </div>

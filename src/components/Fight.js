@@ -373,7 +373,12 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
             changes.push(
               <span
                 key="exp"
-                style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'green' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  color: '#28a745',
+                }}
               >
                 <FaStar /> +{response.expGain}
               </span>
@@ -389,7 +394,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
-                  color: isPositive ? 'green' : 'red',
+                  color: isPositive ? '#28a745' : '#dc3545',
                 }}
               >
                 <FaSmile /> {isPositive ? '+' : ''}{response.moodChange}
@@ -405,7 +410,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
-                  color: 'red',
+                  color: '#dc3545',
                 }}
               >
                 <FaBolt /> -{response.energyChange}

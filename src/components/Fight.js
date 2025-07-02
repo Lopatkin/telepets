@@ -377,10 +377,10 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
-                  color: '#28a745',
+                  color: '#28a745', // зелёный текст
                 }}
               >
-                <FaStar /> +{response.expGain}
+                <FaStar style={{ color: '#f1c40f' }} /> +{response.expGain}
               </span>
             );
           }
@@ -397,7 +397,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
                   color: isPositive ? '#28a745' : '#dc3545',
                 }}
               >
-                <FaSmile /> {isPositive ? '+' : ''}{response.moodChange}
+                <FaSmile style={{ color: '#3498db' }} /> {isPositive ? '+' : ''}{response.moodChange}
               </span>
             );
           }
@@ -413,7 +413,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
                   color: '#dc3545',
                 }}
               >
-                <FaBolt /> -{response.energyChange}
+                <FaBolt style={{ color: '#f39c12' }} /> -{response.energyChange}
               </span>
             );
           }

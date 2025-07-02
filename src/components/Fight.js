@@ -368,21 +368,50 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
           // Формируем сообщение для уведомления
           const changes = [];
-          if (response.expGain > 0) changes.push(
-            <span key="exp" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <FaStar /> +{response.expGain}
-            </span>
-          );
-          if (response.moodChange !== 0) changes.push(
-            <span key="mood" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <FaSmile /> {response.moodChange > 0 ? '+' : ''}{response.moodChange}
-            </span>
-          );
-          if (response.energyChange !== 0) changes.push(
-            <span key="energy" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <FaBolt /> -{response.energyChange}
-            </span>
-          );
+
+          if (response.expGain > 0) {
+            changes.push(
+              <span
+                key="exp"
+                style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'green' }}
+              >
+                <FaStar /> +{response.expGain}
+              </span>
+            );
+          }
+
+          if (response.moodChange !== 0) {
+            const isPositive = response.moodChange > 0;
+            changes.push(
+              <span
+                key="mood"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  color: isPositive ? 'green' : 'red',
+                }}
+              >
+                <FaSmile /> {isPositive ? '+' : ''}{response.moodChange}
+              </span>
+            );
+          }
+
+          if (response.energyChange !== 0) {
+            changes.push(
+              <span
+                key="energy"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  color: 'red',
+                }}
+              >
+                <FaBolt /> -{response.energyChange}
+              </span>
+            );
+          }
 
           const notificationMessage = (
             <>

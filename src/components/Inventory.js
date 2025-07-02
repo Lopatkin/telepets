@@ -451,7 +451,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                     color: applied ? '#28a745' : '#999',
                   }}>
                     <FaBolt style={{ color: '#f39c12' }} />
-                    {applied ? `+${value}` : '100'} {applied ? null : <FaCheck style={{ fontSize: '0.8em', color: '#28a745' }} />}
+                    {applied ? `+${value}` : <FaCheck style={{ fontSize: '0.8em', color: '#28a745' }} />}
                   </span>
                 );
               }
@@ -466,7 +466,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                     color: applied ? '#28a745' : '#999',
                   }}>
                     <FaSmile style={{ color: '#3498db' }} />
-                    {applied ? `+${value}` : '100'} {applied ? null : <FaCheck style={{ fontSize: '0.8em', color: '#28a745' }} />}
+                    {applied ? `+${value}` : <FaCheck style={{ fontSize: '0.8em', color: '#28a745' }} />}
                   </span>
                 );
               }

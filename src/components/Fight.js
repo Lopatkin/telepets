@@ -4,7 +4,8 @@ import { FaRunning, FaFistRaised, FaShieldAlt } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 import fightImage from '../images/fight.jpg'; // Импортируем изображение
-import { FaStar, FaSmile, FaBolt } from 'react-icons/fa';
+import { FaCheckCircle, FaSkullCrossbones, FaStar, FaSmile, FaBolt } from 'react-icons/fa';
+
 //import { useNotification } from '../utils/NotificationContext'; // Новый импорт
 
 const ButtonContainer = styled.div`
@@ -365,8 +366,11 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
 
         if (response.playerHP <= 0 || response.npcHP <= 0) {
           setIsRoundActive(false);
-          const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
+
           // Формируем сообщение для уведомления
+          const isVictory = response.playerHP > 0;
+          const finalMessage = isVictory ? 'Вы победили!' : 'Вы проиграли!';
+
           const changes = [];
 
           if (response.expGain > 0) {
@@ -377,7 +381,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
-                  color: '#28a745', // зелёный текст
+                  color: '#28a745',
                 }}
               >
                 <FaStar style={{ color: '#f1c40f' }} /> +{response.expGain}
@@ -419,15 +423,28 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           }
 
           const notificationMessage = (
-            <>
-              <div><strong>{finalMessage}</strong></div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }}>
+                {isVictory
+                  ? <FaCheckCircle style={{ color: '#28a745' }} />
+                  : <FaSkullCrossbones style={{ color: '#fff' }} />
+                }
+                <span>{finalMessage}</span>
+              </div>
               {changes.length > 0 && (
-                <div style={{ marginTop: '4px', display: 'flex', gap: '12px' }}>
+                <div style={{
+                  marginTop: '6px',
+                  display: 'flex',
+                  gap: '12px',
+                  justifyContent: 'center',
+                  flexWrap: 'wrap'
+                }}>
                   {changes}
                 </div>
               )}
-            </>
+            </div>
           );
+
           showNotification(notificationMessage, response.playerHP <= 0 ? 'error' : 'success');
           setBattleLogs((prev) => [
             `${new Date().toLocaleTimeString()}: ${finalMessage}`,

@@ -6,6 +6,8 @@ const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
     const showNotification = (message, type = 'info') => {
+        const isDark = type === 'error';
+
         toast[type](
             <div style={{
                 width: '100%',
@@ -19,16 +21,16 @@ export const NotificationProvider = ({ children }) => {
             </div>,
             {
                 position: "top-right",
-                autoClose: 3000,
+                autoClose: 2000,
                 hideProgressBar: true,
                 closeOnClick: true,
                 pauseOnHover: true,
                 draggable: true,
-                theme: 'light',
+                theme: isDark ? 'dark' : 'light',
                 style: {
-                    background: '#f8f9fa',  // светло-серый
-                    color: '#212529',       // тёмно-серый текст
-                    textAlign: 'center',
+                    background: isDark ? '#2c2c2c' : '#f8f9fa',
+                    color: isDark ? '#fff' : '#212529',
+                    textAlign: 'center'
                 }
             }
         );

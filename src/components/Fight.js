@@ -368,15 +368,27 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           const finalMessage = response.playerHP <= 0 ? 'Вы проиграли!' : 'Вы победили!';
           // Формируем сообщение для уведомления
           const changes = [];
-          if (response.expGain > 0) changes.push(<span key="exp">+{response.expGain} <FaStar /></span>);
-          if (response.moodChange !== 0) changes.push(<span key="mood">{response.moodChange > 0 ? '+' : ''}{response.moodChange} <FaSmile /></span>);
-          if (response.energyChange !== 0) changes.push(<span key="energy">-{response.energyChange} <FaBolt /></span>);
+          if (response.expGain > 0) changes.push(
+            <span key="exp" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <FaStar /> +{response.expGain}
+            </span>
+          );
+          if (response.moodChange !== 0) changes.push(
+            <span key="mood" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <FaSmile /> {response.moodChange > 0 ? '+' : ''}{response.moodChange}
+            </span>
+          );
+          if (response.energyChange !== 0) changes.push(
+            <span key="energy" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <FaBolt /> -{response.energyChange}
+            </span>
+          );
 
           const notificationMessage = (
             <>
               <div><strong>{finalMessage}</strong></div>
               {changes.length > 0 && (
-                <div style={{ marginTop: '4px', display: 'inline-flex', gap: '8px' }}>
+                <div style={{ marginTop: '4px', display: 'flex', gap: '12px' }}>
                   {changes}
                 </div>
               )}

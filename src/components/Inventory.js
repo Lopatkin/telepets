@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
-import { FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaEdit, FaCheck, FaTimes, FaBolt, FaSmile } from 'react-icons/fa';
 import { INVENTORY_WEIGHT_LIMIT } from './constants/settings';
 
 import stickImage from '../images/items/stick.jpg';
@@ -22,6 +22,7 @@ import bandageImage from '../images/items/bandage.jpg';
 import cannedFoodImage from '../images/items/canned-food.jpg';
 import chocolateImage from '../images/items/chocolate.jpg';
 import coffeeImage from '../images/items/coffee.jpg';
+
 
 import { useNotification } from '../utils/NotificationContext';
 
@@ -433,7 +434,50 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
         if (response.success) {
           setTempPersonalItems(prev => prev.filter(item => item._id !== applyModal.item._id));
           socket.emit('getItems', { owner: userOwnerKey });
-          showNotification(response.message, 'success');
+          if (response.success) {
+            setTempPersonalItems(prev => prev.filter(item => item._id !== applyModal.item._id));
+            socket.emit('getItems', { owner: userOwnerKey });
+
+            if (applyModal.item?.name === 'Кофе' && response.effects) {
+              const changes = [];
+
+              if (response.effects.energy > 0) {
+                changes.push(
+                  <span key="energy" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#28a745' }}>
+                    <FaBolt style={{ color: '#f39c12' }} /> +{response.effects.energy}
+                  </span>
+                );
+              }
+              if (response.effects.satiety > 0) {
+                changes.push(
+                  <span key="satiety" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#28a745' }}>
+                    <FaSmile style={{ color: '#3498db' }} /> +{response.effects.satiety}
+                  </span>
+                );
+              }
+
+              const coffeeNotification = (
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontWeight: 'bold' }}>Вы выпили кофе!</div>
+                  {changes.length > 0 && (
+                    <div style={{
+                      marginTop: '6px',
+                      display: 'flex',
+                      gap: '12px',
+                      justifyContent: 'center',
+                      flexWrap: 'wrap'
+                    }}>
+                      {changes}
+                    </div>
+                  )}
+                </div>
+              );
+
+              showNotification(coffeeNotification, 'success');
+            } else {
+              showNotification(response.message, 'success');
+            }
+          }
         } else {
           showNotification(response.message || 'Ошибка при использовании предмета', 'error');
         }

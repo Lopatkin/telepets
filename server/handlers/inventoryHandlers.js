@@ -155,7 +155,18 @@ function registerInventoryHandlers({
             }
 
             itemLocks.delete(itemId);
-            callback({ success: true, message: `Предмет ${item.name} использован` });
+            if (item.name === 'Кофе') {
+                callback({
+                    success: true,
+                    message: 'Вы выпили кофе!',
+                    effects: {
+                        energy: effect.energy || 0,
+                        satiety: effect.satiety || 0
+                    }
+                });
+            } else {
+                callback({ success: true, message: `Предмет ${item.name} использован` });
+            }
         } catch (err) {
             console.error('Error using item:', err.message, err.stack);
             itemLocks.delete(itemId);

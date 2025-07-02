@@ -24,7 +24,12 @@ export const NotificationProvider = ({ children }) => {
                 closeOnClick: true,
                 pauseOnHover: true,
                 draggable: true,
-                theme: 'colored',
+                theme: 'light',
+                style: {
+                    background: '#f8f9fa',  // светло-серый
+                    color: '#212529',       // тёмно-серый текст
+                    textAlign: 'center',
+                }
             }
         );
     };

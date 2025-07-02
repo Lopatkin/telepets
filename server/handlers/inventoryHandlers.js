@@ -160,8 +160,14 @@ function registerInventoryHandlers({
                     success: true,
                     message: 'Вы выпили кофе!',
                     effects: {
-                        energy: effect.energy || 0,
-                        satiety: effect.satiety || 0
+                        energy: {
+                            value: effect.energy || 0,
+                            applied: updatedStats.energy > user.stats.energy
+                        },
+                        satiety: {
+                            value: effect.satiety || 0,
+                            applied: updatedStats.satiety > user.stats.satiety
+                        }
                     }
                 });
             } else {

@@ -441,17 +441,32 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             if (applyModal.item?.name === 'Кофе' && response.effects) {
               const changes = [];
 
-              if (response.effects.energy > 0) {
+              if (response.effects.energy) {
+                const { value, applied } = response.effects.energy;
                 changes.push(
-                  <span key="energy" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#28a745' }}>
-                    <FaBolt style={{ color: '#f39c12' }} /> +{response.effects.energy}
+                  <span key="energy" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    color: applied ? '#28a745' : '#999',
+                  }}>
+                    <FaBolt style={{ color: '#f39c12' }} />
+                    {applied ? `+${value}` : '100'} {applied ? null : <FaCheck style={{ fontSize: '0.8em', color: '#28a745' }} />}
                   </span>
                 );
               }
-              if (response.effects.satiety > 0) {
+
+              if (response.effects.satiety) {
+                const { value, applied } = response.effects.satiety;
                 changes.push(
-                  <span key="satiety" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#28a745' }}>
-                    <FaSmile style={{ color: '#3498db' }} /> +{response.effects.satiety}
+                  <span key="satiety" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    color: applied ? '#28a745' : '#999',
+                  }}>
+                    <FaSmile style={{ color: '#3498db' }} />
+                    {applied ? `+${value}` : '100'} {applied ? null : <FaCheck style={{ fontSize: '0.8em', color: '#28a745' }} />}
                   </span>
                 );
               }

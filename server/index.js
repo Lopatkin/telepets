@@ -244,28 +244,63 @@ io.on('connection', (socket) => {
     let moodChange = 0;
     let expGain = 0;
     let energyChange = isFightOver ? npcReward.energy : 0;
+    let satietyChange = 0;
+    let healthChange = 0;
 
     if (isFightOver) {
       if (fight.playerHP <= 0) {
         message += 'Вы проиграли бой!';
-        moodChange = -10; // Уменьшаем настроение при поражении
+        moodChange = -10;
       } else {
         message += 'Вы победили!';
-        moodChange = npcReward.mood; // Увеличиваем настроение при победе
-        expGain = npcReward.exp(); // Начисляем опыт при победе
+        moodChange = npcReward.mood;
+        expGain = npcReward.exp();
       }
     }
 
-    // Обновляем здоровье, энергию, настроение и опыт игрока в базе данных
+    let newEnergy = Math.max(user.stats.energy - energyChange, 0);
+    let newSatiety = user.stats.satiety;
+    let newMood = user.stats.mood;
+    let newHealth = fight.playerHP;
+
+    if (user.stats.energy < energyChange) {
+      const deficit = energyChange - user.stats.energy;
+
+      if (user.stats.satiety >= deficit * 2) {
+        newSatiety -= deficit * 2;
+        satietyChange = -deficit * 2;
+      } else {
+        const satietyDeficit = deficit * 2 - user.stats.satiety;
+        satietyChange = -user.stats.satiety;
+        newSatiety = 0;
+
+        if (user.stats.mood >= satietyDeficit * 1.5) {
+          const moodPenalty = Math.ceil(satietyDeficit * 1.5);
+          newMood = Math.max(user.stats.mood - moodPenalty, 0);
+          moodChange = -moodPenalty;
+        } else {
+          const moodDeficit = Math.ceil(satietyDeficit * 1.5) - user.stats.mood;
+          moodChange = -user.stats.mood;
+          newMood = 0;
+
+          const healthPenalty = moodDeficit * 4;
+          newHealth = Math.max(newHealth - healthPenalty, 0);
+          healthChange = -healthPenalty;
+        }
+      }
+    }
+
+    // Применяем обновлённые значения
     await User.updateOne(
       { userId },
       {
         $set: {
-          'stats.health': fight.playerHP,
-          'stats.energy': Math.max(0, user.stats.energy - energyChange),
-          'stats.mood': Math.min(Math.max(user.stats.mood + moodChange, 0), user.stats.maxMood),
+          'stats.health': newHealth,
+          'stats.energy': newEnergy,
+          'stats.mood': Math.min(Math.max(newMood, 0), user.stats.maxMood),
+          'stats.satiety': Math.min(Math.max(newSatiety, 0), user.stats.maxSatiety)
         },
-        $inc: { exp: expGain } // Начисляем опыт
+        $inc: { exp: expGain }
       }
     );
 
@@ -302,9 +337,11 @@ io.on('connection', (socket) => {
       playerHP: fight.playerHP,
       npcHP: fight.npcHP,
       message,
-      expGain, // Добавляем в ответ
-      moodChange, // Добавляем в ответ
-      energyChange // Добавляем в ответ
+      expGain,
+      moodChange,
+      energyChange: -energyChange, // теперь передаётся как отрицательное значение
+      satietyChange,
+      healthChange
     });
   });
 

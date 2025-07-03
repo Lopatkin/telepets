@@ -4,7 +4,8 @@ import { FaRunning, FaFistRaised, FaShieldAlt } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 import fightImage from '../images/fight.jpg'; // Импортируем изображение
-import { FaCheckCircle, FaSkullCrossbones, FaStar, FaSmile, FaBolt } from 'react-icons/fa';
+import { FaCheckCircle, FaSkullCrossbones, FaStar, FaSmile, FaBolt, FaHeart} from 'react-icons/fa';
+import { FaDrumstickBite } from 'react-icons/fa6';
 
 //import { useNotification } from '../utils/NotificationContext'; // Новый импорт
 
@@ -418,6 +419,34 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
                 }}
               >
                 <FaBolt style={{ color: '#f39c12' }} /> -{response.energyChange}
+              </span>
+            );
+          }
+
+          if (response.satietyChange !== 0) {
+            const isPositive = response.satietyChange > 0;
+            changes.push(
+              <span key="satiety" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                color: isPositive ? '#28a745' : '#dc3545',
+              }}>
+                <FaDrumstickBite style={{ color: '#8e44ad' }} /> {isPositive ? '+' : ''}{response.satietyChange}
+              </span>
+            );
+          }
+
+          if (response.healthChange !== 0) {
+            const isPositive = response.healthChange > 0;
+            changes.push(
+              <span key="health" style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                color: isPositive ? '#28a745' : '#dc3545',
+              }}>
+                <FaHeart style={{ color: '#e74c3c' }} /> {isPositive ? '+' : ''}{response.healthChange}
               </span>
             );
           }

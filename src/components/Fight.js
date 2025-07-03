@@ -4,7 +4,7 @@ import { FaRunning, FaFistRaised, FaShieldAlt } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 import { Avatar, DefaultAvatar } from '../styles/ChatStyles';
 import fightImage from '../images/fight.jpg'; // Импортируем изображение
-import { FaCheckCircle, FaSkullCrossbones, FaStar, FaSmile, FaBolt, FaHeart} from 'react-icons/fa';
+import { FaCheckCircle, FaSkullCrossbones, FaStar, FaSmile, FaBolt, FaHeart } from 'react-icons/fa';
 import { FaDrumstickBite } from 'react-icons/fa6';
 
 //import { useNotification } from '../utils/NotificationContext'; // Новый импорт
@@ -372,80 +372,48 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           const isVictory = response.playerHP > 0;
           const finalMessage = isVictory ? 'Вы победили!' : 'Вы проиграли!';
 
+          const prev = response.previousStats || {};
           const changes = [];
 
           if (response.expGain > 0) {
             changes.push(
-              <span
-                key="exp"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  color: '#28a745',
-                }}
-              >
+              <span key="exp" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#28a745' }}>
                 <FaStar style={{ color: '#f1c40f' }} /> +{response.expGain}
               </span>
             );
           }
 
-          if (response.moodChange !== 0) {
+          if (response.energyChange && prev.energy > 0) {
+            const isPositive = response.energyChange > 0;
+            changes.push(
+              <span key="energy" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isPositive ? '#28a745' : '#dc3545' }}>
+                <FaBolt style={{ color: '#f39c12' }} /> {isPositive ? '+' : ''}{response.energyChange}
+              </span>
+            );
+          }
+
+          if (response.moodChange && prev.mood > 0) {
             const isPositive = response.moodChange > 0;
             changes.push(
-              <span
-                key="mood"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  color: isPositive ? '#28a745' : '#dc3545',
-                }}
-              >
+              <span key="mood" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isPositive ? '#28a745' : '#dc3545' }}>
                 <FaSmile style={{ color: '#3498db' }} /> {isPositive ? '+' : ''}{response.moodChange}
               </span>
             );
           }
 
-          if (response.energyChange !== 0) {
-            changes.push(
-              <span
-                key="energy"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  color: '#dc3545',
-                }}
-              >
-                <FaBolt style={{ color: '#f39c12' }} /> -{response.energyChange}
-              </span>
-            );
-          }
-
-          if (response.satietyChange !== 0) {
+          if (response.satietyChange && prev.satiety > 0) {
             const isPositive = response.satietyChange > 0;
             changes.push(
-              <span key="satiety" style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                color: isPositive ? '#28a745' : '#dc3545',
-              }}>
+              <span key="satiety" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isPositive ? '#28a745' : '#dc3545' }}>
                 <FaDrumstickBite style={{ color: '#8e44ad' }} /> {isPositive ? '+' : ''}{response.satietyChange}
               </span>
             );
           }
 
-          if (response.healthChange !== 0) {
+          if (response.healthChange && prev.health > 0) {
             const isPositive = response.healthChange > 0;
             changes.push(
-              <span key="health" style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                color: isPositive ? '#28a745' : '#dc3545',
-              }}>
+              <span key="health" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isPositive ? '#28a745' : '#dc3545' }}>
                 <FaHeart style={{ color: '#e74c3c' }} /> {isPositive ? '+' : ''}{response.healthChange}
               </span>
             );

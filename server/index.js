@@ -239,6 +239,14 @@ io.on('connection', (socket) => {
     // Получаем параметры NPC из npcRewards
     const npcReward = npcRewards[npcId] || { exp: () => 0, energy: 0, mood: 0 };
 
+    // Сохраняем исходные параметры до боя
+    const originalStats = {
+      health: user.stats.health,
+      energy: user.stats.energy,
+      mood: user.stats.mood,
+      satiety: user.stats.satiety
+    };
+
     // Проверяем завершение боя
     const isFightOver = fight.playerHP <= 0 || fight.npcHP <= 0;
     let moodChange = 0;
@@ -290,7 +298,6 @@ io.on('connection', (socket) => {
       }
     }
 
-    // Применяем обновлённые значения
     await User.updateOne(
       { userId },
       {
@@ -339,10 +346,12 @@ io.on('connection', (socket) => {
       message,
       expGain,
       moodChange,
-      energyChange: -energyChange, // теперь передаётся как отрицательное значение
+      energyChange: -energyChange,
       satietyChange,
-      healthChange
+      healthChange,
+      previousStats: originalStats
     });
+
   });
 
   // Добавление обработчика getUser

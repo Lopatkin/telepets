@@ -249,7 +249,8 @@ io.on('connection', (socket) => {
 
     // Проверяем завершение боя
     const isFightOver = fight.playerHP <= 0 || fight.npcHP <= 0;
-    let moodChange = 0;
+    let moodBonus = 0;
+    let moodPenalty = 0;
     let expGain = 0;
     let energyChange = isFightOver ? npcReward.energy : 0;
     let satietyChange = 0;
@@ -258,10 +259,10 @@ io.on('connection', (socket) => {
     if (isFightOver) {
       if (fight.playerHP <= 0) {
         message += 'Вы проиграли бой!';
-        moodChange = -10;
+        moodPenalty = -10;
       } else {
         message += 'Вы победили!';
-        moodChange = npcReward.mood;
+        moodBonus = npcReward.mood;
         expGain = npcReward.exp();
       }
     }
@@ -283,12 +284,12 @@ io.on('connection', (socket) => {
         newSatiety = 0;
 
         if (user.stats.mood >= satietyDeficit * 1.5) {
-          const moodPenalty = Math.ceil(satietyDeficit * 1.5);
-          newMood = Math.max(user.stats.mood - moodPenalty, 0);
-          moodChange = -moodPenalty;
+          const moodLoss = Math.ceil(satietyDeficit * 1.5);
+          newMood = Math.max(user.stats.mood - moodLoss, 0);
+          moodPenalty = -moodLoss;
         } else {
           const moodDeficit = Math.ceil(satietyDeficit * 1.5) - user.stats.mood;
-          moodChange = -user.stats.mood;
+          moodPenalty = -user.stats.mood;
           newMood = 0;
 
           const healthPenalty = moodDeficit * 4;
@@ -298,13 +299,15 @@ io.on('connection', (socket) => {
       }
     }
 
+    let finalMood = Math.max(user.stats.mood + moodBonus + moodPenalty, 0);
+
     await User.updateOne(
       { userId },
       {
         $set: {
           'stats.health': newHealth,
           'stats.energy': newEnergy,
-          'stats.mood': Math.min(Math.max(newMood, 0), user.stats.maxMood),
+          'stats.mood': Math.min(finalMood, user.stats.maxMood),
           'stats.satiety': Math.min(Math.max(newSatiety, 0), user.stats.maxSatiety)
         },
         $inc: { exp: expGain }
@@ -345,7 +348,7 @@ io.on('connection', (socket) => {
       npcHP: fight.npcHP,
       message,
       expGain,
-      moodChange,
+      moodChange: moodBonus + moodPenalty,
       energyChange: -energyChange,
       satietyChange,
       healthChange,

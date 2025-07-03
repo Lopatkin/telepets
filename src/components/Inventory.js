@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
-import { FaEdit, FaCheck, FaTimes, FaBolt, FaSmile } from 'react-icons/fa';
+import { FaEdit, FaCheck, FaTimes, FaBolt, FaSmile, FaHeart } from 'react-icons/fa';
+import { FaDrumstickBite } from 'react-icons/fa6';
 import { INVENTORY_WEIGHT_LIMIT } from './constants/settings';
 
 import stickImage from '../images/items/stick.jpg';
@@ -438,42 +439,35 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
             setTempPersonalItems(prev => prev.filter(item => item._id !== applyModal.item._id));
             socket.emit('getItems', { owner: userOwnerKey });
 
-            if (applyModal.item?.name === 'Кофе' && response.effects) {
+            const itemName = applyModal.item?.name;
+            const customEffectItems = ['Кофе', 'Лесные ягоды', 'Лесные грибы', 'Бинт', 'Аптечка', 'Консервы'];
+
+            if (customEffectItems.includes(itemName) && response.effects) {
+              const paramIcons = {
+                health: <FaHeart style={{ color: '#e74c3c' }} />,
+                mood: <FaSmile style={{ color: '#3498db' }} />,
+                satiety: <FaDrumstickBite style={{ color: '#8e44ad' }} />,
+                energy: <FaBolt style={{ color: '#f39c12' }} />
+              };
+
               const changes = [];
 
-              if (response.effects.energy) {
-                const { value, applied } = response.effects.energy;
+              Object.entries(response.effects).forEach(([key, { value, applied }]) => {
                 changes.push(
-                  <span key="energy" style={{
+                  <span key={key} style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
                     color: applied ? '#28a745' : '#999',
                   }}>
-                    <FaBolt style={{ color: '#f39c12' }} />
+                    {paramIcons[key]}
                     {applied ? `+${value}` : <FaCheck style={{ fontSize: '0.8em', color: '#28a745' }} />}
                   </span>
                 );
-              }
-
-              if (response.effects.satiety) {
-                const { value, applied } = response.effects.satiety;
-                changes.push(
-                  <span key="satiety" style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    color: applied ? '#28a745' : '#999',
-                  }}>
-                    <FaSmile style={{ color: '#3498db' }} />
-                    {applied ? `+${value}` : <FaCheck style={{ fontSize: '0.8em', color: '#28a745' }} />}
-                  </span>
-                );
-              }
-
-              const coffeeNotification = (
+              });
+              const notificationMessage = (
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontWeight: 'bold' }}>Вы выпили кофе!</div>
+                  <div style={{ fontWeight: 'bold' }}>{response.message}</div>
                   {changes.length > 0 && (
                     <div style={{
                       marginTop: '6px',
@@ -488,9 +482,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
                 </div>
               );
 
-              showNotification(coffeeNotification, 'success');
-            } else {
-              showNotification(response.message, 'success');
+              showNotification(notificationMessage, 'success');
             }
           }
         } else {

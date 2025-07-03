@@ -155,24 +155,35 @@ function registerInventoryHandlers({
             }
 
             itemLocks.delete(itemId);
-            if (item.name === 'Кофе') {
-                callback({
-                    success: true,
-                    message: 'Вы выпили кофе!',
-                    effects: {
-                        energy: {
-                            value: effect.energy || 0,
-                            applied: updatedStats.energy > user.stats.energy
-                        },
-                        satiety: {
-                            value: effect.satiety || 0,
-                            applied: updatedStats.satiety > user.stats.satiety
-                        }
-                    }
-                });
-            } else {
-                callback({ success: true, message: `Предмет ${item.name} использован` });
-            }
+
+            const customMessages = {
+                'Кофе': 'Вы выпили кофе!',
+                'Лесные ягоды': 'Вы съели лесные ягоды!',
+                'Лесные грибы': 'Вы съели лесные грибы!',
+                'Бинт': 'Вы использовали бинт',
+                'Аптечка': 'Вы использовали аптечку',
+                'Консервы': 'Вы съели консервы!'
+            };
+
+            const effectsPayload = {};
+            ['health', 'mood', 'satiety', 'energy'].forEach(key => {
+                const value = effect[key] || 0;
+                const oldVal = user.stats[key];
+                const newVal = updatedStats[key];
+                if (value !== 0 || newVal === user.stats[`max${key[0].toUpperCase()}${key.slice(1)}`]) {
+                    effectsPayload[key] = {
+                        value,
+                        applied: newVal > oldVal
+                    };
+                }
+            });
+
+            callback({
+                success: true,
+                message: customMessages[item.name] || `Предмет ${item.name} использован`,
+                effects: effectsPayload
+            });
+
         } catch (err) {
             console.error('Error using item:', err.message, err.stack);
             itemLocks.delete(itemId);

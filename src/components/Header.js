@@ -287,13 +287,21 @@ function Header({ user, room, theme, socket }) {
           // Показываем уведомление о повышении уровня
           showNotification(
             <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FaStar color="#FFD700" />
+              <FaStar color="#333" />
               <div>
                 <div style={{ fontWeight: 'bold' }}>Поздравляем!</div>
                 <div>Вы достигли {newLevel} уровня!</div>
               </div>
             </div>,
-            'success'
+            'success',
+            {
+              style: {
+                background: '#FFD700',
+                color: '#333',
+                textAlign: 'center',
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+              }
+            }
           );
           setTimeout(() => setIsFlickering(false), 3000);
         }

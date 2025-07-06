@@ -30,8 +30,10 @@ export const NotificationProvider = ({ children }) => {
                 style: {
                     background: isDark ? '#2c2c2c' : '#f8f9fa',
                     color: isDark ? '#fff' : '#212529',
-                    textAlign: 'center'
-                }
+                    textAlign: 'center',
+                    ...options.style // Добавляем кастомные стили
+                },
+                ...options // Передаем остальные опции
             }
         );
     };

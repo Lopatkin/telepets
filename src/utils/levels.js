@@ -52,5 +52,21 @@ export const levelTable = [
 ];
 
 export const getLevelInfo = (exp) => {
-    return levelTable.find(lvl => exp >= lvl.minExp && exp <= lvl.maxExp) || levelTable[levelTable.length - 1];
+    for (let i = levelTable.length - 1; i >= 0; i--) {
+        if (exp >= levelTable[i].minExp) {
+            return {
+                level: levelTable[i].level,
+                currentExp: exp,
+                maxExp: levelTable[i].maxExp,
+                totalMaxExp: levelTable[i].maxExp
+            };
+        }
+    }
+
+    return {
+        level: 1,
+        currentExp: exp,
+        maxExp: 10,
+        totalMaxExp: 10
+    };
 };

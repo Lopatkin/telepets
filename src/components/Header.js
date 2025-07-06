@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaCoins, FaStar } from 'react-icons/fa'; // Добавляем FaStar
 import { keyframes } from 'styled-components';
+import { useNotification } from '../utils/NotificationContext';
 
 // Добавление анимаций мерцания для кредитов
 const creditsFlickerGreen = keyframes`
@@ -244,6 +245,7 @@ function Header({ user, room, theme, socket }) {
   const [level, setLevel] = useState(getLevelInfo(user?.exp || 0).level);
   const [isFlickering, setIsFlickering] = useState(false);
   const [creditsFlicker, setCreditsFlicker] = useState(null); // Состояние для типа мерцания кредитов
+  const { showNotification } = useNotification(); // Добавляем хук для уведомлений
 
   const roomName = room
     ? (room.startsWith('myhome_') ? 'Мой дом' : room)
@@ -282,6 +284,17 @@ function Header({ user, room, theme, socket }) {
           console.log('Updating level from userUpdate:', newLevel);
           setLevel(newLevel);
           setIsFlickering(true);
+          // Показываем уведомление о повышении уровня
+          showNotification(
+            <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FaStar color="#FFD700" />
+              <div>
+                <div style={{ fontWeight: 'bold' }}>Поздравляем!</div>
+                <div>Вы достигли {newLevel} уровня!</div>
+              </div>
+            </div>,
+            'success'
+          );
           setTimeout(() => setIsFlickering(false), 3000);
         }
       }

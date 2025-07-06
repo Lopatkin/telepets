@@ -394,6 +394,80 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
       socket.emit('pickupItem', { itemId }, (response) => {
         if (!response?.success) {
           showNotification(response?.message || 'Ошибка при подборе предмета', 'error');
+        } else {
+          // Формируем уведомление с изменёнными параметрами
+          const { energyChange, moodChange, satietyChange, healthChange, expGain } = response;
+          const changes = [];
+
+          const paramIcons = {
+            health: <FaHeart style={{ color: '#e74c3c' }} />,
+            mood: <FaSmile style={{ color: '#3498db' }} />,
+            satiety: <FaDrumstickBite style={{ color: '#8e44ad' }} />,
+            energy: <FaBolt style={{ color: '#f39c12' }} />,
+            exp: <FaStar style={{ color: '#f1c40f' }} />
+          };
+          if (expGain > 0) {
+            changes.push(
+              <span key="exp" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#28a745' }}>
+                {paramIcons.exp} +{expGain}
+              </span>
+            );
+          }
+          if (energyChange !== 0) {
+            const isPositive = energyChange > 0;
+            changes.push(
+              <span key="energy" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isPositive ? '#28a745' : '#dc3545' }}>
+                {paramIcons.energy} {isPositive ? '+' : ''}{energyChange}
+              </span>
+            );
+          }
+
+          if (moodChange !== 0) {
+            const isPositive = moodChange > 0;
+            changes.push(
+              <span key="mood" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isPositive ? '#28a745' : '#dc3545' }}>
+                {paramIcons.mood} {isPositive ? '+' : ''}{moodChange}
+              </span>
+            );
+          }
+
+          if (satietyChange !== 0) {
+            const isPositive = satietyChange > 0;
+            changes.push(
+              <span key="satiety" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isPositive ? '#28a745' : '#dc3545' }}>
+                {paramIcons.satiety} {isPositive ? '+' : ''}{satietyChange}
+              </span>
+            );
+          }
+
+          if (healthChange !== 0) {
+            const isPositive = healthChange > 0;
+            changes.push(
+              <span key="health" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isPositive ? '#28a745' : '#dc3545' }}>
+                {paramIcons.health} {isPositive ? '+' : ''}{healthChange}
+              </span>
+            );
+          }
+
+          const notificationMessage = (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontWeight: 'bold' }}>Предмет успешно подобран!</div>
+              {changes.length > 0 && (
+                <div style={{
+                  marginTop: '6px',
+                  display: 'flex',
+                  gap: '12px',
+                  justifyContent: 'center',
+                  flexWrap: 'wrap'
+                }}>
+                  {changes}
+                </div>
+              )
+              }
+            </div >
+          );
+
+          showNotification(notificationMessage, 'success');
         }
         socket.emit('getItems', { owner: userOwnerKey });
         socket.emit('getItems', { owner: locationOwnerKey });

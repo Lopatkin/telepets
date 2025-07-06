@@ -283,6 +283,8 @@ function registerInventoryHandlers({
 
             // Добавляем логику для уменьшения энергии и начисления опыта
             const energyConsumingItems = ['Палка', 'Лесные ягоды', 'Лесные грибы'];
+            let energyChange = 0, moodChange = 0, satietyChange = 0, healthChange = 0, expGain = 0;
+            let updatedUser = null;
             if (energyConsumingItems.includes(item.name)) {
                 const userId = owner.replace('user_', '');
                 const user = await User.findOne({ userId });
@@ -301,12 +303,16 @@ function registerInventoryHandlers({
                     // Проверяем энергию, настроение, сытость и здоровье
                     if (user.stats.energy > 0) {
                         newEnergy = Math.max(user.stats.energy - 1, 0); // Уменьшаем энергию на 1, но не ниже 0
+                        energyChange = newEnergy - user.stats.energy;
                     } else if (user.stats.mood > 0) {
                         newMood = Math.max(user.stats.mood - 2, 0); // Если энергия 0, уменьшаем настроение на 2
+                        moodChange = newMood - user.stats.mood;
                     } else if (user.stats.satiety > 0) {
                         newSatiety = Math.max(user.stats.satiety - 3, 0); // Если настроение 0, уменьшаем сытость на 3
+                        satietyChange = newSatiety - user.stats.satiety;
                     } else {
                         newHealth = Math.max(user.stats.health - 4, 0); // Если сытость 0, уменьшаем здоровье на 4
+                        healthChange = newHealth - user.stats.health;
                     }
 
                     // Начисляем случайное количество опыта (от 1 до 5)
@@ -350,7 +356,15 @@ function registerInventoryHandlers({
                 }
             }
 
-            if (callback) callback({ success: true, item: newItem });
+            if (callback) callback({
+                success: true,
+                item: newItem,
+                energyChange,
+                moodChange,
+                satietyChange,
+                healthChange,
+                expGain
+            });
             if (item._id) itemLocks.delete(item._id);
         } catch (err) {
             console.error('Error adding item:', err.message, err.stack);

@@ -61,8 +61,6 @@ const LoadingContainer = styled.div`
 
 function App() {
   const [user, setUser] = useState(null);
-  const prevExp = usePrevious(user?.exp);
-  const { showNotification } = useNotification();
   const [activeTab, setActiveTab] = useState('chat');
   const [currentRoom, setCurrentRoom] = useState(null);
   const [theme, setTheme] = useState('telegram');
@@ -92,6 +90,24 @@ function App() {
       return newUser;
     });
   }, []);
+
+  function LevelUpNotifier({ user }) {
+    const prevExp = usePrevious(user?.exp);
+    const { showNotification } = useNotification();
+
+    useEffect(() => {
+      if (!user || prevExp === undefined) return;
+
+      const previousLevel = getLevelInfo(prevExp)?.level || 1;
+      const currentLevel = getLevelInfo(user.exp)?.level || 1;
+
+      if (currentLevel > previousLevel) {
+        showNotification(`🎉 Поздравляем! Вы достигли уровня ${currentLevel}!`, 'success');
+      }
+    }, [user, prevExp, showNotification]);
+
+    return null;
+  }
 
   const closeActionModal = () => {
     console.log('Closing action modal');
@@ -456,6 +472,7 @@ function App() {
   return (
     <NotificationProvider>
       <AppContainer>
+        <LevelUpNotifier user={user} />
         <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
         <Content>
           {showMyShelter ? (

@@ -298,6 +298,14 @@ function registerInventoryHandlers({
                     let newSatiety = user.stats.satiety;
                     let newHealth = user.stats.health;
 
+                    // Сохраняем предыдущие значения для сравнения
+                    const previousStats = {
+                        energy: user.stats.energy,
+                        mood: user.stats.mood,
+                        satiety: user.stats.satiety,
+                        health: user.stats.health
+                    };
+
                     // Проверяем энергию, настроение, сытость и здоровье
                     if (user.stats.energy > 0) {
                         newEnergy = Math.max(user.stats.energy - 1, 0); // Уменьшаем энергию на 1, но не ниже 0
@@ -347,10 +355,35 @@ function registerInventoryHandlers({
                         freeRoam: updatedUser.freeRoam || false,
                         stats: updatedUser.stats
                     });
-                }
-            }
 
-            if (callback) callback({ success: true, item: newItem });
+                    // Формируем данные об изменениях для уведомления
+                    const effectsPayload = {};
+                    ['energy', 'mood', 'satiety', 'health'].forEach(key => {
+                        const value = updatedUser.stats[key] - previousStats[key];
+                        if (value !== 0) {
+                            effectsPayload[key] = {
+                                value,
+                                applied: value > 0
+                            };
+                        }
+                    });
+                    if (expGain > 0) {
+                        effectsPayload.exp = {
+                            value: expGain,
+                            applied: true
+                        };
+                    }
+
+                    if (callback) callback({
+                        success: true,
+                        item: newItem,
+                        message: `Предмет ${item.name} успешно найден!`,
+                        effects: effectsPayload
+                    });
+                }
+            } else {
+                if (callback) callback({ success: true, item: newItem });
+            }
             if (item._id) itemLocks.delete(item._id);
         } catch (err) {
             console.error('Error adding item:', err.message, err.stack);

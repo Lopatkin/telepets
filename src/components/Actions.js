@@ -14,6 +14,7 @@ import { ClipLoader } from 'react-spinners';
 import { getActiveNPCs } from '../utils/npcData';
 
 import { useNotification } from '../utils/NotificationContext';
+import { FaStar, FaSmile, FaBolt, FaHeart, FaDrumstickBite } from 'react-icons/fa';
 
 const COOLDOWN_DURATION_CONST = 10 * 100;
 
@@ -142,8 +143,63 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
       socket.emit('addItem', { owner: `user_${userId}`, item: action.item }, (response) => {
         setIsProcessing(false);
         if (response && response.success) {
+          // Формируем кастомные сообщения для уведомлений
+          const customMessages = {
+            'Палка': 'Вы нашли палку!',
+            'Лесные ягоды': 'Вы нашли лесные ягоды!',
+            'Лесные грибы': 'Вы нашли лесные грибы!'
+          };
+
+          const message = customMessages[action.item.name] || `Предмет ${action.item.name} добавлен!`;
+
+          // Обрабатываем изменения параметров для уведомления
+          if (['Палка', 'Лесные ягоды', 'Лесные грибы'].includes(action.item.name) && response.effects) {
+            const paramIcons = {
+              health: <FaHeart style={{ color: '#e74c3c' }} />,
+              mood: <FaSmile style={{ color: '#3498db' }} />,
+              satiety: <FaDrumstickBite style={{ color: '#8e44ad' }} />,
+              energy: <FaBolt style={{ color: '#f39c12' }} />,
+              exp: <FaStar style={{ color: '#f1c40f' }} />
+            };
+
+            const changes = [];
+            Object.entries(response.effects).forEach(([key, { value, applied }]) => {
+              changes.push(
+                <span key={key} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  color: applied ? '#28a745' : '#dc3545'
+                }}>
+                  {paramIcons[key]}
+                  {value > 0 ? '+' : ''}{value}
+                </span>
+              );
+            });
+
+            const notificationMessage = (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontWeight: 'bold' }}>{message}</div>
+                {changes.length > 0 && (
+                  <div style={{
+                    marginTop: '6px',
+                    display: 'flex',
+                    gap: '12px',
+                    justifyContent: 'center',
+                    flexWrap: 'wrap'
+                  }}>
+                    {changes}
+                  </div>
+                )}
+              </div>
+            );
+
+            showNotification(notificationMessage, 'success');
+          } else {
+            showNotification(message, 'success');
+          }
+
           setSelectedAction(null);
-          showNotification(action.successMessage, 'success');
           if (action.cooldownKey) {
             startCooldown(action.cooldownKey);
           }

@@ -19,6 +19,10 @@ import { NotificationProvider } from './utils/NotificationContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Новый импорт
 
+import { getLevelInfo } from './utils/levels';
+import { usePrevious } from '../src/components/hooks/usePrevious';
+import { useNotification } from './utils/NotificationContext';
+
 const BouncingBallOverlay = styled.div`
   position: absolute;
   top: 0;
@@ -57,6 +61,8 @@ const LoadingContainer = styled.div`
 
 function App() {
   const [user, setUser] = useState(null);
+  const prevExp = usePrevious(user?.exp);
+  const { showNotification } = useNotification();
   const [activeTab, setActiveTab] = useState('chat');
   const [currentRoom, setCurrentRoom] = useState(null);
   const [theme, setTheme] = useState('telegram');
@@ -105,6 +111,17 @@ function App() {
       // console.log('personalItems state after setPersonalItems:', updatedItems);
     }
   }, [user?.userId]);
+
+  useEffect(() => {
+    if (!user || prevExp === undefined) return;
+
+    const previousLevel = getLevelInfo(prevExp)?.level || 1;
+    const currentLevel = getLevelInfo(user.exp)?.level || 1;
+
+    if (currentLevel > previousLevel) {
+      showNotification(`🎉 Поздравляем! Вы достигли уровня ${currentLevel}!`, 'success');
+    }
+  }, [user?.exp]);
 
   useEffect(() => {
     const initializeSocket = () => {

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaCoins, FaStar } from 'react-icons/fa'; // Добавляем FaStar
 import { keyframes } from 'styled-components';
+import { getLevelInfo } from '../utils/levels';
+
 
 // Добавление анимаций мерцания для кредитов
 const creditsFlickerGreen = keyframes`

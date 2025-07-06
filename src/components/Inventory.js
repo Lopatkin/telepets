@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import * as S from '../styles/InventoryStyles';
-import { FaEdit, FaCheck, FaTimes, FaBolt, FaSmile, FaHeart } from 'react-icons/fa';
+import { FaEdit, FaCheck, FaTimes, FaBolt, FaSmile, FaHeart, FaStar } from 'react-icons/fa';
 import { FaDrumstickBite } from 'react-icons/fa6';
 import { INVENTORY_WEIGHT_LIMIT } from './constants/settings';
 

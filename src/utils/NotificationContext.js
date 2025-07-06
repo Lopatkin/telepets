@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
-    const showNotification = (message, type = 'info') => {
+    const showNotification = (message, type = 'info', options = {}) => {
         const isDark = type === 'error';
 
         toast[type](

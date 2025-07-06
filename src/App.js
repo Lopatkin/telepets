@@ -19,10 +19,6 @@ import { NotificationProvider } from './utils/NotificationContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Новый импорт
 
-import { getLevelInfo } from './utils/levels';
-import { usePrevious } from '../src/components/hooks/usePrevious';
-import { useNotification } from './utils/NotificationContext';
-
 const BouncingBallOverlay = styled.div`
   position: absolute;
   top: 0;
@@ -91,24 +87,6 @@ function App() {
     });
   }, []);
 
-  function LevelUpNotifier({ user }) {
-    const prevExp = usePrevious(user?.exp);
-    const { showNotification } = useNotification();
-
-    useEffect(() => {
-      if (!user || prevExp === undefined) return;
-
-      const previousLevel = getLevelInfo(prevExp)?.level || 1;
-      const currentLevel = getLevelInfo(user.exp)?.level || 1;
-
-      if (currentLevel > previousLevel) {
-        showNotification(`🎉 Поздравляем! Вы достигли уровня ${currentLevel}!`, 'success');
-      }
-    }, [user, prevExp, showNotification]);
-
-    return null;
-  }
-
   const closeActionModal = () => {
     console.log('Closing action modal');
     setIsActionModalOpen(false);
@@ -127,17 +105,6 @@ function App() {
       // console.log('personalItems state after setPersonalItems:', updatedItems);
     }
   }, [user?.userId]);
-
-  useEffect(() => {
-    if (!user || prevExp === undefined) return;
-
-    const previousLevel = getLevelInfo(prevExp)?.level || 1;
-    const currentLevel = getLevelInfo(user.exp)?.level || 1;
-
-    if (currentLevel > previousLevel) {
-      showNotification(`🎉 Поздравляем! Вы достигли уровня ${currentLevel}!`, 'success');
-    }
-  }, [user, prevExp, showNotification]);
 
   useEffect(() => {
     const initializeSocket = () => {
@@ -472,7 +439,6 @@ function App() {
   return (
     <NotificationProvider>
       <AppContainer>
-        <LevelUpNotifier user={user} />
         <Header user={user} room={currentRoom} theme={appliedTheme} socket={socket} />
         <Content>
           {showMyShelter ? (

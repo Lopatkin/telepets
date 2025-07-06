@@ -423,7 +423,7 @@ function registerInventoryHandlers({
         }
     });
 
-    socket.on('pickupItem', async ({ itemId }) => {
+    socket.on('pickupItem', async ({ itemId }, callback) => {
         try {
             if (itemLocks.has(itemId)) {
                 socket.emit('error', { message: 'Этот предмет уже обрабатывается другим пользователем' });
@@ -454,6 +454,78 @@ function registerInventoryHandlers({
                 return;
             }
 
+            // Добавляем логику для уменьшения энергии и начисления опыта
+            const energyConsumingItems = ['Палка', 'Лесные ягоды', 'Лесные грибы'];
+            let energyChange = 0, moodChange = 0, satietyChange = 0, healthChange = 0, expGain = 0;
+            let updatedUser = null;
+            if (energyConsumingItems.includes(item.name)) {
+                // Проверяем здоровье игрока
+                if (user.stats.health === 0) {
+                    itemLocks.delete(itemId);
+                    if (callback) callback({ success: false, message: 'Восстановите здоровье' });
+                    return;
+                }
+
+                let newEnergy = user.stats.energy;
+                let newMood = user.stats.mood;
+                let newSatiety = user.stats.satiety;
+                let newHealth = user.stats.health;
+
+                // Проверяем энергию, настроение, сытость и здоровье
+                if (user.stats.energy > 0) {
+                    newEnergy = Math.max(user.stats.energy - 1, 0); // Уменьшаем энергию на 1, но не ниже 0
+                    energyChange = newEnergy - user.stats.energy;
+                } else if (user.stats.mood > 0) {
+                    newMood = Math.max(user.stats.mood - 2, 0); // Если энергия 0, уменьшаем настроение на 2
+                    moodChange = newMood - user.stats.mood;
+                } else if (user.stats.satiety > 0) {
+                    newSatiety = Math.max(user.stats.satiety - 3, 0); // Если настроение 0, уменьшаем сытость на 3
+                    satietyChange = newSatiety - user.stats.satiety;
+                } else {
+                    newHealth = Math.max(user.stats.health - 4, 0); // Если сытость 0, уменьшаем здоровье на 4
+                    healthChange = newHealth - user.stats.health;
+                }
+
+                // Начисляем случайное количество опыта (от 1 до 5)
+                expGain = Math.floor(Math.random() * 5) + 1; // Случайное число от 1 до 5
+                const newExp = (user.exp || 0) + expGain;
+
+                // Обновляем пользователя
+                await User.updateOne(
+                    { userId: socket.userData.userId },
+                    {
+                        $set: {
+                            'stats.energy': newEnergy,
+                            'stats.mood': newMood,
+                            'stats.satiety': newSatiety,
+                            'stats.health': newHealth,
+                            exp: newExp
+                        }
+                    }
+                );
+
+                // Получаем обновленного пользователя
+                updatedUser = await User.findOne({ userId: socket.userData.userId });
+                socket.emit('userUpdate', {
+                    userId: updatedUser.userId,
+                    firstName: updatedUser.firstName,
+                    username: updatedUser.username,
+                    lastName: updatedUser.lastName,
+                    photoUrl: updatedUser.photoUrl,
+                    isRegistered: updatedUser.isRegistered,
+                    isHuman: updatedUser.isHuman,
+                    animalType: updatedUser.animalType,
+                    name: updatedUser.name,
+                    owner: updatedUser.owner,
+                    homeless: updatedUser.homeless,
+                    credits: updatedUser.credits || 0,
+                    exp: updatedUser.exp || 0,
+                    onLeash: updatedUser.onLeash,
+                    freeRoam: updatedUser.freeRoam || false,
+                    stats: updatedUser.stats
+                });
+            }
+
             item.owner = userOwnerKey;
             await item.save();
 
@@ -469,6 +541,16 @@ function registerInventoryHandlers({
                 io.to(currentRoom).emit('items', { owner: oldOwner, items: itemCache.get(oldOwner) });
                 io.to(currentRoom).emit('items', { owner: userOwnerKey, items: itemCache.get(userOwnerKey) });
             }
+
+            if (callback) callback({
+                success: true,
+                item,
+                energyChange,
+                moodChange,
+                satietyChange,
+                healthChange,
+                expGain
+            });
 
             itemLocks.delete(itemId);
         } catch (err) {

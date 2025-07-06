@@ -392,6 +392,7 @@ function Inventory({ userId, currentRoom, theme, socket, personalItems, onItemsU
 
     setTimeout(() => {
       socket.emit('pickupItem', { itemId }, (response) => {
+        console.log('Pickup item response:', response); // Добавляем логирование ответа сервера
         if (!response?.success) {
           showNotification(response?.message || 'Ошибка при подборе предмета', 'error');
         } else {

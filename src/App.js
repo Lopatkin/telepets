@@ -121,7 +121,7 @@ function App() {
     if (currentLevel > previousLevel) {
       showNotification(`🎉 Поздравляем! Вы достигли уровня ${currentLevel}!`, 'success');
     }
-  }, [user?.exp]);
+  }, [user, prevExp, showNotification]);
 
   useEffect(() => {
     const initializeSocket = () => {

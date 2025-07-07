@@ -82,15 +82,18 @@ const Mannequin = styled.div`
 `;
 
 const MannequinLabel = styled.h3`
-  margin-bottom: 10px;
-  font-size: 1.2em;
-  text-align: center;
-  max-width: 100%; /* Ограничиваем ширину метки */
-  white-space: nowrap; /* Запрещаем перенос текста */
-  overflow: hidden; /* Скрываем лишний текст */
-  text-overflow: ellipsis; /* Добавляем многоточие для длинного текста */
-  min-height: 1.5em; /* Гарантируем минимальную высоту для выравнивания */
-`;
+   margin-bottom: 10px;
+   font-size: 1.2em;
+   text-align: center;
+    max-width: 100%; /* Ограничиваем ширину метки до контейнера манекена */
+    min-height: 3em; /* Задаём минимальную высоту для двух строк текста */
+    line-height: 1.5em; /* Высота строки для читаемости */
+    display: -webkit-box; /* Для ограничения количества строк */
+    -webkit-line-clamp: 2; /* Ограничиваем текст двумя строками */
+    -webkit-box-orient: vertical; /* Вертикальная ориентация текста */
+    overflow: hidden; /* Скрываем лишний текст */
+    text-overflow: ellipsis; /* Добавляем многоточие для обрезанного текста */
+ `;
 
 const AvatarContainer = styled.div`
   margin-bottom: 15px;
@@ -558,7 +561,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
       </HeaderContainer>
       <MannequinContainer>
         <Mannequin>
-          <MannequinLabel theme={theme}>{displayName}</MannequinLabel>
+          <MannequinLabel theme={theme} title={displayName}>{displayName}</MannequinLabel>
           <AvatarContainer>
             {user.photoUrl && user.photoUrl.trim() ? (
               <LargeAvatar src={user.photoUrl} alt="Player Avatar" />
@@ -593,7 +596,7 @@ function Fight({ theme, socket, user, npc, onClose, showNotification, updateUser
           </InstructionLabel>
         </Mannequin>
         <Mannequin>
-          <MannequinLabel theme={theme}>{npc.name}</MannequinLabel>
+          <MannequinLabel theme={theme} title={npc.name}>{npc.name}</MannequinLabel>
           <AvatarContainer>
             {npc.photoUrl && npc.photoUrl.trim() ? (
               <LargeAvatar src={npc.photoUrl} alt="NPC Avatar" />

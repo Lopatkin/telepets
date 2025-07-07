@@ -98,11 +98,6 @@ const WorkshopCrafting = ({
     setCraftingProgress(newProgress);
 
     if (newClickCount < clicksRequired) {
-      // showNotification(
-      //   `Осталось нажатий: ${clicksRequired - newClickCount}`,
-      //   'info',
-      //   { autoClose: 1000 } // ← так правильно задаётся длительность
-      // );
       return;
     }
 
@@ -122,7 +117,6 @@ const WorkshopCrafting = ({
       boards: item.materials.boards,
     };
 
-    // Отправляем один запрос craftItem
     socket.emit('craftItem', { owner: `user_${userId}`, craftedItem, materials }, (response) => {
       setIsProcessing(false);
       if (response && response.success) {
@@ -130,7 +124,7 @@ const WorkshopCrafting = ({
         setSelectedAction(null);
         setClickCount(0);
         setCraftingProgress(0);
-        refreshItems(); // ← обновляем инвентарь после крафта
+        refreshItems(); // ← безопасно используется
       } else {
         showNotification(response?.message || 'Ошибка при создании предмета');
       }
@@ -145,6 +139,7 @@ const WorkshopCrafting = ({
     showNotification,
     setSelectedAction,
     isProcessing,
+    refreshItems, // ← добавлено сюда
   ]);
 
   const renderSliders = useCallback(() => {

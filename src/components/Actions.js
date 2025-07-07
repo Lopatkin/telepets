@@ -29,41 +29,26 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
   const { showNotification } = useNotification();
 
   useEffect(() => {
-    if (socket && onItemsUpdate) {
-      // console.log('Subscribing to items event in Actions');
-      socket.on('items', onItemsUpdate);
-      // console.log('Emitting getItems for user in Actions:', `user_${userId}`);
-      socket.emit('getItems', { owner: `user_${userId}` });
-      return () => {
-        // console.log('Unsubscribing from items event in Actions');
-        socket.off('items', onItemsUpdate);
-      };
-    }
-  }, [socket, userId, onItemsUpdate]);
-
-  useEffect(() => {
     // console.log('Received personalItems in Actions:', personalItems);
     setIsLoading(false);
   }, [personalItems]);
 
-  // Добавляем новый useEffect для обработки ответа от события 'items'
   useEffect(() => {
-    if (socket && onItemsUpdate) {
-      // console.log('Subscribing to items event in Actions');
-      socket.on('items', (data) => {
-        onItemsUpdate(data);
-        // Устанавливаем isLoading в false после получения данных
-        if (data.owner === `user_${userId}`) {
-          setIsLoading(false);
-        }
-      });
-      // console.log('Emitting getItems for user in Actions:', `user_${userId}`);
-      socket.emit('getItems', { owner: `user_${userId}` });
-      return () => {
-        // console.log('Unsubscribing from items event in Actions');
-        socket.off('items');
-      };
-    }
+    if (!socket || !onItemsUpdate) return;
+
+    const handleItems = (data) => {
+      onItemsUpdate(data);
+      if (data.owner === `user_${userId}`) {
+        setIsLoading(false);
+      }
+    };
+
+    socket.on('items', handleItems);
+    socket.emit('getItems', { owner: `user_${userId}` });
+
+    return () => {
+      socket.off('items', handleItems);
+    };
   }, [socket, userId, onItemsUpdate]);
 
   // Загружаем NPC для действия "Охотиться" на локации "Лес"

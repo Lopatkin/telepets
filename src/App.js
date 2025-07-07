@@ -325,21 +325,6 @@ function App() {
     initializeSocket();
   }, [handleItemsUpdate, updateUser, user?.userId, currentRoom]); // Добавляем зависимости
 
-  // Добавляем эффект для повторного запроса getItems после обновления user
-  // useEffect(() => {
-  //   if (socket && user?.userId && isAuthenticated && isRegistered && personalItems.length === 0) {
-  //     console.log('Re-emitting getItems for user:', `user_${user.userId}`);
-  //     socket.emit('getItems', { owner: `user_${user.userId}` });
-  //   }
-  // }, [socket, user, isAuthenticated, isRegistered, personalItems.length]);
-
-  // useEffect(() => {
-  //   if (socket && user?.userId && isAuthenticated && isRegistered && activeTab === 'actions') {
-  //     console.log('Emitting getItems for user on actions tab:', `user_${user.userId}`);
-  //     socket.emit('getItems', { owner: `user_${user.userId}` });
-  //   }
-  // }, [socket, user, isAuthenticated, isRegistered, activeTab]);
-
   useEffect(() => {
     if (socket && user?.userId && isAuthenticated && isRegistered && personalItems.length === 0) {
       // console.log('Emitting getItems for user:', `user_${user.userId}`);

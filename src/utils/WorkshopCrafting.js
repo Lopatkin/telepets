@@ -97,11 +97,11 @@ const WorkshopCrafting = ({
     setCraftingProgress(newProgress);
 
     if (newClickCount < clicksRequired) {
-      showNotification(
-        `Осталось нажатий: ${clicksRequired - newClickCount}`,
-        'info',
-        { autoClose: 1000 } // ← так правильно задаётся длительность
-      );
+      // showNotification(
+      //   `Осталось нажатий: ${clicksRequired - newClickCount}`,
+      //   'info',
+      //   { autoClose: 1000 } // ← так правильно задаётся длительность
+      // );
       return;
     }
 

@@ -14,6 +14,7 @@ const WorkshopCrafting = ({
   userId,
   showNotification,
   setSelectedAction,
+  refreshItems,
 }) => {
   const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
   const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 });
@@ -129,6 +130,7 @@ const WorkshopCrafting = ({
         setSelectedAction(null);
         setClickCount(0);
         setCraftingProgress(0);
+        refreshItems(); // ← обновляем инвентарь после крафта
       } else {
         showNotification(response?.message || 'Ошибка при создании предмета');
       }

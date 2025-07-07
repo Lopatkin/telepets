@@ -340,6 +340,7 @@ function Actions({ userId, currentRoom, theme, socket, personalItems, onItemsUpd
                 userId={userId}
                 showNotification={showNotification}
                 setSelectedAction={setSelectedAction}
+                refreshItems={() => socket.emit('getItems', { owner: `user_${userId}` })}
               />
             ) : (
               <>

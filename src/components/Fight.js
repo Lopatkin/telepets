@@ -85,14 +85,17 @@ const MannequinLabel = styled.h3`
    margin-bottom: 10px;
    font-size: 1.2em;
    text-align: center;
-    max-width: 100%; /* Ограничиваем ширину метки до контейнера манекена */
-    min-height: 3em; /* Задаём минимальную высоту для двух строк текста */
-    line-height: 1.5em; /* Высота строки для читаемости */
-    display: -webkit-box; /* Для ограничения количества строк */
-    -webkit-line-clamp: 2; /* Ограничиваем текст двумя строками */
-    -webkit-box-orient: vertical; /* Вертикальная ориентация текста */
-    overflow: hidden; /* Скрываем лишний текст */
-    text-overflow: ellipsis; /* Добавляем многоточие для обрезанного текста */
+  max-width: 100%; /* Ограничиваем ширину метки до контейнера манекена */
+  min-height: 3em; /* Задаём минимальную высоту для двух строк текста */
+  line-height: 1.5em; /* Высота строки для читаемости */
+  display: flex; /* Используем flex для центрирования */
+  align-items: center; /* Вертикальное центрирование */
+  justify-content: center; /* Горизонтальное центрирование */
+  display: -webkit-box; /* Для ограничения количества строк */
+  -webkit-line-clamp: 2; /* Ограничиваем текст двумя строками */
+  -webkit-box-orient: vertical; /* Вертикальная ориентация текста */
+  overflow: hidden; /* Скрываем лишний текст */
+  text-overflow: ellipsis; /* Добавляем многоточие для обрезанного текста */
  `;
 
 const AvatarContainer = styled.div`

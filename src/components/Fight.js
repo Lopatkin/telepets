@@ -85,6 +85,11 @@ const MannequinLabel = styled.h3`
   margin-bottom: 10px;
   font-size: 1.2em;
   text-align: center;
+  max-width: 100%; /* Ограничиваем ширину метки */
+  white-space: nowrap; /* Запрещаем перенос текста */
+  overflow: hidden; /* Скрываем лишний текст */
+  text-overflow: ellipsis; /* Добавляем многоточие для длинного текста */
+  min-height: 1.5em; /* Гарантируем минимальную высоту для выравнивания */
 `;
 
 const AvatarContainer = styled.div`

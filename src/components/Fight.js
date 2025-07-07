@@ -32,7 +32,7 @@ const HeaderContainer = styled.div`
   align-items: center;
   justify-content: space-between;
   width: calc(100% - 20px); /* Учитываем padding */
-  margin-bottom: 10px;
+  margin-bottom: 0px;
 `;
 
 const TimeProgressBar = styled.div`

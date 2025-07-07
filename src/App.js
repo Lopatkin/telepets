@@ -11,13 +11,13 @@ import Inventory from './components/Inventory';
 import { ClipLoader } from 'react-spinners';
 import Registration from './components/Registration';
 import BouncingBall from './components/BouncingBall';
-import MyShelter from './components/MyShelter'; // Новый импорт
+import MyShelter from './components/MyShelter';
 import startLoadingImage from './images/start_loading.jpg';
 
 import { NotificationProvider } from './utils/NotificationContext';
 
 import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'; // Новый импорт
+import 'react-toastify/dist/ReactToastify.css';
 
 const BouncingBallOverlay = styled.div`
   position: absolute;
@@ -69,11 +69,10 @@ function App() {
   const [pets, setPets] = useState([]);
   const [isRegistered, setIsRegistered] = useState(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
-  const [showMyShelter, setShowMyShelter] = useState(false); // Новое состояние
+  const [showMyShelter, setShowMyShelter] = useState(false);
 
   const bouncingBallContainerRef = useRef(null);
 
-  // Callback для обновления состояния user из дочерних компонентов
   const updateUser = useCallback((updatedUser) => {
     console.log('Updating user state from child component:', updatedUser);
     setUser(prevUser => {
@@ -94,52 +93,21 @@ function App() {
 
   const handleItemsUpdate = useCallback((data) => {
     const { owner, items } = data;
-    // console.log('handleItemsUpdate:', { owner, items });
     if (owner === `user_${user?.userId}`) {
       const updatedItems = items.map(item => ({
         ...item,
         _id: item._id.toString(),
       }));
-      // console.log('Updating personalItems:', updatedItems);
       setPersonalItems(updatedItems);
-      // console.log('personalItems state after setPersonalItems:', updatedItems);
     }
   }, [user?.userId]);
 
-  // useEffect для инициализации сокета
-  useEffect(() => {
-    const initializeSocket = () => {
-      if (socketRef.current) return;
-
-      socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com', {
-        cors: {
-          origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
-          methods: ["GET", "POST"]
-        },
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000
-      });
-
-      setSocket(socketRef.current);
-    };
-
-    initializeSocket();
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        console.log('Socket disconnected on unmount');
-      }
-    };
-  }, []);
-
-  // новый useEffect для обработки событий сокета
-  useEffect(() => {
+  // Новая функция для настройки обработчиков сокета
+  const setupSocketHandlers = useCallback(() => {
     if (!socketRef.current) return;
 
     socketRef.current.on('connect', () => {
-      // console.log('Socket connected:', socketRef.current.id);
+      console.log('Socket connected:', socketRef.current.id);
       setSocket(socketRef.current);
 
       if (window.Telegram?.WebApp) {
@@ -180,7 +148,6 @@ function App() {
       if (user?.userId) {
         socketRef.current.emit('getUser', { userId: user.userId }, (response) => {
           if (response.success && response.user) {
-            // console.log('Received user data on connect:', response.user);
             updateUser(response.user);
             setIsRegistered(response.user.isRegistered);
           }
@@ -190,7 +157,6 @@ function App() {
 
     socketRef.current.on('getUser', (response) => {
       if (response.success && response.user) {
-        // console.log('Received getUser response:', response.user);
         updateUser(response.user);
       }
     });
@@ -224,7 +190,6 @@ function App() {
         setPets(prevPets => [...prevPets, animal]);
       }
     });
-
     socketRef.current.on('petsList', (petsData) => {
       setPets(petsData.map(pet => ({
         userId: pet.userId,
@@ -240,7 +205,6 @@ function App() {
 
     socketRef.current.on('itemAction', (data) => {
       const { action, owner, item, itemId, itemIds } = data;
-      // console.log('Received itemAction:', data);
       if (owner === `user_${user?.userId}`) {
         if (action === 'add') {
           setPersonalItems(prev => [...prev, { ...item, _id: item._id.toString() }]);
@@ -283,7 +247,7 @@ function App() {
     });
 
     socketRef.current.on('authSuccess', ({ defaultRoom, isRegistered }) => {
-      // console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
+      console.log('Authentication successful, received defaultRoom:', defaultRoom, 'isRegistered:', isRegistered);
       setIsAuthenticated(true);
       setIsRegistered(isRegistered);
       if (isRegistered) {
@@ -291,7 +255,7 @@ function App() {
         joinedRoomsRef.current.add(defaultRoom);
         socketRef.current.emit('joinRoom', { room: defaultRoom, lastTimestamp: null });
         if (user?.userId) {
-          // console.log('Emitting getItems for user:', `user_${user.userId}`);
+          console.log('Emitting getItems for user:', `user_${user.userId}`);
           socketRef.current.emit('getItems', { owner: `user_${user.userId}` });
         } else {
           console.warn('user.userId is undefined during authSuccess');
@@ -300,7 +264,7 @@ function App() {
     });
 
     socketRef.current.on('forceRoomChange', ({ newRoom }) => {
-      // console.log('Перемещение в новую комнату:', newRoom);
+      console.log('Перемещение в новую комнату:', newRoom);
       setCurrentRoom(newRoom);
       joinedRoomsRef.current.add(newRoom);
       socketRef.current.emit('joinRoom', { room: newRoom, lastTimestamp: null });
@@ -326,11 +290,40 @@ function App() {
         socketRef.current.off('error');
       }
     };
-  }, [handleItemsUpdate, updateUser, user?.userId, currentRoom]);
+  }, [user?.userId, updateUser, handleItemsUpdate, currentRoom]);
+
+  // useEffect для инициализации сокета
+  useEffect(() => {
+    const initializeSocket = () => {
+      if (socketRef.current) return;
+
+      socketRef.current = io(process.env.REACT_APP_SERVER_URL || 'https://telepets.onrender.com', {
+        cors: {
+          origin: process.env.FRONTEND_URL || "https://telepets.netlify.app",
+          methods: ["GET", "POST"]
+        },
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000
+      });
+
+      setSocket(socketRef.current);
+      setupSocketHandlers(); // Вызов функции настройки обработчиков
+    };
+
+    initializeSocket();
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        console.log('Socket disconnected on unmount');
+      }
+    };
+  }, [setupSocketHandlers]);
 
   useEffect(() => {
     if (socket && user?.userId && isAuthenticated && isRegistered && personalItems.length === 0) {
-      // console.log('Emitting getItems for user:', `user_${user.userId}`);
+      console.log('Emitting getItems for user:', `user_${user.userId}`);
       socket.emit('getItems', { owner: `user_${user.userId}` });
     }
   }, [socket, user, isAuthenticated, isRegistered, personalItems.length]);
@@ -386,7 +379,7 @@ function App() {
 
   useEffect(() => {
     if (activeTab !== 'chat' && currentRoom && socket) {
-      // console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
+      console.log(`User stayed in room ${currentRoom} while switching to ${activeTab} tab`);
     }
   }, [activeTab, currentRoom, socket]);
 
@@ -422,7 +415,6 @@ function App() {
     user.freeRoam ||
     (!isAnimalAtHome && !isAnimalOnLeashWithOwnerOnline)
   );
-  // console.log('canAccessMap:', canAccessMap, 'freeRoam:', user?.freeRoam, 'isAnimalAtHome:', isAnimalAtHome, 'isAnimalOnLeashWithOwnerOnline:', isAnimalOnLeashWithOwnerOnline);
 
   return (
     <NotificationProvider>

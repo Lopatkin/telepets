@@ -15,22 +15,25 @@ import sofaImage from '../images/dwelling/furniture/sofa.png';
 import chestImage from '../images/dwelling/furniture/chest.png';
 
 const SaveButton = styled.button`
-    position: absolute;
-    top: 10px;
-    right: 60px;
-    background: ${({ theme }) => (theme === 'dark' ? '#4A4A4A' : '#D3D3D3')};
-    color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
-    border: none;
-    border-radius: 5px;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 16px;
-    z-index: 2000;
+      position: absolute;
+      top: 10px;
+      right: 60px;
+      background: ${({ theme, isSaved }) =>
+        isSaved ? '#4CAF50' : (theme === 'dark' ? '#4A4A4A' : '#D3D3D3')};
+      color: ${({ theme }) => (theme === 'dark' ? '#fff' : '#000')};
+      border: none;
+      border-radius: 5px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 16px;
+      z-index: 2000;
+      transition: background 0.3s ease; // Добавляем плавный переход для мигания
 
-    &:hover {
-      background: ${({ theme }) => (theme === 'dark' ? '#5A5A5A' : '#B0B0B0')};
-    }
-`;
+      &:hover {
+          background: ${({ theme, isSaved }) =>
+        isSaved ? '#45a049' : (theme === 'dark' ? '#5A5A5A' : '#B0B0B0')};
+      }
+  `;
 
 const CloseIcon = styled.button`
   position: absolute;
@@ -77,6 +80,7 @@ const CanvasContainer = styled.div`
 
 
 function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
+    const [isSaved, setIsSaved] = useState(false);
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
@@ -302,7 +306,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         const width = canvas.width;
         const height = canvas.height;
 
-        // Лог для проверки размеров перед сохранением
         console.log('Сохранение, текущие размеры:', {
             width,
             height,
@@ -326,6 +329,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         socket.emit('updateItemPositions', { owner: currentRoom, positions }, (response) => {
             if (response.success) {
                 console.log('Позиции предметов успешно сохранены на сервере');
+                setIsSaved(true); // Включаем мигание
+                setTimeout(() => {
+                    setIsSaved(false); // Выключаем мигание через 2 секунды
+                }, 2000);
             } else {
                 console.error('Ошибка сохранения позиций:', response.message);
             }
@@ -798,7 +805,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     return (
         <ShelterContainer theme={theme}>
             <CloseIcon theme={theme} onClick={handleClose}>×</CloseIcon>
-            <SaveButton theme={theme} onClick={handleSave}>Сохранить</SaveButton>
+            <SaveButton theme={theme} isSaved={isSaved} onClick={handleSave}>Сохранить</SaveButton>
             <CanvasContainer>
                 <canvas ref={canvasRef} />
             </CanvasContainer>

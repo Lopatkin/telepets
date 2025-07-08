@@ -18,6 +18,27 @@ import bandageImage from '../images/dwelling/furniture/bandage.png';
 import chocolateImage from '../images/dwelling/furniture/chocolate.png';
 import cannedFoodImage from '../images/dwelling/furniture/canned-food.png';
 
+// Определение конфигурации текстур
+const textureConfig = {
+    wallpaper: { image: wallpaperImage, ref: useRef(new Image()), key: 'wallpaper' },
+    floor: { image: floorImage, ref: useRef(new Image()), key: 'floor' },
+    stick: { image: stickImage, ref: useRef(new Image()), key: 'stick', name: 'Палка', size: 67 },
+    garbage: { image: garbageImage, ref: useRef(new Image()), key: 'garbage', name: 'Мусор', size: 67 },
+    berry: { image: berryImage, ref: useRef(new Image()), key: 'berry', name: 'Лесные ягоды', size: 50 },
+    mushrooms: { image: mushroomsImage, ref: useRef(new Image()), key: 'mushrooms', name: 'Лесные грибы', size: 50 },
+    board: { image: boardImage, ref: useRef(new Image()), key: 'board', name: 'Доска', size: 100 },
+    chair: { image: chairImage, ref: useRef(new Image()), key: 'chair', name: 'Стул', size: 100 },
+    table: { image: tableImage, ref: useRef(new Image()), key: 'table', name: 'Стол', size: 200 },
+    wardrobe: { image: wardrobeImage, ref: useRef(new Image()), key: 'wardrobe', name: 'Шкаф', size: 200 },
+    sofa: { image: sofaImage, ref: useRef(new Image()), key: 'sofa', name: 'Кровать', size: 200 },
+    chest: { image: chestImage, ref: useRef(new Image()), key: 'chest', name: 'Тумба', size: 100 },
+    firstAidKit: { image: firstAidKitImage, ref: useRef(new Image()), key: 'firstAidKit', name: 'Аптечка', size: 50 },
+    bandage: { image: bandageImage, ref: useRef(new Image()), key: 'bandage', name: 'Бинт', size: 50 },
+    chocolate: { image: chocolateImage, ref: useRef(new Image()), key: 'chocolate', name: 'Шоколадка', size: 50 },
+    cannedFood: { image: cannedFoodImage, ref: useRef(new Image()), key: 'cannedFood', name: 'Консервы', size: 50 },
+};
+
+
 const SaveButton = styled.button`
       position: absolute;
       top: 10px;
@@ -94,39 +115,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
     const runnerRef = useRef(null);
-    const wallpaperImgRef = useRef(new Image());
-    const floorImgRef = useRef(new Image());
-    const stickImgRef = useRef(new Image());
-    const garbageImgRef = useRef(new Image());
-    const berryImgRef = useRef(new Image());
-    const mushroomsImgRef = useRef(new Image());
-    const boardImgRef = useRef(new Image());
-    const chairImgRef = useRef(new Image());
-    const tableImgRef = useRef(new Image());
-    const wardrobeImgRef = useRef(new Image());
-    const sofaImgRef = useRef(new Image());
-    const chestImgRef = useRef(new Image());
-    const firstAidKitImgRef = useRef(new Image());
-    const bandageImgRef = useRef(new Image());
-    const chocolateImgRef = useRef(new Image());
-    const cannedFoodImgRef = useRef(new Image());
     const imagesLoadedRef = useRef({
-        wallpaper: false,
-        floor: false,
-        stick: false,
-        garbage: false,
-        berry: false,
-        mushrooms: false,
-        board: false,
-        chair: false,
-        table: false,
-        wardrobe: false,
-        sofa: false,
-        chest: false,
-        firstAidKit: false,
-        bandage: false,
-        chocolate: false,
-        cannedFood: false
+        // Инициализация флагов загрузки на основе textureConfig
+        ...Object.keys(textureConfig).reduce((acc, key) => ({
+            ...acc,
+            [key]: false
+        }), {})
     });
     const [locationItems, setLocationItems] = useState([]);
     const wallRef = useRef(null);
@@ -137,137 +131,17 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
     // Загрузка изображений
     useEffect(() => {
-        wallpaperImgRef.current.src = wallpaperImage;
-        floorImgRef.current.src = floorImage;
-        stickImgRef.current.src = stickImage;
-        garbageImgRef.current.src = garbageImage;
-        berryImgRef.current.src = berryImage;
-        mushroomsImgRef.current.src = mushroomsImage;
-        boardImgRef.current.src = boardImage;
-        chairImgRef.current.src = chairImage;
-        tableImgRef.current.src = tableImage;
-        wardrobeImgRef.current.src = wardrobeImage;
-        sofaImgRef.current.src = sofaImage;
-        chestImgRef.current.src = chestImage;
-        firstAidKitImgRef.current.src = firstAidKitImage;
-        bandageImgRef.current.src = bandageImage;
-        chocolateImgRef.current.src = chocolateImage;
-        cannedFoodImgRef.current.src = cannedFoodImage;
-
-        wallpaperImgRef.current.onload = () => {
-            imagesLoadedRef.current.wallpaper = true;
-        };
-        floorImgRef.current.onload = () => {
-            imagesLoadedRef.current.floor = true;
-        };
-        stickImgRef.current.onload = () => {
-            imagesLoadedRef.current.stick = true;
-        };
-        garbageImgRef.current.onload = () => {
-            imagesLoadedRef.current.garbage = true;
-        };
-        berryImgRef.current.onload = () => {
-            imagesLoadedRef.current.berry = true;
-        };
-        mushroomsImgRef.current.onload = () => {
-            imagesLoadedRef.current.mushrooms = true;
-        };
-        boardImgRef.current.onload = () => {
-            imagesLoadedRef.current.board = true;
-        };
-        chairImgRef.current.onload = () => {
-            imagesLoadedRef.current.chair = true;
-        };
-        tableImgRef.current.onload = () => {
-            imagesLoadedRef.current.table = true;
-        };
-        wardrobeImgRef.current.onload = () => {
-            imagesLoadedRef.current.wardrobe = true;
-        };
-        sofaImgRef.current.onload = () => {
-            imagesLoadedRef.current.sofa = true;
-        };
-        chestImgRef.current.onload = () => {
-            imagesLoadedRef.current.chest = true;
-        };
-
-        firstAidKitImgRef.current.onload = () => {
-            imagesLoadedRef.current.firstAidKit = true;
-        };
-        bandageImgRef.current.onload = () => {
-            imagesLoadedRef.current.bandage = true;
-        };
-        chocolateImgRef.current.onload = () => {
-            imagesLoadedRef.current.chocolate = true;
-        };
-        cannedFoodImgRef.current.onload = () => {
-            imagesLoadedRef.current.cannedFood = true;
-        };
-
-        wallpaperImgRef.current.onerror = () => {
-            console.error('Failed to load wallpaper image');
-            imagesLoadedRef.current.wallpaper = true;
-        };
-        floorImgRef.current.onerror = () => {
-            console.error('Failed to load floor image');
-            imagesLoadedRef.current.floor = true;
-        };
-        stickImgRef.current.onerror = () => {
-            console.error('Failed to load stick image');
-            imagesLoadedRef.current.stick = true;
-        };
-        garbageImgRef.current.onerror = () => {
-            console.error('Failed to load garbage image');
-            imagesLoadedRef.current.garbage = true;
-        };
-        berryImgRef.current.onerror = () => {
-            console.error('Failed to load berry image');
-            imagesLoadedRef.current.berry = true;
-        };
-        mushroomsImgRef.current.onerror = () => {
-            console.error('Failed to load mushrooms image');
-            imagesLoadedRef.current.mushrooms = true;
-        };
-        boardImgRef.current.onerror = () => {
-            console.error('Failed to load board image');
-            imagesLoadedRef.current.board = true;
-        };
-        chairImgRef.current.onerror = () => {
-            console.error('Failed to load chair image');
-            imagesLoadedRef.current.chair = true;
-        };
-        tableImgRef.current.onerror = () => {
-            console.error('Failed to load table image');
-            imagesLoadedRef.current.table = true;
-        };
-        wardrobeImgRef.current.onerror = () => {
-            console.error('Failed to load wardrobe image');
-            imagesLoadedRef.current.wardrobe = true;
-        };
-        sofaImgRef.current.onerror = () => {
-            console.error('Failed to load sofa image');
-            imagesLoadedRef.current.sofa = true;
-        };
-        chestImgRef.current.onerror = () => {
-            console.error('Failed to load chest image');
-            imagesLoadedRef.current.chest = true;
-        };
-        firstAidKitImgRef.current.onerror = () => {
-            console.error('Failed to load first aid kit image');
-            imagesLoadedRef.current.firstAidKit = true;
-        };
-        bandageImgRef.current.onerror = () => {
-            console.error('Failed to load bandage image');
-            imagesLoadedRef.current.bandage = true;
-        };
-        chocolateImgRef.current.onerror = () => {
-            console.error('Failed to load chocolate image');
-            imagesLoadedRef.current.chocolate = true;
-        };
-        cannedFoodImgRef.current.onerror = () => {
-            console.error('Failed to load canned food image');
-            imagesLoadedRef.current.cannedFood = true;
-        };
+        // Упрощенная загрузка изображений с использованием textureConfig
+        Object.values(textureConfig).forEach(({ image, ref, key }) => {
+            ref.current.src = image;
+            ref.current.onload = () => {
+                imagesLoadedRef.current[key] = true;
+            };
+            ref.current.onerror = () => {
+                console.error(`Failed to load ${key} image`);
+                imagesLoadedRef.current[key] = true;
+            };
+        });
     }, []);
 
     // Создание стены и пола
@@ -423,52 +297,17 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
         // Формируем данные для предметов на основе данных из базы
         itemDataRef.current = locationItems.map((item, index) => {
-            const isStick = item.name === 'Палка';
-            const isGarbage = item.name === 'Мусор';
-            const isBerry = item.name === 'Лесные ягоды';
-            const isMushrooms = item.name === 'Лесные грибы';
-            const isBoard = item.name === 'Доска';
-            const isChair = item.name === 'Стул';
-            const isTable = item.name === 'Стол';
-            const isWardrobe = item.name === 'Шкаф';
-            const isSofa = item.name === 'Кровать';
-            const isChest = item.name === 'Тумба';
-            const isFirstAidKit = item.name === 'Аптечка';
-            const isBandage = item.name === 'Бинт';
-            const isChocolate = item.name === 'Шоколадка';
-            const isCannedFood = item.name === 'Консервы';
-
-            const size = isChair ? 100 :
-                isBoard ? 100 :
-                    isBerry || isMushrooms ? 50 :
-                        isStick || isGarbage ? 67 :
-                            isChest ? 100 :
-                                isFirstAidKit || isBandage || isChocolate || isCannedFood ? 50 :
-                                    200;
-
+            // Поиск конфигурации текстуры по имени предмета
+            const config = Object.values(textureConfig).find(conf => conf.name === item.name) || {};
             return {
                 id: item._id,
-                x: item.x * width, // Преобразуем относительную x в абсолютную
-                y: item.y * height, // Преобразуем относительную y в абсолютную
+                x: item.x * width,
+                y: item.y * height,
                 scaleFactor: item.scaleFactor,
                 zIndex: item.zIndex,
-                width: size,
-                height: size,
-                texture: isStick ? stickImage :
-                    isGarbage ? garbageImage :
-                        isBerry ? berryImage :
-                            isMushrooms ? mushroomsImage :
-                                isBoard ? boardImage :
-                                    isChair ? chairImage :
-                                        isTable ? tableImage :
-                                            isWardrobe ? wardrobeImage :
-                                                isSofa ? sofaImage :
-                                                    isChest ? chestImage :
-                                                        isFirstAidKit ? firstAidKitImage :
-                                                            isBandage ? bandageImage :
-                                                                isChocolate ? chocolateImage :
-                                                                    isCannedFood ? cannedFoodImage :
-                                                                        undefined,
+                width: config.size || 200,
+                height: config.size || 200,
+                texture: config.image || undefined,
                 opacity: 1
             };
         });
@@ -488,10 +327,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             item.opacity = 0.8;
         };
 
-        const handleMouseDown = (event) => {
+        // Общая функция для обработки событий мыши и касания
+        const handleInteraction = (event, isTouch = false) => {
+            event.preventDefault();
             const rect = canvas.getBoundingClientRect();
-            const mouseX = event.clientX - rect.left;
-            const mouseY = event.clientY - rect.top;
+            const mouseX = isTouch ? event.touches[0].clientX - rect.left : event.clientX - rect.left;
+            const mouseY = isTouch ? event.touches[0].clientY - rect.top : event.clientY - rect.top;
 
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
@@ -507,47 +348,20 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                         mouseY >= item.y - halfHeight &&
                         mouseY <= item.y + halfHeight
                     ) {
-                        const image = item.texture === stickImage ? stickImgRef.current :
-                            item.texture === garbageImage ? garbageImgRef.current :
-                                item.texture === berryImage ? berryImgRef.current :
-                                    item.texture === mushroomsImage ? mushroomsImgRef.current :
-                                        item.texture === boardImage ? boardImgRef.current :
-                                            item.texture === chairImage ? chairImgRef.current :
-                                                item.texture === tableImage ? tableImgRef.current :
-                                                    item.texture === wardrobeImage ? wardrobeImgRef.current :
-                                                        item.texture === sofaImage ? sofaImgRef.current :
-                                                            item.texture === firstAidKitImage ? firstAidKitImgRef.current :
-                                                                item.texture === bandageImage ? bandageImgRef.current :
-                                                                    item.texture === chocolateImage ? chocolateImgRef.current :
-                                                                        item.texture === cannedFoodImage ? cannedFoodImgRef.current :
-                                                                            chestImgRef.current;
-
-                        if (image.width && image.height && imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
-                            item.texture === garbageImage ? 'garbage' :
-                                item.texture === berryImage ? 'berry' :
-                                    item.texture === mushroomsImage ? 'mushrooms' :
-                                        item.texture === boardImage ? 'board' :
-                                            item.texture === chairImage ? 'chair' :
-                                                item.texture === tableImage ? 'table' :
-                                                    item.texture === wardrobeImage ? 'wardrobe' :
-                                                        item.texture === sofaImage ? 'sofa' :
-                                                            item.texture === firstAidKitImage ? 'firstAidKit' :
-                                                                item.texture === bandageImage ? 'bandage' :
-                                                                    item.texture === chocolateImage ? 'chocolate' :
-                                                                        item.texture === cannedFoodImage ? 'cannedFood' :
-                                                                            'chest']) {
-                            const aspectRatio = image.width / image.height;
+                        const config = Object.values(textureConfig).find(conf => conf.image === item.texture);
+                        if (config && config.ref.current.width && config.ref.current.height && imagesLoadedRef.current[config.key]) {
+                            const aspectRatio = config.ref.current.width / config.ref.current.height;
                             const textureHeight = item.height * item.scaleFactor;
                             const textureWidth = textureHeight * aspectRatio;
 
-                            tempCanvas.width = image.width;
-                            tempCanvas.height = image.height;
-                            tempCtx.drawImage(image, 0, 0, image.width, image.height);
+                            tempCanvas.width = config.ref.current.width;
+                            tempCanvas.height = config.ref.current.height;
+                            tempCtx.drawImage(config.ref.current, 0, 0, config.ref.current.width, config.ref.current.height);
 
-                            const localX = (mouseX - (item.x - halfWidth)) / (textureWidth / image.width);
-                            const localY = (mouseY - (item.y - halfHeight)) / (textureHeight / image.height);
+                            const localX = (mouseX - (item.x - halfWidth)) / (textureWidth / config.ref.current.width);
+                            const localY = (mouseY - (item.y - halfHeight)) / (textureHeight / config.ref.current.height);
 
-                            if (localX >= 0 && localX < image.width && localY >= 0 && localY < image.height) {
+                            if (localX >= 0 && localX < config.ref.current.width && localY >= 0 && localY < config.ref.current.height) {
                                 try {
                                     const pixelData = tempCtx.getImageData(Math.floor(localX), Math.floor(localY), 1, 1).data;
                                     const isNotTransparent = pixelData[3] > 0;
@@ -565,11 +379,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 .filter(item => item && item.isNotTransparent)
                 .sort((a, b) => (b.item.zIndex || 0) - (a.item.zIndex || 0));
 
-            const clickedItem = itemsUnderCursor.length > 0 ? itemsUnderCursor[0].item : null;
+            const selectedItem = itemsUnderCursor.length > 0 ? itemsUnderCursor[0].item : null;
 
-            if (clickedItem) {
-                bringToFront(clickedItem);
-                draggedItemRef.current = clickedItem;
+            if (selectedItem) {
+                bringToFront(selectedItem);
+                draggedItemRef.current = selectedItem;
             }
         };
 
@@ -588,93 +402,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             if (draggedItemRef.current) {
                 draggedItemRef.current.opacity = 1;
                 draggedItemRef.current = null;
-            }
-        };
-
-        const handleTouchStart = (event) => {
-            event.preventDefault();
-            const touch = event.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = touch.clientX - rect.left;
-            const mouseY = touch.clientY - rect.top;
-
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
-
-            const itemsUnderCursor = itemDataRef.current
-                .map(item => {
-                    const halfWidth = (item.width * item.scaleFactor) / 2;
-                    const halfHeight = (item.height * item.scaleFactor) / 2;
-
-                    if (
-                        mouseX >= item.x - halfWidth &&
-                        mouseX <= item.x + halfWidth &&
-                        mouseY >= item.y - halfHeight &&
-                        mouseY <= item.y + halfHeight
-                    ) {
-                        const image = item.texture === stickImage ? stickImgRef.current :
-                            item.texture === garbageImage ? garbageImgRef.current :
-                                item.texture === berryImage ? berryImgRef.current :
-                                    item.texture === mushroomsImage ? mushroomsImgRef.current :
-                                        item.texture === boardImage ? boardImgRef.current :
-                                            item.texture === chairImage ? chairImgRef.current :
-                                                item.texture === tableImage ? tableImgRef.current :
-                                                    item.texture === wardrobeImage ? wardrobeImgRef.current :
-                                                        item.texture === sofaImage ? sofaImgRef.current :
-                                                            item.texture === firstAidKitImage ? firstAidKitImgRef.current :
-                                                                item.texture === bandageImage ? bandageImgRef.current :
-                                                                    item.texture === chocolateImage ? chocolateImgRef.current :
-                                                                        item.texture === cannedFoodImage ? cannedFoodImgRef.current :
-                                                                            chestImgRef.current;
-
-                        if (image.width && image.height && imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
-                            item.texture === garbageImage ? 'garbage' :
-                                item.texture === berryImage ? 'berry' :
-                                    item.texture === mushroomsImage ? 'mushrooms' :
-                                        item.texture === boardImage ? 'board' :
-                                            item.texture === chairImage ? 'chair' :
-                                                item.texture === tableImage ? 'table' :
-                                                    item.texture === wardrobeImage ? 'wardrobe' :
-                                                        item.texture === sofaImage ? 'sofa' :
-                                                            item.texture === firstAidKitImage ? 'firstAidKit' :
-                                                                item.texture === bandageImage ? 'bandage' :
-                                                                    item.texture === chocolateImage ? 'chocolate' :
-                                                                        item.texture === cannedFoodImage ? 'cannedFood' :
-                                                                            'chest']) {
-                            const aspectRatio = image.width / image.height;
-                            const textureHeight = item.height * item.scaleFactor;
-                            const textureWidth = textureHeight * aspectRatio;
-
-                            tempCanvas.width = image.width;
-                            tempCanvas.height = image.height;
-                            tempCtx.drawImage(image, 0, 0, image.width, image.height);
-
-                            const localX = (mouseX - (item.x - halfWidth)) / (textureWidth / image.width);
-                            const localY = (mouseY - (item.y - halfHeight)) / (textureHeight / image.height);
-
-                            if (localX >= 0 && localX < image.width && localY >= 0 && localY < image.height) {
-                                try {
-                                    const pixelData = tempCtx.getImageData(Math.floor(localX), Math.floor(localY), 1, 1).data;
-                                    const isNotTransparent = pixelData[3] > 0;
-                                    return { item, isNotTransparent };
-                                } catch (error) {
-                                    console.error('Error reading pixel data for item:', item.id, error);
-                                    return null;
-                                }
-                            }
-                        }
-                        return null;
-                    }
-                    return null;
-                })
-                .filter(item => item && item.isNotTransparent)
-                .sort((a, b) => (b.item.zIndex || 0) - (a.item.zIndex || 0));
-
-            const touchedItem = itemsUnderCursor.length > 0 ? itemsUnderCursor[0].item : null;
-
-            if (touchedItem) {
-                bringToFront(touchedItem);
-                draggedItemRef.current = touchedItem;
             }
         };
 
@@ -699,10 +426,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             }
         };
 
-        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousedown', handleInteraction);
         canvas.addEventListener('mousemove', handleMouseMove);
         canvas.addEventListener('mouseup', handleMouseUp);
-        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchstart', (e) => handleInteraction(e, true), { passive: false });
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
 
@@ -732,8 +459,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 context.clip();
 
                 const isWall = body === wallRef.current;
-                const image = isWall ? wallpaperImgRef.current : floorImgRef.current;
-                const isImageLoaded = isWall ? imagesLoadedRef.current.wallpaper : imagesLoadedRef.current.floor;
+                const config = isWall ? textureConfig.wallpaper : textureConfig.floor;
+                const image = config.ref.current;
+                const isImageLoaded = imagesLoadedRef.current[config.key];
 
                 if (isImageLoaded && image.width && image.height) {
                     const aspectRatio = image.width / image.height;
@@ -778,55 +506,30 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const items = itemDataRef.current.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0));
             items.forEach(item => {
                 context.globalAlpha = item.opacity;
-                if (item.texture &&
-                    [stickImage, garbageImage, berryImage, mushroomsImage, boardImage, chairImage, tableImage, wardrobeImage, sofaImage, chestImage, firstAidKitImage, bandageImage, chocolateImage, cannedFoodImage].includes(item.texture) &&
-                    imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
-                        item.texture === garbageImage ? 'garbage' :
-                            item.texture === berryImage ? 'berry' :
-                                item.texture === mushroomsImage ? 'mushrooms' :
-                                    item.texture === boardImage ? 'board' :
-                                        item.texture === chairImage ? 'chair' :
-                                            item.texture === tableImage ? 'table' :
-                                                item.texture === wardrobeImage ? 'wardrobe' :
-                                                    item.texture === sofaImage ? 'sofa' :
-                                                        item.texture === firstAidKitImage ? 'firstAidKit' :
-                                                            item.texture === bandageImage ? 'bandage' :
-                                                                item.texture === chocolateImage ? 'chocolate' :
-                                                                    item.texture === cannedFoodImage ? 'cannedFood' :
-                                                                        'chest']) {
-                    const image = item.texture === stickImage ? stickImgRef.current :
-                        item.texture === garbageImage ? garbageImgRef.current :
-                            item.texture === berryImage ? berryImgRef.current :
-                                item.texture === mushroomsImage ? mushroomsImgRef.current :
-                                    item.texture === boardImage ? boardImgRef.current :
-                                        item.texture === chairImage ? chairImgRef.current :
-                                            item.texture === tableImage ? tableImgRef.current :
-                                                item.texture === wardrobeImage ? wardrobeImgRef.current :
-                                                    item.texture === sofaImage ? sofaImgRef.current :
-                                                        item.texture === firstAidKitImage ? firstAidKitImgRef.current :
-                                                            item.texture === bandageImage ? bandageImgRef.current :
-                                                                item.texture === chocolateImage ? chocolateImgRef.current :
-                                                                    item.texture === cannedFoodImage ? cannedFoodImgRef.current :
-                                                                        chestImgRef.current;
-                    if (image.width && image.height) {
-                        const aspectRatio = image.width / image.height;
-                        const textureHeight = item.height * item.scaleFactor;
-                        const textureWidth = textureHeight * aspectRatio;
-                        context.save();
-                        context.shadowColor = 'rgba(0, 0, 0, 0.3)';
-                        context.shadowBlur = 5;
-                        context.shadowOffsetX = 3;
-                        context.shadowOffsetY = 3;
-                        context.drawImage(image, item.x - textureWidth / 2, item.y - textureHeight / 2, textureWidth, textureHeight);
-                        context.shadowColor = 'rgba(0, 0, 0, 0)';
-                        context.shadowBlur = 0;
-                        context.shadowOffsetX = 0;
-                        context.shadowOffsetY = 0;
-                        context.restore();
+                if (item.texture) {
+                    const config = Object.values(textureConfig).find(conf => conf.image === item.texture);
+                    if (config && imagesLoadedRef.current[config.key]) {
+                        const image = config.ref.current;
+
+                        if (image.width && image.height) {
+                            const aspectRatio = image.width / image.height;
+                            const textureHeight = item.height * item.scaleFactor;
+                            const textureWidth = textureHeight * aspectRatio;
+                            context.save();
+                            context.shadowColor = 'rgba(0, 0, 0, 0.3)';
+                            context.shadowBlur = 5;
+                            context.shadowOffsetX = 3;
+                            context.shadowOffsetY = 3;
+                            context.drawImage(image, item.x - textureWidth / 2, item.y - textureHeight / 2, textureWidth, textureHeight);
+                            context.shadowColor = 'rgba(0, 0, 0, 0)';
+                            context.shadowBlur = 0;
+                            context.shadowOffsetX = 0;
+                            context.shadowOffsetY = 0;
+                            context.restore();
+                        }
                     }
-                }
-                context.globalAlpha = 1;
-            });
+                    context.globalAlpha = 1;
+                });
 
             animationFrameId = requestAnimationFrame(renderLoop);
         };
@@ -877,10 +580,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
 
         return () => {
             cancelAnimationFrame(animationFrameId);
-            canvas.removeEventListener('mousedown', handleMouseDown);
+            canvas.removeEventListener('mousedown', handleInteraction);
             canvas.removeEventListener('mousemove', handleMouseMove);
             canvas.removeEventListener('mouseup', handleMouseUp);
-            canvas.removeEventListener('touchstart', handleTouchStart);
+            canvas.removeEventListener('touchstart', (e) => handleInteraction(e, true));
             canvas.removeEventListener('touchmove', handleTouchMove);
             canvas.removeEventListener('touchend', handleTouchEnd);
             window.removeEventListener('resize', handleResize);

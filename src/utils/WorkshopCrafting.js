@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
+import { FaBolt, FaStar } from 'react-icons/fa';
 import {
-  FaBolt, FaStar, ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
+  ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
   SliderContainer, SliderLabel, Slider, SliderValue, Select, MaterialsText,
 } from '../styles/ActionsStyles';
 import { ClipLoader } from 'react-spinners';

@@ -725,17 +725,48 @@ function registerInventoryHandlers({
             if (effect) {
                 const user = await User.findOne({ userId });
                 if (user) {
-                    const updatedStats = {
-                        energy: Math.min(Math.max(user.stats.energy + (effect.energy || 0), 0), user.stats.maxEnergy),
-                        exp: (user.exp || 0) + effect.exp
+                    // Сохраняем предыдущие значения для сравнения
+                    const previousStats = {
+                        energy: user.stats.energy,
+                        mood: user.stats.mood,
+                        satiety: user.stats.satiety,
+                        health: user.stats.health
                     };
+
+                    let newEnergy = user.stats.energy;
+                    let newMood = user.stats.mood;
+                    let newSatiety = user.stats.satiety;
+                    let newHealth = user.stats.health;
+                    let energyCost = effect.energy || 0;
+
+                    // Проверяем здоровье игрока
+                    if (user.stats.health === 0) {
+                        if (callback) callback({ success: false, message: 'Восстановите здоровье' });
+                        return;
+                    }
+
+                    // Последовательное уменьшение параметров
+                    if (newEnergy > 0) {
+                        newEnergy = Math.max(newEnergy + energyCost, 0);
+                    } else if (newMood > 0) {
+                        newMood = Math.max(newMood + energyCost, 0);
+                    } else if (newSatiety > 0) {
+                        newSatiety = Math.max(newSatiety + energyCost, 0);
+                    } else {
+                        newHealth = Math.max(newHealth + energyCost, 0);
+                    }
+
+                    const newExp = (user.exp || 0) + effect.exp;
 
                     await User.updateOne(
                         { userId },
                         {
                             $set: {
-                                'stats.energy': updatedStats.energy,
-                                exp: updatedStats.exp
+                                'stats.energy': newEnergy,
+                                'stats.mood': newMood,
+                                'stats.satiety': newSatiety,
+                                'stats.health': newHealth,
+                                exp: newExp
                             }
                         }
                     );
@@ -744,9 +775,51 @@ function registerInventoryHandlers({
                     const updatedUser = await User.findOne({ userId });
                     socket.emit('userUpdate', {
                         userId: updatedUser.userId,
+                        firstName: updatedUser.firstName,
+                        username: updatedUser.username,
+                        lastName: updatedUser.lastName,
+                        photoUrl: updatedUser.photoUrl,
+                        isRegistered: updatedUser.isRegistered,
+                        isHuman: updatedUser.isHuman,
+                        animalType: updatedUser.animalType,
+                        name: updatedUser.name,
+                        owner: updatedUser.owner,
+                        homeless: updatedUser.homeless,
+                        credits: updatedUser.credits || 0,
+                        exp: updatedUser.exp || 0,
+                        onLeash: updatedUser.onLeash,
+                        freeRoam: updatedUser.freeRoam || false,
                         stats: updatedUser.stats,
-                        exp: updatedUser.exp
                     });
+
+                    // Формируем данные об изменениях для уведомления
+                    const effectsPayload = {};
+                    ['energy', 'mood', 'satiety', 'health'].forEach(key => {
+                        const value = updatedUser.stats[key] - previousStats[key];
+                        if (value !== 0) {
+                            effectsPayload[key] = {
+                                value,
+                                applied: value > 0
+                            };
+                        }
+                    });
+                    if (effect.exp > 0) {
+                        effectsPayload.exp = {
+                            value: effect.exp,
+                            applied: true
+                        };
+                    }
+
+                    if (callback) {
+                        callback({
+                            success: true,
+                            item: newItem,
+                            message: `Вы успешно создали: ${craftedItem.name}!`,
+                            effects: effectsPayload
+                        });
+                    } else {
+                        callback({ success: true, item: newItem });
+                    }
                 }
             }
 
@@ -765,21 +838,6 @@ function registerInventoryHandlers({
                 io.to(currentRoom).emit('itemAction', { action: 'remove', owner, itemIds: [...stickIds, ...boardIds] });
                 io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: newItem });
                 io.to(currentRoom).emit('items', { owner, items: updatedItems });
-            }
-
-            if (callback) {
-                const effectsPayload = effect ? {
-                    energy: { value: effect.energy, applied: effect.energy > 0 },
-                    exp: { value: effect.exp, applied: true }
-                } : {};
-                callback({
-                    success: true,
-                    item: newItem,
-                    message: `Вы успешно создали: ${craftedItem.name}!`,
-                    effects: effectsPayload
-                });
-            } else {
-                callback({ success: true, item: newItem });
             }
         } catch (err) {
             console.error('Error crafting item:', err.message, err.stack);

@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { FaBolt, FaStar } from 'react-icons/fa';
+import { FaStar, FaSmile, FaBolt, FaHeart, FaDrumstickBite } from 'react-icons/fa';
 import {
   ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
   SliderContainer, SliderLabel, Slider, SliderValue, Select, MaterialsText,
@@ -123,9 +123,11 @@ const WorkshopCrafting = ({
       if (response && response.success) {
         const paramIcons = {
           energy: <FaBolt style={{ color: '#f39c12' }} />,
+          mood: <FaSmile style={{ color: '#3498db' }} />,
+          satiety: <FaDrumstickBite style={{ color: '#8e44ad' }} />,
+          health: <FaHeart style={{ color: '#e74c3c' }} />,
           exp: <FaStar style={{ color: '#f1c40f' }} />
         };
-
         const changes = [];
         if (response.effects) {
           Object.entries(response.effects).forEach(([key, { value, applied }]) => {
@@ -136,8 +138,7 @@ const WorkshopCrafting = ({
                 gap: '4px',
                 color: applied ? '#28a745' : '#dc3545'
               }}>
-                {paramIcons[key]}
-                {value > 0 ? '+' : ''}{value}
+                {paramIcons[key]} {value > 0 ? '+' : ''}{value}
               </span>
             );
           });

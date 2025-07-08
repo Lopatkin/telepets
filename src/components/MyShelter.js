@@ -443,7 +443,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     isBerry || isMushrooms ? 50 :
                         isStick || isGarbage ? 67 :
                             isChest ? 100 :
-                                isFirstAidKit || isBandage || isChocolate || isCannedFood ? 200 :
+                                isFirstAidKit || isBandage || isChocolate || isCannedFood ? 50 :
                                     200;
 
             return {

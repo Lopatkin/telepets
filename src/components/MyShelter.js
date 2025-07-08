@@ -13,6 +13,10 @@ import tableImage from '../images/dwelling/furniture/table.png';
 import wardrobeImage from '../images/dwelling/furniture/wardrobe.png';
 import sofaImage from '../images/dwelling/furniture/sofa.png';
 import chestImage from '../images/dwelling/furniture/chest.png';
+import firstAidKitImage from '../images/dwelling/furniture/first-aid-kit.png';
+import bandageImage from '../images/dwelling/furniture/bandage.png';
+import chocolateImage from '../images/dwelling/furniture/chocolate.png';
+import cannedFoodImage from '../images/dwelling/furniture/canned-food.png';
 
 const SaveButton = styled.button`
       position: absolute;
@@ -102,6 +106,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const wardrobeImgRef = useRef(new Image());
     const sofaImgRef = useRef(new Image());
     const chestImgRef = useRef(new Image());
+    const firstAidKitImgRef = useRef(new Image());
+    const bandageImgRef = useRef(new Image());
+    const chocolateImgRef = useRef(new Image());
+    const cannedFoodImgRef = useRef(new Image());
     const imagesLoadedRef = useRef({
         wallpaper: false,
         floor: false,
@@ -114,7 +122,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         table: false,
         wardrobe: false,
         sofa: false,
-        chest: false
+        chest: false,
+        firstAidKit: false,
+        bandage: false,
+        chocolate: false,
+        cannedFood: false
     });
     const [locationItems, setLocationItems] = useState([]);
     const wallRef = useRef(null);
@@ -137,6 +149,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         wardrobeImgRef.current.src = wardrobeImage;
         sofaImgRef.current.src = sofaImage;
         chestImgRef.current.src = chestImage;
+        firstAidKitImgRef.current.src = firstAidKitImage;
+        bandageImgRef.current.src = bandageImage;
+        chocolateImgRef.current.src = chocolateImage;
+        cannedFoodImgRef.current.src = cannedFoodImage;
 
         wallpaperImgRef.current.onload = () => {
             imagesLoadedRef.current.wallpaper = true;
@@ -173,6 +189,19 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         };
         chestImgRef.current.onload = () => {
             imagesLoadedRef.current.chest = true;
+        };
+
+        firstAidKitImgRef.current.onload = () => {
+            imagesLoadedRef.current.firstAidKit = true;
+        };
+        bandageImgRef.current.onload = () => {
+            imagesLoadedRef.current.bandage = true;
+        };
+        chocolateImgRef.current.onload = () => {
+            imagesLoadedRef.current.chocolate = true;
+        };
+        cannedFoodImgRef.current.onload = () => {
+            imagesLoadedRef.current.cannedFood = true;
         };
 
         wallpaperImgRef.current.onerror = () => {
@@ -222,6 +251,22 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         chestImgRef.current.onerror = () => {
             console.error('Failed to load chest image');
             imagesLoadedRef.current.chest = true;
+        };
+        firstAidKitImgRef.current.onerror = () => {
+            console.error('Failed to load first aid kit image');
+            imagesLoadedRef.current.firstAidKit = true;
+        };
+        bandageImgRef.current.onerror = () => {
+            console.error('Failed to load bandage image');
+            imagesLoadedRef.current.bandage = true;
+        };
+        chocolateImgRef.current.onerror = () => {
+            console.error('Failed to load chocolate image');
+            imagesLoadedRef.current.chocolate = true;
+        };
+        cannedFoodImgRef.current.onerror = () => {
+            console.error('Failed to load canned food image');
+            imagesLoadedRef.current.cannedFood = true;
         };
     }, []);
 
@@ -388,13 +433,18 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             const isWardrobe = item.name === 'Шкаф';
             const isSofa = item.name === 'Кровать';
             const isChest = item.name === 'Тумба';
+            const isFirstAidKit = item.name === 'Аптечка';
+            const isBandage = item.name === 'Бинт';
+            const isChocolate = item.name === 'Шоколадка';
+            const isCannedFood = item.name === 'Консервы';
 
             const size = isChair ? 100 :
                 isBoard ? 100 :
                     isBerry || isMushrooms ? 50 :
                         isStick || isGarbage ? 67 :
-                            isChest ? 100 : // Изменено с 200 на 100 для "Тумба"
-                                200;
+                            isChest ? 100 :
+                                isFirstAidKit || isBandage || isChocolate || isCannedFood ? 50 :
+                                    200;
 
             return {
                 id: item._id,
@@ -413,7 +463,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                         isTable ? tableImage :
                                             isWardrobe ? wardrobeImage :
                                                 isSofa ? sofaImage :
-                                                    isChest ? chestImage : undefined,
+                                                    isChest ? chestImage :
+                                                        isFirstAidKit ? firstAidKitImage :
+                                                            isBandage ? bandageImage :
+                                                                isChocolate ? chocolateImage :
+                                                                    isCannedFood ? cannedFoodImage :
+                                                                        undefined,
                 opacity: 1
             };
         });
@@ -461,7 +516,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                                 item.texture === tableImage ? tableImgRef.current :
                                                     item.texture === wardrobeImage ? wardrobeImgRef.current :
                                                         item.texture === sofaImage ? sofaImgRef.current :
-                                                            chestImgRef.current;
+                                                            item.texture === firstAidKitImage ? firstAidKitImgRef.current :
+                                                                item.texture === bandageImage ? bandageImgRef.current :
+                                                                    item.texture === chocolateImage ? chocolateImgRef.current :
+                                                                        item.texture === cannedFoodImage ? cannedFoodImgRef.current :
+                                                                            chestImgRef.current;
 
                         if (image.width && image.height && imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
                             item.texture === garbageImage ? 'garbage' :
@@ -471,7 +530,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                             item.texture === chairImage ? 'chair' :
                                                 item.texture === tableImage ? 'table' :
                                                     item.texture === wardrobeImage ? 'wardrobe' :
-                                                        item.texture === sofaImage ? 'sofa' : 'chest']) {
+                                                        item.texture === sofaImage ? 'sofa' :
+                                                            item.texture === firstAidKitImage ? 'firstAidKit' :
+                                                                item.texture === bandageImage ? 'bandage' :
+                                                                    item.texture === chocolateImage ? 'chocolate' :
+                                                                        item.texture === cannedFoodImage ? 'cannedFood' :
+                                                                            'chest']) {
                             const aspectRatio = image.width / image.height;
                             const textureHeight = item.height * item.scaleFactor;
                             const textureWidth = textureHeight * aspectRatio;
@@ -557,7 +621,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                                 item.texture === tableImage ? tableImgRef.current :
                                                     item.texture === wardrobeImage ? wardrobeImgRef.current :
                                                         item.texture === sofaImage ? sofaImgRef.current :
-                                                            chestImgRef.current;
+                                                            item.texture === firstAidKitImage ? firstAidKitImgRef.current :
+                                                                item.texture === bandageImage ? bandageImgRef.current :
+                                                                    item.texture === chocolateImage ? chocolateImgRef.current :
+                                                                        item.texture === cannedFoodImage ? cannedFoodImgRef.current :
+                                                                            chestImgRef.current;
 
                         if (image.width && image.height && imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
                             item.texture === garbageImage ? 'garbage' :
@@ -567,7 +635,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                             item.texture === chairImage ? 'chair' :
                                                 item.texture === tableImage ? 'table' :
                                                     item.texture === wardrobeImage ? 'wardrobe' :
-                                                        item.texture === sofaImage ? 'sofa' : 'chest']) {
+                                                        item.texture === sofaImage ? 'sofa' :
+                                                            item.texture === firstAidKitImage ? 'firstAidKit' :
+                                                                item.texture === bandageImage ? 'bandage' :
+                                                                    item.texture === chocolateImage ? 'chocolate' :
+                                                                        item.texture === cannedFoodImage ? 'cannedFood' :
+                                                                            'chest']) {
                             const aspectRatio = image.width / image.height;
                             const textureHeight = item.height * item.scaleFactor;
                             const textureWidth = textureHeight * aspectRatio;
@@ -706,7 +779,7 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
             items.forEach(item => {
                 context.globalAlpha = item.opacity;
                 if (item.texture &&
-                    [stickImage, garbageImage, berryImage, mushroomsImage, boardImage, chairImage, tableImage, wardrobeImage, sofaImage, chestImage].includes(item.texture) &&
+                    [stickImage, garbageImage, berryImage, mushroomsImage, boardImage, chairImage, tableImage, wardrobeImage, sofaImage, chestImage, firstAidKitImage, bandageImage, chocolateImage, cannedFoodImage].includes(item.texture) &&
                     imagesLoadedRef.current[item.texture === stickImage ? 'stick' :
                         item.texture === garbageImage ? 'garbage' :
                             item.texture === berryImage ? 'berry' :
@@ -715,7 +788,12 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                         item.texture === chairImage ? 'chair' :
                                             item.texture === tableImage ? 'table' :
                                                 item.texture === wardrobeImage ? 'wardrobe' :
-                                                    item.texture === sofaImage ? 'sofa' : 'chest']) {
+                                                    item.texture === sofaImage ? 'sofa' :
+                                                        item.texture === firstAidKitImage ? 'firstAidKit' :
+                                                            item.texture === bandageImage ? 'bandage' :
+                                                                item.texture === chocolateImage ? 'chocolate' :
+                                                                    item.texture === cannedFoodImage ? 'cannedFood' :
+                                                                        'chest']) {
                     const image = item.texture === stickImage ? stickImgRef.current :
                         item.texture === garbageImage ? garbageImgRef.current :
                             item.texture === berryImage ? berryImgRef.current :
@@ -725,7 +803,11 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                                             item.texture === tableImage ? tableImgRef.current :
                                                 item.texture === wardrobeImage ? wardrobeImgRef.current :
                                                     item.texture === sofaImage ? sofaImgRef.current :
-                                                        chestImgRef.current;
+                                                        item.texture === firstAidKitImage ? firstAidKitImgRef.current :
+                                                            item.texture === bandageImage ? bandageImgRef.current :
+                                                                item.texture === chocolateImage ? chocolateImgRef.current :
+                                                                    item.texture === cannedFoodImage ? cannedFoodImgRef.current :
+                                                                        chestImgRef.current;
                     if (image.width && image.height) {
                         const aspectRatio = image.width / image.height;
                         const textureHeight = item.height * item.scaleFactor;

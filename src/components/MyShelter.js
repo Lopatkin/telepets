@@ -27,7 +27,13 @@ const SaveButton = styled.button`
       cursor: pointer;
       font-size: 16px;
       z-index: 2000;
-      transition: background 0.3s ease; // Добавляем плавный переход для мигания
+      transition: background 0.3s ease;
+      animation: ${({ isSaved }) => isSaved ? 'blink 0.666s ease 3' : 'none'}; // 3 мигания за 2 секунды (2 / 3 = 0.666s на цикл)
+
+      @keyframes blink {
+          0%, 100% { background: #4CAF50; } // Зелёный
+          50% { background: ${({ theme }) => (theme === 'dark' ? '#4A4A4A' : '#D3D3D3')}; } // Исходный цвет
+      }
 
       &:hover {
           background: ${({ theme, isSaved }) =>
@@ -329,9 +335,9 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
         socket.emit('updateItemPositions', { owner: currentRoom, positions }, (response) => {
             if (response.success) {
                 console.log('Позиции предметов успешно сохранены на сервере');
-                setIsSaved(true); // Включаем мигание
+                setIsSaved(true);
                 setTimeout(() => {
-                    setIsSaved(false); // Выключаем мигание через 2 секунды
+                    setIsSaved(false); // Отключаем анимацию через 2 секунды
                 }, 2000);
             } else {
                 console.error('Ошибка сохранения позиций:', response.message);

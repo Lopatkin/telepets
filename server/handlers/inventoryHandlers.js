@@ -640,6 +640,7 @@ function registerInventoryHandlers({
 
     socket.on('craftItem', async ({ owner, craftedItem, materials }, callback) => {
         try {
+            const userId = owner.replace('user_', '');
             // console.log('Received craftItem data:', { owner, craftedItem, materials });
             if (!craftedItem || typeof craftedItem !== 'object' || !materials || typeof materials !== 'object') {
                 // console.error('Invalid craftItem data:', { craftedItem, materials });
@@ -691,6 +692,64 @@ function registerInventoryHandlers({
             const newItem = await Item.create({ owner, ...craftedItem });
             // console.log('Crafted item:', newItem);
 
+
+            // Добавляем логику для изменения энергии и начисления опыта
+            const craftEffects = {
+                'Доска': {
+                    energy: -(Math.floor(Math.random() * 4) + 2), // от -2 до -5
+                    exp: Math.floor(Math.random() * 6) + 5         // от 5 до 10
+                },
+                'Стул': {
+                    energy: -(Math.floor(Math.random() * 6) + 5),  // от -5 до -10
+                    exp: Math.floor(Math.random() * 11) + 10       // от 10 до 20
+                },
+                'Стол': {
+                    energy: -(Math.floor(Math.random() * 6) + 10), // от -10 до -15
+                    exp: Math.floor(Math.random() * 11) + 20       // от 20 до 30
+                },
+                'Шкаф': {
+                    energy: -(Math.floor(Math.random() * 6) + 15), // от -15 до -20
+                    exp: Math.floor(Math.random() * 21) + 30       // от 30 до 50
+                },
+                'Кровать': {
+                    energy: -(Math.floor(Math.random() * 6) + 15), // от -15 до -20
+                    exp: Math.floor(Math.random() * 21) + 30       // от 30 до 50
+                },
+                'Тумба': {
+                    energy: -(Math.floor(Math.random() * 6) + 15), // от -15 до -20
+                    exp: Math.floor(Math.random() * 21) + 30       // от 30 до 50
+                }
+            };
+
+            const effect = craftEffects[craftedItem.name];
+            if (effect) {
+                const user = await User.findOne({ userId });
+                if (user) {
+                    const updatedStats = {
+                        energy: Math.min(Math.max(user.stats.energy + (effect.energy || 0), 0), user.stats.maxEnergy),
+                        exp: (user.exp || 0) + effect.exp
+                    };
+
+                    await User.updateOne(
+                        { userId },
+                        {
+                            $set: {
+                                'stats.energy': updatedStats.energy,
+                                exp: updatedStats.exp
+                            }
+                        }
+                    );
+
+                    // Получаем обновленного пользователя
+                    const updatedUser = await User.findOne({ userId });
+                    socket.emit('userUpdate', {
+                        userId: updatedUser.userId,
+                        stats: updatedUser.stats,
+                        exp: updatedUser.exp
+                    });
+                }
+            }
+
             // Обновление кэша
             const ownerItems = itemCache.get(owner) || [];
             const updatedItems = ownerItems
@@ -708,7 +767,20 @@ function registerInventoryHandlers({
                 io.to(currentRoom).emit('items', { owner, items: updatedItems });
             }
 
-            if (callback) callback({ success: true, item: newItem });
+            if (callback) {
+                const effectsPayload = effect ? {
+                    energy: { value: effect.energy, applied: effect.energy > 0 },
+                    exp: { value: effect.exp, applied: true }
+                } : {};
+                callback({
+                    success: true,
+                    item: newItem,
+                    message: `Вы успешно создали: ${craftedItem.name}!`,
+                    effects: effectsPayload
+                });
+            } else {
+                callback({ success: true, item: newItem });
+            }
         } catch (err) {
             console.error('Error crafting item:', err.message, err.stack);
             if (callback) callback({ success: false, message: 'Ошибка при создании предмета' });

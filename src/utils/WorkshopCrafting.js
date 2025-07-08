@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
-  ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
+  FaBolt, FaStar, ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
   SliderContainer, SliderLabel, Slider, SliderValue, Select, MaterialsText,
 } from '../styles/ActionsStyles';
 import { ClipLoader } from 'react-spinners';
@@ -120,13 +120,52 @@ const WorkshopCrafting = ({
     socket.emit('craftItem', { owner: `user_${userId}`, craftedItem, materials }, (response) => {
       setIsProcessing(false);
       if (response && response.success) {
-        showNotification(`Вы успешно создали: ${selectedCraftItem}!`);
+        const paramIcons = {
+          energy: <FaBolt style={{ color: '#f39c12' }} />,
+          exp: <FaStar style={{ color: '#f1c40f' }} />
+        };
+
+        const changes = [];
+        if (response.effects) {
+          Object.entries(response.effects).forEach(([key, { value, applied }]) => {
+            changes.push(
+              <span key={key} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                color: applied ? '#28a745' : '#dc3545'
+              }}>
+                {paramIcons[key]}
+                {value > 0 ? '+' : ''}{value}
+              </span>
+            );
+          });
+        }
+
+        const notificationMessage = (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontWeight: 'bold' }}>{response.message}</div>
+            {changes.length > 0 && (
+              <div style={{
+                marginTop: '6px',
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'center',
+                flexWrap: 'wrap'
+              }}>
+                {changes}
+              </div>
+            )}
+          </div>
+        );
+
+        showNotification(notificationMessage, 'success');
         setSelectedAction(null);
         setClickCount(0);
         setCraftingProgress(0);
         refreshItems(); // ← безопасно используется
       } else {
-        showNotification(response?.message || 'Ошибка при создании предмета');
+        showNotification(response?.message || 'Ошибка при создании предмета', 'error');
       }
     });
   }, [

@@ -510,7 +510,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                     const config = Object.values(textureConfig).find(conf => conf.image === item.texture);
                     if (config && imagesLoadedRef.current[config.key]) {
                         const image = config.ref.current;
-
                         if (image.width && image.height) {
                             const aspectRatio = image.width / image.height;
                             const textureHeight = item.height * item.scaleFactor;
@@ -528,8 +527,10 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                             context.restore();
                         }
                     }
-                    context.globalAlpha = 1;
-                });
+                }
+                // Перемещение сброса прозрачности за пределы условия
+                context.globalAlpha = 1;
+            });
 
             animationFrameId = requestAnimationFrame(renderLoop);
         };

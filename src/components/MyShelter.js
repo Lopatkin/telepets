@@ -380,7 +380,8 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
                 isBoard ? 100 :
                     isBerry || isMushrooms ? 50 :
                         isStick || isGarbage ? 67 :
-                            200;
+                            isChest ? 100 : // Изменено с 200 на 100 для "Тумба"
+                                200;
 
             return {
                 id: item._id,

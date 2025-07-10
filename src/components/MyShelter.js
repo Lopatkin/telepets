@@ -87,24 +87,7 @@ const CanvasContainer = styled.div`
   overflow: hidden;
 `;
 
-const imageSources = {
-    wallpaper: wallpaperImage,
-    floor: floorImage,
-    stick: stickImage,
-    garbage: garbageImage,
-    berry: berryImage,
-    mushrooms: mushroomsImage,
-    board: boardImage,
-    chair: chairImage,
-    table: tableImage,
-    wardrobe: wardrobeImage,
-    sofa: sofaImage,
-    chest: chestImage,
-    firstAidKit: firstAidKitImage,
-    bandage: bandageImage,
-    chocolate: chocolateImage,
-    cannedFood: cannedFoodImage
-};
+
 
 function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const [isSaved, setIsSaved] = useState(false);
@@ -127,7 +110,24 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const bandageImgRef = useRef(new Image());
     const chocolateImgRef = useRef(new Image());
     const cannedFoodImgRef = useRef(new Image());
-
+    const imagesLoadedRef = useRef({
+        wallpaper: false,
+        floor: false,
+        stick: false,
+        garbage: false,
+        berry: false,
+        mushrooms: false,
+        board: false,
+        chair: false,
+        table: false,
+        wardrobe: false,
+        sofa: false,
+        chest: false,
+        firstAidKit: false,
+        bandage: false,
+        chocolate: false,
+        cannedFood: false
+    });
     const [locationItems, setLocationItems] = useState([]);
     const wallRef = useRef(null);
     const floorRef = useRef(null);
@@ -136,22 +136,139 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const initialDimensionsRef = useRef({ width: 0, height: 0, wallHeight: 0, floorHeight: 0 });
 
     // Загрузка изображений
-    const imageRefs = useRef({});
-    const imagesLoadedRef = useRef({});
-
     useEffect(() => {
-        Object.entries(imageSources).forEach(([key, src]) => {
-            const img = new Image();
-            img.src = src;
-            img.onload = () => { imagesLoadedRef.current[key] = true; };
-            img.onerror = () => {
-                console.error(`Не удалось загрузить изображение: ${key}`);
-                imagesLoadedRef.current[key] = true; // Чтобы не блокировать отображение
-            };
-            imageRefs.current[key] = img;
-        });
-    }, []);
+        wallpaperImgRef.current.src = wallpaperImage;
+        floorImgRef.current.src = floorImage;
+        stickImgRef.current.src = stickImage;
+        garbageImgRef.current.src = garbageImage;
+        berryImgRef.current.src = berryImage;
+        mushroomsImgRef.current.src = mushroomsImage;
+        boardImgRef.current.src = boardImage;
+        chairImgRef.current.src = chairImage;
+        tableImgRef.current.src = tableImage;
+        wardrobeImgRef.current.src = wardrobeImage;
+        sofaImgRef.current.src = sofaImage;
+        chestImgRef.current.src = chestImage;
+        firstAidKitImgRef.current.src = firstAidKitImage;
+        bandageImgRef.current.src = bandageImage;
+        chocolateImgRef.current.src = chocolateImage;
+        cannedFoodImgRef.current.src = cannedFoodImage;
 
+        wallpaperImgRef.current.onload = () => {
+            imagesLoadedRef.current.wallpaper = true;
+        };
+        floorImgRef.current.onload = () => {
+            imagesLoadedRef.current.floor = true;
+        };
+        stickImgRef.current.onload = () => {
+            imagesLoadedRef.current.stick = true;
+        };
+        garbageImgRef.current.onload = () => {
+            imagesLoadedRef.current.garbage = true;
+        };
+        berryImgRef.current.onload = () => {
+            imagesLoadedRef.current.berry = true;
+        };
+        mushroomsImgRef.current.onload = () => {
+            imagesLoadedRef.current.mushrooms = true;
+        };
+        boardImgRef.current.onload = () => {
+            imagesLoadedRef.current.board = true;
+        };
+        chairImgRef.current.onload = () => {
+            imagesLoadedRef.current.chair = true;
+        };
+        tableImgRef.current.onload = () => {
+            imagesLoadedRef.current.table = true;
+        };
+        wardrobeImgRef.current.onload = () => {
+            imagesLoadedRef.current.wardrobe = true;
+        };
+        sofaImgRef.current.onload = () => {
+            imagesLoadedRef.current.sofa = true;
+        };
+        chestImgRef.current.onload = () => {
+            imagesLoadedRef.current.chest = true;
+        };
+
+        firstAidKitImgRef.current.onload = () => {
+            imagesLoadedRef.current.firstAidKit = true;
+        };
+        bandageImgRef.current.onload = () => {
+            imagesLoadedRef.current.bandage = true;
+        };
+        chocolateImgRef.current.onload = () => {
+            imagesLoadedRef.current.chocolate = true;
+        };
+        cannedFoodImgRef.current.onload = () => {
+            imagesLoadedRef.current.cannedFood = true;
+        };
+
+        wallpaperImgRef.current.onerror = () => {
+            console.error('Failed to load wallpaper image');
+            imagesLoadedRef.current.wallpaper = true;
+        };
+        floorImgRef.current.onerror = () => {
+            console.error('Failed to load floor image');
+            imagesLoadedRef.current.floor = true;
+        };
+        stickImgRef.current.onerror = () => {
+            console.error('Failed to load stick image');
+            imagesLoadedRef.current.stick = true;
+        };
+        garbageImgRef.current.onerror = () => {
+            console.error('Failed to load garbage image');
+            imagesLoadedRef.current.garbage = true;
+        };
+        berryImgRef.current.onerror = () => {
+            console.error('Failed to load berry image');
+            imagesLoadedRef.current.berry = true;
+        };
+        mushroomsImgRef.current.onerror = () => {
+            console.error('Failed to load mushrooms image');
+            imagesLoadedRef.current.mushrooms = true;
+        };
+        boardImgRef.current.onerror = () => {
+            console.error('Failed to load board image');
+            imagesLoadedRef.current.board = true;
+        };
+        chairImgRef.current.onerror = () => {
+            console.error('Failed to load chair image');
+            imagesLoadedRef.current.chair = true;
+        };
+        tableImgRef.current.onerror = () => {
+            console.error('Failed to load table image');
+            imagesLoadedRef.current.table = true;
+        };
+        wardrobeImgRef.current.onerror = () => {
+            console.error('Failed to load wardrobe image');
+            imagesLoadedRef.current.wardrobe = true;
+        };
+        sofaImgRef.current.onerror = () => {
+            console.error('Failed to load sofa image');
+            imagesLoadedRef.current.sofa = true;
+        };
+        chestImgRef.current.onerror = () => {
+            console.error('Failed to load chest image');
+            imagesLoadedRef.current.chest = true;
+        };
+        firstAidKitImgRef.current.onerror = () => {
+            console.error('Failed to load first aid kit image');
+            imagesLoadedRef.current.firstAidKit = true;
+        };
+        bandageImgRef.current.onerror = () => {
+            console.error('Failed to load bandage image');
+            imagesLoadedRef.current.bandage = true;
+        };
+        chocolateImgRef.current.onerror = () => {
+            console.error('Failed to load chocolate image');
+            imagesLoadedRef.current.chocolate = true;
+        };
+        cannedFoodImgRef.current.onerror = () => {
+            console.error('Failed to load canned food image');
+            imagesLoadedRef.current.cannedFood = true;
+        };
+    }, []);
 
     // Создание стены и пола
     useEffect(() => {

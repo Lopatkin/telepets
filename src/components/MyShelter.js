@@ -78,17 +78,17 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const [isSaved, setIsSaved] = useState(false);
     const canvasRef = useRef(null);
     const engineRef = useRef(Matter.Engine.create());
-    const runnerRef = useRef(null);
+    // const runnerRef = useRef(null);
     const wallpaperImgRef = useRef(new Image());
     const floorImgRef = useRef(new Image());
     const imageRefs = useRef({});
     const imagesLoadedRef = useRef({});
 
-    const wallRef = useRef(null);
-    const floorRef = useRef(null);
+    // const wallRef = useRef(null);
+    // const floorRef = useRef(null);
     const itemDataRef = useRef([]);
     const draggedItemRef = useRef(null);
-    const initialDimensionsRef = useRef({ width: 0, height: 0, wallHeight: 0, floorHeight: 0 });
+    // const initialDimensionsRef = useRef({ width: 0, height: 0, wallHeight: 0, floorHeight: 0 });
     const [locationItems, setLocationItems] = useState([]);
 
     useEffect(() => {

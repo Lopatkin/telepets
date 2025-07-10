@@ -87,7 +87,24 @@ const CanvasContainer = styled.div`
   overflow: hidden;
 `;
 
-
+const imageSources = {
+    wallpaper: wallpaperImage,
+    floor: floorImage,
+    stick: stickImage,
+    garbage: garbageImage,
+    berry: berryImage,
+    mushrooms: mushroomsImage,
+    board: boardImage,
+    chair: chairImage,
+    table: tableImage,
+    wardrobe: wardrobeImage,
+    sofa: sofaImage,
+    chest: chestImage,
+    firstAidKit: firstAidKitImage,
+    bandage: bandageImage,
+    chocolate: chocolateImage,
+    cannedFood: cannedFoodImage
+};
 
 function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     const [isSaved, setIsSaved] = useState(false);
@@ -121,25 +138,6 @@ function MyShelter({ theme, setShowMyShelter, userId, socket, currentRoom }) {
     // Загрузка изображений
     const imageRefs = useRef({});
     const imagesLoadedRef = useRef({});
-
-    const imageSources = {
-        wallpaper: wallpaperImage,
-        floor: floorImage,
-        stick: stickImage,
-        garbage: garbageImage,
-        berry: berryImage,
-        mushrooms: mushroomsImage,
-        board: boardImage,
-        chair: chairImage,
-        table: tableImage,
-        wardrobe: wardrobeImage,
-        sofa: sofaImage,
-        chest: chestImage,
-        firstAidKit: firstAidKitImage,
-        bandage: bandageImage,
-        chocolate: chocolateImage,
-        cannedFood: cannedFoodImage
-    };
 
     useEffect(() => {
         Object.entries(imageSources).forEach(([key, src]) => {

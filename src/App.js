@@ -142,11 +142,8 @@ function App() {
             setTelegramTheme(window.Telegram.WebApp.colorScheme || 'light');
           } else {
             const testUser = {
-              // userId: 'test123',
-              // firstName: 'Test User',
-              // isHuman: false
-              userId: '7407790594',
-              firstName: 'Небритый Йожег',
+              userId: 'test123',
+              firstName: 'Test User',
               isHuman: false
             };
             // const lastRoom = 'Полигон утилизации';
@@ -156,11 +153,8 @@ function App() {
           }
         } else {
           const testUser = {
-            // userId: 'test123',
-            // firstName: 'Test User',
-            // isHuman: false
-            userId: '7407790594',
-            firstName: 'Небритый Йожег',
+            userId: 'test123',
+            firstName: 'Test User',
             isHuman: false
           };
           // const lastRoom = 'Полигон утилизации';

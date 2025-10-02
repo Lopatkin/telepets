@@ -640,7 +640,6 @@ function registerInventoryHandlers({
 
     socket.on('craftItem', async ({ owner, craftedItem, materials }, callback) => {
         try {
-            const userId = owner.replace('user_', '');
             // console.log('Received craftItem data:', { owner, craftedItem, materials });
             if (!craftedItem || typeof craftedItem !== 'object' || !materials || typeof materials !== 'object') {
                 // console.error('Invalid craftItem data:', { craftedItem, materials });
@@ -692,137 +691,6 @@ function registerInventoryHandlers({
             const newItem = await Item.create({ owner, ...craftedItem });
             // console.log('Crafted item:', newItem);
 
-
-            // Добавляем логику для изменения энергии и начисления опыта
-            const craftEffects = {
-                'Доска': {
-                    energy: -(Math.floor(Math.random() * 4) + 2), // от -2 до -5
-                    exp: Math.floor(Math.random() * 6) + 5         // от 5 до 10
-                },
-                'Стул': {
-                    energy: -(Math.floor(Math.random() * 6) + 5),  // от -5 до -10
-                    exp: Math.floor(Math.random() * 11) + 10       // от 10 до 20
-                },
-                'Стол': {
-                    energy: -(Math.floor(Math.random() * 6) + 10), // от -10 до -15
-                    exp: Math.floor(Math.random() * 11) + 20       // от 20 до 30
-                },
-                'Шкаф': {
-                    energy: -(Math.floor(Math.random() * 6) + 15), // от -15 до -20
-                    exp: Math.floor(Math.random() * 21) + 30       // от 30 до 50
-                },
-                'Кровать': {
-                    energy: -(Math.floor(Math.random() * 6) + 15), // от -15 до -20
-                    exp: Math.floor(Math.random() * 21) + 30       // от 30 до 50
-                },
-                'Тумба': {
-                    energy: -(Math.floor(Math.random() * 6) + 15), // от -15 до -20
-                    exp: Math.floor(Math.random() * 21) + 30       // от 30 до 50
-                }
-            };
-
-            const effect = craftEffects[craftedItem.name];
-            if (effect) {
-                const user = await User.findOne({ userId });
-                if (user) {
-                    // Сохраняем предыдущие значения для сравнения
-                    const previousStats = {
-                        energy: user.stats.energy,
-                        mood: user.stats.mood,
-                        satiety: user.stats.satiety,
-                        health: user.stats.health
-                    };
-
-                    let newEnergy = user.stats.energy;
-                    let newMood = user.stats.mood;
-                    let newSatiety = user.stats.satiety;
-                    let newHealth = user.stats.health;
-                    let energyCost = effect.energy || 0;
-
-                    // Проверяем здоровье игрока
-                    if (user.stats.health === 0) {
-                        if (callback) callback({ success: false, message: 'Восстановите здоровье' });
-                        return;
-                    }
-
-                    // Последовательное уменьшение параметров
-                    if (newEnergy > 0) {
-                        newEnergy = Math.max(newEnergy + energyCost, 0);
-                    } else if (newMood > 0) {
-                        newMood = Math.max(newMood + energyCost, 0);
-                    } else if (newSatiety > 0) {
-                        newSatiety = Math.max(newSatiety + energyCost, 0);
-                    } else {
-                        newHealth = Math.max(newHealth + energyCost, 0);
-                    }
-
-                    const newExp = (user.exp || 0) + effect.exp;
-
-                    await User.updateOne(
-                        { userId },
-                        {
-                            $set: {
-                                'stats.energy': newEnergy,
-                                'stats.mood': newMood,
-                                'stats.satiety': newSatiety,
-                                'stats.health': newHealth,
-                                exp: newExp
-                            }
-                        }
-                    );
-
-                    // Получаем обновленного пользователя
-                    const updatedUser = await User.findOne({ userId });
-                    socket.emit('userUpdate', {
-                        userId: updatedUser.userId,
-                        firstName: updatedUser.firstName,
-                        username: updatedUser.username,
-                        lastName: updatedUser.lastName,
-                        photoUrl: updatedUser.photoUrl,
-                        isRegistered: updatedUser.isRegistered,
-                        isHuman: updatedUser.isHuman,
-                        animalType: updatedUser.animalType,
-                        name: updatedUser.name,
-                        owner: updatedUser.owner,
-                        homeless: updatedUser.homeless,
-                        credits: updatedUser.credits || 0,
-                        exp: updatedUser.exp || 0,
-                        onLeash: updatedUser.onLeash,
-                        freeRoam: updatedUser.freeRoam || false,
-                        stats: updatedUser.stats,
-                    });
-
-                    // Формируем данные об изменениях для уведомления
-                    const effectsPayload = {};
-                    ['energy', 'mood', 'satiety', 'health'].forEach(key => {
-                        const value = updatedUser.stats[key] - previousStats[key];
-                        if (value !== 0) {
-                            effectsPayload[key] = {
-                                value,
-                                applied: value > 0
-                            };
-                        }
-                    });
-                    if (effect.exp > 0) {
-                        effectsPayload.exp = {
-                            value: effect.exp,
-                            applied: true
-                        };
-                    }
-
-                    if (callback) {
-                        callback({
-                            success: true,
-                            item: newItem,
-                            message: `Вы успешно создали: ${craftedItem.name}!`,
-                            effects: effectsPayload
-                        });
-                    } else {
-                        callback({ success: true, item: newItem });
-                    }
-                }
-            }
-
             // Обновление кэша
             const ownerItems = itemCache.get(owner) || [];
             const updatedItems = ownerItems
@@ -839,6 +707,8 @@ function registerInventoryHandlers({
                 io.to(currentRoom).emit('itemAction', { action: 'add', owner, item: newItem });
                 io.to(currentRoom).emit('items', { owner, items: updatedItems });
             }
+
+            if (callback) callback({ success: true, item: newItem });
         } catch (err) {
             console.error('Error crafting item:', err.message, err.stack);
             if (callback) callback({ success: false, message: 'Ошибка при создании предмета' });

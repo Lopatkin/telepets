@@ -138,6 +138,7 @@ function BouncingBall({ room, containerRef }) {
       Engine.clear(engine);
       runner.enabled = false;
       render.canvas.remove();
+      
     };
   }, [room, containerRef]);
 

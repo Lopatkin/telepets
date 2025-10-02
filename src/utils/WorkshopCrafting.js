@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { FaStar, FaSmile, FaBolt, FaHeart, FaDrumstickBite } from 'react-icons/fa';
 import {
   ProgressBarContainer, Progress, StartButton, CheckboxContainer, CheckboxLabel, Checkbox,
   SliderContainer, SliderLabel, Slider, SliderValue, Select, MaterialsText,
@@ -15,7 +14,6 @@ const WorkshopCrafting = ({
   userId,
   showNotification,
   setSelectedAction,
-  refreshItems,
 }) => {
   const [selectedCraftItem, setSelectedCraftItem] = useState('Доска');
   const [sliderValues, setSliderValues] = useState({ sticks: 0, boards: 0 });
@@ -99,6 +97,7 @@ const WorkshopCrafting = ({
     setCraftingProgress(newProgress);
 
     if (newClickCount < clicksRequired) {
+      showNotification(`Осталось нажатий: ${clicksRequired - newClickCount}`, 1000);
       return;
     }
 
@@ -118,56 +117,16 @@ const WorkshopCrafting = ({
       boards: item.materials.boards,
     };
 
+    // Отправляем один запрос craftItem
     socket.emit('craftItem', { owner: `user_${userId}`, craftedItem, materials }, (response) => {
       setIsProcessing(false);
       if (response && response.success) {
-        const paramIcons = {
-          energy: <FaBolt style={{ color: '#f39c12' }} />,
-          mood: <FaSmile style={{ color: '#3498db' }} />,
-          satiety: <FaDrumstickBite style={{ color: '#8e44ad' }} />,
-          health: <FaHeart style={{ color: '#e74c3c' }} />,
-          exp: <FaStar style={{ color: '#f1c40f' }} />
-        };
-        const changes = [];
-        if (response.effects) {
-          Object.entries(response.effects).forEach(([key, { value, applied }]) => {
-            changes.push(
-              <span key={key} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                color: applied ? '#28a745' : '#dc3545'
-              }}>
-                {paramIcons[key]} {value > 0 ? '+' : ''}{value}
-              </span>
-            );
-          });
-        }
-
-        const notificationMessage = (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: 'bold' }}>{response.message}</div>
-            {changes.length > 0 && (
-              <div style={{
-                marginTop: '6px',
-                display: 'flex',
-                gap: '12px',
-                justifyContent: 'center',
-                flexWrap: 'wrap'
-              }}>
-                {changes}
-              </div>
-            )}
-          </div>
-        );
-
-        showNotification(notificationMessage, 'success');
+        showNotification(`Вы успешно создали: ${selectedCraftItem}!`);
         setSelectedAction(null);
         setClickCount(0);
         setCraftingProgress(0);
-        refreshItems(); // ← безопасно используется
       } else {
-        showNotification(response?.message || 'Ошибка при создании предмета', 'error');
+        showNotification(response?.message || 'Ошибка при создании предмета');
       }
     });
   }, [
@@ -180,7 +139,6 @@ const WorkshopCrafting = ({
     showNotification,
     setSelectedAction,
     isProcessing,
-    refreshItems, // ← добавлено сюда
   ]);
 
   const renderSliders = useCallback(() => {
